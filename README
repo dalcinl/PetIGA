@@ -1,0 +1,19 @@
+==============
+README: PetIGA
+==============
+
+:Author:       Lisandro Dalcin, Nathaniel Collier
+:Contact:      dalcinl@gmail.com, nathaniel.collier@gmail.com
+:Organization: CONICET_, KAUST_
+
+.. _CONICET:  http://www.conicet.gov.ar/
+.. _KAUST:    http://www.kaust.edu.sa/
+
+
+- To build and install this package, you must meet the following
+  requirements.
+
+  + PETSc_ 3.2
+
+
+.. _PETSc:  http://www.mcs.anl.gov/petsc/

@@ -1,0 +1,10 @@
+.. _CONICET:  http://www.conicet.gov.ar/
+.. _CIMEC:    http://www.cimec.org.ar/
+.. _KAUST:    http://www.kaust.edu.sa/
+
+.. _MPI:      http://www.mpi-forum.org/
+.. _PETSc:    http://www.mcs.anl.gov/petsc/
+
+.. Local Variables:
+.. mode: rst
+.. End:

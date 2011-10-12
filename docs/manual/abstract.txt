@@ -1,0 +1,7 @@
+.. topic:: Abstract
+
+   This document describes PetIGA ...
+
+.. Local Variables:
+.. mode: rst
+.. End:

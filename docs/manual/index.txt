@@ -1,0 +1,27 @@
+======
+PetIGA
+======
+
+:Authors:      Nathaniel Collier, Lisandro Dalcin
+:Contact:       nathaniel.collier@gmail.com, dalcinl@gmail.com
+:Organization: KAUST_, CONICET_
+:Date:         |today|
+
+.. include:: abstract.txt
+
+Contents
+========
+
+.. include:: toctree.txt
+
+.. include:: links.txt
+
+Index
+=====
+
+* :ref:`genindex`
+* :ref:`search`
+
+.. Local Variables:
+.. mode: rst
+.. End:
