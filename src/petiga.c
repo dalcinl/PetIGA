@@ -1,5 +1,20 @@
 #include "petiga.h"
 
+#include "private/matimpl.h"
+#include "private/dmimpl.h"
+#undef  __FUNCT__
+#define __FUNCT__ "DMSetMatType"
+static
+PetscErrorCode DMSetMatType(DM dm,const MatType mattype)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = PetscFree(dm->mattype);CHKERRQ(ierr);
+  ierr = PetscStrallocpy(mattype,&dm->mattype);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreate"
 PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
@@ -18,6 +33,8 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   *_iga = iga;
 
   ierr = PetscNew(struct _IGAUserOps,&iga->userops);CHKERRQ(ierr);
+  iga->vectype = PETSC_NULL;
+  iga->mattype = PETSC_NULL;
 
   iga->dim = -1;
   iga->dof = -1;
@@ -52,6 +69,8 @@ PetscErrorCode IGADestroy(IGA *_iga)
   if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);;
   
   ierr = PetscFree(iga->userops);CHKERRQ(ierr);
+  ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
+  ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
   for (i=0; i<3; i++) {
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleDestroy(&iga->rule[i]);CHKERRQ(ierr);
@@ -199,12 +218,20 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
   {
-
+    PetscBool flg;
+    char vtype[256] = VECSTANDARD;
+    char mtype[256] = MATBAIJ;
+    if (iga->vectype) {ierr= PetscStrcpy(vtype,iga->vectype);CHKERRQ(ierr);}
+    if (iga->mattype) {ierr= PetscStrcpy(mtype,iga->mattype);CHKERRQ(ierr);}
+    ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscOptionsList("-iga_vec_type","Vector type","VecSetType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
+    if (flg) {ierr= IGASetVecType(iga,vtype);CHKERRQ(ierr);}
+    ierr = PetscOptionsList("-iga_mat_type","Matrix type","MatSetType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
+    if (flg) {ierr= IGASetMatType(iga,mtype);CHKERRQ(ierr);}
+    ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscOptionsEnd();CHKERRQ(ierr);
   }
-  ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -248,6 +275,15 @@ PetscErrorCode IGASetUp(IGA iga)
     }
   }
 
+  if (!iga->vectype) {
+    const MatType vtype = VECSTANDARD;
+    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
+  }
+  if (!iga->mattype) {
+    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
+    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
+  }
+
   {
     PetscInt swidth, sizes[3];
     DMDABoundaryType btype[3];
@@ -273,6 +309,8 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = DMDASetStencilWidth(iga->dm_dof,swidth); CHKERRQ(ierr);
     /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_"); CHKERRQ(ierr);*/
     /*ierr = DMSetFromOptions(iga->dm_dof); CHKERRQ(ierr);*/
+    ierr = DMSetVecType(iga->dm_dof,iga->vectype);CHKERRQ(ierr);
+    ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
     ierr = DMSetUp(iga->dm_dof);CHKERRQ(ierr);
   }
 
@@ -305,6 +343,39 @@ PetscErrorCode IGAGetGeomDM(IGA iga, DM *dm_geom)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetVecType"
+PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidCharPointer(vectype,2);
+  ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
+  ierr = PetscStrallocpy(vectype,&iga->vectype);CHKERRQ(ierr);
+  if (iga->dm_dof) {
+    ierr = DMSetVecType(iga->dm_dof,iga->vectype);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetMatType"
+PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidCharPointer(mattype,2);
+  ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
+  ierr = PetscStrallocpy(mattype,&iga->mattype);CHKERRQ(ierr);
+  if (iga->dm_dof) {
+    ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGACreateVec"
 PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
 {
@@ -320,13 +391,26 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
 #define __FUNCT__ "IGACreateMat"
 PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
 {
-  const MatType mat_type = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
-  mat_type = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-  ierr = DMGetMatrix(iga->dm_dof,mat_type,mat);CHKERRQ(ierr);
+  ierr = DMGetMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
+  ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
+  /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
+  {
+    PetscInt bs;
+    ierr = DMGetBlockSize(iga->dm_dof,&bs);CHKERRQ(ierr);
+    ierr = PetscLayoutSetBlockSize((*mat)->rmap,bs);CHKERRQ(ierr);
+    ierr = PetscLayoutSetBlockSize((*mat)->cmap,bs);CHKERRQ(ierr);
+  }
+  {
+    ISLocalToGlobalMapping ltog,ltogb;
+    ierr = DMGetLocalToGlobalMapping(iga->dm_dof,&ltog);CHKERRQ(ierr);
+    ierr = DMGetLocalToGlobalMappingBlock(iga->dm_dof,&ltogb);CHKERRQ(ierr);
+    ierr = MatSetLocalToGlobalMapping(*mat,ltog,ltog);CHKERRQ(ierr);
+    ierr = MatSetLocalToGlobalMappingBlock(*mat,ltogb,ltogb);CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
 

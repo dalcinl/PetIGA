@@ -147,6 +147,8 @@ struct _IGAOps {
 struct _p_IGA {
   PETSCHEADER(struct _IGAOps);
   IGAUserOps userops;
+  VecType    vectype;
+  MatType    mattype;
 
   PetscBool setup;
   PetscInt  dim;
@@ -186,6 +188,9 @@ extern PetscErrorCode IGASetUp(IGA iga);
 extern PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 extern PetscErrorCode IGAGetDofDM(IGA iga,DM *dm_dof);
 extern PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm_geom);
+
+extern PetscErrorCode IGASetVecType(IGA iga,const VecType vectype);
+extern PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
 
 extern PetscErrorCode IGACreateVec(IGA iga,Vec *vec);
 extern PetscErrorCode IGACreateMat(IGA iga,Mat *mat);

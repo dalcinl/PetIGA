@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUserFunction(iga,Function,0);CHKERRQ(ierr);
   ierr = IGASetUserJacobian(iga,Jacobian,0);CHKERRQ(ierr);
 
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   Vec x;
