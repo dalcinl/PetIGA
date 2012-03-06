@@ -395,7 +395,11 @@ PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
+#if PETSC_VERSION_(3,2,0)
   ierr = DMGetMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
+#else
+  ierr = DMCreateMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
+#endif
   ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   {
