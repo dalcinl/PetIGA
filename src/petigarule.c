@@ -196,6 +196,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
     W[3] =  W[2];
     W[4] =  W[1];
     W[5] =  W[0];
+    break;
   case (7): /* p = 13 */
     X[0] = -0.9491079123427585245261896840478513; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.7415311855993944398638647732807884; /* GaussianQuadratureWeights[7, -1, 1, 37]   */
@@ -211,6 +212,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
     W[4] =  W[2];
     W[5] =  W[1];
     W[6] =  W[0];
+    break;
   case (8): /* p = 15 */
     X[0] = -0.9602898564975362316835608685694730; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.7966664774136267395915539364758304; /* GaussianQuadratureWeights[8, -1, 1, 37]   */
@@ -228,6 +230,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
     W[5] =  W[2];
     W[6] =  W[1];
     W[7] =  W[0];
+    break;
   case (9): /* p = 17 */
     X[0] = -0.9681602395076260898355762029036729; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.8360311073266357942994297880697349; /* GaussianQuadratureWeights[9, -1, 1, 37]   */
@@ -247,6 +250,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
     W[6] =  W[2];
     W[7] =  W[1];
     W[8] =  W[0];
+    break;
   default:
     return -1;
   }
