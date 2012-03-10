@@ -266,7 +266,7 @@ PetscErrorCode IGASetUp(IGA iga)
   }
   for (i=0; i<3; i++) {
     if (!iga->rule[i]->nqp) {
-      PetscInt p = iga->axis[i]->p, q = p*p/2+1;
+      PetscInt p = iga->axis[i]->p, q = p+1;
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
     if (!iga->basis[i]->nel) {
