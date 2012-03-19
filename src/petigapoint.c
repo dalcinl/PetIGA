@@ -107,9 +107,9 @@ PetscBool IGAPointNext(IGAPoint point)
     return PETSC_FALSE;
   }
   /* */
+  point->point    = parent->point + index * dim;
   point->weight   = parent->weight[index];
   point->detJ     = parent->detJ[index];
-  point->position = parent->position + index * dim;
   point->jacobian = parent->jacobian + index * dim*dim;
   point->shape[0] = parent->shape[0] + index * nen;
   point->shape[1] = parent->shape[1] + index * nen*dim;
@@ -156,7 +156,8 @@ PetscErrorCode IGAPointGetInfo(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscI
 }
 
 EXTERN_C_BEGIN
-extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
+                            const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__

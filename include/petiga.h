@@ -47,7 +47,7 @@ extern PetscErrorCode IGAAxisGetOrder(IGAAxis axis,PetscInt *p);
 extern PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[]);
 extern PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[]);
 extern PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
-                                  PetscInt E,PetscReal Ui,PetscReal Uf);
+                                         PetscInt E,PetscReal Ui,PetscReal Uf);
 extern PetscErrorCode IGAAxisCheck(IGAAxis axis);
 
 struct _n_IGARule {
@@ -160,6 +160,8 @@ struct _p_IGA {
   IGABoundary boundary[3][2];
   
   DM dm_geom;
+  PetscBool rational;
+  PetscBool geometry;
   DM dm_dof;
 
   IGAElement iterator;
@@ -234,9 +236,9 @@ struct _n_IGAElement {
   PetscScalar *vfix;
   PetscScalar *xfix;
   
+  PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJ;     /*   [nqp]                     */
-  PetscReal *position; /*   [nqp][dim]                */
   PetscReal *jacobian; /*   [nqp][dim][dim]           */
   PetscReal *shape[4]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][dim]           */
@@ -293,9 +295,9 @@ struct _n_IGAPoint {
   PetscInt dof;
   PetscInt dim;
 
+  PetscReal *point;    /*   [dim] */
   PetscReal weight;    /*   []    */
   PetscReal detJ;      /*   []    */
-  PetscReal *position; /*   [dim] */
   PetscReal *jacobian; /*   [dim][dim] */
   PetscReal *shape[4]; /*0: [nen]      */
                        /*1: [nen][dim] */

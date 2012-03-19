@@ -1,0 +1,46 @@
+! -*- f90 -*-
+
+subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
+  use ISO_C_BINDING, only: C_INT, C_LONG
+  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  implicit none
+  !integer(kind=C_INT   ), parameter     :: dim = 3
+  integer(kind=C_INT   ), intent(in)    :: nd, na
+  real   (kind=C_DOUBLE), intent(in)    :: w(na)
+  real   (kind=C_DOUBLE), intent(inout) :: R0(            na)
+  real   (kind=C_DOUBLE), intent(inout) :: R1(        dim,na)
+  real   (kind=C_DOUBLE), intent(inout) :: R2(    dim,dim,na)
+  real   (kind=C_DOUBLE), intent(inout) :: R3(dim,dim,dim,na)
+  integer :: a, i, j, k
+  real(kind=C_DOUBLE) :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
+  !
+  forall (a=1:na)
+     R0(a) = w(a) * R0(a)
+  end forall
+  W0 = sum(R0)
+  R0 = R0 / W0
+  !
+  forall (i=1:dim)
+     W1(i) = sum(w*R1(i,:))
+     R1(i,:) = w*R1(i,:) - R0(:) * W1(i)
+  end forall
+  R1 = R1 / W0
+  !
+  if (nd < 2) return
+  forall (i=1:dim, j=1:dim)
+     W2(i,j) = sum(w*R2(i,j,:))
+     R2(i,j,:) = w*R2(i,j,:)   - R0(:)*W2(i,j) &
+               - R1(i,:)*W1(j) - R1(j,:)*W1(i)
+  end forall
+  R2 = R2 / W0
+  !
+  if (nd < 3) return
+  forall (i=1:dim, j=1:dim, k=1:dim)
+     W3(i,j,k) = sum(w*R3(i,j,k,:))
+     R3(i,j,k,:) = w*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &
+                 - R1(i,:)*W2(j,k) - R1(j,:)*W2(i,k) - R1(k,:)*W2(i,j) &
+                 - R2(j,k,:)*W1(i) - R2(i,k,:)*W1(j) - R2(i,j,:)*W1(k)
+  end forall
+  R3 = R3 / W0
+  !
+end subroutine Rationalize

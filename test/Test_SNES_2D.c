@@ -25,8 +25,8 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
   PetscScalar PETSC_UNUSED w = U0[2], w_x = U1[2][0], w_y = U1[2][1];
   PetscScalar PETSC_UNUSED r = U0[3], r_x = U1[3][0], r_y = U1[3][1];
 
-  PetscReal x = p->position[0];
-  PetscReal y = p->position[1];
+  PetscReal x = p->point[0];
+  PetscReal y = p->point[1];
   PetscReal *N0 = p->shape[0];
   PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
 

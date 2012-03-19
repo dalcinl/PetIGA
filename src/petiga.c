@@ -48,7 +48,9 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
-  iga->dm_geom = 0;
+  iga->dm_geom  = 0;
+  iga->rational = PETSC_FALSE;
+  iga->geometry = PETSC_FALSE;
   iga->dm_dof  = 0;
 
   PetscFunctionReturn(0);
@@ -270,7 +272,8 @@ PetscErrorCode IGASetUp(IGA iga)
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
     if (!iga->basis[i]->nel) {
-      PetscInt d = 3; /* XXX */
+      PetscInt p = iga->axis[i]->p;
+      PetscInt d = PetscMin(p,3); /* XXX */
       ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);
     }
   }

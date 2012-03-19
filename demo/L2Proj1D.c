@@ -32,7 +32,7 @@ typedef struct {
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
-  PetscReal x = p->position[0];
+  PetscReal x = p->point[0];
   PetscReal *N = p->shape[0];
   
   PetscInt a,b,nen=p->nen;

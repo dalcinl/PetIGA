@@ -1,0 +1,202 @@
+! -*- f90 -*-
+
+subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
+  use ISO_C_BINDING, only: C_INT, C_LONG
+  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  implicit none
+  !integer(kind=C_INT   ), parameter     :: dim = 3
+  integer(kind=C_INT   ), intent(in)    :: nd, num
+  real   (kind=C_DOUBLE), intent(in)    :: X(dim,num)
+  real   (kind=C_DOUBLE), intent(out)   :: detJ
+  real   (kind=C_DOUBLE), intent(out)   :: Jac(dim,dim)
+  real   (kind=C_DOUBLE), intent(inout) :: N0(            num)
+  real   (kind=C_DOUBLE), intent(inout) :: N1(        dim,num)
+  real   (kind=C_DOUBLE), intent(inout) :: N2(    dim,dim,num)
+  real   (kind=C_DOUBLE), intent(inout) :: N3(dim,dim,dim,num)
+
+  integer :: idx
+  integer :: i, j, k, l
+  integer :: a, b, c, d
+
+  real(kind=C_DOUBLE) :: X1(dim,dim)
+  real(kind=C_DOUBLE) :: X2(dim,dim,dim)
+  real(kind=C_DOUBLE) :: X3(dim,dim,dim,dim)
+  real(kind=C_DOUBLE) :: E1(dim,dim)
+  real(kind=C_DOUBLE) :: E2(dim,dim,dim)
+  real(kind=C_DOUBLE) :: E3(dim,dim,dim,dim)
+  real(kind=C_DOUBLE) :: R1(        dim,num)
+  real(kind=C_DOUBLE) :: R2(    dim,dim,num)
+  real(kind=C_DOUBLE) :: R3(dim,dim,dim,num)
+
+  ! gradient of the mapping
+  Jac  = matmul(X,transpose(N1))
+  detJ = Determinant(dim,Jac)
+  ! 1st derivatives
+  if (nd >= 1) then
+     X1 = Jac
+     E1 = Inverse(dim,X1,detJ)
+     R1 = 0
+     do idx = 1,num
+        do i = 1,dim
+           do a = 1,dim
+              R1(i,idx) = N1(a,idx)*E1(a,i) +  R1(i,idx)
+           end do
+        end do
+     end do
+  endif
+  ! 2nd derivatives
+  if (nd >= 2) then
+     X2 = 0
+     do b = 1,dim
+        do a = 1,dim
+           do i = 1,dim
+              do idx = 1,num
+                 X2(i,a,b) = X(i,idx)*N2(a,b,idx) + X2(i,a,b)
+              end do
+           end do
+        end do
+     end do
+     E2 = 0
+     do j = 1,dim
+        do i = 1,dim
+           do c = 1,dim
+              do b = 1,dim
+                 do a = 1,dim
+                    do k = 1,dim
+                       E2(c,i,j) = - X2(k,a,b)*E1(a,i)*E1(b,j)*E1(c,k) + E2(c,i,j)
+                    end do
+                 end do
+              end do
+           end do
+        end do
+     end do
+     R2 = 0
+     do idx = 1,num
+        do j = 1,dim
+           do i = 1,dim
+              do b = 1,dim
+                 do a = 1,dim
+                    R2(i,j,idx) = N2(a,b,idx)*E1(a,i)*E1(b,j) + R2(i,j,idx)
+                 end do
+                 R2(i,j,idx) = N1(b,idx)*E2(b,i,j) + R2(i,j,idx)
+              end do
+           end do
+        end do
+     end do
+  endif
+  ! 3rd derivatives
+  if (nd >= 3) then
+     X3 = 0
+     do c = 1,dim
+        do b = 1,dim
+           do a = 1,dim
+              do i = 1,dim
+                 do idx = 1,num
+                    X3(i,a,b,c) = X(i,idx)*N3(a,b,c,idx) + X3(i,a,b,c)
+                 end do
+              end do
+           end do
+        end do
+     end do
+     E3 = 0
+     do k = 1,dim
+        do j = 1,dim
+           do i = 1,dim
+              do d = 1,dim
+                 do a = 1,dim
+                    do b = 1,dim
+                       do l = 1,dim
+                          do c = 1,dim
+                             E3(d,i,j,k) = - X3(l,c,b,a)*E1(c,i)*E1(b,j)*E1(a,k)*E1(d,l) + E3(d,i,j,k)
+                          end do
+                          E3(d,i,j,k) = - X2(l,b,a)*( E1(a,j)*E2(b,i,k) &
+                                                    + E1(a,k)*E2(b,i,j) &
+                                                    + E1(b,i)*E2(a,j,k) )*E1(d,l) + E3(d,i,j,k)
+                       end do
+                    end do
+                 end do
+              end do
+           end do
+        end do
+     end do
+     R3 = 0
+     do idx = 1,num
+        do k = 1,dim
+           do j = 1,dim
+              do i = 1,dim
+                 do a = 1,dim
+                    do b = 1,dim
+                       do c = 1,dim
+                          R3(i,j,k,idx) = N3(c,b,a,idx)*E1(c,i)*E1(b,j)*E1(a,k) + R3(i,j,k,idx)
+                       end do
+                       R3(i,j,k,idx) = N2(b,a,idx)*( E1(a,j)*E2(b,i,k) &
+                                                   + E1(a,k)*E2(b,i,j) &
+                                                   + E1(b,i)*E2(a,j,k) ) + R3(i,j,k,idx)
+                    end do
+                    R3(i,j,k,idx) = N1(a,idx)*E3(a,i,j,k) + R3(i,j,k,idx)
+                 end do
+              end do
+           end do
+        end do
+     end do
+  end if
+  !
+  if (nd >= 1) N1 = R1
+  if (nd >= 2) N2 = R2
+  if (nd >= 3) N3 = R3
+
+end subroutine GeometryMap
+
+pure function Determinant(dim,A) result (detA)
+  use ISO_C_BINDING, only: C_INT, C_LONG
+  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  implicit none
+  integer(kind=C_INT   ), intent(in)  :: dim
+  real   (kind=C_DOUBLE), intent(in)  :: A(dim,dim)
+  real   (kind=C_DOUBLE) :: detA
+  select case (dim)
+  case (1)
+     detA = A(1,1)
+  case (2)
+     detA = + A(1,1)*A(2,2) - A(2,1)*A(1,2)
+  case (3)
+     detA = + A(1,1) * ( A(2,2)*A(3,3) - A(3,2)*A(2,3) ) &
+            - A(2,1) * ( A(1,2)*A(3,3) - A(3,2)*A(1,3) ) &
+            + A(3,1) * ( A(1,2)*A(2,3) - A(2,2)*A(1,3) )
+  case default
+     detA = 0
+  end select
+end function Determinant
+
+pure function Inverse(dim,A,detA) result (invA)
+  use ISO_C_BINDING, only: C_INT, C_LONG
+  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  implicit none
+  integer(kind=C_INT   ), intent(in)  :: dim
+  real   (kind=C_DOUBLE), intent(in)  :: A(dim,dim)
+  real   (kind=C_DOUBLE), intent(in)  :: detA
+  real   (kind=C_DOUBLE)              :: invA(dim,dim)
+  select case (dim)
+  case (1)
+     invA = 1.0/detA
+  case (2)
+     invA(1,1) = + A(2,2)
+     invA(2,1) = - A(2,1)
+     invA(1,2) = - A(1,2)
+     invA(2,2) = + A(1,1)
+     invA = invA/detA
+  case (3)
+     invA(1,1) = + A(2,2)*A(3,3) - A(2,3)*A(3,2)
+     invA(2,1) = - A(2,1)*A(3,3) + A(2,3)*A(3,1)
+     invA(3,1) = + A(2,1)*A(3,2) - A(2,2)*A(3,1)
+     invA(1,2) = - A(1,2)*A(3,3) + A(1,3)*A(3,2)
+     invA(2,2) = + A(1,1)*A(3,3) - A(1,3)*A(3,1)
+     invA(3,2) = - A(1,1)*A(3,2) + A(1,2)*A(3,1)
+     invA(1,3) = + A(1,2)*A(2,3) - A(1,3)*A(2,2)
+     invA(2,3) = - A(1,1)*A(2,3) + A(1,3)*A(2,1)
+     invA(3,3) = + A(1,1)*A(2,2) - A(1,2)*A(2,1)
+     invA = invA/detA
+  case default
+     invA = 0
+  end select
+end function Inverse

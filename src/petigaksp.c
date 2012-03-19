@@ -55,10 +55,12 @@ PetscErrorCode IGACreateKSP(IGA iga, KSP *ksp)
   PetscValidPointer(ksp,2);
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = KSPCreate(comm,ksp);CHKERRQ(ierr);
+  ierr = PetscObjectCompose((PetscObject)*ksp,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   /*ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);*/
   /*ierr = KSPSetOperators(*ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);*/
   /*ierr = MatDestroy(&A);CHKERRQ(ierr);*/
   /*ierr = KSPSetDM(**ksp,iga->dm_dof);CHKERRQ(ierr);*/
   /*ierr = KSPSetDMActive(**ksp,PETSC_FALSE);CHKERRQ(ierr);*/
+  
   PetscFunctionReturn(0);
 }

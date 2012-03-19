@@ -24,8 +24,8 @@ typedef struct {
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
-  PetscReal x = p->position[0];
-  PetscReal y = p->position[1];
+  PetscReal x = p->point[0];
+  PetscReal y = p->point[1];
   PetscReal *N = p->shape[0];
 
   PetscInt a,b,nen=p->nen;
