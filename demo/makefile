@@ -10,7 +10,7 @@ CFLAGS    = #-g3 -Wall -Wextra -Wno-unused-parameter #-Wconversion
 FFLAGS    = #-g3 -Wall -Wextra -fcheck=all
 CPPFLAGS  =
 FPPFLAGS  =
-LOCDIR    = demo
+LOCDIR    = demo/
 EXAMPLESC = CahnHilliard2D.c
 EXAMPLESF =
 MANSEC    = IGA
