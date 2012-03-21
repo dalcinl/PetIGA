@@ -329,26 +329,35 @@ int main(int argc, char *argv[]) {
   PetscReal Ly = 2.0;
   PetscReal Lz = 2.0/3.0*PI;
 
-  PetscInt N=32, p=2, C=PETSC_DECIDE;
+  PetscInt N[3] = {16,16,16}, nN = 3; 
+  PetscInt p[3] = { 2, 2, 2}, np = 3;
+  PetscInt C[3] = {-1,-1,-1}, nC = 3;
   PetscBool output = PETSC_FALSE;
   PetscBool monitor = PETSC_FALSE;
   char initial[PETSC_MAX_PATH_LEN] = {0};
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","NavierStokes Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","NavierStokesVMS Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-ns_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ns_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ns_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-ns_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-ns_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (C == PETSC_DECIDE) C = p-1;
-
-  if (p < 2 || C < 1) /* Problem requires a p>=2 C1 basis */
-    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Problem requires minimum of p = 2 and C = 1");
-  if (p <= C)         /* Check C < p */
-    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Discretization inconsistent: polynomial order must be greater than degree of continuity");
+  if (nN == 1) N[2] = N[1] = N[0]; if (nN == 2) N[2] = N[0];
+  if (np == 1) p[2] = p[1] = p[0]; if (np == 2) p[2] = p[0];
+  if (nC == 1) C[2] = C[1] = C[0]; if (nC == 2) C[2] = C[0];
+  if (C[0] == -1) C[0] = p[0]-1;
+  if (C[1] == -1) C[1] = p[1]-1;
+  if (C[2] == -1) C[2] = p[2]-1;
+  PetscInt i;
+  for (i=0; i<3; i++) { 
+    if (p[i] < 2 || C[i] < 1) /* Problem requires a p>=2 C1 basis */
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
+              "Problem requires minimum of p = 2 and C = 1");
+    if (p[i] <= C[i])         /* Check C < p */
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
+              "Discretization inconsistent: polynomial order must be greater than degree of continuity");
+  }
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -357,21 +366,21 @@ int main(int argc, char *argv[]) {
 
   IGAAxis axis0;
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisSetOrder(axis0,p);CHKERRQ(ierr);
+  ierr = IGAAxisSetOrder(axis0,p[0]);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis0,PETSC_TRUE);CHKERRQ(ierr);
   //ierr = IGAAxisInitUniform(axis0,p,C,N,-0.5*Lx,0.5*Lx);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,p,C,N,0,Lx);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis0,p[0],C[0],N[0],0,Lx);CHKERRQ(ierr);
   IGAAxis axis1;
   ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisSetOrder(axis1,p);CHKERRQ(ierr);
+  ierr = IGAAxisSetOrder(axis1,p[1]);CHKERRQ(ierr);
   //ierr = IGAAxisInitUniform(axis1,p,C,N,-0.5*Ly,0.5*Ly);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis1,p,C,N,0,Ly);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis1,p[1],C[1],N[1],0,Ly);CHKERRQ(ierr);
   IGAAxis axis2;
   ierr = IGAGetAxis(iga,2,&axis2);CHKERRQ(ierr);
-  ierr = IGAAxisSetOrder(axis2,p);CHKERRQ(ierr);
+  ierr = IGAAxisSetOrder(axis2,p[2]);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis2,PETSC_TRUE);CHKERRQ(ierr);
   //ierr = IGAAxisInitUniform(axis2,p,C,N,-0.5*Lz,0.5*Lz);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis2,p,C,N,0,Lz);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis2,p[2],C[2],N[2],0,Lz);CHKERRQ(ierr);
 
   IGABoundary bnd;
   PetscInt dir=1,side,field;
