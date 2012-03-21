@@ -84,21 +84,27 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   element->dim = iga->dim;
   element->dof = iga->dof;
   { /* */
+    IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
     PetscInt i,d = element->dim;
-    PetscInt start[3],width[3];
+    PetscInt shape[3],start[3],width[3];
+    ierr = DMDAGetInfo(iga->dm_dof,0,
+                       &shape[0],&shape[1],&shape[2],
+                       0,0,0,0,0,0,0,0,0);CHKERRQ(ierr);
     ierr = DMDAGetCorners(iga->dm_dof,
                           &start[0],&start[1],&start[2],
                           &width[0],&width[1],&width[2]);CHKERRQ(ierr);
     for (i=0; i<d; i++) {
       PetscInt iel,nel = BD[i]->nel;
       PetscInt *offset = BD[i]->offset;
+      PetscInt middle  = BD[i]->p/2;
       PetscInt first = start[i];
       PetscInt last  = start[i] + width[i] - 1;
       PetscInt start = 0, end = nel;
+      if (AX[i]->periodic) middle = 0; /* XXX Is this optimal? */
       for (iel=0; iel<nel; iel++) {
-        if (offset[iel] < first) start++;
-        if (offset[iel] > last)  end--;
+        if (offset[iel] + middle < first) start++;
+        if (offset[iel] + middle > last)  end--;
       }
       element->range[i][0] = start;
       element->range[i][1] = end;
