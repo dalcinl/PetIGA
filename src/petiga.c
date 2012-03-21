@@ -1,5 +1,6 @@
 #include "petiga.h"
 
+static PetscErrorCode DMSetMatType(DM,const MatType);
 #include "private/matimpl.h"
 #include "private/dmimpl.h"
 #undef  __FUNCT__
@@ -224,6 +225,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscBool flg;
     char vtype[256] = VECSTANDARD;
     char mtype[256] = MATBAIJ;
+    if (iga->dof < 2) {ierr= PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype) {ierr= PetscStrcpy(vtype,iga->vectype);CHKERRQ(ierr);}
     if (iga->mattype) {ierr= PetscStrcpy(mtype,iga->mattype);CHKERRQ(ierr);}
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
@@ -234,6 +236,66 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
   }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGACreateDofDM"
+static PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof)
+{
+  PetscInt         i, swidth = 0, sizes[3] = {1, 1, 1};
+  DMDABoundaryType btype[3] = {DMDA_BOUNDARY_NONE, DMDA_BOUNDARY_NONE, DMDA_BOUNDARY_NONE};
+  PetscErrorCode   ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dm_dof,2);
+  for (i=0; i<iga->dim; i++) {
+    IGAAxis  axis = iga->axis[i];
+    PetscInt p = axis->p, m = axis->m, n = m-p-1;
+    swidth = PetscMax(swidth,p);
+    sizes[i] = axis->periodic ? n+1-p : n+1;
+    btype[i] = axis->periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
+  }
+  ierr = DMDACreate(((PetscObject)iga)->comm,&*dm_dof);CHKERRQ(ierr);
+  ierr = DMDASetDim(*dm_dof,iga->dim); CHKERRQ(ierr);
+  ierr = DMDASetDof(*dm_dof,iga->dof); CHKERRQ(ierr);
+  ierr = DMDASetSizes(*dm_dof,sizes[0],sizes[1],sizes[2]); CHKERRQ(ierr);
+  ierr = DMDASetBoundaryType(*dm_dof,btype[0],btype[1],btype[2]); CHKERRQ(ierr);
+  ierr = DMDASetStencilType(*dm_dof,DMDA_STENCIL_BOX); CHKERRQ(ierr);
+  ierr = DMDASetStencilWidth(*dm_dof,swidth); CHKERRQ(ierr);
+  ierr = DMSetUp(*dm_dof);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGACreateGeomDM"
+static PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom)
+{
+  MPI_Comm         comm;
+  PetscInt         dim,M,N,P,m,n,p,swidth;
+  const PetscInt   *lx,*ly,*lz;
+  DMDABoundaryType btx,bty,btz;
+  DMDAStencilType  stype;
+  PetscErrorCode   ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dm_geom,2);
+  
+  if (!iga->dm_dof) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"XXX ");
+  ierr = PetscObjectGetComm((PetscObject)iga->dm_dof,&comm);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(iga->dm_dof,&dim,&M,&N,&P,&m,&n,&p,PETSC_NULL,
+                     &swidth,&btx,&bty,&btz,&stype);CHKERRQ(ierr);
+  ierr = DMDAGetOwnershipRanges(iga->dm_dof,&lx,&ly,&lz);CHKERRQ(ierr);
+  ierr = DMDACreate(comm,dm_geom);CHKERRQ(ierr);
+  ierr = DMDASetDim(*dm_geom,dim);CHKERRQ(ierr);
+  ierr = DMDASetDof(*dm_geom,dim+1);CHKERRQ(ierr);
+  ierr = DMDASetSizes(*dm_geom,M,N,P);CHKERRQ(ierr);
+  ierr = DMDASetNumProcs(*dm_geom,m,n,p);CHKERRQ(ierr);
+  ierr = DMDASetOwnershipRanges(*dm_geom,lx,ly,lz);CHKERRQ(ierr);
+  ierr = DMDASetBoundaryType(*dm_geom,btx,bty,btz);CHKERRQ(ierr);
+  ierr = DMDASetStencilType(*dm_geom,stype);CHKERRQ(ierr);
+  ierr = DMDASetStencilWidth(*dm_geom,swidth);CHKERRQ(ierr);
+  ierr = DMSetUp(*dm_geom);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -287,35 +349,11 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
   }
 
-  {
-    PetscInt swidth, sizes[3];
-    DMDABoundaryType btype[3];
-    for (i=0; i<3; i++) {
-      swidth = 0; sizes[i] = 1;
-      btype[i] = DMDA_BOUNDARY_NONE;
-    }
-    for (i=0; i<iga->dim; i++) {
-      IGAAxis  axis = iga->axis[i];
-      PetscInt p = axis->p;
-      PetscInt m = axis->m;
-      PetscInt n = m-p-1;
-      swidth = PetscMax(swidth,p);
-      sizes[i] = axis->periodic ? n+1-p : n+1;
-      btype[i] = axis->periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
-    }
-    ierr = DMDACreate(((PetscObject)iga)->comm,&iga->dm_dof);CHKERRQ(ierr);
-    ierr = DMDASetDim(iga->dm_dof,iga->dim); CHKERRQ(ierr);
-    ierr = DMDASetDof(iga->dm_dof,iga->dof); CHKERRQ(ierr);
-    ierr = DMDASetSizes(iga->dm_dof,sizes[0],sizes[1],sizes[2]); CHKERRQ(ierr);
-    ierr = DMDASetBoundaryType(iga->dm_dof,btype[0],btype[1],btype[2]); CHKERRQ(ierr);
-    ierr = DMDASetStencilType(iga->dm_dof,DMDA_STENCIL_BOX); CHKERRQ(ierr);
-    ierr = DMDASetStencilWidth(iga->dm_dof,swidth); CHKERRQ(ierr);
-    /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_"); CHKERRQ(ierr);*/
-    /*ierr = DMSetFromOptions(iga->dm_dof); CHKERRQ(ierr);*/
-    ierr = DMSetVecType(iga->dm_dof,iga->vectype);CHKERRQ(ierr);
-    ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
-    ierr = DMSetUp(iga->dm_dof);CHKERRQ(ierr);
-  }
+  ierr = IGACreateDofDM(iga,&iga->dm_dof);CHKERRQ(ierr);
+  ierr = DMSetVecType(iga->dm_dof,iga->vectype);CHKERRQ(ierr);
+  ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
+  /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_"); CHKERRQ(ierr);*/
+  /*ierr = DMSetFromOptions(iga->dm_dof); CHKERRQ(ierr);*/
 
   iga->setup = PETSC_TRUE;
 
@@ -331,6 +369,7 @@ PetscErrorCode IGAGetDofDM(IGA iga, DM *dm_dof)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dm_dof,2);
   *dm_dof = iga->dm_dof;
   PetscFunctionReturn(0);
 }
@@ -341,6 +380,7 @@ PetscErrorCode IGAGetGeomDM(IGA iga, DM *dm_geom)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dm_geom,2);
   *dm_geom = iga->dm_geom;
   PetscFunctionReturn(0);
 }
@@ -390,6 +430,10 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_(3,2,0)
+#define DMCreateMatrix DMGetMatrix
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateMat"
 PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
@@ -398,11 +442,7 @@ PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
-#if PETSC_VERSION_(3,2,0)
-  ierr = DMGetMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
-#else
   ierr = DMCreateMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
-#endif
   ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   {
