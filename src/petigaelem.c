@@ -155,6 +155,13 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     ierr = PetscMalloc1(nqp*nen*dim,PetscReal,&element->shape[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->shape[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->shape[3]);CHKERRQ(ierr);
+
+    ierr = PetscMemzero(element->detJ,    sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->jacobian,sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->shape[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
   }
   { /* */
     PetscInt nen = element->nen;
