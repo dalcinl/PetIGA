@@ -30,13 +30,20 @@ int main(int argc, char *argv[]) {
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  PetscInt N=16, p=2, C=PETSC_DECIDE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Poisson3D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
+  PetscInt N[3] = {16,16,16}, nN = 3; 
+  PetscInt p[3] = { 2, 2, 2}, np = 3;
+  PetscInt C[3] = {-1,-1,-1}, nC = 3;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Projection2D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (C == PETSC_DECIDE) C = p-1;
+  if (nN == 1) N[2] = N[1] = N[0]; if (nN == 2) N[2] = N[0];
+  if (np == 1) p[2] = p[1] = p[0]; if (np == 2) p[2] = p[0];
+  if (nC == 1) C[2] = C[1] = C[0]; if (nC == 2) C[2] = C[0];
+  if (C[0] == -1) C[0] = p[0]-1;
+  if (C[1] == -1) C[1] = p[1]-1;
+  if (C[2] == -1) C[2] = p[2]-1;
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -45,13 +52,13 @@ int main(int argc, char *argv[]) {
   
   IGAAxis axis0;
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,p,C,N,-1.0,1.0);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis0,p[0],C[0],N[0],-1.0,1.0);CHKERRQ(ierr);
   IGAAxis axis1;
   ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis0,axis1);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis1,p[1],C[1],N[1],-1.0,1.0);CHKERRQ(ierr);
   IGAAxis axis2;
   ierr = IGAGetAxis(iga,2,&axis2);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis1,axis2);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis2,p[2],C[2],N[2],-1.0,1.0);CHKERRQ(ierr);
 
   IGABoundary bnd;
   PetscInt dir,side;
