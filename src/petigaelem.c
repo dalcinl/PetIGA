@@ -427,7 +427,7 @@ extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,
 EXTERN_C_END
 
 #define IGA_ShapeFuns_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[0]->nen,BD[i]->d,   \
+  BD[i]->nqp,BD[i]->nen,BD[i]->d,   \
   BD[i]->detJ+ID[i],BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*(BD[i]->d+1)
 
 #undef  __FUNCT__
