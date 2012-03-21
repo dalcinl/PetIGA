@@ -70,7 +70,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);;
-  
+
   ierr = PetscFree(iga->userops);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
@@ -94,6 +94,9 @@ PetscErrorCode IGADestroy(IGA *_iga)
 #define __FUNCT__ "IGAView"
 PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 {
+  PetscBool      isstring;
+  PetscBool      isascii;
+  PetscBool      isbinary;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -101,6 +104,75 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
     ierr = PetscViewerASCIIGetStdout(((PetscObject)iga)->comm,&viewer);CHKERRQ(ierr);
   }
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+  PetscCheckSameComm(iga,1,viewer,2);
+  if (!iga->setup) PetscFunctionReturn(0);
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERSTRING,&isstring);CHKERRQ(ierr);
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
+  if (!isascii) PetscFunctionReturn(0);
+  {
+    PetscInt i;
+    MPI_Comm comm;
+    PetscInt dim,dof;
+    PetscInt procs[3],nodes[3];
+    PetscInt start[3],width[3];
+    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    ierr = DMDAGetInfo(iga->dm_dof,0,
+                       &nodes[0],&nodes[1],&nodes[2],
+                       &procs[0],&procs[1],&procs[2],
+                       0,0,0,0,0,0);CHKERRQ(ierr);
+    ierr = DMDAGetCorners(iga->dm_dof,
+                          &start[0],&start[1],&start[2],
+                          &width[0],&width[1],&width[2]);CHKERRQ(ierr);
+
+    ierr = PetscViewerASCIIPrintf(viewer,"IGA: dimension=%D  dofs/node=%D\n",dim,dof);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      IGAAxis  *AX = iga->axis;
+      IGARule  *QR = iga->rule;
+      IGABasis *BD = iga->basis;
+      PetscViewerASCIIPrintf(viewer,"Axis %D: periodic=%d  degree=%D  quadrature=%D  processors=%D  nodes=%D  elements=%D\n",
+                             i,(int)AX[i]->periodic,AX[i]->p,QR[i]->nqp,procs[i],nodes[i],BD[i]->nel);CHKERRQ(ierr);
+    }
+    { /* */
+      PetscInt nnodes=1,nelems=1;
+      PetscInt icount[2],isum[2],imin[2],imax[2];
+      for (i=0; i<dim; i++) {
+        PetscInt s = iga->iterator->range[i][0];
+        PetscInt e = iga->iterator->range[i][1];
+        nnodes *= width[i];
+        nelems *= e - s;
+      }
+      icount[0] = nnodes;
+      icount[1] = nelems;
+      ierr = MPI_Allreduce(&icount,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(&icount,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(&icount,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - nodes:    sum=%D  min=%D  max=%D  max/min=%g\n",
+                                    isum[0],imin[0],imax[0],(double)imax[0]/(double)imin[0]);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
+                                    isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
+    }
+    /*
+    PetscMPIInt index = 0;
+    PetscInt ranks[3] = {1,1,1};
+    ierr = MPI_Comm_rank(comm,&index);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      ranks[i] = index % procs[i];
+      index -= ranks[i];
+      index /= procs[i];
+    }
+    ierr = MPI_Comm_rank(((PetscObject)iga)->comm,&index);CHKERRQ(ierr);
+    ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);
+    ierr = PetscViewerASCIISynchronizedPrintf(viewer,
+                                              "[%d] (%D,%D,%D): ",
+                                              (int)index,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
+    ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nodes=%D elements=%D\n",nnodes,nelems);
+    ierr = PetscViewerFlush(viewer);
+    ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);
+    */
+  }
   PetscFunctionReturn(0);
 }
 
@@ -280,7 +352,7 @@ static PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm_geom,2);
-  
+
   if (!iga->dm_dof) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"XXX ");
   ierr = PetscObjectGetComm((PetscObject)iga->dm_dof,&comm);CHKERRQ(ierr);
   ierr = DMDAGetInfo(iga->dm_dof,&dim,&M,&N,&P,&m,&n,&p,PETSC_NULL,
@@ -324,7 +396,7 @@ PetscErrorCode IGASetUp(IGA iga)
   if (!iga->iterator) {
     ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
   }
-  
+
   for (i=0; i<iga->dim; i++) {
     ierr = IGAAxisCheck(iga->axis[i]);CHKERRQ(ierr);
   }
@@ -360,6 +432,18 @@ PetscErrorCode IGASetUp(IGA iga)
 
   iga->iterator->parent = iga;
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
+
+  { /* */
+    PetscBool flg;
+    char filename[PETSC_MAX_PATH_LEN] = "";
+    PetscViewer viewer;
+    ierr = PetscOptionsGetString(((PetscObject)iga)->prefix,"-iga_view",filename,PETSC_MAX_PATH_LEN,&flg);CHKERRQ(ierr);
+    if (flg && !PetscPreLoadingOn) {
+      ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename,&viewer);CHKERRQ(ierr);
+      ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    }
+  }
 
   PetscFunctionReturn(0);
 }
