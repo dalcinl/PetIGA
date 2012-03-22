@@ -305,6 +305,7 @@ static PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
   PetscErrorCode   ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,dof,2);
   PetscValidPointer(_dm,3);
   *_dm = PETSC_NULL;
 
@@ -395,15 +396,6 @@ PetscErrorCode IGASetUp(IGA iga)
   if (iga->dof < 1)
     iga->dof = 1;
 
-  for (i=0; i<3; i++) {
-    if (!iga->axis[i])  {ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);}
-    if (!iga->rule[i])  {ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);}
-    if (!iga->basis[i]) {ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);}
-  }
-  if (!iga->iterator) {
-    ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
-  }
-
   for (i=0; i<iga->dim; i++) {
     ierr = IGAAxisCheck(iga->axis[i]);CHKERRQ(ierr);
   }
@@ -432,11 +424,12 @@ PetscErrorCode IGASetUp(IGA iga)
   ierr = IGACreateDofDM(iga,&iga->dm_dof);CHKERRQ(ierr);
   ierr = DMSetVecType(iga->dm_dof,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
-  /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_"); CHKERRQ(ierr);*/
-  /*ierr = DMSetFromOptions(iga->dm_dof); CHKERRQ(ierr);*/
+  /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_");CHKERRQ(ierr);*/
+  /*ierr = DMSetFromOptions(iga->dm_dof);CHKERRQ(ierr);*/
 
   {
-    PetscInt i,dim = iga->dim;
+    PetscInt i;
+    PetscInt dim = iga->dim;
     IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
     PetscInt *proc_rank  = iga->proc_rank;
