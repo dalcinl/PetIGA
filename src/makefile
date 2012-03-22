@@ -8,7 +8,7 @@ ALL: lib
 #FFLAGS = -g3 -Wall -Wextra -fcheck=all
 
 SOURCEH  = petiga.h
-SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigaelem.c petigapoint.c petigaksp.c petigasnes.c petigats.c petigabound.c
+SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigaelem.c petigapoint.c petigaksp.c petigasnes.c petigats.c petigabound.c petigaio.c
 SOURCEF  = petigabsp.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90 petigaint.f90
 OBJSC    = ${SOURCEC:.c=.o}
 OBJSF    = ${SOURCEF:.f90=.o}

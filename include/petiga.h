@@ -176,6 +176,11 @@ extern PetscErrorCode IGADestroy(IGA *iga);
 extern PetscErrorCode IGAView(IGA iga,PetscViewer viewer);
 extern PetscErrorCode IGASetFromOptions(IGA iga);
 
+extern PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
+extern PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
+extern PetscErrorCode IGARead(IGA iga,const char filename[]);
+extern PetscErrorCode IGAWrite(IGA iga,const char filename[]);
+
 extern PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 extern PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);
 extern PetscErrorCode IGASetDof(IGA iga,PetscInt dof);
