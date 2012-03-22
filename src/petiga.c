@@ -111,59 +111,39 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
   {
-    PetscInt i;
     MPI_Comm comm;
-    PetscInt dim,dof;
-    PetscInt procs[3],nodes[3];
-    PetscInt start[3],width[3];
+    PetscInt i,dim,dof;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
-    ierr = DMDAGetInfo(iga->dm_dof,0,
-                       &nodes[0],&nodes[1],&nodes[2],
-                       &procs[0],&procs[1],&procs[2],
-                       0,0,0,0,0,0);CHKERRQ(ierr);
-    ierr = DMDAGetCorners(iga->dm_dof,
-                          &start[0],&start[1],&start[2],
-                          &width[0],&width[1],&width[2]);CHKERRQ(ierr);
 
     ierr = PetscViewerASCIIPrintf(viewer,"IGA: dimension=%D  dofs/node=%D\n",dim,dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
-      IGAAxis  *AX = iga->axis;
-      IGARule  *QR = iga->rule;
-      IGABasis *BD = iga->basis;
+      IGAAxis *AX = iga->axis;
+      IGARule *QR = iga->rule;
       PetscViewerASCIIPrintf(viewer,"Axis %D: periodic=%d  degree=%D  quadrature=%D  processors=%D  nodes=%D  elements=%D\n",
-                             i,(int)AX[i]->periodic,AX[i]->p,QR[i]->nqp,procs[i],nodes[i],BD[i]->nel);CHKERRQ(ierr);
+                             i,(int)AX[i]->periodic,AX[i]->p,QR[i]->nqp,
+                             iga->proc_sizes[i],iga->node_sizes[i],iga->elem_sizes[i]);CHKERRQ(ierr);
     }
     { /* */
-      PetscInt nnodes=1,nelems=1;
-      PetscInt icount[2],isum[2],imin[2],imax[2];
+      PetscInt iloc[2] = {1, 1};
+      PetscInt isum[2],imin[2],imax[2];
       for (i=0; i<dim; i++) {
-        PetscInt s = iga->iterator->range[i][0];
-        PetscInt e = iga->iterator->range[i][1];
-        nnodes *= width[i];
-        nelems *= e - s;
+        iloc[0] *= iga->node_width[i];
+        iloc[1] *= iga->elem_width[i];
       }
-      icount[0] = nnodes;
-      icount[1] = nelems;
-      ierr = MPI_Allreduce(&icount,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
-      ierr = MPI_Allreduce(&icount,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
-      ierr = MPI_Allreduce(&icount,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(&iloc,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(&iloc,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(&iloc,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - nodes:    sum=%D  min=%D  max=%D  max/min=%g\n",
                                     isum[0],imin[0],imax[0],(double)imax[0]/(double)imin[0]);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
                                     isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
     }
     /*
-    PetscMPIInt index = 0;
-    PetscInt ranks[3] = {1,1,1};
+    PetscMPIInt index;
+    PetscInt *ranks[3] = iga->proc_rank;
     ierr = MPI_Comm_rank(comm,&index);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) {
-      ranks[i] = index % procs[i];
-      index -= ranks[i];
-      index /= procs[i];
-    }
-    ierr = MPI_Comm_rank(((PetscObject)iga)->comm,&index);CHKERRQ(ierr);
     ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);
     ierr = PetscViewerASCIISynchronizedPrintf(viewer,
                                               "[%d] (%D,%D,%D): ",
@@ -416,7 +396,7 @@ PetscErrorCode IGASetUp(IGA iga)
     iga->dof = 1;
 
   for (i=0; i<3; i++) {
-    if (!iga->axis[i])  {ierr = IGAAxisCreate(&iga-> axis[i]);CHKERRQ(ierr);}
+    if (!iga->axis[i])  {ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);}
     if (!iga->rule[i])  {ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);}
     if (!iga->basis[i]) {ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);}
   }
@@ -454,6 +434,76 @@ PetscErrorCode IGASetUp(IGA iga)
   ierr = DMSetMatType(iga->dm_dof,iga->mattype);CHKERRQ(ierr);
   /*ierr = DMSetOptionsPrefix(iga->dm_dof, "dof_"); CHKERRQ(ierr);*/
   /*ierr = DMSetFromOptions(iga->dm_dof); CHKERRQ(ierr);*/
+
+  {
+    PetscInt i,dim = iga->dim;
+    IGAAxis  *AX = iga->axis;
+    IGABasis *BD = iga->basis;
+    PetscInt *proc_rank  = iga->proc_rank;
+    PetscInt *proc_sizes = iga->proc_sizes;
+    PetscInt *node_sizes = iga->node_sizes;
+    PetscInt *node_start = iga->node_start;
+    PetscInt *node_width = iga->node_width;
+    PetscInt *elem_sizes = iga->elem_sizes;
+    PetscInt *elem_start = iga->elem_start;
+    PetscInt *elem_width = iga->elem_width;
+    PetscInt ghost_start[3];
+    PetscInt ghost_width[3];
+    PetscMPIInt index;
+    /* processor grid and coordinates */
+    ierr = MPI_Comm_rank(((PetscObject)iga)->comm,&index);CHKERRQ(ierr);
+    ierr = DMDAGetInfo(iga->dm_dof,0,0,0,0,
+                       &proc_sizes[0],&proc_sizes[1],&proc_sizes[2],
+                       0,0,0,0,0,0);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      proc_rank[i] = index % proc_sizes[i];
+      index -= proc_rank[i];
+      index /= proc_sizes[i];
+    }
+    for (i=dim; i<3; i++) {
+      proc_rank[i]  = 1;
+      proc_sizes[i] = 1;
+    }
+    /* node partitioning */
+    ierr = DMDAGetInfo(iga->dm_dof,0,
+                       &node_sizes[0],&node_sizes[1],&node_sizes[2],
+                       0,0,0,0,0,0,0,0,0);CHKERRQ(ierr);
+    ierr = DMDAGetCorners(iga->dm_dof,
+                          &node_start[0],&node_start[1],&node_start[2],
+                          &node_width[0],&node_width[1],&node_width[2]);CHKERRQ(ierr);
+    ierr = DMDAGetGhostCorners(iga->dm_dof,
+                               &ghost_start[0],&ghost_start[1],&ghost_start[2],
+                               &ghost_width[0],&ghost_width[1],&ghost_width[2]);CHKERRQ(ierr);
+    for (i=dim; i<3; i++) {
+      node_sizes[i]  = 1;
+      node_start[i]  = 0;
+      node_width[i]  = 1;
+      ghost_start[i] = 0;
+      ghost_width[i] = 1;
+    }
+    /* element partitioning */
+    for (i=0; i<dim; i++) {
+      PetscInt iel,nel = BD[i]->nel;
+      PetscInt *offset = BD[i]->offset;
+      PetscInt middle  = BD[i]->p/2;
+      PetscInt first = node_start[i];
+      PetscInt last  = node_start[i] + node_width[i] - 1;
+      PetscInt start = 0, end = nel;
+      if (AX[i]->periodic) middle = 0; /* XXX Is this optimal? */
+      for (iel=0; iel<nel; iel++) {
+        if (offset[iel] + middle < first) start++;
+        if (offset[iel] + middle > last)  end--;
+      }
+      elem_sizes[i] = nel;
+      elem_start[i] = start;
+      elem_width[i] = end - start;
+    }
+    for (i=dim; i<3; i++) {
+      elem_sizes[i] = 1;
+      elem_start[i] = 0;
+      elem_width[i] = 1;
+    }
+  }
 
   iga->setup = PETSC_TRUE;
 

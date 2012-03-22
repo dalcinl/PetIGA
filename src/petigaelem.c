@@ -84,74 +84,38 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   element->dim = iga->dim;
   element->dof = iga->dof;
   { /* */
-    IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
-    PetscInt i,d = element->dim;
-    PetscInt shape[3],start[3],width[3];
-    ierr = DMDAGetInfo(iga->dm_dof,0,
-                       &shape[0],&shape[1],&shape[2],
-                       0,0,0,0,0,0,0,0,0);CHKERRQ(ierr);
-    ierr = DMDAGetCorners(iga->dm_dof,
-                          &start[0],&start[1],&start[2],
-                          &width[0],&width[1],&width[2]);CHKERRQ(ierr);
-    for (i=0; i<d; i++) {
-      PetscInt iel,nel = BD[i]->nel;
-      PetscInt *offset = BD[i]->offset;
-      PetscInt middle  = BD[i]->p/2;
-      PetscInt first = start[i];
-      PetscInt last  = start[i] + width[i] - 1;
-      PetscInt start = 0, end = nel;
-      if (AX[i]->periodic) middle = 0; /* XXX Is this optimal? */
-      for (iel=0; iel<nel; iel++) {
-        if (offset[iel] + middle < first) start++;
-        if (offset[iel] + middle > last)  end--;
-      }
-      element->range[i][0] = start;
-      element->range[i][1] = end;
-    }
-    for (i=d; i<3; i++) {
-      element->range[i][0] = 0;
-      element->range[i][1] = 1;
-    }
-  }
-  { /* */
-    PetscInt i,d = element->dim;
+    PetscInt i,dim = element->dim;
+    PetscInt nel=1, nen=1, nqp=1;
     PetscInt start[3],width[3];
     ierr = DMDAGetGhostCorners(iga->dm_dof,
                                &start[0],&start[1],&start[2],
                                &width[0],&width[1],&width[2]);CHKERRQ(ierr);
-    for (i=0; i<d; i++) {
-      element->start[i] = start[i];
-      element->width[i] = width[i];
+    for (i=0; i<dim; i++) {
+      element->range[i][0] = iga->elem_start[i];
+      element->range[i][1] = iga->elem_start[i] + iga->elem_width[i];
+      element->start[i]    = start[i];
+      element->width[i]    = width[i];
+      nel *= iga->elem_width[i];
+      nen *= BD[i]->nen;
+      nqp *= BD[i]->nqp;
     }
-    for (i=d; i<3; i++) {
+    for (i=dim; i<3; i++) {
+      element->range[i][0] = 0;
+      element->range[i][1] = 1;
       element->start[i] = 0;
       element->width[i] = 1;
     }
-  }
-  {  /* */
-    PetscInt dim = element->dim;
-    PetscInt nel = 1;
-    PetscInt i;
-    for (i=0; i<dim; i++) {
-      PetscInt *range = element->range[i];
-      nel *= range[1] - range[0];
-    }
-    element->count = nel;
     element->index = -1;
+    element->count = nel;
+    element->nqp   = nqp;
+    element->nen   = nen;
   }
   { /* */
-    IGABasis *BD = iga->basis;
     PetscInt dim = element->dim;
-    PetscInt nqp = 1;
-    PetscInt nen = 1;
-    PetscInt i;
-    for (i=0; i<dim; i++) {
-      nqp *= BD[i]->nqp;
-      nen *= BD[i]->nen;
-    }
-    element->nqp = nqp;
-    element->nen = nen;
+    PetscInt nqp = element->nqp;
+    PetscInt nen = element->nen;
+
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
@@ -315,7 +279,7 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
     PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
     PetscBool onboundary = PETSC_FALSE;
     PetscInt i,dim = element->dim;
-    for (i=0; i<dim; i++) { 
+    for (i=0; i<dim; i++) {
       PetscInt e = BD[i]->nel-1;
       PetscInt n = BD[i]->nnp-1;
       if (AX[i]->periodic) continue;

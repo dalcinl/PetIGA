@@ -158,7 +158,16 @@ struct _p_IGA {
   IGARule  rule[3];
   IGABasis basis[3];
   IGABoundary boundary[3][2];
-  
+
+  PetscInt proc_rank[3];
+  PetscInt proc_sizes[3];
+  PetscInt node_sizes[3];
+  PetscInt node_start[3];
+  PetscInt node_width[3];
+  PetscInt elem_sizes[3];
+  PetscInt elem_start[3];
+  PetscInt elem_width[3];
+
   DM dm_geom;
   PetscBool rational;
   PetscBool geometry;
