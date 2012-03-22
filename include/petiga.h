@@ -14,7 +14,7 @@ PETSC_EXTERN_CXX_BEGIN
 #ifndef PetscMalloc1
 #define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
 #endif
- 
+
 /* ---------------------------------------------------------------- */
 
 typedef struct _n_IGAAxis     *IGAAxis;
@@ -153,7 +153,7 @@ struct _p_IGA {
   PetscBool setup;
   PetscInt  dim;
   PetscInt  dof;
-  
+
   IGAAxis  axis[3];
   IGARule  rule[3];
   IGABasis basis[3];
@@ -240,7 +240,7 @@ struct _n_IGAElement {
   PetscInt    *ifix;
   PetscScalar *vfix;
   PetscScalar *xfix;
-  
+
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJ;     /*   [nqp]                     */
@@ -249,7 +249,7 @@ struct _n_IGAElement {
                        /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
                        /*3: [nqp][nen][dim][dim][dim] */
-  
+
   IGA      parent;
   IGAPoint iterator;
 
@@ -308,7 +308,7 @@ struct _n_IGAPoint {
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
-  
+
   IGAElement  parent;
 
   PetscInt    nvec;
