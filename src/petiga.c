@@ -49,10 +49,11 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
+  iga->geometry = PETSC_NULL;
   iga->rational = PETSC_FALSE;
-  iga->geometry = PETSC_FALSE;
-  iga->dm_geom  = 0;
-  iga->dm_dof   = 0;
+  iga->vec_geom = PETSC_NULL;
+  iga->dm_geom  = PETSC_NULL;
+  iga->dm_dof   = PETSC_NULL;
 
   PetscFunctionReturn(0);
 }
@@ -83,6 +84,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   }
   ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
 
+  ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_dof);CHKERRQ(ierr);
 
@@ -113,11 +115,14 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   {
     MPI_Comm comm;
     PetscInt i,dim,dof;
+    PetscBool geometry = iga->vec_geom ? PETSC_TRUE : PETSC_FALSE;
+    PetscBool rational = geometry ? iga->rational : PETSC_FALSE;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
 
-    ierr = PetscViewerASCIIPrintf(viewer,"IGA: dimension=%D  dofs/node=%D\n",dim,dof);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(viewer,"IGA: dimension=%D  dofs/node=%D  geometry=%s  rational=%s\n",
+                                  dim,dof,geometry?"yes":"no",rational?"yes":"no");CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis *AX = iga->axis;
       IGARule *QR = iga->rule;
@@ -293,7 +298,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateDM"
-static PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
+PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
 {
   PetscInt         i,dim;
   PetscInt         procs[3]   = {-1,-1,-1};
@@ -353,7 +358,7 @@ static PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateDofDM"
-static PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof)
+PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof)
 {
   PetscInt         dof;
   PetscErrorCode   ierr;
@@ -367,7 +372,7 @@ static PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateGeomDM"
-static PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom)
+PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom)
 {
   PetscInt       dim;
   PetscErrorCode ierr;

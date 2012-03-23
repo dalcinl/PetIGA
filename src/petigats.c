@@ -57,6 +57,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementFixFunction(element,F);CHKERRQ(ierr);
     ierr = IGAElementAssembleVec(element,F,vecF);CHKERRQ(ierr);
   }
+  ierr = IGAElementEnd(element);CHKERRQ(ierr);
 
   /* Restore array to the local vectors */
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
@@ -129,6 +130,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementFixJacobian(element,J);CHKERRQ(ierr);
     ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
   }
+  ierr = IGAElementEnd(element);CHKERRQ(ierr);
 
   /* Restore array to the vectors */
   ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);

@@ -84,6 +84,7 @@ PetscErrorCode IGAPointBegin(IGAPoint point)
   element = point->parent;
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  point->index = -1;
   ierr = IGAElementBuildQuadrature(element);CHKERRQ(ierr);
   ierr = IGAElementBuildShapeFuns(element);CHKERRQ(ierr);
   PetscFunctionReturn(0);

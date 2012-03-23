@@ -35,6 +35,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
     ierr = IGAElementAssembleMat(element,A,matA);CHKERRQ(ierr);
     ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
   }
+  ierr = IGAElementEnd(element);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

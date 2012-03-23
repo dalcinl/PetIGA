@@ -18,7 +18,7 @@ subroutine IGA_Quadrature_1D(&
 end subroutine IGA_Quadrature_1D
 
 subroutine IGA_ShapeFuns_1D(&
-     rational,geometry,  &
+     geometry,rational,  &
      inq,ina,ind,iJ,iN,  &
      Cw,                 &
      detJ,J,N0,N1,N2,N3) &
@@ -27,8 +27,8 @@ subroutine IGA_ShapeFuns_1D(&
   use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
   implicit none
   integer(kind=C_INT   ), parameter        :: dim = 1
-  integer(kind=C_INT   ), intent(in),value :: rational
   integer(kind=C_INT   ), intent(in),value :: geometry
+  integer(kind=C_INT   ), intent(in),value :: rational
   integer(kind=C_INT   ), intent(in),value :: inq, ina, ind
   real   (kind=C_DOUBLE), intent(in)  :: iJ, iN(0:ind,ina,inq)
   real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina)
@@ -43,11 +43,11 @@ subroutine IGA_ShapeFuns_1D(&
 
   real(kind=C_DOUBLE) :: C(dim,ina)
   real(kind=C_DOUBLE) :: w(    ina)
-  if (rational /= 0) then
-     w = Cw(dim+1,:) 
-  end if
   if (geometry /= 0) then
      C = Cw(1:dim,:)
+  end if
+  if (rational /= 0) then
+     w = Cw(dim+1,:) 
   end if
 
   nd = max(1,min(ind,3))

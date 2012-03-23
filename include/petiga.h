@@ -158,6 +158,12 @@ struct _p_IGA {
   IGARule  rule[3];
   IGABasis basis[3];
   IGABoundary boundary[3][2];
+  IGAElement iterator;
+
+  const PetscScalar *geometry;
+  PetscBool          rational;
+  Vec                vec_geom;
+  DM                 dm_geom;
 
   PetscInt proc_rank[3];
   PetscInt proc_sizes[3];
@@ -167,13 +173,7 @@ struct _p_IGA {
   PetscInt elem_sizes[3];
   PetscInt elem_start[3];
   PetscInt elem_width[3];
-
-  DM dm_geom;
-  PetscBool rational;
-  PetscBool geometry;
-  DM dm_dof;
-
-  IGAElement iterator;
+  DM       dm_dof;
 };
 
 extern PetscClassId IGA_CLASSID;
@@ -200,6 +200,10 @@ extern PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);
 extern PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary);
 
 extern PetscErrorCode IGASetUp(IGA iga);
+
+extern PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *dm);
+extern PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof);
+extern PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom);
 
 extern PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 extern PetscErrorCode IGAGetDofDM(IGA iga,DM *dm_dof);
@@ -243,12 +247,8 @@ struct _n_IGAElement {
 
   PetscInt start[3];
   PetscInt width[3];
-  PetscInt *mapping;   /*   [nen] */
-
-  PetscInt     nfix;
-  PetscInt    *ifix;
-  PetscScalar *vfix;
-  PetscScalar *xfix;
+  PetscInt  *mapping;  /*   [nen]        */
+  PetscReal *geometry; /*   [nen][dim+1] */
 
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
@@ -262,6 +262,11 @@ struct _n_IGAElement {
   IGA      parent;
   IGAPoint iterator;
 
+  PetscInt     nfix;
+  PetscInt    *ifix;
+  PetscScalar *vfix;
+  PetscScalar *xfix;
+
   PetscInt    nvec;
   PetscScalar *wvec[8];
   PetscInt    nmat;
@@ -274,6 +279,7 @@ extern PetscErrorCode IGAElementSetUp(IGAElement element);
 
 extern PetscErrorCode IGAElementBegin(IGAElement element);
 extern PetscBool      IGAElementNext(IGAElement element);
+extern PetscErrorCode IGAElementEnd(IGAElement element);
 
 extern PetscErrorCode IGAElementBuildFix(IGAElement element);
 extern PetscErrorCode IGAElementBuildMap(IGAElement element);
