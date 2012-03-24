@@ -23,9 +23,22 @@ PetscErrorCode IGARuleDestroy(IGARule *_rule)
   rule = *_rule; *_rule = 0;
   if (!rule) PetscFunctionReturn(0);
   if (--rule->refct > 0) PetscFunctionReturn(0);
+  ierr = IGARuleReset(rule);CHKERRQ(ierr);
+  ierr = PetscFree(rule);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGARuleReset"
+PetscErrorCode IGARuleReset(IGARule rule)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!rule) PetscFunctionReturn(0);
+  PetscValidPointer(rule,1);
+  rule->nqp = 0;
   ierr = PetscFree(rule->point);CHKERRQ(ierr);
   ierr = PetscFree(rule->weight);CHKERRQ(ierr);
-  ierr = PetscFree(rule);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -92,8 +105,7 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
   if (GaussRule(nqp,point,weight) != 0)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points %D not implemented",nqp);
-  ierr = PetscFree(rule->point);CHKERRQ(ierr);
-  ierr = PetscFree(rule->weight);CHKERRQ(ierr);
+  ierr = IGARuleReset(rule);CHKERRQ(ierr);
   rule->nqp = nqp;
   rule->point = point;
   rule->weight = weight;
@@ -200,7 +212,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
   case (7): /* p = 13 */
     X[0] = -0.9491079123427585245261896840478513; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.7415311855993944398638647732807884; /* GaussianQuadratureWeights[7, -1, 1, 37]   */
-    X[2] = -0.4058451513773971669066064120769615;   
+    X[2] = -0.4058451513773971669066064120769615;
     X[3] =  0.0;
     X[4] = -X[2];
     X[5] = -X[1];
@@ -216,7 +228,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
   case (8): /* p = 15 */
     X[0] = -0.9602898564975362316835608685694730; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.7966664774136267395915539364758304; /* GaussianQuadratureWeights[8, -1, 1, 37]   */
-    X[2] = -0.5255324099163289858177390491892463;   
+    X[2] = -0.5255324099163289858177390491892463;
     X[3] = -0.1834346424956498049394761423601840;
     X[4] = -X[3];
     X[5] = -X[2];
@@ -234,7 +246,7 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
   case (9): /* p = 17 */
     X[0] = -0.9681602395076260898355762029036729; /* << NumericalDifferentialEquationAnalysis` */
     X[1] = -0.8360311073266357942994297880697349; /* GaussianQuadratureWeights[9, -1, 1, 37]   */
-    X[2] = -0.6133714327005903973087020393414742;   
+    X[2] = -0.6133714327005903973087020393414742;
     X[3] = -0.3242534234038089290385380146433366;
     X[4] =  0.0;
     X[5] = -X[3];

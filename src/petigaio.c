@@ -19,6 +19,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
+  ierr = IGAReset(iga);CHKERRQ(ierr);
   { /* */
     PetscInt i,buf[3];
     PetscInt kind,dim;
@@ -57,6 +58,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       ierr = DMGlobalToLocalBegin(dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
       ierr = DMGlobalToLocalEnd  (dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
 
+      ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
       ierr = VecDuplicate(vec_geom_local,&iga->vec_geom);CHKERRQ(ierr);
       ierr = VecCopy(vec_geom_local,iga->vec_geom);CHKERRQ(ierr);
       ierr = VecStrideMin(vec_geom_global,dim,PETSC_NULL,&min_w);CHKERRQ(ierr);

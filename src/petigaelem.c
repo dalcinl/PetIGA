@@ -1,28 +1,6 @@
 #include "petiga.h"
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementFreeWork"
-static
-PetscErrorCode IGAElementFreeWork(IGAElement element)
-{
-  size_t i;
-  size_t MAX_WORK_VEC;
-  size_t MAX_WORK_MAT;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
-  MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_VEC; i++)
-    {ierr = PetscFree(element->wvec[i]);CHKERRQ(ierr);}
-  for (i=0; i<MAX_WORK_MAT; i++)
-    {ierr = PetscFree(element->wmat[i]);CHKERRQ(ierr);}
-  element->nvec = 0;
-  element->nmat = 0;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "IGAElementCreate"
 PetscErrorCode IGAElementCreate(IGAElement *_element)
 {
@@ -49,10 +27,45 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
   element = *_element; *_element = 0;
   if (!element) PetscFunctionReturn(0);
   if (--element->refct > 0) PetscFunctionReturn(0);
+  ierr = IGAPointDestroy(&element->iterator);CHKERRQ(ierr);
+  ierr = IGAElementReset(element);CHKERRQ(ierr);
+  ierr = PetscFree(element);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementFreeWork"
+static
+PetscErrorCode IGAElementFreeWork(IGAElement element)
+{
+  size_t i;
+  size_t MAX_WORK_VEC;
+  size_t MAX_WORK_MAT;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
+  for (i=0; i<MAX_WORK_VEC; i++)
+    {ierr = PetscFree(element->wvec[i]);CHKERRQ(ierr);}
+  element->nvec = 0;
+  MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
+  for (i=0; i<MAX_WORK_MAT; i++)
+    {ierr = PetscFree(element->wmat[i]);CHKERRQ(ierr);}
+  element->nmat = 0;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementReset"
+PetscErrorCode IGAElementReset(IGAElement element)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!element) PetscFunctionReturn(0);
+  PetscValidPointer(element,1);
+  element->index = -1;
   ierr = PetscFree(element->mapping);CHKERRQ(ierr);
   ierr = PetscFree(element->geometry);CHKERRQ(ierr);
-
   ierr = PetscFree(element->point);CHKERRQ(ierr);
   ierr = PetscFree(element->weight);CHKERRQ(ierr);
   ierr = PetscFree(element->detJ);CHKERRQ(ierr);
@@ -62,13 +75,10 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
   ierr = PetscFree(element->shape[2]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[3]);CHKERRQ(ierr);
   ierr = IGAElementFreeWork(element);CHKERRQ(ierr);
-  ierr = IGAPointDestroy(&element->iterator);CHKERRQ(ierr);
-
   ierr = PetscFree(element->ifix);CHKERRQ(ierr);
   ierr = PetscFree(element->vfix);CHKERRQ(ierr);
   ierr = PetscFree(element->xfix);CHKERRQ(ierr);
-
-  ierr = PetscFree(element);CHKERRQ(ierr);
+  ierr = IGAPointReset(element->iterator);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -83,6 +93,8 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   iga = element->parent;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   if (!iga->setup) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
+  ierr = IGAElementReset(element);CHKERRQ(ierr);
+
   element->dim = iga->dim;
   element->dof = iga->dof;
   { /* */
@@ -142,7 +154,7 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     PetscInt nen = element->nen;
     PetscInt dof = element->dof;
     element->nfix = 0;
-    ierr = PetscMalloc1(nen*dof,PetscInt,&element->ifix);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*dof,PetscInt,   &element->ifix);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*dof,PetscScalar,&element->vfix);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*dof,PetscScalar,&element->xfix);CHKERRQ(ierr);
   }

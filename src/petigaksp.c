@@ -62,6 +62,6 @@ PetscErrorCode IGACreateKSP(IGA iga, KSP *ksp)
   /*ierr = MatDestroy(&A);CHKERRQ(ierr);*/
   /*ierr = KSPSetDM(**ksp,iga->dm_dof);CHKERRQ(ierr);*/
   /*ierr = KSPSetDMActive(**ksp,PETSC_FALSE);CHKERRQ(ierr);*/
-  
+
   PetscFunctionReturn(0);
 }

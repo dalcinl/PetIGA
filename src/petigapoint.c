@@ -1,28 +1,6 @@
 #include "petiga.h"
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointFreeWork"
-static
-PetscErrorCode IGAPointFreeWork(IGAPoint point)
-{
-  size_t i;
-  size_t MAX_WORK_VEC;
-  size_t MAX_WORK_MAT;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_VEC; i++)
-    {ierr = PetscFree(point->wvec[i]);CHKERRQ(ierr);}
-  point->nvec = 0;
-  MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_MAT; i++)
-    {ierr = PetscFree(point->wmat[i]);CHKERRQ(ierr);}
-  point->nmat = 0;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "IGAPointCreate"
 PetscErrorCode IGAPointCreate(IGAPoint *_point)
 {
@@ -48,8 +26,43 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
   point = *_point; *_point = 0;
   if (!point) PetscFunctionReturn(0);
   if (--point->refct > 0) PetscFunctionReturn(0);
-  ierr = IGAPointFreeWork(point);CHKERRQ(ierr);
+  ierr = IGAPointReset(point);CHKERRQ(ierr);
   ierr = PetscFree(point);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointFreeWork"
+static
+PetscErrorCode IGAPointFreeWork(IGAPoint point)
+{
+  size_t i;
+  size_t MAX_WORK_VEC;
+  size_t MAX_WORK_MAT;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
+  for (i=0; i<MAX_WORK_VEC; i++)
+    {ierr = PetscFree(point->wvec[i]);CHKERRQ(ierr);}
+  point->nvec = 0;
+  MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
+  for (i=0; i<MAX_WORK_MAT; i++)
+    {ierr = PetscFree(point->wmat[i]);CHKERRQ(ierr);}
+  point->nmat = 0;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointReset"
+PetscErrorCode IGAPointReset(IGAPoint point)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!point) PetscFunctionReturn(0);
+  PetscValidPointer(point,1);
+  point->index = -1;
+  ierr = IGAPointFreeWork(point);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -57,12 +70,14 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
 #define __FUNCT__ "IGAPointSetUp"
 PetscErrorCode IGAPointSetUp(IGAPoint point)
 {
-  IGAElement element;
+  IGAElement     element;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   element = point->parent;
   PetscValidPointer(element,0);
-  
+  ierr = IGAPointReset(point);CHKERRQ(ierr);
+
   point->nen = element->nen;
   point->dof = element->dof;
   point->dim = element->dim;
@@ -77,7 +92,7 @@ PetscErrorCode IGAPointSetUp(IGAPoint point)
 #define __FUNCT__ "IGAPointBegin"
 PetscErrorCode IGAPointBegin(IGAPoint point)
 {
-  IGAElement element;
+  IGAElement     element;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);

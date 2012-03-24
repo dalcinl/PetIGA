@@ -75,6 +75,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   ierr = PetscFree(iga->userops);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
+
   for (i=0; i<3; i++) {
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleDestroy(&iga->rule[i]);CHKERRQ(ierr);
@@ -84,11 +85,24 @@ PetscErrorCode IGADestroy(IGA *_iga)
   }
   ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
 
+  ierr = IGAReset(iga);CHKERRQ(ierr);
+  ierr = PetscHeaderDestroy(&iga);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAReset"
+PetscErrorCode IGAReset(IGA iga)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  iga->setup = PETSC_FALSE;
+  ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_dof);CHKERRQ(ierr);
-
-  ierr = PetscHeaderDestroy(&iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -102,19 +116,17 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (!viewer) {
-    ierr = PetscViewerASCIIGetStdout(((PetscObject)iga)->comm,&viewer);CHKERRQ(ierr);
-  }
+  if (!viewer) {ierr = PetscViewerASCIIGetStdout(((PetscObject)iga)->comm,&viewer);CHKERRQ(ierr);}
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
   if (!iga->setup) PetscFunctionReturn(0);
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERSTRING,&isstring);CHKERRQ(ierr);
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
   {
-    MPI_Comm comm;
-    PetscInt i,dim,dof;
+    MPI_Comm  comm;
+    PetscInt  i,dim,dof;
     PetscBool geometry = iga->vec_geom ? PETSC_TRUE : PETSC_FALSE;
     PetscBool rational = geometry ? iga->rational : PETSC_FALSE;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
@@ -251,6 +263,20 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAGetBasis"
+PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(basis,3);
+  if (iga->dim <= 0) SETERRQ (((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
+  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
+  *basis = iga->basis[i];
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAGetBoundary"
 PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary)
 {
@@ -264,7 +290,7 @@ PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boun
   if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   if (side < 0) side = 0; /* XXX error ?*/
   if (side > 1) side = 1; /* XXX error ?*/
-  if (iga->boundary[i][side]->dof < 1) {
+  if (iga->boundary[i][side]->dof != iga->dof) {
     ierr = IGABoundaryInit(iga->boundary[i][side],iga->dof);CHKERRQ(ierr);
   }
   *boundary = iga->boundary[i][side];
@@ -399,22 +425,24 @@ PetscErrorCode IGASetUp(IGA iga)
             "Must call IGASetDim() first");
 
   if (iga->dof < 1)
-    iga->dof = 1;
+    iga->dof = 1;  /* XXX */
 
   for (i=0; i<iga->dim; i++) {
     ierr = IGAAxisCheck(iga->axis[i]);CHKERRQ(ierr);
   }
+  for (i=iga->dim; i<3; i++) {
+    ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
+    ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
+    ierr = IGABasisReset(iga->basis[i]);CHKERRQ(ierr);
+  }
   for (i=0; i<3; i++) {
-    if (!iga->rule[i]->nqp) {
-      PetscInt p = iga->axis[i]->p;
-      PetscInt q = p+1;
-      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
-    }
-    if (!iga->basis[i]->nel) {
-      PetscInt p = iga->axis[i]->p;
-      PetscInt d = PetscMin(p,3); /* XXX */
-      ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);
-    }
+    PetscInt p = iga->axis[i]->p;
+    PetscInt q = p+1;
+    PetscInt d = PetscMin(p,3); /* XXX */
+    if (!iga->rule[i]->nqp)
+      {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+    if (!iga->basis[i]->nel)
+      {ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);}
   }
 
   if (!iga->vectype) {

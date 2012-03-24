@@ -36,6 +36,25 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAAxisReset"
+PetscErrorCode IGAAxisReset(IGAAxis axis)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!axis) PetscFunctionReturn(0);
+  PetscValidPointer(axis,1);
+  if (axis->p == 0 && axis->m == 1) PetscFunctionReturn(0);
+  ierr = PetscFree(axis->U);CHKERRQ(ierr);
+  axis->periodic = PETSC_FALSE;
+  axis->p = 0;
+  axis->m = 1;
+  ierr = PetscMalloc((axis->m+1)*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
+  axis->U[0] = -0.5;
+  axis->U[1] = +0.5;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAAxisReference"
 PetscErrorCode IGAAxisReference(IGAAxis axis)
 {
@@ -175,7 +194,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
   if (p == PETSC_DEFAULT) p = axis->p;
   if (C == PETSC_DECIDE)  C = p-1;
   if (C == PETSC_DEFAULT) C = p-1;
-  
+
   if (E < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Number of elements must be grather than zero, got %D",E);
@@ -208,7 +227,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
   axis->p = p;
   axis->m = m;
   axis->U = U;
-  
+
   PetscFunctionReturn(0);
 }
 

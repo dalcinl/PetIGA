@@ -20,12 +20,26 @@ PetscErrorCode IGABoundaryDestroy(IGABoundary *_boundary)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_boundary,1);
-  boundary = *_boundary; _boundary = 0;
+  boundary = *_boundary; *_boundary = 0;
   if (!boundary) PetscFunctionReturn(0);
   if (--boundary->refct > 0) PetscFunctionReturn(0);
+  ierr = IGABoundaryReset(boundary);CHKERRQ(ierr);
+  ierr = PetscFree(boundary);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundaryReset"
+PetscErrorCode IGABoundaryReset(IGABoundary boundary)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!boundary) PetscFunctionReturn(0);
+  PetscValidPointer(boundary,1);
+  boundary->dof = 0;
+  boundary->nbc = 0;
   ierr = PetscFree(boundary->field);CHKERRQ(ierr);
   ierr = PetscFree(boundary->value);CHKERRQ(ierr);
-  ierr = PetscFree(boundary);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -46,12 +60,11 @@ PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(boundary,1);
-  boundary->nbc = 0;
-  ierr = PetscFree(boundary->field);CHKERRQ(ierr);
-  ierr = PetscFree(boundary->value);CHKERRQ(ierr);
+  ierr = IGABoundaryReset(boundary);CHKERRQ(ierr);
   boundary->dof = dof;
-  ierr = PetscMalloc1(dof,PetscInt,&boundary->field);CHKERRQ(ierr);
-  ierr = PetscMalloc1(dof,PetscReal,&boundary->value);CHKERRQ(ierr);
+  boundary->nbc = 0;
+  ierr = PetscMalloc1(dof,PetscInt,   &boundary->field);CHKERRQ(ierr);
+  ierr = PetscMalloc1(dof,PetscScalar,&boundary->value);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -59,7 +72,7 @@ PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof)
 #define __FUNCT__ "IGABoundarySetValue"
 PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value)
 {
-  PetscInt       dof;
+  PetscInt dof;
   PetscFunctionBegin;
   PetscValidPointer(boundary,1);
   dof = boundary->dof;

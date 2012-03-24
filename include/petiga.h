@@ -37,6 +37,7 @@ struct _n_IGAAxis {
 };
 extern PetscErrorCode IGAAxisCreate(IGAAxis *axis);
 extern PetscErrorCode IGAAxisDestroy(IGAAxis *axis);
+extern PetscErrorCode IGAAxisReset(IGAAxis axis);
 extern PetscErrorCode IGAAxisReference(IGAAxis axis);
 extern PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis);
 extern PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *axis);
@@ -59,8 +60,9 @@ struct _n_IGARule {
 };
 extern PetscErrorCode IGARuleCreate(IGARule *rule);
 extern PetscErrorCode IGARuleDestroy(IGARule *rule);
-extern PetscErrorCode IGARuleCopy(IGARule base,IGARule rule);
+extern PetscErrorCode IGARuleReset(IGARule rule);
 extern PetscErrorCode IGARuleReference(IGARule rule);
+extern PetscErrorCode IGARuleCopy(IGARule base,IGARule rule);
 extern PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule);
 extern PetscErrorCode IGARuleInit(IGARule rule,PetscInt q);
 extern PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[]);
@@ -85,6 +87,7 @@ struct _n_IGABasis {
 };
 extern PetscErrorCode IGABasisCreate(IGABasis *basis);
 extern PetscErrorCode IGABasisDestroy(IGABasis *basis);
+extern PetscErrorCode IGABasisReset(IGABasis basis);
 extern PetscErrorCode IGABasisReference(IGABasis basis);
 extern PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d);
 
@@ -98,6 +101,7 @@ struct _n_IGABoundary {
 };
 extern PetscErrorCode IGABoundaryCreate(IGABoundary *boundary);
 extern PetscErrorCode IGABoundaryDestroy(IGABoundary *boundary);
+extern PetscErrorCode IGABoundaryReset(IGABoundary boundary);
 extern PetscErrorCode IGABoundaryReference(IGABoundary boundary);
 extern PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof);
 extern PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
@@ -182,6 +186,8 @@ extern PetscErrorCode IGAInitializePackage(const char path[]);
 
 extern PetscErrorCode IGACreate(MPI_Comm comm,IGA *iga);
 extern PetscErrorCode IGADestroy(IGA *iga);
+extern PetscErrorCode IGAReset(IGA iga);
+extern PetscErrorCode IGASetUp(IGA iga);
 extern PetscErrorCode IGAView(IGA iga,PetscViewer viewer);
 extern PetscErrorCode IGASetFromOptions(IGA iga);
 
@@ -197,9 +203,8 @@ extern PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof);
 
 extern PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis);
 extern PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);
+extern PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis);
 extern PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary);
-
-extern PetscErrorCode IGASetUp(IGA iga);
 
 extern PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *dm);
 extern PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof);
@@ -275,6 +280,7 @@ struct _n_IGAElement {
 };
 extern PetscErrorCode IGAElementCreate(IGAElement *element);
 extern PetscErrorCode IGAElementDestroy(IGAElement *element);
+extern PetscErrorCode IGAElementReset(IGAElement element);
 extern PetscErrorCode IGAElementSetUp(IGAElement element);
 
 extern PetscErrorCode IGAElementBegin(IGAElement element);
@@ -333,6 +339,7 @@ struct _n_IGAPoint {
 };
 extern PetscErrorCode IGAPointCreate(IGAPoint *point);
 extern PetscErrorCode IGAPointDestroy(IGAPoint *point);
+extern PetscErrorCode IGAPointReset(IGAPoint point);
 extern PetscErrorCode IGAPointSetUp(IGAPoint point);
 
 extern PetscErrorCode IGAPointBegin(IGAPoint point);
