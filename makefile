@@ -16,7 +16,7 @@ all-legacy:
 	-@${MKDIR} ${PETSC_ARCH}/include
 	-@${MKDIR} ${PETSC_ARCH}/lib
 	-@${OMAKE} all_build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
-all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build shared_nomesg
+all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build sharedlibs
 .PHONY: all all-legacy all_build
 
 #
@@ -44,15 +44,22 @@ chk_petiga_dir:
 #
 build:
 	-@echo "========================================="
-	-@echo "Beginning to compile PetIGA library"
+	-@echo "Building PetIGA"
+	-@echo "Using PETSC_DIR=${PETSC_DIR}"
+	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "========================================="
+	-@echo "Beginning to compile PetIGA library"
+#	-@echo "========================================="
 	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@${OMAKE} ranlib              PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed building PetIGA library"
 	-@echo "========================================="
 ranlib:
 	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
-.PHONY: build ranlib
+sharedlibs:
+	-@${OMAKE} shared_nomesg PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} \
+	           | grep -v "making shared libraries in" 
+.PHONY: build ranlib sharedlibs
 
 # Delete PetIGA library
 deletelibs:
@@ -72,7 +79,7 @@ allclean: deletelibs deletemods srcclean
 testexamples:
 	-@echo "=========================================="
 	-@echo "BEGINNING TO COMPILE AND RUN TEST EXAMPLES"
-	-@echo "========================================="
+	-@echo "=========================================="
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed compiling and running test examples"
 	-@echo "=========================================="
