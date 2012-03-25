@@ -1,20 +1,15 @@
 #include "petiga.h"
 
-static PetscErrorCode DMSetMatType(DM,const MatType);
+#if PETSC_VERSION_(3,2,0)
 #include "private/matimpl.h"
-#include "private/dmimpl.h"
-#undef  __FUNCT__
-#define __FUNCT__ "DMSetMatType"
-static
-PetscErrorCode DMSetMatType(DM dm,const MatType mattype)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = PetscFree(dm->mattype);CHKERRQ(ierr);
-  ierr = PetscStrallocpy(mattype,&dm->mattype);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
+#else
+#include "petsc-private/matimpl.h"
+#endif
+
+#if PETSC_VERSION_(3,2,0)
+#define DMCreateMatrix DMGetMatrix
+static PetscErrorCode DMSetMatType(DM dm,const MatType mattype);
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreate"
@@ -618,10 +613,6 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_(3,2,0)
-#define DMCreateMatrix DMGetMatrix
-#endif
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateMat"
 PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
@@ -792,3 +783,19 @@ PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJac
   if (IJacCtx)   iga->userops->IJacCtx   = IJacCtx;
   PetscFunctionReturn(0);
 }
+
+
+#if PETSC_VERSION_(3,2,0)
+#include "private/dmimpl.h"
+#undef  __FUNCT__
+#define __FUNCT__ "DMSetMatType"
+static PetscErrorCode DMSetMatType(DM dm,const MatType mattype)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = PetscFree(dm->mattype);CHKERRQ(ierr);
+  ierr = PetscStrallocpy(mattype,&dm->mattype);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#endif
