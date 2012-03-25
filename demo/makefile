@@ -1,6 +1,8 @@
 TARGETS = InputOutput \
 	  L2Proj1D L2Proj2D \
           Poisson1D Poisson2D Poisson3D \
+          Laplace \
+          Poisson \
           CahnHilliard2D \
           NavierStokesVMS
 ALL: ${TARGETS}
@@ -37,6 +39,12 @@ Poisson2D: Poisson2D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Poisson3D: Poisson3D.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+Laplace: Laplace.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+Poisson: Poisson.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 CahnHilliard2D: CahnHilliard2D.o chkopts
