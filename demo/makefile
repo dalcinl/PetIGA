@@ -3,6 +3,7 @@ TARGETS = InputOutput \
           Poisson1D Poisson2D Poisson3D \
           Laplace \
           Poisson \
+          PatternFormation \
           CahnHilliard2D \
           NavierStokesVMS
 ALL: ${TARGETS}
@@ -45,6 +46,9 @@ Laplace: Laplace.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Poisson: Poisson.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+PatternFormation: PatternFormation.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 CahnHilliard2D: CahnHilliard2D.o chkopts
