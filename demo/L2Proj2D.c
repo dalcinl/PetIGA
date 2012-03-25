@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis1,p[1],C[1],N[1],-1.0,1.0);CHKERRQ(ierr);
 
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   Mat A;

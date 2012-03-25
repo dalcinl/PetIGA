@@ -391,10 +391,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
-
-  ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

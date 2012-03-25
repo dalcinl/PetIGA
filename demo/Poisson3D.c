@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   PetscInt N[3] = {16,16,16}, nN = 3; 
   PetscInt p[3] = { 2, 2, 2}, np = 3;
   PetscInt C[3] = {-1,-1,-1}, nC = 3;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Projection2D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Poisson2D Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   Mat A;

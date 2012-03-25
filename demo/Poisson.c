@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
       ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
     }
   }
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   Mat A;
@@ -79,7 +80,6 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGAFormSystem(iga,A,b,System,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);

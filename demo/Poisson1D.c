@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetBoundary(iga,0,1,&right);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(right,0,value);CHKERRQ(ierr);
 
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   Mat A;
