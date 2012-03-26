@@ -112,15 +112,11 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
     }
   }
   if (!mat) {
-    MatDuplicateOption op = MAT_SHARE_NONZERO_PATTERN;
     #if PETSC_VERSION_(3,2,0)
-    PetscBool sbaij = PETSC_FALSE;
-    if (!sbaij) {ierr = PetscTypeCompare((PetscObject)A,MATSEQSBAIJ,&sbaij);CHKERRQ(ierr);}
-    if (!sbaij) {ierr = PetscTypeCompare((PetscObject)A,MATMPISBAIJ,&sbaij);CHKERRQ(ierr);}
-    ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
-    if (sbaij && bs==1) op = MAT_DO_NOT_COPY_VALUES;
+    ierr = MatDuplicate(A,MAT_DO_NOT_COPY_VALUES,&mat);CHKERRQ(ierr);
+    #else
+    ierr = MatDuplicate(A,MAT_SHARE_NONZERO_PATTERN,&mat);CHKERRQ(ierr);
     #endif
-    ierr = MatDuplicate(A,op,&mat);CHKERRQ(ierr);
     ierr = MatSetOption(mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   }
   *B = mat;
