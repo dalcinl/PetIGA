@@ -622,8 +622,6 @@ PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
   ierr = DMCreateMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
-  ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
-  /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   {
     PetscInt bs;
     ierr = DMGetBlockSize(iga->dm_dof,&bs);CHKERRQ(ierr);
@@ -637,6 +635,10 @@ PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
     ierr = MatSetLocalToGlobalMapping(*mat,ltog,ltog);CHKERRQ(ierr);
     ierr = MatSetLocalToGlobalMappingBlock(*mat,ltogb,ltogb);CHKERRQ(ierr);
   }
+  ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
+  /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
+  /*ierr = MatSetOption(*mat,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
+  ierr = PetscObjectCompose((PetscObject)*mat,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

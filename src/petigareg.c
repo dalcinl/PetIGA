@@ -6,13 +6,19 @@ static PetscBool IGAPackageInitialized = PETSC_FALSE;
 PetscBool IGARegisterAllCalled = PETSC_FALSE;
 PetscLogEvent IGA_Event = 0;
 
+EXTERN_C_BEGIN
+extern PetscErrorCode PCCreate_EBE(PC);
+EXTERN_C_END
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGARegisterAll"
-PetscErrorCode IGARegisterAll(PETSC_UNUSED const char path[])
+PetscErrorCode IGARegisterAll(const char path[])
 {
-  /*PetscErrorCode ierr;*/
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   IGARegisterAllCalled = PETSC_TRUE;
+  ierr = PCRegisterAll(path);CHKERRQ(ierr);
+  ierr = PCRegisterDynamic("ebe",path,"PCCreate_EBE",PCCreate_EBE);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
