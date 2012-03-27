@@ -11,6 +11,17 @@
 static PetscErrorCode DMSetMatType(DM dm,const MatType mattype);
 #endif
 
+#if defined(PETSC_USE_DEBUG)
+#  define IGACheckSetUp(iga,arg) do {                                    \
+    if (PetscUnlikely(!(iga)->setup))                                    \
+      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
+               "Must call IGASetUp() on argument %D \"%s\" before %s()", \
+               (arg),#iga,PETSC_FUNCTION_NAME);                          \
+  } while (0)
+#else
+#  define IGACheckSetUp(iga,arg) do {} while (0)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreate"
 PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
@@ -609,6 +620,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(vec,2);
+  IGACheckSetUp(iga,1);
   ierr = DMCreateGlobalVector(iga->dm_dof,vec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -621,6 +633,7 @@ PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
+  IGACheckSetUp(iga,1);
   ierr = DMCreateMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
   {
     PetscInt bs;
@@ -650,6 +663,7 @@ PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(lvec,2);
+  IGACheckSetUp(iga,1);
   ierr = DMGetLocalVector(iga->dm_dof,lvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -663,6 +677,7 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(lvec,2);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,2);
+  IGACheckSetUp(iga,1);
   ierr = DMRestoreLocalVector(iga->dm_dof,lvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -675,6 +690,7 @@ PetscErrorCode IGAGetGlobalVec(IGA iga,Vec *gvec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(gvec,2);
+  IGACheckSetUp(iga,1);
   ierr = DMGetGlobalVector(iga->dm_dof,gvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -688,6 +704,7 @@ PetscErrorCode IGARestoreGlobalVec(IGA iga,Vec *gvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(gvec,2);
   PetscValidHeaderSpecific(*gvec,VEC_CLASSID,2);
+  IGACheckSetUp(iga,1);
   ierr = DMRestoreGlobalVector(iga->dm_dof,gvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -701,6 +718,7 @@ PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
   ierr = DMGlobalToLocalBegin(iga->dm_dof,gvec,INSERT_VALUES,lvec);CHKERRQ(ierr);
   ierr = DMGlobalToLocalEnd  (iga->dm_dof,gvec,INSERT_VALUES,lvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -715,6 +733,7 @@ PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
   ierr = DMLocalToGlobalBegin(iga->dm_dof,lvec,addv,gvec);CHKERRQ(ierr);
   ierr = DMLocalToGlobalEnd  (iga->dm_dof,lvec,addv,gvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);

@@ -92,7 +92,7 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   PetscValidPointer(element,1);
   iga = element->parent;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  if (!iga->setup) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
+  if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
   ierr = IGAElementReset(element);CHKERRQ(ierr);
 
   element->dim = iga->dim;
@@ -170,8 +170,8 @@ PetscErrorCode IGAElementBegin(IGAElement element)
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   iga = element->parent;
-  if (PetscUnlikely(!iga->setup))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+  if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
   if (iga->vec_geom) {
     ierr = VecGetArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);
   }
