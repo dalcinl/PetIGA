@@ -10,10 +10,10 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   PetscValidPointer(_axis,1);
   ierr = PetscNew(struct _n_IGAAxis,_axis);CHKERRQ(ierr);
   (*_axis)->refct = 1; axis = *_axis;
+  ierr = PetscMalloc(2*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
   axis->periodic = PETSC_FALSE;
   axis->p = 0;
   axis->m = 1;
-  ierr = PetscMalloc((axis->m+1)*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
   axis->U[0] = -0.5;
   axis->U[1] = +0.5;
   PetscFunctionReturn(0);
@@ -43,12 +43,13 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscFunctionBegin;
   if (!axis) PetscFunctionReturn(0);
   PetscValidPointer(axis,1);
-  if (axis->p == 0 && axis->m == 1) PetscFunctionReturn(0);
-  ierr = PetscFree(axis->U);CHKERRQ(ierr);
+  if (axis->m > 1) {
+    ierr = PetscFree(axis->U);CHKERRQ(ierr);
+    ierr = PetscMalloc(2*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
+  }
   axis->periodic = PETSC_FALSE;
   axis->p = 0;
   axis->m = 1;
-  ierr = PetscMalloc((axis->m+1)*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
   axis->U[0] = -0.5;
   axis->U[1] = +0.5;
   PetscFunctionReturn(0);
