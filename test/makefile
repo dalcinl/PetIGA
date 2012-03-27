@@ -22,12 +22,12 @@ OPTS=-nox -malloc_debug -malloc_dump
 runex1a_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type aij
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type baij
-	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij -pc_type none
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 4 -p 1 -iga_mat_type dense
 runex1a_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type aij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type baij
-	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij -pc_type none
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 4 -p 1 -iga_mat_type dense
 runex1b_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 2

@@ -1,13 +1,6 @@
 #include "petiga.h"
 
 #if PETSC_VERSION_(3,2,0)
-#include "private/matimpl.h"
-#else
-#include "petsc-private/matimpl.h"
-#endif
-
-#if PETSC_VERSION_(3,2,0)
-#define DMCreateMatrix DMGetMatrix
 static PetscErrorCode DMSetMatType(DM dm,const MatType mattype);
 #endif
 
@@ -17,7 +10,7 @@ static PetscErrorCode DMSetMatType(DM dm,const MatType mattype);
       SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
                "Must call IGASetUp() on argument %D \"%s\" before %s()", \
                (arg),#iga,PETSC_FUNCTION_NAME);                          \
-  } while (0)
+    } while (0)
 #else
 #  define IGACheckSetUp(iga,arg) do {} while (0)
 #endif
@@ -314,14 +307,14 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscBool flg;
     char vtype[256] = VECSTANDARD;
     char mtype[256] = MATBAIJ;
-    if (iga->dof < 2) {ierr= PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
-    if (iga->vectype) {ierr= PetscStrcpy(vtype,iga->vectype);CHKERRQ(ierr);}
-    if (iga->mattype) {ierr= PetscStrcpy(mtype,iga->mattype);CHKERRQ(ierr);}
+    if (iga->dof < 2) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
+    if (iga->vectype) {ierr = PetscStrcpy(vtype,iga->vectype);CHKERRQ(ierr);}
+    if (iga->mattype) {ierr = PetscStrcpy(mtype,iga->mattype);CHKERRQ(ierr);}
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsList("-iga_vec_type","Vector type","VecSetType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
-    if (flg) {ierr= IGASetVecType(iga,vtype);CHKERRQ(ierr);}
+    if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
     ierr = PetscOptionsList("-iga_mat_type","Matrix type","MatSetType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
-    if (flg) {ierr= IGASetMatType(iga,mtype);CHKERRQ(ierr);}
+    if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
   }
@@ -471,7 +464,7 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt dim = iga->dim;
     IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
-    PetscInt *proc_rank  = iga->proc_rank;
+    PetscInt *proc_rank = iga->proc_rank;
     PetscInt *proc_sizes = iga->proc_sizes;
     PetscInt *node_sizes = iga->node_sizes;
     PetscInt *node_start = iga->node_start;
@@ -479,8 +472,8 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *elem_sizes = iga->elem_sizes;
     PetscInt *elem_start = iga->elem_start;
     PetscInt *elem_width = iga->elem_width;
-    PetscInt ghost_start[3];
-    PetscInt ghost_width[3];
+    PetscInt *ghost_start = iga->ghost_start;
+    PetscInt *ghost_width = iga->ghost_width;
     PetscMPIInt index;
     /* processor grid and coordinates */
     ierr = MPI_Comm_rank(((PetscObject)iga)->comm,&index);CHKERRQ(ierr);
@@ -622,36 +615,6 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscValidPointer(vec,2);
   IGACheckSetUp(iga,1);
   ierr = DMCreateGlobalVector(iga->dm_dof,vec);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateMat"
-PetscErrorCode IGACreateMat(IGA iga, Mat *mat)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(mat,2);
-  IGACheckSetUp(iga,1);
-  ierr = DMCreateMatrix(iga->dm_dof,iga->mattype,mat);CHKERRQ(ierr);
-  {
-    PetscInt bs;
-    ierr = DMGetBlockSize(iga->dm_dof,&bs);CHKERRQ(ierr);
-    ierr = PetscLayoutSetBlockSize((*mat)->rmap,bs);CHKERRQ(ierr);
-    ierr = PetscLayoutSetBlockSize((*mat)->cmap,bs);CHKERRQ(ierr);
-  }
-  {
-    ISLocalToGlobalMapping ltog,ltogb;
-    ierr = DMGetLocalToGlobalMapping(iga->dm_dof,&ltog);CHKERRQ(ierr);
-    ierr = DMGetLocalToGlobalMappingBlock(iga->dm_dof,&ltogb);CHKERRQ(ierr);
-    ierr = MatSetLocalToGlobalMapping(*mat,ltog,ltog);CHKERRQ(ierr);
-    ierr = MatSetLocalToGlobalMappingBlock(*mat,ltogb,ltogb);CHKERRQ(ierr);
-  }
-  ierr = MatSetOption(*mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
-  /*ierr = MatSetOption(*mat,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
-  /*ierr = MatSetOption(*mat,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
-  ierr = PetscObjectCompose((PetscObject)*mat,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
