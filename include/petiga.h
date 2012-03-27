@@ -174,9 +174,12 @@ struct _p_IGA {
   PetscInt node_sizes[3];
   PetscInt node_start[3];
   PetscInt node_width[3];
+  PetscInt ghost_start[3];
+  PetscInt ghost_width[3];
   PetscInt elem_sizes[3];
   PetscInt elem_start[3];
   PetscInt elem_width[3];
+
   DM       dm_dof;
 };
 
@@ -250,8 +253,6 @@ struct _n_IGAElement {
   PetscInt dof;
   PetscInt dim;
 
-  PetscInt start[3];
-  PetscInt width[3];
   PetscInt  *mapping;  /*   [nen]        */
   PetscReal *geometry; /*   [nen][dim+1] */
 

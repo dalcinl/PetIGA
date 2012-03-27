@@ -100,16 +100,10 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   { /* */
     IGABasis *BD = iga->basis;
     PetscInt i,dim = element->dim;
-    PetscInt nel=1, nen=1, nqp=1;
-    PetscInt start[3],width[3];
-    ierr = DMDAGetGhostCorners(iga->dm_dof,
-                               &start[0],&start[1],&start[2],
-                               &width[0],&width[1],&width[2]);CHKERRQ(ierr);
+    PetscInt nel=1,nen=1,nqp=1;
     for (i=0; i<dim; i++) {
       element->range[i][0] = iga->elem_start[i];
       element->range[i][1] = iga->elem_start[i] + iga->elem_width[i];
-      element->start[i]    = start[i];
-      element->width[i]    = width[i];
       nel *= iga->elem_width[i];
       nen *= BD[i]->nen;
       nqp *= BD[i]->nqp;
@@ -117,8 +111,6 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     for (i=dim; i<3; i++) {
       element->range[i][0] = 0;
       element->range[i][1] = 1;
-      element->start[i] = 0;
-      element->width[i] = 1;
     }
     element->index = -1;
     element->count = nel;
@@ -355,13 +347,13 @@ PetscErrorCode IGAElementBuildMap(IGAElement element)
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   { /* */
-    IGABasis *BD = element->parent->basis;
+    IGA      iga = element->parent;
+    IGABasis *BD = iga->basis;
     PetscInt *ID = element->ID;
-    PetscInt *start = element->start;
-    PetscInt *width = element->width;
     PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
     PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
     PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
+    PetscInt *start = iga->ghost_start, *width = iga->ghost_width;
     PetscInt istart = start[0], istride = 1;
     PetscInt jstart = start[1], jstride = width[0];
     PetscInt kstart = start[2], kstride = width[0]*width[1];
