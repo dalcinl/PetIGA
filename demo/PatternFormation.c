@@ -166,8 +166,8 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUserIFunction(iga,Function,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
-  PetscReal h = PetscMin(2.0/N[1],2.0/N[2]);
-  PetscReal dt = h/user.delta/15.0;
+  PetscReal h  = PetscMin(2.0/N[0],2.0/N[1]);
+  PetscReal dt = h/user.delta/5.0;
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
