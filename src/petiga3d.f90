@@ -26,12 +26,12 @@ subroutine IGA_Quadrature_3D(&
 end subroutine IGA_Quadrature_3D
 
 subroutine IGA_ShapeFuns_3D(&
-     geometry,rational,  &
-     inq,ina,ind,iJ,iN,  &
-     jnq,jna,jnd,jJ,jN,  &
-     knq,kna,knd,kJ,kN,  &
-     Cw,                 &
-     detJ,J,N0,N1,N2,N3) &
+     geometry,rational,     &
+     inq,ina,ind,iJ,iN,     &
+     jnq,jna,jnd,jJ,jN,     &
+     knq,kna,knd,kJ,kN,     &
+     Cw,detJac,Jac,         &
+     N0,N1,N2,N3)           &
   bind(C, name="IGA_ShapeFuns_3D")
   use ISO_C_BINDING, only: C_INT, C_LONG
   use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
@@ -46,8 +46,8 @@ subroutine IGA_ShapeFuns_3D(&
   real   (kind=C_DOUBLE), intent(in)  :: jJ, jN(0:jnd,jna,jnq)
   real   (kind=C_DOUBLE), intent(in)  :: kJ, kN(0:knd,kna,knq)
   real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina,jna,kna)
-  real   (kind=C_DOUBLE), intent(out) :: detJ(     inq,jnq,knq)
-  real   (kind=C_DOUBLE), intent(out) :: J(dim,dim,inq,jnq,knq)
+  real   (kind=C_DOUBLE), intent(out) :: detJac(     inq,jnq,knq)
+  real   (kind=C_DOUBLE), intent(out) :: Jac(dim,dim,inq,jnq,knq)
   real   (kind=C_DOUBLE), intent(out) :: N0(       ina,jna,kna,inq,jnq,knq)
   real   (kind=C_DOUBLE), intent(out) :: N1(   dim,ina,jna,kna,inq,jnq,knq)
   real   (kind=C_DOUBLE), intent(out) :: N2(dim**2,ina,jna,kna,inq,jnq,knq)
@@ -92,22 +92,22 @@ subroutine IGA_ShapeFuns_3D(&
            if (geometry /= 0) then
               call GeometryMap(&
                    nd,na,C,&
-                   detJ( iq,jq,kq),&
-                   J(:,:,iq,jq,kq),&
+                   detJac( iq,jq,kq),&
+                   Jac(:,:,iq,jq,kq),&
                    N0(  :,:,:,iq,jq,kq),&
                    N1(:,:,:,:,iq,jq,kq),&
                    N2(:,:,:,:,iq,jq,kq),&
                    N3(:,:,:,:,iq,jq,kq))
-              detJ( iq,jq,kq) = detJ( iq,jq,kq) * (iJ*jJ*kJ)
-              J(1,:,iq,jq,kq) = J(1,:,iq,jq,kq) * iJ 
-              J(2,:,iq,jq,kq) = J(2,:,iq,jq,kq) * jJ 
-              J(3,:,iq,jq,kq) = J(3,:,iq,jq,kq) * kJ 
+              detJac( iq,jq,kq) = detJac( iq,jq,kq) * (iJ*jJ*kJ)
+              Jac(1,:,iq,jq,kq) = Jac(1,:,iq,jq,kq) * iJ
+              Jac(2,:,iq,jq,kq) = Jac(2,:,iq,jq,kq) * jJ
+              Jac(3,:,iq,jq,kq) = Jac(3,:,iq,jq,kq) * kJ
            else
-              detJ( iq,jq,kq) = (iJ*jJ*kJ)
-              J(:,:,iq,jq,kq) = 0
-              J(1,1,iq,jq,kq) = iJ
-              J(2,2,iq,jq,kq) = jJ
-              J(3,3,iq,jq,kq) = kJ
+              detJac( iq,jq,kq) = (iJ*jJ*kJ)
+              Jac(:,:,iq,jq,kq) = 0
+              Jac(1,1,iq,jq,kq) = iJ
+              Jac(2,2,iq,jq,kq) = jJ
+              Jac(3,3,iq,jq,kq) = kJ
            end if
         end do
      end do

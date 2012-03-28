@@ -22,11 +22,11 @@ subroutine IGA_Quadrature_2D(&
 end subroutine IGA_Quadrature_2D
 
 subroutine IGA_ShapeFuns_2D(&
-     geometry,rational,  &
-     inq,ina,ind,iJ,iN,  &
-     jnq,jna,jnd,jJ,jN,  &
-     Cw,                 &
-     detJ,J,N0,N1,N2,N3) &
+     geometry,rational,     &
+     inq,ina,ind,iJ,iN,     &
+     jnq,jna,jnd,jJ,jN,     &
+     Cw,detJac,Jac,         &
+     N0,N1,N2,N3)           &
   bind(C, name="IGA_ShapeFuns_2D")
   use ISO_C_BINDING, only: C_INT, C_LONG
   use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
@@ -39,8 +39,8 @@ subroutine IGA_ShapeFuns_2D(&
   real   (kind=C_DOUBLE), intent(in)  :: iJ, iN(0:ind,ina,inq)
   real   (kind=C_DOUBLE), intent(in)  :: jJ, jN(0:jnd,jna,jnq)
   real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina,jna)
-  real   (kind=C_DOUBLE), intent(out) :: detJ(     inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: J(dim,dim,inq,jnq)
+  real   (kind=C_DOUBLE), intent(out) :: detJac(     inq,jnq)
+  real   (kind=C_DOUBLE), intent(out) :: Jac(dim,dim,inq,jnq)
   real   (kind=C_DOUBLE), intent(out) :: N0(       ina,jna,inq,jnq)
   real   (kind=C_DOUBLE), intent(out) :: N1(   dim,ina,jna,inq,jnq)
   real   (kind=C_DOUBLE), intent(out) :: N2(dim**2,ina,jna,inq,jnq)
@@ -55,7 +55,7 @@ subroutine IGA_ShapeFuns_2D(&
      C = Cw(1:dim,:,:)
   end if
   if (rational /= 0) then
-     w = Cw(dim+1,:,:) 
+     w = Cw(dim+1,:,:)
   end if
 
   nd = max(1,min(ind,jnd,3))
@@ -81,20 +81,20 @@ subroutine IGA_ShapeFuns_2D(&
         if (geometry /= 0) then
            call GeometryMap(&
                 nd,na,C,&
-                detJ( iq,jq),&
-                J(:,:,iq,jq),&
+                detJac( iq,jq),&
+                Jac(:,:,iq,jq),&
                 N0(  :,:,iq,jq),&
                 N1(:,:,:,iq,jq),&
                 N2(:,:,:,iq,jq),&
                 N3(:,:,:,iq,jq))
-           detJ( iq,jq) = detJ( iq,jq) * (iJ*jJ) 
-           J(1,:,iq,jq) = J(1,:,iq,jq) * iJ
-           J(2,:,iq,jq) = J(2,:,iq,jq) * jJ
+           detJac( iq,jq) = detJac( iq,jq) * (iJ*jJ)
+           Jac(1,:,iq,jq) = Jac(1,:,iq,jq) * iJ
+           Jac(2,:,iq,jq) = Jac(2,:,iq,jq) * jJ
         else
-           detJ( iq,jq) = (iJ*jJ)
-           J(:,:,iq,jq) = 0
-           J(1,1,iq,jq) = iJ
-           J(2,2,iq,jq) = jJ
+           detJac( iq,jq) = (iJ*jJ)
+           Jac(:,:,iq,jq) = 0
+           Jac(1,1,iq,jq) = iJ
+           Jac(2,2,iq,jq) = jJ
         end if
      end do
   end do

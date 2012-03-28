@@ -18,10 +18,10 @@ subroutine IGA_Quadrature_1D(&
 end subroutine IGA_Quadrature_1D
 
 subroutine IGA_ShapeFuns_1D(&
-     geometry,rational,  &
-     inq,ina,ind,iJ,iN,  &
-     Cw,                 &
-     detJ,J,N0,N1,N2,N3) &
+     geometry,rational,     &
+     inq,ina,ind,iJ,iN,     &
+     Cw,detJac,Jac,         &
+     N0,N1,N2,N3)           &
   bind(C, name="IGA_ShapeFuns_1D")
   use ISO_C_BINDING, only: C_INT, C_LONG
   use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
@@ -32,8 +32,8 @@ subroutine IGA_ShapeFuns_1D(&
   integer(kind=C_INT   ), intent(in),value :: inq, ina, ind
   real   (kind=C_DOUBLE), intent(in)  :: iJ, iN(0:ind,ina,inq)
   real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina)
-  real   (kind=C_DOUBLE), intent(out) :: detJ(     inq)
-  real   (kind=C_DOUBLE), intent(out) :: J(dim,dim,inq)
+  real   (kind=C_DOUBLE), intent(out) :: detJac(     inq)
+  real   (kind=C_DOUBLE), intent(out) :: Jac(dim,dim,inq)
   real   (kind=C_DOUBLE), intent(out) :: N0(       ina,inq)
   real   (kind=C_DOUBLE), intent(out) :: N1(   dim,ina,inq)
   real   (kind=C_DOUBLE), intent(out) :: N2(dim**2,ina,inq)
@@ -47,7 +47,7 @@ subroutine IGA_ShapeFuns_1D(&
      C = Cw(1:dim,:)
   end if
   if (rational /= 0) then
-     w = Cw(dim+1,:) 
+     w = Cw(dim+1,:)
   end if
 
   nd = max(1,min(ind,3))
@@ -71,17 +71,17 @@ subroutine IGA_ShapeFuns_1D(&
      if (geometry /= 0) then
         call GeometryMap(&
              nd,na,C,&
-             detJ( iq),&
-             J(:,:,iq),&
+             detJac( iq),&
+             Jac(:,:,iq),&
              N0(  :,iq),&
              N1(:,:,iq),&
              N2(:,:,iq),&
              N3(:,:,iq))
-        detJ( iq) = detJ( iq) * iJ 
-        J(1,:,iq) = J(1,:,iq) * iJ
+        detJac( iq) = detJac( iq) * iJ
+        Jac(1,:,iq) = Jac(1,:,iq) * iJ
      else
-        detJ( iq) = iJ
-        J(1,1,iq) = iJ
+        detJac( iq) = iJ
+        Jac(1,1,iq) = iJ
      end if
   end do
 
