@@ -11,6 +11,7 @@ g(u,v) = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
 */
 
 typedef struct {
+  PetscReal delta;
   PetscReal D1,D2;
   PetscReal alpha;
   PetscReal beta;
@@ -31,11 +32,12 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,PetscReal shift,
   IGAPointInterpolate(point,0,V,&uv_t[0]);
   IGAPointInterpolate(point,0,U,&uv_0[0]);
   IGAPointInterpolate(point,1,U,&uv_1[0][0]);
-  PetscScalar u_t = uv_t[0],    v_t = uv_t[1];    
-  PetscScalar u   = uv_0[0],    v   = uv_0[1];    
+  PetscScalar u_t = uv_t[0],    v_t = uv_t[1];
+  PetscScalar u   = uv_0[0],    v   = uv_0[1];
   PetscScalar u_x = uv_1[0][0], v_x = uv_1[1][0];
   PetscScalar u_y = uv_1[0][1], v_y = uv_1[1][1];
 
+  PetscReal delta = user->delta;
   PetscReal D1    = user->D1;
   PetscReal D2    = user->D2;
   PetscReal alpha = user->alpha;
@@ -49,13 +51,13 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,PetscReal shift,
   PetscReal (*N0)    = point->shape[0];
   PetscReal (*N1)[2] = (PetscReal (*)[2]) point->shape[1];
   PetscInt  a,nen=point->nen;
-  PetscScalar (*R)[2] = (PetscScalar (*)[2])Re; 
+  PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];
     PetscReal Na_y = N1[a][1];
-    PetscScalar Ru = Na*u_t + D1*(Na_x*u_x + Na_y*u_y) - Na*f;
-    PetscScalar Rv = Na*v_t + D2*(Na_x*v_x + Na_y*v_y) - Na*g;
+    PetscScalar Ru = Na*u_t + delta*D1*(Na_x*u_x + Na_y*u_y) - Na*f;
+    PetscScalar Rv = Na*v_t + delta*D2*(Na_x*v_x + Na_y*v_y) - Na*g;
     R[a][0] = Ru;
     R[a][1] = Rv;
   }
@@ -72,8 +74,9 @@ PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,PetscReal shift,
 
   PetscScalar uv_0[2];
   IGAPointInterpolate(point,0,U,&uv_0[0]);
-  PetscScalar u = uv_0[0], v = uv_0[1];    
+  PetscScalar u = uv_0[0], v = uv_0[1];
 
+  PetscReal delta = user->delta;
   PetscReal D1    = user->D1;
   PetscReal D2    = user->D2;
   PetscReal alpha = user->alpha;
@@ -100,8 +103,8 @@ PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,PetscReal shift,
       PetscReal Nb_x = N1[b][0];
       PetscReal Nb_y = N1[b][1];
       PetscScalar Kab[2][2] = {{0,0},{0,0}};
-      Kab[0][0] = shift*Na*Nb + D1*(Na_x*Nb_x + Na_y*Nb_y);
-      Kab[1][1] = shift*Na*Nb + D2*(Na_x*Nb_x + Na_y*Nb_y);
+      Kab[0][0] = shift*Na*Nb + delta*D1*(Na_x*Nb_x + Na_y*Nb_y);
+      Kab[1][1] = shift*Na*Nb + delta*D2*(Na_x*Nb_x + Na_y*Nb_y);
       Kab[0][0] -= Na*f_u*Nb; Kab[0][1] -= Na*f_v*Nb;
       Kab[1][0] -= Na*g_u*Nb; Kab[1][1] -= Na*g_v*Nb;
       for (i=0;i<2;i++)
@@ -120,18 +123,19 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   AppCtx user;
-  user.D1    = 1.0;
-  user.D2    = 1.0;
-  user.alpha = 1.0;
-  user.beta  = 1.0;
-  user.gamma = 1.0;
-  user.tau1  = 1.0;
-  user.tau2  = 1.0; 
+  user.delta = 0.0045;
+  user.D1    =  0.500;
+  user.D2    =  1.000;
+  user.alpha =  0.899;
+  user.beta  = -0.910;
+  user.gamma = -user.alpha;
+  user.tau1  =  0.020;
+  user.tau2  =  0.200;
 
   PetscInt i;
   PetscInt dim = 2;
   PetscInt dof = 2;
-  PetscInt N[2] = {16,16}, nN = 2; 
+  PetscInt N[2] = {32,32}, nN = 2;
   PetscInt p[2] = { 2, 2}, np = 2;
   PetscInt C[2] = {-1,-1}, nC = 2;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","PatternFormation Options","IGA");CHKERRQ(ierr);
@@ -154,7 +158,7 @@ int main(int argc, char *argv[]) {
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisSetPeriodic(axis,PETSC_TRUE);CHKERRQ(ierr);
     ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
-    ierr = IGAAxisInitUniform(axis,p[i],C[i],N[i],0.0,1.0);CHKERRQ(ierr);
+    ierr = IGAAxisInitUniform(axis,p[i],C[i],N[i],-1.0,+1.0);CHKERRQ(ierr);
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -162,17 +166,21 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUserIFunction(iga,Function,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
+  PetscReal h = PetscMin(2.0/N[1],2.0/N[2]);
+  PetscReal dt = h/user.delta/15.0;
+
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(ts,1e-3);CHKERRQ(ierr);
-
-  ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,120,10000.0);CHKERRQ(ierr);
+  ierr = TSSetTime(ts,0.0);CHKERRQ(ierr);
+  ierr = TSSetTimeStep(ts,dt);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = VecSetRandom(U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = VecScale(U,1.);CHKERRQ(ierr);
   ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
