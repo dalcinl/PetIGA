@@ -757,6 +757,27 @@ PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJac
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUserIEFunction"
+PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *IEFunCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (IEFunction) iga->userops->IEFunction = IEFunction;
+  if (IEFunCtx)   iga->userops->IEFunCtx   = IEFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUserIEJacobian"
+PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *IEJacCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (IEJacobian) iga->userops->IEJacobian = IEJacobian;
+  if (IEJacCtx)   iga->userops->IEJacCtx   = IEJacCtx;
+  PetscFunctionReturn(0);
+}
 
 #if PETSC_VERSION_(3,2,0)
 #include "private/dmimpl.h"

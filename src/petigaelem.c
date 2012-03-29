@@ -635,7 +635,6 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   PetscFunctionReturn(0);
 }
 
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementAssembleVec"
 PetscErrorCode IGAElementAssembleVec(IGAElement element,PetscScalar F[],Vec vec)

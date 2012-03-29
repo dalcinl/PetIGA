@@ -1,5 +1,5 @@
 TARGETS = InputOutput \
-	  L2Proj1D L2Proj2D \
+          L2Proj1D L2Proj2D \
           Poisson1D Poisson2D Poisson3D \
           Laplace \
           Poisson \
@@ -98,6 +98,14 @@ runex4_1:
 	-@${MPIEXEC} -n 1 ./CahnHilliard2D ${OPTS} -ts_max_steps 2
 runex4_4:
 	-@${MPIEXEC} -n 4 ./CahnHilliard2D ${OPTS} -ts_max_steps 2
+runex5a_1:
+	-@${MPIEXEC} -n 1 ./PatternFormation ${OPTS} -ts_max_steps 2
+runex5a_4:
+	-@${MPIEXEC} -n 4 ./PatternFormation ${OPTS} -ts_max_steps 2
+runex5b_1:
+	-@${MPIEXEC} -n 1 ./PatternFormation ${OPTS} -ts_max_steps 2 -implicit
+runex5b_4:
+	-@${MPIEXEC} -n 4 ./PatternFormation ${OPTS} -ts_max_steps 2 -implicit
 
 InputOutput := InputOutput.PETSc runex0a_1 runex0a_2 runex0a_3 runex0a_4 runex0a_8 runex0a.rm InputOutput.rm
 L2Proj1D := L2Proj1D.PETSc runex1a_1 runex1a_4 L2Proj1D.rm
@@ -106,19 +114,20 @@ Poisson1D := Poisson1D.PETSc runex2a_1 runex2a_4 Poisson1D.rm
 Poisson2D := Poisson2D.PETSc runex2b_1 runex2b_4 Poisson2D.rm
 Poisson3D := Poisson3D.PETSc runex2c_1 runex2c_4 Poisson3D.rm
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
+PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b_4 PatternFormation.rm
 
 L2Proj       := $(L2Proj1D) $(L2Proj2D) $(L2Proj3D)
 Poisson      := $(Poisson1D) $(Poisson2D) $(Poisson3D)
 CahnHilliard := $(CahnHilliard2D) $(CahnHilliard3D)
 
-TESTEXAMPLES_C := $(InputOutput) $(L2Proj) $(Poisson) $(CahnHilliard)
+TESTEXAMPLES_C := $(InputOutput) $(L2Proj) $(Poisson) $(CahnHilliard) $(PatternFormation)
 TESTEXAMPLES_F :=
 TESTEXAMPLES_FORTRAN:=$(TESTEXAMPLES_F)
 testexamples:
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 testfortran:
 	-@if [ "${FC}" != "" ]; then \
-            ${OMAKE} tree ACTION=testexamples_Fortran PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
-          fi
+	    ${OMAKE} tree ACTION=testexamples_Fortran PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
+	  fi
 
 include ${PETIGA_DIR}/conf/petigatest
