@@ -107,10 +107,11 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   if (!viewer) {ierr = PetscViewerASCIIGetStdout(((PetscObject)iga)->comm,&viewer);CHKERRQ(ierr);}
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  if (!iga->setup) PetscFunctionReturn(0);
+  if (!iga->setup) PetscFunctionReturn(0); /* XXX */
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
+  if (isbinary) {ierr = IGASave(iga,viewer);CHKERRQ(ierr);}
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERSTRING,&isstring);CHKERRQ(ierr);
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
   {
     MPI_Comm  comm;
@@ -525,14 +526,30 @@ PetscErrorCode IGASetUp(IGA iga)
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
 
   { /* */
-    PetscBool flg;
-    char filename[PETSC_MAX_PATH_LEN] = "";
+    PetscBool flg1,flg2;
+    char filename1[PETSC_MAX_PATH_LEN] = "";
+    char filename2[PETSC_MAX_PATH_LEN] = "";
     PetscViewer viewer;
-    ierr = PetscOptionsGetString(((PetscObject)iga)->prefix,"-iga_view",filename,PETSC_MAX_PATH_LEN,&flg);CHKERRQ(ierr);
-    if (flg && !PetscPreLoadingOn) {
-      ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename,&viewer);CHKERRQ(ierr);
+    ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-iga_view",       "Information on IGA context",   "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-iga_view_binary","Save to file in binary format","IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
+    ierr = PetscOptionsEnd();CHKERRQ(ierr);//MatView_Private
+    if (flg1 && !PetscPreLoadingOn) {
+      ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename1,&viewer);CHKERRQ(ierr);
       ierr = IGAView(iga,viewer);CHKERRQ(ierr);
       ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    }
+    if (flg2 && !PetscPreLoadingOn) {
+      PetscViewer newviewer=0;
+      if (filename2[0]) {
+        ierr = PetscViewerBinaryOpen(((PetscObject)iga)->comm,filename2,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+        newviewer = viewer;
+      } else {
+        viewer = PETSC_VIEWER_BINARY_(((PetscObject)iga)->comm);
+        PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+      }
+      ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+      ierr = PetscViewerDestroy(&newviewer);CHKERRQ(ierr);
     }
   }
 

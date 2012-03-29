@@ -71,7 +71,7 @@ runex0a_4:
 runex0a_8:
 	-@${MPIEXEC} -n 8 ./InputOutput ${OPTS} -dim 3 -N 13,11,7 -p 3,2,1
 runex0a.rm:
-	-@${RM} -f iga.dat
+	-@${RM} -f iga.dat iga.dat.info
 
 runex1a_1:
 	-@${MPIEXEC} -n 1 ./L2Proj1D ${OPTS}

@@ -29,9 +29,11 @@ int main(int argc, char *argv[]) {
   if (n2<3) p[2] = p[0]; if (n2<2) p[1] = p[0];
   if (n3<3) C[2] = C[0]; if (n3<2) C[1] = C[0];
   for (i=0; i<dim; i++)  if (C[i] ==-1) C[i] = p[i] - 1;
+
+  MPI_Comm comm = PETSC_COMM_WORLD;
   
   IGA iga;
-  ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
+  ierr = IGACreate(comm,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
   ierr = IGASetDof(iga,dof);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
@@ -44,15 +46,30 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   
-  MPI_Comm comm;
-  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
-  IGA iganew;
-  ierr = IGACreate(comm,&iganew);CHKERRQ(ierr);
-  ierr = IGARead(iganew,"iga.dat");CHKERRQ(ierr);
-  ierr = IGASetUp(iganew);CHKERRQ(ierr);
+  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr); /* just for testing */
 
-  ierr = IGADestroy(&iganew);CHKERRQ(ierr);
+  IGA iga1;
+  ierr = IGACreate(comm,&iga1);CHKERRQ(ierr);
+  ierr = IGARead(iga1,"iga.dat");CHKERRQ(ierr);
+  ierr = IGASetUp(iga1);CHKERRQ(ierr);
+  ierr = IGARead(iga1,"iga.dat");CHKERRQ(ierr);  /* just for testing */
+  ierr = IGASetUp(iga1);CHKERRQ(ierr);
+  ierr = IGADestroy(&iga1);CHKERRQ(ierr);
+
+  PetscViewer viewer;
+  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_WRITE,&viewer);
+  ierr = IGASave(iga,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
+  IGA iga2;
+  ierr = IGACreate(comm,&iga2);CHKERRQ(ierr);
+  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_READ,&viewer);
+  ierr = IGALoad(iga2,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = IGASetUp(iga2);CHKERRQ(ierr);
+  ierr = IGADestroy(&iga2);CHKERRQ(ierr);
+
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;

@@ -191,6 +191,7 @@ struct _p_IGA {
 };
 
 extern PetscClassId IGA_CLASSID;
+#define IGA_FILE_CLASSID 1211299
 
 extern PetscErrorCode IGAInitializePackage(const char path[]);
 

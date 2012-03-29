@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-#define IGA_FILE_CLASSID DM_FILE_CLASSID
+static PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGALoad"
@@ -53,7 +53,16 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       PetscScalar min_w,max_w;
       ierr = IGACreateGeomDM(iga,&dm_geom);CHKERRQ(ierr);
       ierr = DMCreateGlobalVector(dm_geom,&vec_geom_global);CHKERRQ(ierr);
-      ierr = VecLoad(vec_geom_global,viewer);CHKERRQ(ierr);
+      if (!skipheader) {
+        ierr = VecLoad(vec_geom_global,viewer);CHKERRQ(ierr);
+      } else {
+        Vec vec_geom_natural;
+        ierr = DMDACreateNaturalVector(dm_geom,&vec_geom_natural);CHKERRQ(ierr);
+        ierr = VecLoad_Binary_SkipHeader(vec_geom_natural,viewer);CHKERRQ(ierr);
+        ierr = DMDANaturalToGlobalBegin(dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
+        ierr = DMDANaturalToGlobalEnd  (dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
+        ierr = VecDestroy(&vec_geom_natural);CHKERRQ(ierr);
+      }
       ierr = DMCreateLocalVector(dm_geom,&vec_geom_local);CHKERRQ(ierr);
       ierr = DMGlobalToLocalBegin(dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
       ierr = DMGlobalToLocalEnd  (dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
@@ -155,6 +164,7 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
   ierr = PetscViewerBinarySkipInfo(viewer);CHKERRQ(ierr);
+  /*ierr = PetscViewerBinarySetSkipHeader(viewer,PETSC_TRUE);CHKERRQ(ierr);*/
   ierr = PetscViewerFileSetMode(viewer,FILE_MODE_READ);CHKERRQ(ierr);
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
   ierr = IGALoad(iga,viewer);CHKERRQ(ierr);
@@ -176,9 +186,54 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
   ierr = PetscViewerBinarySkipInfo(viewer);CHKERRQ(ierr);
+  /*ierr = PetscViewerBinarySetSkipHeader(viewer,PETSC_TRUE);CHKERRQ(ierr);*/
   ierr = PetscViewerFileSetMode(viewer,FILE_MODE_WRITE);CHKERRQ(ierr);
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
   ierr = IGASave(iga,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "VecLoad_Binary_SkipHeader"
+static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec, PetscViewer viewer)
+{
+  MPI_Comm       comm;
+  PetscMPIInt    i,rank,size,tag;
+  int            fd;
+  PetscInt       n;
+  PetscScalar    *array,*work;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  ierr = PetscObjectGetComm((PetscObject)viewer,&comm);CHKERRQ(ierr);
+  ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+  ierr = PetscCommGetNewTag(comm,&tag);CHKERRQ(ierr);
+  ierr = PetscViewerBinaryGetDescriptor(viewer,&fd);CHKERRQ(ierr);
+
+  ierr = VecGetLocalSize(vec,&n);CHKERRQ(ierr);
+  ierr = VecGetArray(vec,&array);CHKERRQ(ierr);
+  if (!rank) {
+    ierr = PetscBinaryRead(fd,array,n,PETSC_SCALAR);CHKERRQ(ierr);
+    if (size > 1) {
+      const PetscInt *range = vec->map->range;
+      n = 1;
+      for (i=1; i<size; i++)
+        n = PetscMax(n,range[i+1] - range[i]);
+      ierr = PetscMalloc(n*sizeof(PetscScalar),&work);CHKERRQ(ierr);
+      for (i=1; i<size; i++) {
+        n   = range[i+1] - range[i];
+        ierr = PetscBinaryRead(fd,work,n,PETSC_SCALAR);CHKERRQ(ierr);
+        ierr = MPI_Send(work,n,MPIU_SCALAR,i,tag,comm);CHKERRQ(ierr);
+      }
+      ierr = PetscFree(work);CHKERRQ(ierr);
+    }
+  } else {
+    MPI_Status status;
+    ierr = MPI_Recv(array,n,MPIU_SCALAR,0,tag,comm,&status);CHKERRQ(ierr);
+  }
+  ierr = VecRestoreArray(vec,&array);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
