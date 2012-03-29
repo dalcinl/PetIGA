@@ -144,14 +144,27 @@ PetscErrorCode IGAAxisGetOrder(IGAAxis axis,PetscInt *p)
 #define __FUNCT__ "IGAAxisSetKnots"
 PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[])
 {
+  PetscInt       k;
   PetscReal      *V = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (U) PetscValidPointer(U,3);
+  /*
+  if (axis->p < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
+            "Must call IGAAxisSetOrder() first");
+  */
   if (m < 2*axis->p+1)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of knots must be at least %D, got %D",2*(axis->p+1),m+1);
+  if (U) for (k=1; k<=m; k++)
+           if (U[k-1] > U[k])
+             SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                      "Knot sequence must be increasing, "
+                      "got U[%D]=%G > U[%D]=%G",
+                      k-1,U[k-1],k,U[k]);
+
   if (U) {
     ierr = PetscMalloc((m+1)*sizeof(PetscReal),&V);CHKERRQ(ierr);
     ierr = PetscMemcpy(V,U,(m+1)*sizeof(PetscReal));CHKERRQ(ierr);
@@ -182,19 +195,83 @@ PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAAxisInitBreaks"
+PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt mult)
+{
+  PetscInt       i,j,k;
+  PetscInt       p,C,s,n,m,r;
+  PetscReal      *U;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(axis,1);
+  PetscValidPointer(u,3);
+
+  if (mult == PETSC_DEFAULT) mult = 1;
+  if (mult == PETSC_DECIDE)  mult = 1;
+
+  if (axis->p < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
+            "Must call IGAAxisSetOrder() first");
+  if (nu < 2)
+    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Number of breaks must be at least two, got %D",nu);
+  for (i=1; i<nu; i++)
+    if (u[i-1] >= u[i])
+      SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+               "Break sequence must be strictly increasing, "
+               "got u[%D]=%G %s u[%D]=%G",
+               i-1,u[i-1],i,u[i],(u[i]==u[i-1])?"==":">");
+  if (mult > axis->p)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Multiplicity must be less than or equal "
+             "polynomial order, got C=%D > p=%D",mult,axis->p);
+
+  p = axis->p; /* polynomial order */
+  s = PetscMax(1,mult); /* multiplicity */
+  C = p - s; /* continuity */
+  r = nu - 1; /* last break index */
+  m = 2*(p+1) + (r-1)*s - 1; /* last knot index */
+  n = m - p - 1; /* last basis function index */
+  ierr = PetscMalloc1(m+1,PetscReal,&U);CHKERRQ(ierr);
+
+  for(k=0; k<=p; k++) { /* open part */
+    U[k]   = u[0];
+    U[m-k] = u[r];
+  }
+  for(i=1; i<=r-1; i++) { /* r-1 breaks */
+    for(j=0; j<s; j++)    /* s times */
+      U[k++] = u[i];
+  }
+  if (axis->periodic) {
+    for(k=0; k<=C; k++) { /* periodic part */
+      U[k]     = U[p] - U[m-p] + U[n-C+k];
+      U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
+    }
+  }
+
+  ierr = PetscFree(axis->U);CHKERRQ(ierr);
+  axis->p = p;
+  axis->m = m;
+  axis->U = U;
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitUniform"
 PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
                                   PetscInt E,PetscReal Ui,PetscReal Uf)
 {
-  PetscInt       m,k,i,j;
+  PetscInt       i,j,k;
+  PetscInt       s,n,m;
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
 
   if (p == PETSC_DEFAULT) p = axis->p;
-  if (C == PETSC_DECIDE)  C = p-1;
   if (C == PETSC_DEFAULT) C = p-1;
+  if (C == PETSC_DECIDE)  C = p-1;
 
   if (E < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
@@ -204,23 +281,28 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
              "Polynomial order must be grather than zero, got %D",p);
   if (C < 0 || C >= p)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Continuity must be in range [0,%D), got %D",p,C);
+             "Continuity must be in range [0,%D], got %D",p-1,C);
+  if (Ui >= Uf)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
+             "Initial value %G must be less than final value %G",Ui,Uf);
 
-  m = 2*(p+1) + (E-1)*(p-C) - 1; /* last knot index */
-  ierr = PetscMalloc((m+1)*sizeof(PetscReal),&U);CHKERRQ(ierr);
+  s = p - C; /* multiplicity */
+  m = 2*(p+1) + (E-1)*s - 1; /* last knot index */
+  n = m - p - 1; /* last basis function index */
+  ierr = PetscMalloc1(m+1,PetscReal,&U);CHKERRQ(ierr);
 
   for(k=0; k<=p; k++) { /* open part */
     U[k]   = Ui;
     U[m-k] = Uf;
   }
-  for(i=1; i<=(E-1); i++) { /* (E-1) knots */
-    for(j=1; j<=(p-C); j++)   /* (p-C) times */
+  for(i=1; i<=(E-1); i++) { /* (E-1) breaks */
+    for(j=1; j<=s; j++)     /* s times */
       U[k++] = Ui + i * ((Uf-Ui)/E);
   }
   if (axis->periodic) {
     for(k=0; k<=C; k++) { /* periodic part */
-      U[k]     = Ui - Uf + U[m-C-(p+1)+k];
-      U[m-C+k] = Uf - Ui + U[(p+1)+k];
+      U[k]     = U[p] - U[m-p] + U[n-C+k];
+      U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
     }
   }
 
@@ -239,10 +321,32 @@ PetscErrorCode IGAAxisCheck(IGAAxis axis)
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (axis->p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
             "Must call IGAAxisSetOrder() first");
   if (!axis->U || axis->m < 2*axis->p+1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
             "Must call IGAAxisSetKnots() first");
+#ifdef PETSC_USE_DEBUG
+  {
+    PetscInt  k  = 1;
+    PetscInt  p  = axis->p;
+    PetscInt  m  = axis->m;
+    PetscReal *U = axis->U;
+    while (k <= m) {
+      PetscInt i=k,s=1;
+      if (U[k-1] > U[k])
+        SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                 "Knot sequence must be increasing, "
+                 "got U[%D]=%G > U[%D]=%G",
+                 k-1,U[k-1],k,U[k]);
+      while (++k < m && U[k-1] == U[k]) s++;
+      if (s > p)
+        SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                 "Knot U[%D]=%G has multiplicity %D "
+                 "greather than polynomial order %D",
+                 i,U[i],s,p);
+    }
+  }
+#endif
   PetscFunctionReturn(0);
 }

@@ -47,6 +47,7 @@ extern PetscErrorCode IGAAxisSetOrder(IGAAxis axis,PetscInt p);
 extern PetscErrorCode IGAAxisGetOrder(IGAAxis axis,PetscInt *p);
 extern PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[]);
 extern PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[]);
+extern PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt r,PetscReal u[],PetscInt s);
 extern PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
                                          PetscInt E,PetscReal Ui,PetscReal Uf);
 extern PetscErrorCode IGAAxisCheck(IGAAxis axis);
