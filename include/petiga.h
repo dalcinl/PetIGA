@@ -11,10 +11,6 @@
 #include <petscdmda.h>
 PETSC_EXTERN_CXX_BEGIN
 
-#ifndef PetscMalloc1
-#define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
-#endif
-
 /* ---------------------------------------------------------------- */
 
 typedef struct _n_IGAAxis     *IGAAxis;
@@ -398,9 +394,13 @@ extern PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal a,
 
 /* ---------------------------------------------------------------- */
 
+#ifndef PetscMalloc1
+#define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
+#endif
+
 #if defined(PETSC_USE_DEBUG)
-#define IGACheckSetUp(iga,arg)                                           \
-    do { if (PetscUnlikely(!(iga)->setup))                               \
+#define IGACheckSetUp(iga,arg) do {                                      \
+    if (PetscUnlikely(!(iga)->setup))                                    \
       SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
                "Must call IGASetUp() on argument %D \"%s\" before %s()", \
                (arg),#iga,PETSC_FUNCTION_NAME);                          \
