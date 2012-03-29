@@ -259,35 +259,34 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitUniform"
-PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
-                                  PetscInt E,PetscReal Ui,PetscReal Uf)
+PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C)
 {
   PetscInt       i,j,k;
-  PetscInt       s,n,m;
+  PetscInt       p,s,n,m;
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
 
-  if (p == PETSC_DEFAULT) p = axis->p;
-  if (C == PETSC_DEFAULT) C = p-1;
-  if (C == PETSC_DECIDE)  C = p-1;
+  if (C == PETSC_DEFAULT) C = axis->p-1;
+  if (C == PETSC_DECIDE)  C = axis->p-1;
 
-  if (E < 1)
+  if (axis->p < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
+            "Must call IGAAxisSetOrder() first");
+  if (N < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Number of elements must be grather than zero, got %D",E);
-  if (p < 1)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Polynomial order must be grather than zero, got %D",p);
-  if (C < 0 || C >= p)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Continuity must be in range [0,%D], got %D",p-1,C);
+             "Number of elements must be grather than zero, got %D",N);
   if (Ui >= Uf)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Initial value %G must be less than final value %G",Ui,Uf);
+  if (C < 0 || C >= axis->p)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
+             "Continuity must be in range [0,%D], got %D",axis->p-1,C);
 
+  p = axis->p;
   s = p - C; /* multiplicity */
-  m = 2*(p+1) + (E-1)*s - 1; /* last knot index */
+  m = 2*(p+1) + (N-1)*s - 1; /* last knot index */
   n = m - p - 1; /* last basis function index */
   ierr = PetscMalloc1(m+1,PetscReal,&U);CHKERRQ(ierr);
 
@@ -295,9 +294,9 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt p,PetscInt C,
     U[k]   = Ui;
     U[m-k] = Uf;
   }
-  for(i=1; i<=(E-1); i++) { /* (E-1) breaks */
+  for(i=1; i<=(N-1); i++) { /* (N-1) breaks */
     for(j=1; j<=s; j++)     /* s times */
-      U[k++] = Ui + i * ((Uf-Ui)/E);
+      U[k++] = Ui + i * ((Uf-Ui)/N);
   }
   if (axis->periodic) {
     for(k=0; k<=C; k++) { /* periodic part */

@@ -77,9 +77,10 @@ int main(int argc, char *argv[]) {
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,1);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
-  IGAAxis axis0;
-  ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,p,C,N,-1.0,1.0);CHKERRQ(ierr);
+  IGAAxis axis;
+  ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetOrder(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis,N,-1.0,1.0,C);CHKERRQ(ierr);
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);

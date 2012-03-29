@@ -55,14 +55,16 @@ int main(int argc, char *argv[]) {
   if (n3<3) C[2] = C[0]; if (n3<2) C[1] = C[0];
   for (i=0; i<dim; i++)  if (C[i] ==-1) C[i] = p[i] - 1;
   
-  IGA iga; IGAAxis axis;
+  IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
   ierr = IGASetDof(iga,dof);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
+    IGAAxis axis;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisSetPeriodic(axis,t[i]);CHKERRQ(ierr);
-    ierr = IGAAxisInitUniform(axis,p[i],C[i],N[i],0.0,1.0);CHKERRQ(ierr);
+    ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
+    ierr = IGAAxisInitUniform(axis,N[i],0.0,1.0,C[i]);CHKERRQ(ierr);
     for (j=0; j<2; j++) {
       IGABoundary bnd;
       PetscInt    field = 0;

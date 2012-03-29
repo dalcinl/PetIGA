@@ -368,19 +368,19 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
   ierr = IGAAxisSetOrder(axis0,p[0]);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis0,PETSC_TRUE);CHKERRQ(ierr);
-  //ierr = IGAAxisInitUniform(axis0,p,C,N,-0.5*Lx,0.5*Lx);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,p[0],C[0],N[0],0,Lx);CHKERRQ(ierr);
+  //ierr = IGAAxisInitUniform(axis0,N,-0.5*Lx,0.5*Lx);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis0,N[0],0.0,Lx,C[0]);CHKERRQ(ierr);
   IGAAxis axis1;
   ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
   ierr = IGAAxisSetOrder(axis1,p[1]);CHKERRQ(ierr);
-  //ierr = IGAAxisInitUniform(axis1,p,C,N,-0.5*Ly,0.5*Ly);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis1,p[1],C[1],N[1],0,Ly);CHKERRQ(ierr);
+  //ierr = IGAAxisInitUniform(axis1,N,-0.5*Ly,0.5*Ly);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis1,N[1],0.0,Ly,C[1]);CHKERRQ(ierr);
   IGAAxis axis2;
   ierr = IGAGetAxis(iga,2,&axis2);CHKERRQ(ierr);
   ierr = IGAAxisSetOrder(axis2,p[2]);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis2,PETSC_TRUE);CHKERRQ(ierr);
-  //ierr = IGAAxisInitUniform(axis2,p,C,N,-0.5*Lz,0.5*Lz);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis2,p[2],C[2],N[2],0,Lz);CHKERRQ(ierr);
+  //ierr = IGAAxisInitUniform(axis2,N,-0.5*Lz,0.5*Lz);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis2,N[2],0.0,Lz,C[2]);CHKERRQ(ierr);
 
   IGABoundary bnd;
   PetscInt dir=1,side,field;

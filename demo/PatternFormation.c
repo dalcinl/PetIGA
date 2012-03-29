@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisSetPeriodic(axis,PETSC_TRUE);CHKERRQ(ierr);
     ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
-    ierr = IGAAxisInitUniform(axis,p[i],C[i],N[i],-1.0,+1.0);CHKERRQ(ierr);
+    ierr = IGAAxisInitUniform(axis,N[i],-1.0,+1.0,C[i]);CHKERRQ(ierr);
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);

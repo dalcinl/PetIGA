@@ -50,15 +50,13 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDim(iga,3);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   
-  IGAAxis axis0;
-  ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,p[0],C[0],N[0],-1.0,1.0);CHKERRQ(ierr);
-  IGAAxis axis1;
-  ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis1,p[1],C[1],N[1],-1.0,1.0);CHKERRQ(ierr);
-  IGAAxis axis2;
-  ierr = IGAGetAxis(iga,2,&axis2);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis2,p[2],C[2],N[2],-1.0,1.0);CHKERRQ(ierr);
+  PetscInt i;
+  for (i=0; i<3; i++) {
+    IGAAxis axis;
+    ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
+    ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
+    ierr = IGAAxisInitUniform(axis,N[i],-1.0,+1.0,C[i]);CHKERRQ(ierr);
+  }
 
   IGABoundary bnd;
   PetscInt dir,side;
