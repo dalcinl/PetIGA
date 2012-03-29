@@ -21,7 +21,7 @@ PetscErrorCode IGAFormFunction(IGA iga,Vec vecU,Vec vecF,
   /* Get local vector U */
   ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);
+  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
@@ -81,7 +81,7 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   /* Get local vector U */
   ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);
+  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
@@ -104,7 +104,7 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
     }
     /* */
     ierr = IGAElementFixJacobian(element,J);CHKERRQ(ierr);
-    ierr = IGAElementAssembleMat(element,J,matJ);;CHKERRQ(ierr);
+    ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
 
