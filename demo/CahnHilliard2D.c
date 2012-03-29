@@ -35,14 +35,14 @@ void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,Pet
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,PetscReal shift,
-                        PetscReal t,const PetscScalar *U,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *V,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
-  PetscScalar c,c_t;
-  IGAPointInterpolate(p,0,U,&c);
+  PetscScalar c_t,c;
   IGAPointInterpolate(p,0,V,&c_t);
+  IGAPointInterpolate(p,0,U,&c);
 
   PetscReal M,dM;
   Mobility(user,c,&M,&dM,NULL);
@@ -85,14 +85,14 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint p,PetscReal dt,PetscReal shift,
-                       PetscReal t,const PetscScalar *U,const PetscScalar *V,
+                       PetscReal t,const PetscScalar *V,const PetscScalar *U,
                        PetscScalar *K,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
-  PetscScalar c,c_t;
-  IGAPointInterpolate(p,0,U,&c);
+  PetscScalar c_t,c;
   IGAPointInterpolate(p,0,V,&c_t);
+  IGAPointInterpolate(p,0,U,&c);
 
   PetscReal M,dM,d2M;
   Mobility(user,c,&M,&dM,&d2M);

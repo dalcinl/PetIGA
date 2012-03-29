@@ -113,10 +113,10 @@ typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscS
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
 typedef PetscErrorCode (*IGAUserIFunction) (IGAPoint point,PetscReal dt,PetscReal a,
-                                            PetscReal t,const PetscScalar *U,const PetscScalar *V,PetscScalar *F,
+                                            PetscReal t,const PetscScalar *V,const PetscScalar *U,PetscScalar *F,
                                             void *ctx);
 typedef PetscErrorCode (*IGAUserIJacobian) (IGAPoint point,PetscReal dt,PetscReal a,
-                                            PetscReal t,const PetscScalar *U,const PetscScalar *V,PetscScalar *J,
+                                            PetscReal t,const PetscScalar *V,const PetscScalar *U,PetscScalar *J,
                                             void *ctx);
 
 typedef struct _IGAUserOps *IGAUserOps;
@@ -371,10 +371,10 @@ extern PetscErrorCode IGAFormJacobian(IGA iga,Vec U,Mat J,
 
 extern PetscErrorCode IGACreateTS(IGA iga,TS *ts);
 extern PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal a,
-                                       PetscReal t,Vec U,Vec V,Vec F,
+                                       PetscReal t,Vec V,Vec U,Vec F,
                                        IGAUserIFunction IFunction,void *ctx);
 extern PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal a,
-                                       PetscReal t,Vec U,Vec V,Mat J,
+                                       PetscReal t,Vec V,Vec U,Mat J,
                                        IGAUserIJacobian IJacobian,void *ctx);
 
 /* ---------------------------------------------------------------- */

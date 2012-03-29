@@ -3,46 +3,46 @@
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIFunction"
 PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
-                                PetscReal t,Vec vecU,Vec vecV,Vec vecF,
+                                PetscReal t,Vec vecV,Vec vecU,Vec vecF,
                                 IGAUserIFunction IFunction, void *ctx)
 {
-  Vec               localU;
   Vec               localV;
-  const PetscScalar *arrayU;
+  Vec               localU;
   const PetscScalar *arrayV;
+  const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
-  PetscValidHeaderSpecific(vecV,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(vecF,VEC_CLASSID,4);
+  PetscValidHeaderSpecific(vecV,VEC_CLASSID,5);
+  PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
+  PetscValidHeaderSpecific(vecF,VEC_CLASSID,7);
 
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
 
   /* Get local vectors U and V */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   /* Communicate global to local */
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
+  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
   /* Get array from the local vectors */
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
   ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
-    PetscScalar *U, *V, *F;
-    ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
+    PetscScalar *V, *U, *F;
     ierr = IGAElementGetWorkVec(element,&V);CHKERRQ(ierr);
+    ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
     /* */
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* Quadrature loop */
     ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
@@ -50,7 +50,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
     while (IGAPointNext(point)) {
       PetscScalar *R;
       ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
-      ierr = IFunction(point,dt,shift,t,U,V,R,ctx);CHKERRQ(ierr);
+      ierr = IFunction(point,dt,shift,t,V,U,R,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
     }
     /* */
@@ -76,46 +76,46 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIJacobian"
 PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
-                                PetscReal t,Vec vecU,Vec vecV,Mat matJ,
+                                PetscReal t,Vec vecV,Vec vecU,Mat matJ,
                                 IGAUserIJacobian IJacobian,void *ctx)
 {
-  Vec               localU;
   Vec               localV;
-  const PetscScalar *arrayU;
+  Vec               localU;
   const PetscScalar *arrayV;
+  const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidHeaderSpecific(vecU,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(vecV,VEC_CLASSID,4);
-  PetscValidHeaderSpecific(matJ,MAT_CLASSID,6);
+  PetscValidHeaderSpecific(vecV,VEC_CLASSID,5);
+  PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
+  PetscValidHeaderSpecific(matJ,MAT_CLASSID,7);
 
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
 
   /* Get local vectors U and V */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
   /* Communicate global to local */
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
+  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
   /* Get array from the local vectors */
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
   ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
-    PetscScalar *U, *V, *J;
+    PetscScalar *V, *U, *J;
     ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&V);CHKERRQ(ierr);
     ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
     /* */
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* Quadrature loop */
     ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
@@ -123,7 +123,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
     while (IGAPointNext(point)) {
       PetscScalar *K;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IJacobian(point,dt,shift,t,U,V,K,ctx);CHKERRQ(ierr);
+      ierr = IJacobian(point,dt,shift,t,V,U,K,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
     }
     /* */
@@ -133,8 +133,8 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
 
   /* Restore array to the vectors */
-  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
   /* Restore local vectors U and V */
   ierr = IGARestoreLocalVec(iga,&localV);CHKERRQ(ierr);
   ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
@@ -160,7 +160,7 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
   PetscValidHeaderSpecific(F,VEC_CLASSID,5);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = IGAFormIFunction(iga,dt,shift,t,U,V,F,
+  ierr = IGAFormIFunction(iga,dt,shift,t,V,U,F,
                           iga->userops->IFunction,
                           iga->userops->IFunCtx);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -184,7 +184,7 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscValidPointer(m,8);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,9);
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = IGAFormIJacobian(iga,dt,shift,t,U,V,*P,
+  ierr = IGAFormIJacobian(iga,dt,shift,t,V,U,*P,
                           iga->userops->IJacobian,
                           iga->userops->IJacCtx);CHKERRQ(ierr);
   if (*J != * P) {

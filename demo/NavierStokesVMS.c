@@ -86,13 +86,13 @@ void FineScale(const AppCtx *user,PetscScalar tauM,PetscScalar tauC,
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,PetscReal shift,
-                        PetscReal t,const PetscScalar *U,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *V,const PetscScalar *U,
                         PetscScalar *Re,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
   PetscReal nu = user->nu;
 
-  PetscScalar u[4],u_t[4];
+  PetscScalar u_t[4],u[4];
   PetscScalar grad_u[4][3];
   PetscScalar der2_u[4][3][3];
   IGAPointInterpolate(pnt,0,V,&u_t[0]);
@@ -172,7 +172,7 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,PetscReal shift,
-                       PetscReal t,const PetscScalar *U,const PetscScalar *V,
+                       PetscReal t,const PetscScalar *V,const PetscScalar *U,
                        PetscScalar *Ke,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
