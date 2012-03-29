@@ -43,7 +43,7 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscFunctionBegin;
   if (!axis) PetscFunctionReturn(0);
   PetscValidPointer(axis,1);
-  if (axis->m > 1) {
+  if (axis->m != 1) {
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     ierr = PetscMalloc(2*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
   }
