@@ -173,14 +173,19 @@ PetscErrorCode IGACreateSNES(IGA iga, SNES *snes)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(snes,2);
+
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = SNESCreate(comm,snes);CHKERRQ(ierr);
+
   ierr = IGACreateVec(iga,&F);CHKERRQ(ierr);
   ierr = SNESSetFunction(*snes,F,IGASNESFormFunction,iga);CHKERRQ(ierr);
   ierr = VecDestroy(&F);CHKERRQ(ierr);
+
   ierr = IGACreateMat(iga,&J);CHKERRQ(ierr);
   ierr = SNESSetJacobian(*snes,J,J,IGASNESFormJacobian,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
-  /*ierr = SNESSetDM(**snes,iga->dm_dof);CHKERRQ(ierr);*/
+
+  ierr = PetscObjectCompose((PetscObject)*snes,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }

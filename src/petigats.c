@@ -207,17 +207,23 @@ PetscErrorCode IGACreateTS(IGA iga, TS *ts)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(ts,2);
+
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = TSCreate(comm,ts);CHKERRQ(ierr);
+
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = TSSetSolution(*ts,U);CHKERRQ(ierr);
   ierr = VecDestroy(&U);CHKERRQ(ierr);
+
   ierr = IGACreateVec(iga,&F);CHKERRQ(ierr);
   ierr = TSSetIFunction(*ts,F,IGATSFormIFunction,iga);CHKERRQ(ierr);
   ierr = VecDestroy(&F);CHKERRQ(ierr);
+
   ierr = IGACreateMat(iga,&J);CHKERRQ(ierr);
   ierr = TSSetIJacobian(*ts,J,J,IGATSFormIJacobian,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
-  /*ierr = TSSetDM(*ts,iga->dm_dof);CHKERRQ(ierr);*/
+
+  ierr = PetscObjectCompose((PetscObject)*ts,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
