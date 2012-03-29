@@ -49,17 +49,18 @@ build:
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "========================================="
 	-@echo "Beginning to compile PetIGA library"
-#	-@echo "========================================="
-	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	-@${OMAKE} ranlib              PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	-@${OMAKE} compile PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	-@${OMAKE} ranlib  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed building PetIGA library"
 	-@echo "========================================="
+compile:
+	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 ranlib:
 	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
 sharedlibs:
 	-@${OMAKE} shared_nomesg PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} \
 	           | ${GREP} -v "making shared libraries in" 
-.PHONY: build ranlib sharedlibs
+.PHONY: build compile ranlib sharedlibs
 
 # Delete PetIGA library
 deletelibs:
