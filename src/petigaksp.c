@@ -1,5 +1,7 @@
 #include "petiga.h"
 
+extern PetscLogEvent IGA_FormSystem;
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormSystem"
 PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void *ctx)
@@ -16,6 +18,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
 
+  ierr = PetscLogEventBegin(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
@@ -37,6 +40,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
     ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

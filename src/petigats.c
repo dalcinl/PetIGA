@@ -1,5 +1,8 @@
 #include "petiga.h"
 
+extern PetscLogEvent IGA_FormFunction;
+extern PetscLogEvent IGA_FormJacobian;
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIFunction"
 PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
@@ -35,6 +38,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
   ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element loop */
+  ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
@@ -60,6 +64,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementAssembleVec(element,F,vecF);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
   /* Restore array to the local vectors */
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
@@ -110,6 +115,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
   ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
 
   /* Element Loop */
+  ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
@@ -135,6 +141,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
   /* Restore array to the vectors */
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
@@ -191,6 +198,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
   ierr = VecGetArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Element loop */
+  ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
@@ -219,6 +227,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementAssembleVec(element,F,vecF);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
   /* Restore array and local vector V */
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
@@ -278,6 +287,7 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
   ierr = VecGetArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Element Loop */
+  ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
   ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
   ierr = IGAElementBegin(element);CHKERRQ(ierr);
   while (IGAElementNext(element)) {
@@ -306,6 +316,7 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
     ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
   }
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
   /* Restore array and local vector V */
   ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
