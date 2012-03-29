@@ -379,5 +379,18 @@ extern PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal a,
 
 /* ---------------------------------------------------------------- */
 
+#if defined(PETSC_USE_DEBUG)
+#define IGACheckSetUp(iga,arg)                                           \
+    do { if (PetscUnlikely(!(iga)->setup))                               \
+      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
+               "Must call IGASetUp() on argument %D \"%s\" before %s()", \
+               (arg),#iga,PETSC_FUNCTION_NAME);                          \
+    } while (0)
+#else
+#define IGACheckSetUp(iga,arg) do {} while (0)
+#endif
+
+/* ---------------------------------------------------------------- */
+
 PETSC_EXTERN_CXX_END
 #endif/*PETIGA_H*/

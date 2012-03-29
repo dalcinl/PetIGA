@@ -4,17 +4,6 @@
 #include "private/matimpl.h"
 #endif
 
-#if defined(PETSC_USE_DEBUG)
-#  define IGACheckSetUp(iga,arg) do {                                   \
-    if (PetscUnlikely(!(iga)->setup))                                   \
-      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                \
-               "Must call IGASetUp() on argument %D \"%s\" before %s()",\
-               (arg),#iga,PETSC_FUNCTION_NAME);                         \
-    } while (0)
-#else
-#  define IGACheckSetUp(iga,arg) do {} while (0)
-#endif
-
 EXTERN_C_BEGIN
 extern PetscErrorCode MatView_MPI_DA(Mat,PetscViewer);
 extern PetscErrorCode MatLoad_MPI_DA(Mat,PetscViewer);

@@ -11,6 +11,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);

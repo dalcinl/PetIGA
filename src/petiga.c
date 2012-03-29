@@ -4,17 +4,6 @@
 static PetscErrorCode DMSetMatType(DM dm,const MatType mattype);
 #endif
 
-#if defined(PETSC_USE_DEBUG)
-#  define IGACheckSetUp(iga,arg) do {                                    \
-    if (PetscUnlikely(!(iga)->setup))                                    \
-      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
-               "Must call IGASetUp() on argument %D \"%s\" before %s()", \
-               (arg),#iga,PETSC_FUNCTION_NAME);                          \
-    } while (0)
-#else
-#  define IGACheckSetUp(iga,arg) do {} while (0)
-#endif
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreate"
 PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)

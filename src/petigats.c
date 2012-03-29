@@ -18,6 +18,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
   PetscValidHeaderSpecific(vecV,VEC_CLASSID,5);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
   PetscValidHeaderSpecific(vecF,VEC_CLASSID,7);
+  IGACheckSetUp(iga,1);
 
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
@@ -91,6 +92,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
   PetscValidHeaderSpecific(vecV,VEC_CLASSID,5);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
   PetscValidHeaderSpecific(matJ,MAT_CLASSID,7);
+  IGACheckSetUp(iga,1);
 
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
@@ -159,6 +161,8 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
   PetscValidHeaderSpecific(F,VEC_CLASSID,5);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
+  if (!iga->userops->IFunction)
+    SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIFunction()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   ierr = IGAFormIFunction(iga,dt,shift,t,V,U,F,
                           iga->userops->IFunction,
@@ -183,6 +187,8 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscValidHeaderSpecific(*P,MAT_CLASSID,7);
   PetscValidPointer(m,8);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,9);
+  if (!iga->userops->IJacobian)
+    SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIJacobian()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   ierr = IGAFormIJacobian(iga,dt,shift,t,V,U,*P,
                           iga->userops->IJacobian,

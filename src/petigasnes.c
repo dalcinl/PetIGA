@@ -14,6 +14,7 @@ PetscErrorCode IGAFormFunction(IGA iga,Vec vecU,Vec vecF,
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
   PetscValidHeaderSpecific(vecF,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
 
   /* Clear global vector F*/
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
@@ -74,6 +75,7 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
   PetscValidHeaderSpecific(matJ,MAT_CLASSID,3);
+  IGACheckSetUp(iga,1);
 
   /* Clear global matrix J */
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
@@ -130,6 +132,8 @@ PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
   PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   PetscValidHeaderSpecific(F,VEC_CLASSID,3);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,4);
+  if (!iga->userops->Function)
+    SETERRQ(((PetscObject)snes)->comm,PETSC_ERR_USER,"Must call IGASetUserFunction()");
   ierr = IGAFormFunction(iga,U,F,
                          iga->userops->Function,
                          iga->userops->FunCtx);CHKERRQ(ierr);
@@ -151,6 +155,8 @@ PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat *J, Mat *P,MatStructure *
   PetscValidHeaderSpecific(*P,MAT_CLASSID,4);
   PetscValidPointer(m,5);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
+  if (!iga->userops->Jacobian)
+    SETERRQ(((PetscObject)snes)->comm,PETSC_ERR_USER,"Must call IGASetUserJacobian()");
   ierr = IGAFormJacobian(iga,U,*P,
                          iga->userops->Jacobian,
                          iga->userops->JacCtx);CHKERRQ(ierr);
