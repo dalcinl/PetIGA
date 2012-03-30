@@ -58,8 +58,10 @@ int main(int argc, char *argv[]) {
 
   PetscInt choice=2;
   const char *choicelist[] = {"line", "parabola", "poly3", "poly4", 0};
+  PetscBool t=PETSC_FALSE;
   PetscInt N=16, p=2, C=PETSC_DECIDE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Projection1D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-periodic", "periodic",__FILE__,t,&t,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-N", "number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p", "polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-C", "global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   IGAAxis axis;
   ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetPeriodic(axis,t);CHKERRQ(ierr);
   ierr = IGAAxisSetOrder(axis,p);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis,N,-1.0,1.0,C);CHKERRQ(ierr);
 

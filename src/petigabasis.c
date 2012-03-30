@@ -45,6 +45,7 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
   ierr = PetscFree(basis->point);CHKERRQ(ierr);
   ierr = PetscFree(basis->value);CHKERRQ(ierr);
+  basis->periodic = PETSC_FALSE;
   basis->nnp = 0;
   ierr = PetscFree(basis->span);CHKERRQ(ierr);
   ierr = PetscFree(basis->offset);CHKERRQ(ierr);
@@ -71,7 +72,8 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInit"
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p,n;
+  PetscBool      periodic;
+  PetscInt       p,m,n,s;
   PetscReal      *U,*X,*W;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
@@ -90,8 +92,9 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   PetscValidPointer(rule,3);
 
   p = axis->p;
-  n = axis->m-p-1;
+  m = axis->m;
   U = axis->U;
+  n = m-p-1;
 
   nqp = rule->nqp;
   X   = rule->point;
@@ -100,7 +103,10 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   nel = SpanCount(n,p,U);
   nen = p+1;
   ndr = d+1;
-  nnp = axis->periodic ? n+1-p : n+1;
+
+  periodic = axis->periodic;
+  for (s=1; s<p && U[m-p] == U[m-p+s]; s++);
+  nnp = periodic ? n-p+s : n+1;
 
   ierr = PetscMalloc1(nel,PetscInt,&span);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel,PetscReal,&detJ);CHKERRQ(ierr);
@@ -139,9 +145,10 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   basis->point  = point;
   basis->value  = value;
 
-  basis->nnp     = nnp;
-  basis->span    = span;
-  basis->offset  = offset;
+  basis->periodic = periodic;
+  basis->nnp      = nnp;
+  basis->span     = span;
+  basis->offset   = offset;
 
   PetscFunctionReturn(0);
 }

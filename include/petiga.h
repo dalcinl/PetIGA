@@ -77,6 +77,7 @@ struct _n_IGABasis {
   PetscReal *point;  /* [nel][nqp]         */
   PetscReal *value;  /* [nel][nqp][nen][d] */
   /**/
+  PetscBool periodic; /* periodicity */
   PetscInt  nnp;      /* number of global basis functions */
   PetscInt  *span;    /* [nel] span index                 */
   PetscInt  *offset;  /* [nel] basis offset               */

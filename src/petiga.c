@@ -341,24 +341,18 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
                        &swidth,&btype[0],&btype[1],&btype[2],0);CHKERRQ(ierr);
     ierr = DMDAGetOwnershipRanges(dm_base,&ranges[0],&ranges[1],&ranges[2]);CHKERRQ(ierr);
   } else {
+    IGABasis *BD = iga->basis;
+    swidth = 0;
     for (i=0; i<dim; i++) {
-      IGAAxis   axis;
-      PetscBool periodic;
-      PetscInt  p,n,m;
-      ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisGetPeriodic(axis,&periodic);CHKERRQ(ierr);
-      ierr = IGAAxisGetOrder(axis,&p);CHKERRQ(ierr);
-      ierr = IGAAxisGetKnots(axis,&m,0);CHKERRQ(ierr);
-      n = m-p-1;
-      swidth = PetscMax(swidth,p);
-      sizes[i] = periodic ? n+1-p : n+1;
-      btype[i] = periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
+      swidth   = PetscMax(swidth,BD[i]->p); /* XXX Overestimated !! */
+      sizes[i] = BD[i]->nnp;
+      btype[i] = BD[i]->periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
     }
   }
 
   ierr = DMDACreate(((PetscObject)iga)->comm,&dm);CHKERRQ(ierr);
-  ierr = DMDASetDim(dm,dim); CHKERRQ(ierr);
-  ierr = DMDASetDof(dm,dof); CHKERRQ(ierr);
+  ierr = DMDASetDim(dm,dim);CHKERRQ(ierr);
+  ierr = DMDASetDof(dm,dof);CHKERRQ(ierr);
   ierr = DMDASetSizes(dm,sizes[0],sizes[1],sizes[2]); CHKERRQ(ierr);
   ierr = DMDASetNumProcs(dm,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
   ierr = DMDASetOwnershipRanges(dm,ranges[0],ranges[1],ranges[2]);CHKERRQ(ierr);
@@ -452,7 +446,6 @@ PetscErrorCode IGASetUp(IGA iga)
   {
     PetscInt i;
     PetscInt dim = iga->dim;
-    IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
     PetscInt *proc_rank = iga->proc_rank;
     PetscInt *proc_sizes = iga->proc_sizes;
@@ -504,7 +497,7 @@ PetscErrorCode IGASetUp(IGA iga)
       PetscInt first = node_start[i];
       PetscInt last  = node_start[i] + node_width[i] - 1;
       PetscInt start = 0, end = nel;
-      if (AX[i]->periodic) middle = 0; /* XXX Is this optimal? */
+      if (BD[i]->periodic) middle = 0; /* XXX Is this optimal? */
       for (iel=0; iel<nel; iel++) {
         if (offset[iel] + middle < first) start++;
         if (offset[iel] + middle > last)  end--;
