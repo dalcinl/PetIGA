@@ -98,10 +98,11 @@ PetscErrorCode IGAReset(IGA iga)
 #define __FUNCT__ "IGAView"
 PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 {
-  PetscBool      isstring;
-  PetscBool      isascii;
-  PetscBool      isbinary;
-  PetscErrorCode ierr;
+  PetscBool         isstring;
+  PetscBool         isascii;
+  PetscBool         isbinary;
+  PetscViewerFormat format;
+  PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (!viewer) {ierr = PetscViewerASCIIGetStdout(((PetscObject)iga)->comm,&viewer);CHKERRQ(ierr);}
@@ -113,11 +114,12 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERSTRING,&isstring);CHKERRQ(ierr);
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
+  ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   {
     MPI_Comm  comm;
-    PetscInt  i,dim,dof;
     PetscBool geometry = iga->vec_geom ? PETSC_TRUE : PETSC_FALSE;
     PetscBool rational = geometry ? iga->rational : PETSC_FALSE;
+    PetscInt  i,dim,dof;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
@@ -132,12 +134,8 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
                              iga->proc_sizes[i],iga->node_sizes[i],iga->elem_sizes[i]);CHKERRQ(ierr);
     }
     { /* */
-      PetscInt iloc[2] = {1, 1};
-      PetscInt isum[2],imin[2],imax[2];
-      for (i=0; i<dim; i++) {
-        iloc[0] *= iga->node_width[i];
-        iloc[1] *= iga->elem_width[i];
-      }
+      PetscInt isum[2],imin[2],imax[2],iloc[2] = {1, 1};
+      for (i=0; i<dim; i++) {iloc[0] *= iga->node_width[i]; iloc[1] *= iga->elem_width[i];}
       ierr = MPI_Allreduce(&iloc,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
       ierr = MPI_Allreduce(&iloc,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
       ierr = MPI_Allreduce(&iloc,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
@@ -146,19 +144,29 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
                                     isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
     }
-    /*
-    PetscMPIInt index;
-    PetscInt *ranks[3] = iga->proc_rank;
-    ierr = MPI_Comm_rank(comm,&index);CHKERRQ(ierr);
-    ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);
-    ierr = PetscViewerASCIISynchronizedPrintf(viewer,
-                                              "[%d] (%D,%D,%D): ",
-                                              (int)index,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
-    ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nodes=%D elements=%D\n",nnodes,nelems);
-    ierr = PetscViewerFlush(viewer);
-    ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);
-    */
-  }
+    if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) {
+        PetscMPIInt rank; PetscInt *ranks = iga->proc_rank;
+        PetscInt *nnp = iga->node_width, tnnp = 1, *snp = iga->node_start;
+        PetscInt *nel = iga->elem_width, tnel = 1, *sel = iga->elem_start;
+        for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
+        ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"[%d] (%D,%D,%D): ",
+                                                  (int)rank,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nodes=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D  ",
+                                                  snp[0],snp[0]+nnp[0]-1,
+                                                  snp[1],snp[1]+nnp[1]-1,
+                                                  snp[2],snp[2]+nnp[2]-1,
+                                                  nnp[0],nnp[1],nnp[2],tnnp);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"elements=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D\n",
+                                                  sel[0],sel[0]+nel[0]-1,
+                                                  sel[1],sel[1]+nel[1]-1,
+                                                  sel[2],sel[2]+nel[2]-1,
+                                                  nel[0],nel[1],nel[2],tnel);CHKERRQ(ierr);
+        ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);CHKERRQ(ierr);
+      }
+    }
   PetscFunctionReturn(0);
 }
 
@@ -519,17 +527,21 @@ PetscErrorCode IGASetUp(IGA iga)
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
 
   { /* */
-    PetscBool flg1,flg2;
+    PetscBool flg1,flg2,info=PETSC_FALSE;
     char filename1[PETSC_MAX_PATH_LEN] = "";
     char filename2[PETSC_MAX_PATH_LEN] = "";
     PetscViewer viewer;
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
-    ierr = PetscOptionsString("-iga_view",       "Information on IGA context",   "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
-    ierr = PetscOptionsString("-iga_view_binary","Save to file in binary format","IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
-    ierr = PetscOptionsEnd();CHKERRQ(ierr);//MatView_Private
-    if (flg1 && !PetscPreLoadingOn) {
+    ierr = PetscOptionsString("-iga_view",         "Information on IGA context",       "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
+    ierr = PetscOptionsBool(  "-iga_view_info",    "Output more detailed information", "IGAView",info, &info,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsBool(  "-iga_view_detailed","Output more detailed information", "IGAView",info, &info,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-iga_view_binary",  "Save to file in binary format",    "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
+    ierr = PetscOptionsEnd();CHKERRQ(ierr);
+    if ((flg1||info) && !PetscPreLoadingOn) {
       ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename1,&viewer);CHKERRQ(ierr);
+      if (info) {ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO_DETAIL);CHKERRQ(ierr);}
       ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+      if (info) {ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);}
       ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     }
     if (flg2 && !PetscPreLoadingOn) {
