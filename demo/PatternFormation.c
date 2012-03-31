@@ -88,7 +88,7 @@ PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,PetscReal shift,
   PetscReal tau1  = user->tau1;
   PetscReal tau2  = user->tau2;
 
-  PetscReal f_u,f_v,g_u,g_v;
+  PetscReal f_u=0,f_v=0,g_u=0,g_v=0;
   if (IMPLICIT) {
     PetscScalar uv_0[2];
     IGAPointInterpolate(point,0,U1,&uv_0[0]);
