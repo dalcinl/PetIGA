@@ -201,6 +201,10 @@ extern PetscErrorCode IGADestroy(IGA *iga);
 extern PetscErrorCode IGAReset(IGA iga);
 extern PetscErrorCode IGASetUp(IGA iga);
 extern PetscErrorCode IGAView(IGA iga,PetscViewer viewer);
+
+extern PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[]);
+extern PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[]);
+extern PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);
 extern PetscErrorCode IGASetFromOptions(IGA iga);
 
 extern PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
