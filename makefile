@@ -59,15 +59,19 @@ ranlib:
 	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
 sharedlibs:
 	-@${OMAKE} shared_nomesg PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} \
-	           | ${GREP} -v "making shared libraries in" 
+	           | (${GREP} -vE "making shared libraries in" || true)
 .PHONY: build compile ranlib sharedlibs
 
 # Delete PetIGA library
-deletelibs:
-	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.*
 deletemods:
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/include/petiga*.mod
-.PHONY: deletelibs deletemods
+deletestaticlibs:
+	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${AR_LIB_SUFFIX}
+deletesharedlibs:
+	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${SL_LINKER_SUFFIX}
+deletelibs:
+	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.*
+.PHONY: deletemods deletestaticlibs deletesharedlibs deletelibs
 
 # Clean up build
 srcclean:
