@@ -149,8 +149,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
-  if (aij || baij) {
-    PetscInt nbs = baij ? n : n*bs, *dnz = 0, *onz = 0;
+  if (aij || baij || sbaij) {
+    PetscInt nbs = (baij||sbaij) ? n : n*bs;
+    PetscInt *dnz = 0, *onz = 0;
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
       PetscInt i,j,k;
@@ -166,46 +167,32 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
             { /* */
               PetscInt row = Index3D(ghost_start,ghost_width,i,j,k);
               PetscInt count = BasisStencil(iga,i,j,k,indices);
-              if (baij || bs == 1) {
+              if (aij) {
+                if (bs == 1) {
+                  ierr = MatPreallocateSetLocal(ltogb,1,&row,ltogb,count,indices,dnz,onz);CHKERRQ(ierr);
+                } else {
+                  ierr = UnblockIndices(bs,row,count,indices,ubrows,ubcols);CHKERRQ(ierr);
+                  ierr = MatPreallocateSetLocal(ltog,bs,ubrows,ltog,count*bs,ubcols,dnz,onz);CHKERRQ(ierr);
+                }
+              } else if (baij) {
                 ierr = MatPreallocateSetLocal(ltogb,1,&row,ltogb,count,indices,dnz,onz);CHKERRQ(ierr);
-              } else  {
-                ierr = UnblockIndices(bs,row,count,indices,ubrows,ubcols);CHKERRQ(ierr);
-                ierr = MatPreallocateSetLocal(ltog,bs,ubrows,ltog,count*bs,ubcols,dnz,onz);CHKERRQ(ierr);
+              } else if (sbaij) {
+                ierr = L2GFilterUpperTriangular(ltogb,&row,&count,indices);CHKERRQ(ierr);
+                ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
             }
-      if (baij) {
-        ierr = MatSeqBAIJSetPreallocation(A,bs,0,dnz);CHKERRQ(ierr);
-        ierr = MatMPIBAIJSetPreallocation(A,bs,0,dnz,0,onz);CHKERRQ(ierr);
-      } else {
+      if (aij) {
         ierr = MatSeqAIJSetPreallocation(A,0,dnz);CHKERRQ(ierr);
         ierr = MatMPIAIJSetPreallocation(A,0,dnz,0,onz);CHKERRQ(ierr);
+      } else if (baij) {
+        ierr = MatSeqBAIJSetPreallocation(A,bs,0,dnz);CHKERRQ(ierr);
+        ierr = MatMPIBAIJSetPreallocation(A,bs,0,dnz,0,onz);CHKERRQ(ierr);
+      } else if (sbaij) {
+        ierr = MatSeqSBAIJSetPreallocation(A,bs,0,dnz);CHKERRQ(ierr);
+        ierr = MatMPISBAIJSetPreallocation(A,bs,0,dnz,0,onz);CHKERRQ(ierr);
       }
       ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
       ierr = PetscFree(indices);CHKERRQ(ierr);
-    }
-    ierr = MatPreallocateFinalize(dnz,onz);CHKERRQ(ierr);
-  } else if (sbaij) {
-    PetscInt nbs = n, *dnz = 0, *onz = 0;
-    ierr = MatPreallocateSymmetricInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
-    {
-      PetscInt i,j,k;
-      PetscInt *start = iga->node_start, *ghost_start = iga->ghost_start;
-      PetscInt *width = iga->node_width, *ghost_width = iga->ghost_width;
-      PetscInt n=1,*indices=0;
-      for(i=0; i<iga->dim; i++) n *= 2*iga->axis[i]->p + 1; /* XXX do better ? */
-      ierr = PetscMalloc1(n,PetscInt,&indices);CHKERRQ(ierr);
-      for (k=start[2]; k<start[2]+width[2]; k++)
-        for (j=start[1]; j<start[1]+width[1]; j++)
-          for (i=start[0]; i<start[0]+width[0]; i++)
-            { /* */
-              PetscInt row = Index3D(ghost_start,ghost_width,i,j,k);
-              PetscInt count = BasisStencil(iga,i,j,k,indices);
-              ierr = L2GFilterUpperTriangular(ltogb,&row,&count,indices);CHKERRQ(ierr);
-              ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
-            }
-      ierr = PetscFree(indices);CHKERRQ(ierr);
-      ierr = MatSeqSBAIJSetPreallocation(A,bs,0,dnz);CHKERRQ(ierr);
-      ierr = MatMPISBAIJSetPreallocation(A,bs,0,dnz,0,onz);CHKERRQ(ierr);
     }
     ierr = MatPreallocateFinalize(dnz,onz);CHKERRQ(ierr);
   } else {
