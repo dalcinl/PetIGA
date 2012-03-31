@@ -714,6 +714,40 @@ PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAGetLocalVecArray"
+PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidPointer(lvec,3);
+  PetscValidPointer(array,4);
+  IGACheckSetUp(iga,1);
+  ierr = IGAGetLocalVec(iga,lvec);CHKERRQ(ierr);
+  ierr = IGAGlobalToLocal(iga,gvec,*lvec);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(*lvec,array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGARestoreLocalVecArray"
+PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidPointer(lvec,3);
+  PetscValidHeaderSpecific(*lvec,VEC_CLASSID,3);
+  PetscValidPointer(array,4);
+  IGACheckSetUp(iga,1);
+  ierr = VecRestoreArrayRead(*lvec,array);
+  ierr = IGARestoreLocalVec(iga,lvec);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAGetElement"
 PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
 {

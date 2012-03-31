@@ -27,15 +27,9 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
 
-  /* Get local vectors U and V */
-  ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  /* Communicate global to local */
-  ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  /* Get array from the local vectors */
-  ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
+  /* Get local vectors V,U and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
@@ -66,12 +60,9 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,PetscReal shift,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
-  /* Restore array to the local vectors */
-  ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  /* Restore local vectors U and V */
-  ierr = IGARestoreLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
+  /* Restore local vectors V,U and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Assemble global vector F */
   ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
@@ -104,15 +95,9 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
 
-  /* Get local vectors U and V */
-  ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  /* Communicate global to local */
-  ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  /* Get array from the local vectors */
-  ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
+  /* Get local vectors V,U and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
@@ -143,12 +128,9 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
-  /* Restore array to the vectors */
-  ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  /* Restore local vectors U and V */
-  ierr = IGARestoreLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
+  /* Get local vectors V,U and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Assemble global matrix J*/
   ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -184,18 +166,10 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
 
-  /* Get local vector and array V */
-  ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  /* Get local vector and array U */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  /* Get local vector and array U0 */
-  ierr = IGAGetLocalVec(iga,&localU0);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU0,localU0);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
+  /* Get local vectors V,U,U0 and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU0,&localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
@@ -229,15 +203,10 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
-  /* Restore array and local vector V */
-  ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localV);CHKERRQ(ierr);
-  /* Restore array and local vector U */
-  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
-  /* Restore array and local vector U0 */
-  ierr = VecRestoreArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU0);CHKERRQ(ierr);
+  /* Restore local vectors V,U,U0 and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU0,&localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Assemble global vector F */
   ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
@@ -273,18 +242,10 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
 
-  /* Get local vector and array V */
-  ierr = IGAGetLocalVec(iga,&localV);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecV,localV);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  /* Get local vector and array U */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  /* Get local vector and array U0 */
-  ierr = IGAGetLocalVec(iga,&localU0);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU0,localU0);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
+  /* Get local vectors V,U,U0 and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGAGetLocalVecArray(iga,vecU0,&localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
@@ -318,15 +279,10 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
-  /* Restore array and local vector V */
-  ierr = VecRestoreArrayRead(localV,&arrayV);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localV);CHKERRQ(ierr);
-  /* Restore array and local vector U */
-  ierr = VecRestoreArrayRead(localU,&arrayU);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
-  /* Restore array and local vector U0 */
-  ierr = VecRestoreArrayRead(localU0,&arrayU0);CHKERRQ(ierr);
-  ierr = IGARestoreLocalVec(iga,&localU0);CHKERRQ(ierr);
+  /* Restore local vectors V,U,U0 and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,vecU0,&localU0,&arrayU0);CHKERRQ(ierr);
 
   /* Assemble global matrix J*/
   ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

@@ -22,10 +22,8 @@ PetscErrorCode IGAFormFunction(IGA iga,Vec vecU,Vec vecF,
   /* Clear global vector F*/
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
 
-  /* Get local vector U */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
+  /* Get local vector U and array */
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecU,vecF,0);CHKERRQ(ierr);
@@ -54,9 +52,8 @@ PetscErrorCode IGAFormFunction(IGA iga,Vec vecU,Vec vecF,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecU,vecF,0);CHKERRQ(ierr);
 
-  /* Restore local vector U */
-  ierr = VecRestoreArrayRead(localU,&arrayU);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
+  /* Restore local vector U and array */
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Assemble global vector F */
   ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
@@ -85,10 +82,8 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   /* Clear global matrix J */
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
 
-  /* Get local vector U */
-  ierr = IGAGetLocalVec(iga,&localU);CHKERRQ(ierr);
-  ierr = IGAGlobalToLocal(iga,vecU,localU);CHKERRQ(ierr);
-  ierr = VecGetArrayRead(localU,&arrayU);CHKERRQ(ierr);
+  /* Get local vector U and array */
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecU,matJ,0);CHKERRQ(ierr);
@@ -117,9 +112,8 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   ierr = IGAElementEnd(element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecU,matJ,0);CHKERRQ(ierr);
 
-  /* Restore local vector U */
-  ierr = VecRestoreArrayRead(localU,&arrayU);
-  ierr = IGARestoreLocalVec(iga,&localU);CHKERRQ(ierr);
+  /* Restore local vector U and array */
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
   /* Assemble global matrix J*/
   ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

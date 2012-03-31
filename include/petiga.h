@@ -239,6 +239,9 @@ extern PetscErrorCode IGARestoreGlobalVec(IGA iga,Vec *gvec);
 extern PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec);
 extern PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
 
+extern PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
+extern PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
+
 extern PetscErrorCode IGAGetElement(IGA iga,IGAElement *element);
 
 extern PetscErrorCode IGASetUserSystem    (IGA iga,IGAUserSystem     System,    void *SysCtx);
