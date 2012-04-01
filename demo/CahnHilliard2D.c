@@ -34,8 +34,9 @@ void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,Pet
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,PetscReal shift,
-                        PetscReal t,const PetscScalar *V,const PetscScalar *U,
+PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+                        PetscReal shift,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -84,8 +85,9 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,PetscReal shift,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
-PetscErrorCode Tangent(IGAPoint p,PetscReal dt,PetscReal shift,
-                       PetscReal t,const PetscScalar *V,const PetscScalar *U,
+PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
+                       PetscReal shift,const PetscScalar *V,
+                       PetscReal t,const PetscScalar *U,
                        PetscScalar *K,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
