@@ -142,7 +142,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIEFunction"
 PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
-                                 PetscReal t,Vec vecV,Vec vecU,Vec vecU0,
+                                 PetscReal t,PetscReal t0,Vec vecV,Vec vecU,Vec vecU0,
                                  Vec vecF,
                                  IGAUserIEFunction IEFunction, void *ctx)
 {
@@ -193,7 +193,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
     while (IGAPointNext(point)) {
       PetscScalar *R;
       ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
-      ierr = IEFunction(point,dt,shift,t,V,U,U0,R,ctx);CHKERRQ(ierr);
+      ierr = IEFunction(point,dt,shift,t,t0,V,U,U0,R,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
     }
     /* */
@@ -218,7 +218,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIEJacobian"
 PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
-                                 PetscReal t,Vec vecV,Vec vecU,Vec vecU0,
+                                 PetscReal t,PetscReal t0,Vec vecV,Vec vecU,Vec vecU0,
                                  Mat matJ,
                                  IGAUserIEJacobian IEJacobian,void *ctx)
 {
@@ -269,7 +269,7 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal shift,
     while (IGAPointNext(point)) {
       PetscScalar *K;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IEJacobian(point,dt,shift,t,V,U,U0,K,ctx);CHKERRQ(ierr);
+      ierr = IEJacobian(point,dt,shift,t,t0,V,U,U0,K,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
     }
     /* */
@@ -308,9 +308,11 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
     SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIFunction()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   if (iga->userops->IEFunction) {
-    Vec U0;
+    PetscReal t0;
+    Vec       U0;
+    ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
-    ierr = IGAFormIEFunction(iga,dt,shift,t,V,U,U0,F,
+    ierr = IGAFormIEFunction(iga,dt,shift,t,t0,V,U,U0,F,
                              iga->userops->IEFunction,
                              iga->userops->IEFunCtx);CHKERRQ(ierr);
   } else {
@@ -342,9 +344,11 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
     SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIJacobian()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   if (iga->userops->IEJacobian) {
-    Vec U0;
+    PetscReal t0;
+    Vec       U0;
+    ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
-    ierr = IGAFormIEJacobian(iga,dt,shift,t,V,U,U0,*P,
+    ierr = IGAFormIEJacobian(iga,dt,shift,t,t0,V,U,U0,*P,
                              iga->userops->IEJacobian,
                              iga->userops->IEJacCtx);CHKERRQ(ierr);
   } else {

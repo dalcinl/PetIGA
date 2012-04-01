@@ -115,10 +115,10 @@ typedef PetscErrorCode (*IGAUserIJacobian) (IGAPoint point,PetscReal dt,PetscRea
                                             PetscReal t,const PetscScalar *V,const PetscScalar *U,
                                             PetscScalar *J,void *ctx);
 typedef PetscErrorCode (*IGAUserIEFunction)(IGAPoint point,PetscReal dt,PetscReal a,
-                                            PetscReal t,const PetscScalar *V,const PetscScalar *U,const PetscScalar *U0,
+                                            PetscReal t,PetscReal t0,const PetscScalar *V,const PetscScalar *U,const PetscScalar *U0,
                                             PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserIEJacobian)(IGAPoint point,PetscReal dt,PetscReal a,
-                                            PetscReal t,const PetscScalar *V,const PetscScalar *U,const PetscScalar *U0,
+                                            PetscReal t,PetscReal t0,const PetscScalar *V,const PetscScalar *U,const PetscScalar *U0,
                                             PetscScalar *J,void *ctx);
 
 typedef struct _IGAUserOps *IGAUserOps;
@@ -405,10 +405,10 @@ extern PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,PetscReal a,
                                        PetscReal t,Vec V,Vec U,Mat J,
                                        IGAUserIJacobian IJacobian,void *ctx);
 extern PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,PetscReal a,
-                                        PetscReal t,Vec V,Vec U,Vec U0,Vec F,
+                                        PetscReal t,PetscReal t0,Vec V,Vec U,Vec U0,Vec F,
                                         IGAUserIEFunction IEFunction,void *ctx);
 extern PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,PetscReal a,
-                                        PetscReal t,Vec V,Vec U,Vec U0,Mat J,
+                                        PetscReal t,PetscReal t0,Vec V,Vec U,Vec U0,Mat J,
                                         IGAUserIEJacobian IEJacobian,void *ctx);
 
 /* ---------------------------------------------------------------- */

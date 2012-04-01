@@ -25,7 +25,7 @@ typedef struct {
 #undef  __FUNCT__
 #define __FUNCT__ "Function"
 PetscErrorCode Function(IGAPoint point,PetscReal dt,PetscReal shift,
-                        PetscReal t,const PetscScalar *V,const PetscScalar *U1,const PetscScalar *U0,
+                        PetscReal t,PetscReal t0,const PetscScalar *V,const PetscScalar *U1,const PetscScalar *U0,
                         PetscScalar *Re,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -73,7 +73,7 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,PetscReal shift,
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,PetscReal shift,
-                        PetscReal t,const PetscScalar *V,const PetscScalar *U1, const PetscScalar *U0,
+                        PetscReal t,PetscReal t0,const PetscScalar *V,const PetscScalar *U1, const PetscScalar *U0,
                         PetscScalar *Ke,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
