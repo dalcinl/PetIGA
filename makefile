@@ -68,7 +68,7 @@ deletemods:
 deletestaticlibs:
 	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${AR_LIB_SUFFIX}
 deletesharedlibs:
-	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${SL_LINKER_SUFFIX}
+	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${SL_LINKER_SUFFIX}*
 deletelibs:
 	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.*
 .PHONY: deletemods deletestaticlibs deletesharedlibs deletelibs
