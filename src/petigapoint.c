@@ -125,7 +125,7 @@ PetscBool IGAPointNext(IGAPoint point)
   /* */
   point->point    = parent->point + index * dim;
   point->weight   = parent->weight[index];
-  point->detJ     = parent->detJ[index];
+  point->detJac   = parent->detJac[index];
   point->jacobian = parent->jacobian + index * dim*dim;
   point->shape[0] = parent->shape[0] + index * nen;
   point->shape[1] = parent->shape[1] + index * nen*dim;
@@ -157,8 +157,8 @@ PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetInfo"
-PetscErrorCode IGAPointGetInfo(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim)
+#define __FUNCT__ "IGAPointGetSizes"
+PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
@@ -168,6 +168,42 @@ PetscErrorCode IGAPointGetInfo(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscI
   if (nen) *nen = point->nen;
   if (dof) *dof = point->dof;
   if (dim) *dim = point->dim;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetQuadrature"
+PetscErrorCode IGAPointGetQuadrature(IGAPoint pnt,PetscInt *dim,
+                                     const PetscReal *point[],PetscReal *weight,PetscReal *detJac)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(pnt,1);
+  if (dim)    PetscValidIntPointer(dim,2);
+  if (point)  PetscValidPointer(point,3);
+  if (weight) PetscValidDoublePointer(weight,4);
+  if (detJac) PetscValidDoublePointer(detJac,5);
+  if (dim)    *dim    = pnt->dim;
+  if (point)  *point  = pnt->point;
+  if (weight) *weight = pnt->weight;
+  if (detJac) *detJac = pnt->detJac;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetShapeFuns"
+PetscErrorCode IGAPointGetShapeFuns(IGAPoint pnt,PetscInt *nen,PetscInt *dim,
+                                    const PetscReal *jacobian[],const PetscReal **shapefuns[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(pnt,1);
+  if (nen)       PetscValidIntPointer(nen,2);
+  if (dim)       PetscValidIntPointer(dim,3);
+  if (jacobian)  PetscValidPointer(jacobian,4);
+  if (shapefuns) PetscValidPointer(shapefuns,5);
+  if (nen)       *nen       = pnt->nen;
+  if (dim)       *dim       = pnt->dim;
+  if (jacobian)  *jacobian  = pnt->jacobian;
+  if (shapefuns) *shapefuns = (const PetscReal **)pnt->shape;
   PetscFunctionReturn(0);
 }
 
@@ -255,7 +291,7 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
   {
     PetscInt nen = point->nen;
     PetscInt dof = point->dof;
-    PetscReal JW = point->detJ*point->weight;
+    PetscReal JW = point->detJac*point->weight;
     PetscInt i, n = nen*dof;
     for (i=0; i<n; i++) F[i] += f[i] * JW;
   }
@@ -275,7 +311,7 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
   {
     PetscInt nen = point->nen;
     PetscInt dof = point->dof;
-    PetscReal JW = point->detJ*point->weight;
+    PetscReal JW = point->detJac*point->weight;
     PetscInt i, n = (nen*dof)*(nen*dof);
     for (i=0; i<n; i++) K[i] += k[i] * JW;
   }

@@ -158,11 +158,12 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     IGA          iga = 0;
     IGAElement   element;
     PetscInt     nen,dof;
-    PetscInt     n,*idx;
-    PetscScalar  *vals,*work,lwkopt;
+    PetscInt     n,*indices;
+    PetscScalar  *values,*work,lwkopt;
     PetscBLASInt m,*ipiv,info,lwork;
     PetscInt     start,end;
-    const PetscInt *lgmap;
+    const PetscInt *ltogmap;
+    const PetscInt *mapping;
     ISLocalToGlobalMapping map;
 
     ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
@@ -170,55 +171,53 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-    ierr = IGAElementGetInfo(element,0,&nen,&dof,0);CHKERRQ(ierr);
+    ierr = IGAElementGetSizes(element,&nen,&dof,0);CHKERRQ(ierr);
 
     if (dof == 1) {
       ierr = MatGetLocalToGlobalMapping(A,&map,PETSC_NULL);CHKERRQ(ierr);
     } else {
       ierr = MatGetLocalToGlobalMappingBlock(A,&map,PETSC_NULL);CHKERRQ(ierr);
     }
-    ierr = ISLocalToGlobalMappingGetIndices(map,&lgmap);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingGetIndices(map,&ltogmap);CHKERRQ(ierr);
     ierr = MatGetOwnershipRange(A,&start,&end);CHKERRQ(ierr);
     start /= dof; end /= dof;
 
     n = nen*dof;
-    ierr = PetscMalloc1(  n,PetscInt,   &idx);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n*n,PetscScalar,&vals);CHKERRQ(ierr);
+    ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
     m = PetscBLASIntCast(n); lwork = -1; work = &lwkopt;
     ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
-    LAPACKgetri_(&m,vals,&m,ipiv,work,&lwork,&info);
+    LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
     ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
 
     ierr = MatZeroEntries(B);CHKERRQ(ierr);
     ierr = IGAElementBegin(element);CHKERRQ(ierr);
     while (IGAElementNext(element)) {
-      const PetscInt *indices = element->mapping;
-      m = n = ComputeOwnedGlobalIndices(lgmap,start,end,dof,nen,indices,idx);
+      ierr = IGAElementGetMapping(element,&nen,&mapping);CHKERRQ(ierr);
+      m = n = ComputeOwnedGlobalIndices(ltogmap,start,end,dof,nen,mapping,indices);
       /* get element matrix from global matrix */
-      ierr = MatGetValues(A,n,idx,n,idx,vals);;CHKERRQ(ierr);
+      ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
       /* compute inverse of element matrix */
-      LAPACKgetrf_(&m,&m,vals,&m,ipiv,&info);
+      LAPACKgetrf_(&m,&m,values,&m,ipiv,&info);
       if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetrf_");
       if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
       ierr = PetscLogFlops((1/3.*n*n*n         +2/3.*n));CHKERRQ(ierr); /* multiplications */
       ierr = PetscLogFlops((1/3.*n*n*n-1/2.*n*n+1/6.*n));CHKERRQ(ierr); /* additions */
-      LAPACKgetri_(&m,vals,&m,ipiv,work,&lwork,&info);
+      LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
       if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetri_");
       if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
       ierr = PetscLogFlops((2/3.*n*n*n+1/2.*n*n+5/6.*n));CHKERRQ(ierr); /* multiplications */
       ierr = PetscLogFlops((2/3.*n*n*n-3/2.*n*n+5/6.*n));CHKERRQ(ierr); /* additions */
       /* add values back into preconditioner matrix */
-      ierr = MatSetValues(B,n,idx,n,idx,vals,ADD_VALUES);CHKERRQ(ierr);
+      ierr = MatSetValues(B,n,indices,n,indices,values,ADD_VALUES);CHKERRQ(ierr);
       ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
     }
     ierr = IGAElementEnd(element);CHKERRQ(ierr);
     ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
-    ierr = ISLocalToGlobalMappingRestoreIndices(map,&lgmap);CHKERRQ(ierr);
-    ierr = PetscFree(idx);CHKERRQ(ierr);
-    ierr = PetscFree(vals);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
+    ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
   }
@@ -258,6 +257,7 @@ static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
   PetscFunctionBegin;
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
+  if (!ebe->mat) PetscFunctionReturn(0);
   ierr = PetscViewerASCIIPrintf(viewer,"element-by-element preconditioner matrix:\n");CHKERRQ(ierr);
   ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO);CHKERRQ(ierr);
   ierr = MatView(ebe->mat,viewer);CHKERRQ(ierr);

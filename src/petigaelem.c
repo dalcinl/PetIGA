@@ -68,7 +68,7 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->geometry);CHKERRQ(ierr);
   ierr = PetscFree(element->point);CHKERRQ(ierr);
   ierr = PetscFree(element->weight);CHKERRQ(ierr);
-  ierr = PetscFree(element->detJ);CHKERRQ(ierr);
+  ierr = PetscFree(element->detJac);CHKERRQ(ierr);
   ierr = PetscFree(element->jacobian);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[0]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[1]);CHKERRQ(ierr);
@@ -126,14 +126,14 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     ierr = PetscMalloc1(nen*(dim+1),PetscReal,&element->geometry);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp,PetscReal,&element->detJ);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp,PetscReal,&element->detJac);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim*dim,PetscReal,&element->jacobian);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen,PetscReal,&element->shape[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim,PetscReal,&element->shape[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->shape[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->shape[3]);CHKERRQ(ierr);
 
-    ierr = PetscMemzero(element->detJ,    sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->jacobian,sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
@@ -195,7 +195,7 @@ PetscBool IGAElementNext(IGAElement element)
     index = (index - coord) / size;
     ID[i] = coord + range[0];
   }
-  IGAElementBuildMap(element);
+  IGAElementBuildMapping(element);
   IGAElementBuildFix(element);
   return PETSC_TRUE;
 }
@@ -239,19 +239,71 @@ PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetInfo"
-PetscErrorCode IGAElementGetInfo(IGAElement element,PetscInt *nqp, PetscInt *nen,PetscInt *dof,PetscInt *dim)
+#define __FUNCT__ "IGAElementGetSizes"
+PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *nen,PetscInt *dof,PetscInt *nqp)
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  if (nqp) PetscValidIntPointer(nqp,4);
-  if (nen) PetscValidIntPointer(nen,5);
+  if (nen) PetscValidIntPointer(nen,2);
   if (dof) PetscValidIntPointer(dof,3);
-  if (dim) PetscValidIntPointer(dim,2);
-  if (nqp) *nqp = element->nqp;
+  if (nqp) PetscValidIntPointer(nqp,4);
   if (nen) *nen = element->nen;
   if (dof) *dof = element->dof;
-  if (dim) *dim = element->dim;
+  if (nqp) *nqp = element->nqp;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementGetMapping"
+PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const PetscInt *mapping[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (nen)     PetscValidIntPointer(nen,3);
+  if (mapping) PetscValidPointer(mapping,3);
+  if (nen)     *nen     = element->nen;
+  if (mapping) *mapping = element->mapping;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementGetQuadrature"
+PetscErrorCode IGAElementGetQuadrature(IGAElement element,PetscInt *nqp,PetscInt *dim,
+                                       const PetscReal *point[],const PetscReal *weight[],
+                                       const PetscReal *detJac[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (nqp)    PetscValidIntPointer(nqp,2);
+  if (dim)    PetscValidIntPointer(dim,3);
+  if (point)  PetscValidPointer(point,4);
+  if (weight) PetscValidPointer(weight,5);
+  if (detJac) PetscValidPointer(detJac,6);
+  if (nqp)    *nqp    = element->nqp;
+  if (dim)    *dim    = element->dim;
+  if (point)  *point  = element->point;
+  if (weight) *weight = element->weight;
+  if (detJac) *detJac = element->detJac;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementGetShapeFuns"
+PetscErrorCode IGAElementGetShapeFuns(IGAElement element,PetscInt *nqp,PetscInt *nen,PetscInt *dim,
+                                      const PetscReal *jacobian[],const PetscReal **shapefuns[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (nqp)       PetscValidIntPointer(nqp,2);
+  if (nen)       PetscValidIntPointer(nen,3);
+  if (dim)       PetscValidIntPointer(dim,4);
+  if (jacobian)  PetscValidPointer(jacobian,5);
+  if (shapefuns) PetscValidPointer(shapefuns,6);
+  if (nqp)       *nqp       = element->nqp;
+  if (nen)       *nqp       = element->nqp;
+  if (dim)       *dim       = element->dim;
+  if (jacobian)  *jacobian  = element->jacobian;
+  if (shapefuns) *shapefuns = (const PetscReal **)element->shape;
   PetscFunctionReturn(0);
 }
 
@@ -338,8 +390,8 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementBuildMap"
-PetscErrorCode IGAElementBuildMap(IGAElement element)
+#define __FUNCT__ "IGAElementBuildMapping"
+PetscErrorCode IGAElementBuildMapping(IGAElement element)
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -458,7 +510,7 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     IGABasis *BD  = element->parent->basis;
     PetscInt *ID  = element->ID;
     PetscReal *Cw = element->geometry;
-    PetscReal *dJ = element->detJ;
+    PetscReal *dJ = element->detJac;
     PetscReal *J  = element->jacobian;
     PetscReal **N = element->shape;
     switch (element->dim) {
