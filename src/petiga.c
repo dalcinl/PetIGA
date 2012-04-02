@@ -670,6 +670,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscValidPointer(vec,2);
   IGACheckSetUp(iga,1);
   ierr = DMCreateGlobalVector(iga->dm_dof,vec);CHKERRQ(ierr);
+  ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
