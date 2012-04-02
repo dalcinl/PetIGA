@@ -208,6 +208,7 @@ extern PetscErrorCode IGAReset(IGA iga);
 extern PetscErrorCode IGASetUp(IGA iga);
 extern PetscErrorCode IGAView(IGA iga,PetscViewer viewer);
 
+extern PetscErrorCode IGAGetOptionsPrefix(IGA iga,const char *prefix[]);
 extern PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[]);
 extern PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[]);
 extern PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);

@@ -295,6 +295,17 @@ PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boun
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAGetOptionsPrefix"
+PetscErrorCode IGAGetOptionsPrefix(IGA iga,const char *prefix[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  ierr = PetscObjectGetOptionsPrefix((PetscObject)iga,prefix);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsPrefix"
 PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[])
 {
