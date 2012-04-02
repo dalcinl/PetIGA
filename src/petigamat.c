@@ -7,7 +7,7 @@
 EXTERN_C_BEGIN
 extern PetscErrorCode MatView_MPI_DA(Mat,PetscViewer);
 extern PetscErrorCode MatLoad_MPI_DA(Mat,PetscViewer);
-EXTERN_C_BEGIN
+EXTERN_C_END
 
 PETSC_STATIC_INLINE
 PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
