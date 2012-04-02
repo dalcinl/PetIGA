@@ -196,18 +196,17 @@ PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitBreaks"
-PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt mult)
+PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt C)
 {
   PetscInt       i,j,k;
-  PetscInt       p,C,s,n,m,r;
+  PetscInt       p,s,n,m,r;
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   PetscValidPointer(u,3);
 
-  if (mult == PETSC_DEFAULT) mult = 1;
-  if (mult == PETSC_DECIDE)  mult = 1;
+  if (C == PETSC_DECIDE) C = axis->p-1;
 
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
@@ -221,14 +220,12 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
                "Break sequence must be strictly increasing, "
                "got u[%D]=%G %s u[%D]=%G",
                i-1,u[i-1],i,u[i],(u[i]==u[i-1])?"==":">");
-  if (mult > axis->p)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Multiplicity must be less than or equal "
-             "polynomial order, got C=%D > p=%D",mult,axis->p);
+  if (C < 0 || C >= axis->p)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
+             "Continuity must be in range [0,%D], got %D",axis->p-1,C);
 
   p = axis->p; /* polynomial order */
-  s = PetscMax(1,mult); /* multiplicity */
-  C = p - s; /* continuity */
+  s = p - C; /* multiplicity */
   r = nu - 1; /* last break index */
   m = 2*(p+1) + (r-1)*s - 1; /* last knot index */
   n = m - p - 1; /* last basis function index */
@@ -262,14 +259,13 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
 PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C)
 {
   PetscInt       i,j,k;
-  PetscInt       p,s,n,m;
+  PetscInt       p,s,n,m,r;
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
 
-  if (C == PETSC_DEFAULT) C = axis->p-1;
-  if (C == PETSC_DECIDE)  C = axis->p-1;
+  if (C == PETSC_DECIDE) C = axis->p-1;
 
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
@@ -284,8 +280,9 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Continuity must be in range [0,%D], got %D",axis->p-1,C);
 
-  p = axis->p;
+  p = axis->p;  /* polynomial order */
   s = p - C; /* multiplicity */
+  r = N ; /* last break index */
   m = 2*(p+1) + (N-1)*s - 1; /* last knot index */
   n = m - p - 1; /* last basis function index */
   ierr = PetscMalloc1(m+1,PetscReal,&U);CHKERRQ(ierr);
@@ -294,7 +291,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
     U[k]   = Ui;
     U[m-k] = Uf;
   }
-  for(i=1; i<=(N-1); i++) { /* (N-1) breaks */
+  for(i=1; i<=r-1; i++) { /* (N-1) breaks */
     for(j=1; j<=s; j++)     /* s times */
       U[k++] = Ui + i * ((Uf-Ui)/N);
   }
