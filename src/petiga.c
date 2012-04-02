@@ -34,6 +34,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
     ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][1]);CHKERRQ(ierr);
+    iga->proc_sizes[i] = -1;
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
@@ -188,6 +189,9 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
+  if (dim < 1 || dim > 3)
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Number of space dimensions must be in range [1,3], got %D",dim);
   if (iga->dim > 0 && iga->dim != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
@@ -213,9 +217,12 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dof,2);
+  if (dof < 1)
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Number of DOFs per node must be greather than one, got %D",dof);
   if (iga->dof > 0 && iga->dof != dof)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA dof from %D after it was set to %D",iga->dof,dof);
+             "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
   iga->dof = dof;
   PetscFunctionReturn(0);
 }
@@ -282,9 +289,9 @@ PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boun
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(boundary,4);
   if (iga->dim <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
-  if (iga->dof <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
   if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
+  if (iga->dof <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (side < 0) side = 0; /* XXX error ?*/
   if (side > 1) side = 1; /* XXX error ?*/
   if (iga->boundary[i][side]->dof != iga->dof) {
@@ -347,16 +354,68 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   {
     PetscBool flg;
+    PetscInt  i,n;
+    PetscBool perds[3]    = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
+    PetscInt  no,degrs[3] = {2,2,2};
+    PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
+    PetscInt  ne,elems[3] = {16,16,16}; /* XXX Too coarse for 1D/2D ? */
+    PetscReal bbox[3][2]  = {{0,1},{0,1},{0,1}};
+
     char vtype[256] = VECSTANDARD;
     char mtype[256] = MATBAIJ;
-    if (iga->dof < 2) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
-    if (iga->vectype) {ierr = PetscStrcpy(vtype,iga->vectype);CHKERRQ(ierr);}
-    if (iga->mattype) {ierr = PetscStrcpy(mtype,iga->mattype);CHKERRQ(ierr);}
+    PetscInt dim = iga->dim;
+    PetscInt dof = iga->dof;
+
+    for (i=0; i<dim; i++) perds[i] = iga->axis[i]->periodic;
+    for (i=0; i<dim; i++) degrs[i] = iga->axis[i]->p;
+
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+    if (iga->setup) goto setupcalled;
+    ierr = PetscOptionsInt("-iga_dim","Number of dimensions",   "IGASetDim",iga->dim,&dim,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = IGASetDim(iga,dim);CHKERRQ(ierr);}
+    ierr = PetscOptionsInt("-iga_dof","Number of DOFs per node","IGASetDof",iga->dof,&dof,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
+    if (iga->dim < 1) dim = 3;
+    /* */
+    ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<np; i++) {
+        iga->proc_sizes[i] = procs[i]; /* XXX Use IGGASetProcessors() */
+      }
+    ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",perds,(n=dim,&n),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscBool periodic = (i<n) ? perds[i] : perds[0];
+        ierr = IGAAxisSetPeriodic(iga->axis[i],periodic);CHKERRQ(ierr);
+      }
+    ierr = PetscOptionsIntArray("-iga_degree","Polynomial degree","IGAAxisSetDegree",degrs,(no=dim,&no),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscInt degree = (i<no) ? degrs[i] : degrs[0];
+        ierr = IGAAxisSetDegree(iga->axis[i],degree);CHKERRQ(ierr);
+      }
+    ierr = PetscOptionsRealArray("-iga_bounding_box", "Bounding box", "IGAAxisInitUniform",&bbox[0][0],(n=2*dim,&n),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-iga_elements","Elements","IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscInt continuity = (i<nc) ? conts[i] : conts[0];
+        PetscInt elements   = (i<ne) ? elems[i] : elems[0];
+        PetscReal *U        = (i<n) ? &bbox[i][0] : &bbox[0][0];
+        if (iga->axis[i]->p < 1) {ierr = IGAAxisSetDegree(iga->axis[i],degrs[i]);CHKERRQ(ierr);} /* XXX Default degree? */
+        ierr = IGAAxisInitUniform(iga->axis[i],elements,U[0],U[1],continuity);CHKERRQ(ierr);
+      }
+  setupcalled:
+    /* */
+    if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
+    if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
+    if (iga->mattype)  {ierr = PetscStrncpy(mtype,iga->mattype,sizeof(mtype));CHKERRQ(ierr);}
     ierr = PetscOptionsList("-iga_vec_type","Vector type","VecSetType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
     ierr = PetscOptionsList("-iga_mat_type","Matrix type","MatSetType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
+    /* */
+    ierr = PetscOptionsName("-iga_view",         "Information on IGA context",       "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_info",    "Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_detailed","Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_binary",  "Save to file in binary format",    "IGAView",PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
   }
@@ -400,6 +459,9 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
       sizes[i] = BD[i]->nnp;
       btype[i] = BD[i]->periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
     }
+    for (i=0; i<dim; i++)
+      if (iga->proc_sizes[i] > 0)
+        procs[i] = iga->proc_sizes[i];
   }
 
   ierr = DMDACreate(((PetscObject)iga)->comm,&dm);CHKERRQ(ierr);
@@ -460,7 +522,7 @@ PetscErrorCode IGASetUp(IGA iga)
             "Must call IGASetDim() first");
 
   if (iga->dof < 1)
-    iga->dof = 1;  /* XXX */
+    iga->dof = 1;  /* XXX Error ? */
 
   for (i=0; i<iga->dim; i++) {
     ierr = IGAAxisCheck(iga->axis[i]);CHKERRQ(ierr);
@@ -469,6 +531,8 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisReset(iga->basis[i]);CHKERRQ(ierr);
+    ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
+    ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
   for (i=0; i<3; i++) {
     PetscInt p = iga->axis[i]->p;

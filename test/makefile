@@ -14,37 +14,62 @@ PETIGA_DIR ?= $(topdir)
 include ${PETIGA_DIR}/conf/petigavariables
 include ${PETIGA_DIR}/conf/petigarules
 
+OPTS=-nox -malloc_debug -malloc_dump
+
+IGACreate: IGACreate.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex1a_seq:
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 1 -iga_dof 4
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 2
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 3 -iga_dof 1
+runex1a_mpi:
+	-@${MPIEXEC} -n 2 ./IGACreate ${OPTS} -iga_dim 1 -iga_dof 8
+	-@${MPIEXEC} -n 4 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 4
+	-@${MPIEXEC} -n 8 ./IGACreate ${OPTS} -iga_dim 3 -iga_dof 2
+runex1b_seq:
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 3 -iga_periodic 0,1 -iga_degree 2,3
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 3 -iga_periodic 1,0 -iga_degree 2,3 
+	-@${MPIEXEC} -n 1 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 3 -iga_periodic 1,1 -iga_degree 2,3
+runex1b_mpi:
+	-@${MPIEXEC} -n 4 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,0,1 -iga_degree 4,3
+	-@${MPIEXEC} -n 4 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,0 -iga_degree 4,3
+	-@${MPIEXEC} -n 4 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,1 -iga_degree 4,3
+IGACreate = IGACreate.PETSc \
+	    runex1a_seq runex1a_mpi \
+	    runex1b_seq runex1b_mpi \
+	    Test_SNES_2D.rm
+
+
 Test_SNES_2D: Test_SNES_2D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-
-OPTS=-nox -malloc_debug -malloc_dump
-runex1a_1:
+runex0a_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type aij
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type baij
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N 4 -p 1 -iga_mat_type dense
-runex1a_4:
+runex0a_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type aij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type baij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 8 -p 1 -iga_mat_type sbaij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 4 -p 1 -iga_mat_type dense
-runex1b_1:
+runex0b_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 2
-runex1b_4:
+runex0b_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -p 2
-runex1c_1:
+runex0c_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 3
-runex1c_4:
+runex0c_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -p 3
-
 Test_SNES_2D = Test_SNES_2D.PETSc  \
-	       runex1a_1 runex1a_4 \
-	       runex1b_1 runex1b_4 \
-	       runex1c_1 runex1c_4 \
+	       runex0a_1 runex0a_4 \
+	       runex0b_1 runex0b_4 \
+	       runex0c_1 runex0c_4 \
 	       Test_SNES_2D.rm
 
-TESTEXAMPLES_C = $(Test_SNES_2D)
+TESTEXAMPLES_C =$(IGACreate) \
+                $(Test_SNES_2D)
 TESTEXAMPLES_FORTRAN =
 test-all:
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
