@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
   IGAAxis axis0;
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis0,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = IGAAxisSetOrder(axis0,p);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis0,p);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis0,N,0.0,1.0,C);CHKERRQ(ierr);
   IGAAxis axis1;
   ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
   IGAAxis axis;
   ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
   ierr = IGAAxisSetPeriodic(axis,t);CHKERRQ(ierr);
-  ierr = IGAAxisSetOrder(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis,N,-1.0,1.0,C);CHKERRQ(ierr);
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);

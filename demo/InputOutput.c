@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     IGAAxis axis;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisSetPeriodic(axis,b[i]);CHKERRQ(ierr);
-    ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
+    ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
     ierr = IGAAxisInitUniform(axis,N[i],0.0,1.0,C[i]);CHKERRQ(ierr);
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);

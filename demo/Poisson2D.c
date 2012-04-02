@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<2; i++) {
     IGAAxis axis;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-    ierr = IGAAxisSetOrder(axis,p[i]);CHKERRQ(ierr);
+    ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
     ierr = IGAAxisInitUniform(axis,N[i],-1.0,+1.0,C[i]);CHKERRQ(ierr);
   }
   IGABoundary bnd;

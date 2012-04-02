@@ -42,7 +42,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       m = buf[2]-1;
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisSetPeriodic(axis,periodic);CHKERRQ(ierr);
-      ierr = IGAAxisSetOrder(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
+      ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = IGAAxisSetKnots(axis,m,0);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,0,&U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m+1,PETSC_REAL);CHKERRQ(ierr);
@@ -123,7 +123,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
       PetscReal *U;
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisGetPeriodic(axis,&periodic);CHKERRQ(ierr);
-      ierr = IGAAxisGetOrder(axis,&p);CHKERRQ(ierr);
+      ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
       buf[0] = periodic;
       buf[1] = p;
