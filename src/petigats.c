@@ -8,7 +8,7 @@ extern PetscLogEvent IGA_FormJacobian;
 PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
                                 PetscReal a,Vec vecV,
                                 PetscReal t,Vec vecU,
-                                Vec vecF,IGAUserIFunction IFunction, void *ctx)
+                                Vec vecF,IGAUserIFunction IFunction,void *ctx)
 {
   Vec               localV;
   Vec               localU;
@@ -145,7 +145,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
                                  PetscReal a,Vec vecV,
                                  PetscReal t,Vec vecU,
                                  PetscReal t0,Vec vecU0,
-                                 Vec vecF,IGAUserIEFunction IEFunction, void *ctx)
+                                 Vec vecF,IGAUserIEFunction IEFunction,void *ctx)
 {
   Vec               localV;
   Vec               localU;
