@@ -124,6 +124,6 @@ subroutine TensorBasisFuns(&
 end subroutine TensorBasisFuns
 
 include 'petigarat.f90.in'
-include 'petigamap.f90.in'
+include 'petigageo.f90.in'
 
 end subroutine IGA_ShapeFuns_1D
