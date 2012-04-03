@@ -38,7 +38,7 @@ runex1b_mpi:
 IGACreate = IGACreate.PETSc \
 	    runex1a_seq runex1a_mpi \
 	    runex1b_seq runex1b_mpi \
-	    Test_SNES_2D.rm
+	    IGACreate.rm
 
 
 Test_SNES_2D: Test_SNES_2D.o chkopts
