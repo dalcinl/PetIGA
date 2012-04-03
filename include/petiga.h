@@ -380,15 +380,21 @@ extern PetscBool      IGAPointNext(IGAPoint point);
 
 extern PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 extern PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim);
-extern PetscErrorCode IGAPointGetQuadrature(IGAPoint pnt,PetscInt *dim,
-                                            const PetscReal *point[],PetscReal *weigth,PetscReal *detJac);
-extern PetscErrorCode IGAPointGetShapeFuns(IGAPoint pnt,PetscInt *nen,PetscInt *dim,
-                                           const PetscReal *jacobian[],const PetscReal **shapefuns[]);
+extern PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],PetscReal *weigth);
+extern PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *jacobian[]);
+extern PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[]);
+
+extern PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
+
+extern PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[]);
+extern PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+extern PetscErrorCode IGAPointGetGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+extern PetscErrorCode IGAPointGetHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+extern PetscErrorCode IGAPointGetDel2 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 
 extern PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[]);
 extern PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[]);
 
-extern PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
 extern PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F[]);
 extern PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K[]);
 
@@ -428,6 +434,10 @@ extern PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
 
 #ifndef PetscMalloc1
 #define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
+#endif
+
+#ifndef PetscValidRealPointer
+#define PetscValidRealPointer PetscValidDoublePointer
 #endif
 
 #if defined(PETSC_USE_DEBUG)

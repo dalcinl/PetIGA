@@ -173,37 +173,123 @@ PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,Petsc
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetQuadrature"
-PetscErrorCode IGAPointGetQuadrature(IGAPoint pnt,PetscInt *dim,
-                                     const PetscReal *point[],PetscReal *weight,PetscReal *detJac)
+PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],PetscReal *weight)
 {
   PetscFunctionBegin;
-  PetscValidPointer(pnt,1);
-  if (dim)    PetscValidIntPointer(dim,2);
-  if (point)  PetscValidPointer(point,3);
-  if (weight) PetscValidDoublePointer(weight,4);
-  if (detJac) PetscValidDoublePointer(detJac,5);
-  if (dim)    *dim    = pnt->dim;
-  if (point)  *point  = pnt->point;
-  if (weight) *weight = pnt->weight;
-  if (detJac) *detJac = pnt->detJac;
+  PetscValidPointer(point,1);
+  if (qpoint) PetscValidPointer(qpoint,3);
+  if (weight) PetscValidRealPointer(weight,4);
+  if (qpoint) *qpoint = point->point;
+  if (weight) *weight = point->weight;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetJacobian"
+PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *jacobian[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  if (detJac)   PetscValidRealPointer(detJac,2);
+  if (jacobian) PetscValidRealPointer(jacobian,3);
+  if (detJac)   *detJac   = point->detJac;
+  if (jacobian) *jacobian = point->jacobian;
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetShapeFuns"
-PetscErrorCode IGAPointGetShapeFuns(IGAPoint pnt,PetscInt *nen,PetscInt *dim,
-                                    const PetscReal *jacobian[],const PetscReal **shapefuns[])
+PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(pnt,1);
-  if (nen)       PetscValidIntPointer(nen,2);
-  if (dim)       PetscValidIntPointer(dim,3);
-  if (jacobian)  PetscValidPointer(jacobian,4);
-  if (shapefuns) PetscValidPointer(shapefuns,5);
-  if (nen)       *nen       = pnt->nen;
-  if (dim)       *dim       = pnt->dim;
-  if (jacobian)  *jacobian  = pnt->jacobian;
-  if (shapefuns) *shapefuns = (const PetscReal **)pnt->shape;
+  PetscValidPointer(point,1);
+  PetscValidPointer(shapefuns,2);
+  if (PetscUnlikely(der < 0 || der >= sizeof(point->shape)/sizeof(PetscReal*)))
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+            "Requested derivative must be in range [0,%d], got %D",
+            (int)(sizeof(point->shape)/sizeof(PetscReal*)),der);
+  *shapefuns = point->shape[der];
+  PetscFunctionReturn(0);
+}
+
+EXTERN_C_BEGIN
+extern void IGA_GetPoint(PetscInt nen,PetscInt dim,const PetscReal N[],
+                         const PetscReal Xw[],PetscReal x[]);
+extern void IGA_GetValue(PetscInt nen,PetscInt dof,const PetscReal N[],
+                         const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetGrad (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
+                         const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetHess (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
+                         const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDel2 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
+                         const PetscScalar U[],PetscScalar u[]);
+EXTERN_C_END
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetPoint"
+PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
+{
+  PetscBool geometry;
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  PetscValidRealPointer(x,2);
+  geometry = p->parent->parent->geometry ? PETSC_TRUE : PETSC_FALSE; /* XXX */
+  if (geometry) {
+    const PetscReal *Xw = p->parent->parent->geometry;
+    IGA_GetPoint(p->nen,p->dim,p->shape[0],Xw,x);
+  } else {
+    PetscInt i,dim = p->dim;
+    const PetscReal *X = p->point;
+    for (i=0; i<dim; i++) x[i] = X[i];
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetValue"
+PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  PetscValidScalarPointer(U,2);
+  PetscValidScalarPointer(u,3);
+  IGA_GetValue(p->nen,p->dof,p->shape[0],U,u);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetGrad"
+PetscErrorCode IGAPointGetGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  PetscValidScalarPointer(U,2);
+  PetscValidScalarPointer(u,3);
+  IGA_GetGrad(p->nen,p->dof,p->dim,p->shape[1],U,u);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetHess"
+PetscErrorCode IGAPointGetHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  PetscValidScalarPointer(U,2);
+  PetscValidScalarPointer(u,3);
+  IGA_GetHess(p->nen,p->dof,p->dim,p->shape[2],U,u);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetDel2"
+PetscErrorCode IGAPointGetDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  PetscValidScalarPointer(U,2);
+  PetscValidScalarPointer(u,3);
+  IGA_GetDel2(p->nen,p->dof,p->dim,p->shape[2],U,u);
   PetscFunctionReturn(0);
 }
 

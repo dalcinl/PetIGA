@@ -24,7 +24,7 @@ typedef struct {
 
 #undef  __FUNCT__
 #define __FUNCT__ "Function"
-PetscErrorCode Function(IGAPoint point,PetscReal dt,
+PetscErrorCode Function(IGAPoint p,PetscReal dt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
                         PetscReal t0,const PetscScalar *U0,
@@ -42,13 +42,17 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,
   PetscReal tau1  = user->tau1;
   PetscReal tau2  = user->tau2;
 
+  PetscInt nen;
+  IGAPointGetSizes(p,&nen,0,0);
+  PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
+
   PetscScalar uv_t[2],uv_0[2],uv_1[2][2];
-  IGAPointInterpolate(point,0,V,&uv_t[0]);
+  IGAPointGetValue(p,V,&uv_t[0]);
   if (IMPLICIT)
-    IGAPointInterpolate(point,0,U1,&uv_0[0]);
+    IGAPointGetValue(p,U1,&uv_0[0]);
   else
-    IGAPointInterpolate(point,0,U0,&uv_0[0]);
-  IGAPointInterpolate(point,1,U1,&uv_1[0][0]);
+    IGAPointGetValue(p,U0,&uv_0[0]);
+  IGAPointGetGrad(p,U1,&uv_1[0][0]);
   PetscScalar u_t = uv_t[0],    v_t = uv_t[1];
   PetscScalar u   = uv_0[0],    v   = uv_0[1];
   PetscScalar u_x = uv_1[0][0], v_x = uv_1[1][0];
@@ -56,10 +60,12 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,
 
   PetscReal f = alpha*u*(1-tau1*v*v) + v*(1-tau2*u);
   PetscReal g = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
-  PetscReal (*N0)    = point->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) point->shape[1];
-  PetscInt  a,nen=point->nen;
-  PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
+
+  const PetscReal *N0,(*N1)[2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+
+  PetscInt  a;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];
@@ -74,7 +80,7 @@ PetscErrorCode Function(IGAPoint point,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,
+PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
                         PetscReal t0,const PetscScalar *U0,
@@ -92,21 +98,28 @@ PetscErrorCode Jacobian(IGAPoint point,PetscReal dt,
   PetscReal tau1  = user->tau1;
   PetscReal tau2  = user->tau2;
 
-  PetscReal f_u=0,f_v=0,g_u=0,g_v=0;
+  PetscInt nen;
+  IGAPointGetSizes(p,&nen,0,0);
+  PetscScalar (*K)[2][nen][2] = (PetscScalar (*)[2][nen][2])Ke;
+
+  PetscReal f_u=0,f_v=0;
+  PetscReal g_u=0,g_v=0;
   if (IMPLICIT) {
     PetscScalar uv_0[2];
-    IGAPointInterpolate(point,0,U1,&uv_0[0]);
-    PetscScalar u = uv_0[0], v = uv_0[1];
+    IGAPointGetValue(p,U1,&uv_0[0]);
+    PetscScalar u = uv_0[0];
+    PetscScalar v = uv_0[1];
     f_u = alpha*(1-tau1*v*v) - tau2*v;
     f_v = -2*alpha*tau1*u*v + (1-tau2*u);
     g_u = alpha*tau1*v*v + (gamma+tau2*v);
     g_v = (beta+2*alpha*tau1*u*v) + tau2*u;
   }
 
-  PetscReal (*N0)    = point->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) point->shape[1];
-  PetscInt  i,j,a,b,nen=point->nen;
-  PetscScalar (*K)[2][nen][2] = (PetscScalar (*)[2][nen][2])Ke;
+  const PetscReal *N0,(*N1)[2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+
+  PetscInt  a,b,i,j;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];

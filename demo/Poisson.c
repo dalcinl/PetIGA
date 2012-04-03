@@ -9,11 +9,17 @@ PetscScalar Forcing(PetscInt dim, const PetscReal x[],void *ctx)
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
-  PetscInt  i,dim = p->dim;
-  PetscInt  a,b,nen=p->nen;
-  PetscReal *x  = p->point;
-  PetscReal *N0 = p->shape[0];
-  PetscReal *N1 = p->shape[1];
+  PetscInt  nen,dim;
+  IGAPointGetSizes(p,&nen,0,&dim);
+
+  PetscReal x[3];
+  IGAPointGetPoint(p,x);
+
+  const PetscReal *N0,*N1;
+  IGAPointGetShapeFuns(p,0,&N0);
+  IGAPointGetShapeFuns(p,0,&N1);
+
+  PetscInt a,b,i;
   for (a=0; a<nen; a++) {
     for (b=0; b<nen; b++) {
       PetscScalar Kab = 0.0;
@@ -37,7 +43,7 @@ int main(int argc, char *argv[]) {
   PetscInt  dim = 3;
   PetscInt  dof = 1;
   PetscBool t[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE};
-  PetscInt  N[3] = {16,16,16}; 
+  PetscInt  N[3] = {16,16,16};
   PetscInt  p[3] = { 2, 2, 2};
   PetscInt  C[3] = {-1,-1,-1};
   PetscInt  n0=3, n1=3, n2=3, n3=3;
@@ -54,7 +60,7 @@ int main(int argc, char *argv[]) {
   if (n2<3) p[2] = p[0]; if (n2<2) p[1] = p[0];
   if (n3<3) C[2] = C[0]; if (n3<2) C[1] = C[0];
   for (i=0; i<dim; i++)  if (C[i] ==-1) C[i] = p[i] - 1;
-  
+
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
@@ -82,7 +88,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGAFormSystem(iga,A,b,System,PETSC_NULL);CHKERRQ(ierr);
-  
+
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);

@@ -41,9 +41,12 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 {
   AppCtx *user = (AppCtx *)ctx;
 
+  PetscInt nen;
+  IGAPointGetSizes(p,&nen,0,0);
+
   PetscScalar c_t,c;
-  IGAPointInterpolate(p,0,V,&c_t);
-  IGAPointInterpolate(p,0,U,&c);
+  IGAPointGetValue(p,V,&c_t);
+  IGAPointGetValue(p,U,&c);
 
   PetscReal M,dM;
   Mobility(user,c,&M,&dM,NULL);
@@ -51,16 +54,17 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   ChemicalPotential(user,c,NULL,&dmu,NULL);
 
   PetscScalar c1[2],c2[2][2];
-  IGAPointInterpolate(p,1,U,&c1[0]);
-  IGAPointInterpolate(p,2,U,&c2[0][0]);
+  IGAPointGetGrad(p,U,&c1[0]);
+  IGAPointGetHess(p,U,&c2[0][0]);
   PetscScalar c_x  = c1[0],    c_y  = c1[1];
   PetscScalar c_xx = c2[0][0], c_yy = c2[1][1];
 
-  PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
-  PetscReal (*N2)[2][2] = (PetscReal (*)[2][2]) p->shape[2];
+  const PetscReal *N0,(*N1)[2],(*N2)[2][2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
 
-  PetscInt a,nen=p->nen;
+  PetscInt a;
   for (a=0; a<nen; a++) {
     PetscReal Na    = N0[a];
     PetscReal Na_x  = N1[a][0];
@@ -92,9 +96,12 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
 {
   AppCtx *user = (AppCtx *)ctx;
 
+  PetscInt nen;
+  IGAPointGetSizes(p,&nen,0,0);
+
   PetscScalar c_t,c;
-  IGAPointInterpolate(p,0,V,&c_t);
-  IGAPointInterpolate(p,0,U,&c);
+  IGAPointGetValue(p,V,&c_t);
+  IGAPointGetValue(p,U,&c);
 
   PetscReal M,dM,d2M;
   Mobility(user,c,&M,&dM,&d2M);
@@ -102,16 +109,17 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   ChemicalPotential(user,c,NULL,&dmu,&d2mu);
 
   PetscScalar c1[2],c2[2][2];
-  IGAPointInterpolate(p,1,U,&c1[0]);
-  IGAPointInterpolate(p,2,U,&c2[0][0]);
+  IGAPointGetGrad(p,U,&c1[0]);
+  IGAPointGetHess(p,U,&c2[0][0]);
   PetscScalar c_x  = c1[0],    c_y  = c1[1];
   PetscScalar c_xx = c2[0][0], c_yy = c2[1][1];
 
-  PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
-  PetscReal (*N2)[2][2] = (PetscReal (*)[2][2]) p->shape[2];
+  const PetscReal *N0,(*N1)[2],(*N2)[2][2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
 
-  PetscInt a,b,nen=p->nen;
+  PetscInt a,b;
   for (a=0; a<nen; a++) {
     PetscReal Na    = N0[a];
     PetscReal Na_x  = N1[a][0];
