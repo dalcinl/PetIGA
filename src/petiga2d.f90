@@ -3,18 +3,17 @@ subroutine IGA_Quadrature_2D(&
      jnq,jX,jW, &
      X, W)      &
   bind(C, name="IGA_Quadrature_2D")
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  use PetIGA
   implicit none
-  integer, parameter :: dim = 2
-  integer(kind=C_INT   ), intent(in),value :: inq
-  integer(kind=C_INT   ), intent(in),value :: jnq
-  real   (kind=C_DOUBLE), intent(in)  :: iX(inq), iW(inq)
-  real   (kind=C_DOUBLE), intent(in)  :: jX(jnq), jW(jnq)
-  real   (kind=C_DOUBLE), intent(out) :: X(dim,inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: W(inq,jnq)
-  integer :: iq
-  integer :: jq
+  integer(kind=IGA_INT ), parameter        :: dim = 2
+  integer(kind=IGA_INT ), intent(in),value :: inq
+  integer(kind=IGA_INT ), intent(in),value :: jnq
+  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq)
+  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq)
+  real   (kind=IGA_REAL), intent(out) :: X(dim,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: W(inq,jnq)
+  integer(kind=IGA_INT ) :: iq
+  integer(kind=IGA_INT ) :: jq
   forall (iq=1:inq, jq=1:jnq)
      X(:,iq,jq) = (/ iX(iq),  jX(jq)/)
      W(  iq,jq) =    iW(iq) * jW(jq)
@@ -28,29 +27,29 @@ subroutine IGA_ShapeFuns_2D(&
      Cw,detJac,Jac,         &
      N0,N1,N2,N3)           &
   bind(C, name="IGA_ShapeFuns_2D")
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  use PetIGA
   implicit none
-  integer(kind=C_INT   ), parameter        :: dim = 2
-  integer(kind=C_INT   ), intent(in),value :: geometry
-  integer(kind=C_INT   ), intent(in),value :: rational
-  integer(kind=C_INT   ), intent(in),value :: inq, ina, ind
-  integer(kind=C_INT   ), intent(in),value :: jnq, jna, jnd
-  real   (kind=C_DOUBLE), intent(in)  :: iJ, iN(0:ind,ina,inq)
-  real   (kind=C_DOUBLE), intent(in)  :: jJ, jN(0:jnd,jna,jnq)
-  real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina,jna)
-  real   (kind=C_DOUBLE), intent(out) :: detJac(     inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: Jac(dim,dim,inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: N0(       ina,jna,inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: N1(   dim,ina,jna,inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: N2(dim**2,ina,jna,inq,jnq)
-  real   (kind=C_DOUBLE), intent(out) :: N3(dim**3,ina,jna,inq,jnq)
-  integer :: ia,iq
-  integer :: ja,jq
-  integer :: na,nd
+  integer(kind=IGA_INT ), parameter        :: dim = 2
+  integer(kind=IGA_INT ), intent(in),value :: geometry
+  integer(kind=IGA_INT ), intent(in),value :: rational
+  integer(kind=IGA_INT ), intent(in),value :: inq, ina, ind
+  integer(kind=IGA_INT ), intent(in),value :: jnq, jna, jnd
+  real   (kind=IGA_REAL), intent(in)  :: iJ, iN(0:ind,ina,inq)
+  real   (kind=IGA_REAL), intent(in)  :: jJ, jN(0:jnd,jna,jnq)
+  real   (kind=IGA_REAL), intent(in)  :: Cw(dim+1,ina,jna)
+  real   (kind=IGA_REAL), intent(out) :: detJac(     inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: Jac(dim,dim,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: N0(       ina,jna,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: N1(   dim,ina,jna,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: N2(dim**2,ina,jna,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina,jna,inq,jnq)
 
-  real(kind=C_DOUBLE) :: C(dim,ina,jna)
-  real(kind=C_DOUBLE) :: w(    ina,jna)
+  integer(kind=IGA_INT ) :: ia,iq
+  integer(kind=IGA_INT ) :: ja,jq
+  integer(kind=IGA_INT ) :: na,nd
+  real   (kind=IGA_REAL) :: C(dim,ina,jna)
+  real   (kind=IGA_REAL) :: w(    ina,jna)
+
   if (geometry /= 0) then
      C = Cw(1:dim,:,:)
   end if
@@ -101,24 +100,22 @@ subroutine IGA_ShapeFuns_2D(&
 
 contains
 
-subroutine TensorBasisFuns(&
+pure subroutine TensorBasisFuns(&
      ina,ind,iN,&
      jna,jnd,jN,&
      nd,N0,N1,N2,N3)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
   implicit none
-  integer(kind=C_INT   ), parameter        :: dim = 2
-  integer(kind=C_INT   ), intent(in),value :: ina, ind
-  integer(kind=C_INT   ), intent(in),value :: jna, jnd
-  real   (kind=C_DOUBLE), intent(in)  :: iN(0:ind,ina)
-  real   (kind=C_DOUBLE), intent(in)  :: jN(0:jnd,jna)
-  integer(kind=C_INT   ), intent(in)  :: nd
-  real   (kind=C_DOUBLE), intent(out) :: N0(            ina,jna)
-  real   (kind=C_DOUBLE), intent(out) :: N1(        dim,ina,jna)
-  real   (kind=C_DOUBLE), intent(out) :: N2(    dim,dim,ina,jna)
-  real   (kind=C_DOUBLE), intent(out) :: N3(dim,dim,dim,ina,jna)
-  integer :: ia, ja
+  integer(kind=IGA_INT ), parameter        :: dim = 2
+  integer(kind=IGA_INT ), intent(in),value :: ina, ind
+  integer(kind=IGA_INT ), intent(in),value :: jna, jnd
+  real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina)
+  real   (kind=IGA_REAL), intent(in)  :: jN(0:jnd,jna)
+  integer(kind=IGA_INT ), intent(in)  :: nd
+  real   (kind=IGA_REAL), intent(out) :: N0(            ina,jna)
+  real   (kind=IGA_REAL), intent(out) :: N1(        dim,ina,jna)
+  real   (kind=IGA_REAL), intent(out) :: N2(    dim,dim,ina,jna)
+  real   (kind=IGA_REAL), intent(out) :: N3(dim,dim,dim,ina,jna)
+  integer(kind=IGA_INT ) :: ia, ja
   !
   forall (ia=1:ina, ja=1:jna)
      N0(ia,ja) = iN(0,ia) * jN(0,ja)

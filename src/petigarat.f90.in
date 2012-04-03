@@ -1,18 +1,17 @@
 ! -*- f90 -*-
 
-subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+pure subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
   implicit none
-  !integer(kind=C_INT   ), parameter     :: dim = 3
-  integer(kind=C_INT   ), intent(in)    :: nd, na
-  real   (kind=C_DOUBLE), intent(in)    :: w(na)
-  real   (kind=C_DOUBLE), intent(inout) :: R0(            na)
-  real   (kind=C_DOUBLE), intent(inout) :: R1(        dim,na)
-  real   (kind=C_DOUBLE), intent(inout) :: R2(    dim,dim,na)
-  real   (kind=C_DOUBLE), intent(inout) :: R3(dim,dim,dim,na)
-  integer :: a, i, j, k
-  real(kind=C_DOUBLE) :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
+  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
+  integer(kind=IGA_INT ), intent(in)    :: nd, na
+  real   (kind=IGA_REAL), intent(in)    :: w(na)
+  real   (kind=IGA_REAL), intent(inout) :: R0(            na)
+  real   (kind=IGA_REAL), intent(inout) :: R1(        dim,na)
+  real   (kind=IGA_REAL), intent(inout) :: R2(    dim,dim,na)
+  real   (kind=IGA_REAL), intent(inout) :: R3(dim,dim,dim,na)
+  !
+  integer(kind=IGA_INT ) :: a, i, j, k
+  real   (kind=IGA_REAL) :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
   !
   forall (a=1:na)
      R0(a) = w(a) * R0(a)

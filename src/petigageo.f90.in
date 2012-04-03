@@ -1,32 +1,29 @@
 ! -*- f90 -*-
 
-subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
   implicit none
-  !integer(kind=C_INT   ), parameter     :: dim = 3
-  integer(kind=C_INT   ), intent(in)    :: nd, num
-  real   (kind=C_DOUBLE), intent(in)    :: X(dim,num)
-  real   (kind=C_DOUBLE), intent(out)   :: detJ
-  real   (kind=C_DOUBLE), intent(out)   :: Jac(dim,dim)
-  real   (kind=C_DOUBLE), intent(inout) :: N0(            num)
-  real   (kind=C_DOUBLE), intent(inout) :: N1(        dim,num)
-  real   (kind=C_DOUBLE), intent(inout) :: N2(    dim,dim,num)
-  real   (kind=C_DOUBLE), intent(inout) :: N3(dim,dim,dim,num)
+  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
+  integer(kind=IGA_INT ), intent(in)    :: nd,num
+  real   (kind=IGA_REAL), intent(in)    :: X(dim,num)
+  real   (kind=IGA_REAL), intent(out)   :: detJ
+  real   (kind=IGA_REAL), intent(out)   :: Jac(dim,dim)
+  real   (kind=IGA_REAL), intent(inout) :: N0(            num)
+  real   (kind=IGA_REAL), intent(inout) :: N1(        dim,num)
+  real   (kind=IGA_REAL), intent(inout) :: N2(    dim,dim,num)
+  real   (kind=IGA_REAL), intent(inout) :: N3(dim,dim,dim,num)
 
-  integer :: idx
-  integer :: i, j, k, l
-  integer :: a, b, c, d
-
-  real(kind=C_DOUBLE) :: X1(dim,dim)
-  real(kind=C_DOUBLE) :: X2(dim,dim,dim)
-  real(kind=C_DOUBLE) :: X3(dim,dim,dim,dim)
-  real(kind=C_DOUBLE) :: E1(dim,dim)
-  real(kind=C_DOUBLE) :: E2(dim,dim,dim)
-  real(kind=C_DOUBLE) :: E3(dim,dim,dim,dim)
-  real(kind=C_DOUBLE) :: R1(        dim,num)
-  real(kind=C_DOUBLE) :: R2(    dim,dim,num)
-  real(kind=C_DOUBLE) :: R3(dim,dim,dim,num)
+  integer(kind=IGA_INT ) :: idx
+  integer(kind=IGA_INT ) :: i, j, k, l
+  integer(kind=IGA_INT ) :: a, b, c, d
+  real   (kind=IGA_REAL) :: X1(dim,dim)
+  real   (kind=IGA_REAL) :: X2(dim,dim,dim)
+  real   (kind=IGA_REAL) :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL) :: E1(dim,dim)
+  real   (kind=IGA_REAL) :: E2(dim,dim,dim)
+  real   (kind=IGA_REAL) :: E3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL) :: R1(        dim,num)
+  real   (kind=IGA_REAL) :: R2(    dim,dim,num)
+  real   (kind=IGA_REAL) :: R3(dim,dim,dim,num)
 
   ! gradient of the mapping
   Jac  = matmul(X,transpose(N1))
@@ -148,12 +145,10 @@ subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
 end subroutine GeometryMap
 
 pure function Determinant(dim,A) result (detA)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
   implicit none
-  integer(kind=C_INT   ), intent(in)  :: dim
-  real   (kind=C_DOUBLE), intent(in)  :: A(dim,dim)
-  real   (kind=C_DOUBLE) :: detA
+  integer(kind=IGA_INT ), intent(in) :: dim
+  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
+  real   (kind=IGA_REAL) :: detA
   select case (dim)
   case (1)
      detA = A(1,1)
@@ -169,13 +164,11 @@ pure function Determinant(dim,A) result (detA)
 end function Determinant
 
 pure function Inverse(dim,A,detA) result (invA)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
   implicit none
-  integer(kind=C_INT   ), intent(in)  :: dim
-  real   (kind=C_DOUBLE), intent(in)  :: A(dim,dim)
-  real   (kind=C_DOUBLE), intent(in)  :: detA
-  real   (kind=C_DOUBLE)              :: invA(dim,dim)
+  integer(kind=IGA_INT ), intent(in) :: dim
+  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
+  real   (kind=IGA_REAL), intent(in) :: detA
+  real   (kind=IGA_REAL)             :: invA(dim,dim)
   select case (dim)
   case (1)
      invA = 1.0/detA

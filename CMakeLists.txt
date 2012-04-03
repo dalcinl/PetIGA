@@ -23,7 +23,9 @@ endif()
 
 enable_language (Fortran)
 
-include_directories (${PETSC_INCLUDES} ${PETSC_PACKAGE_INCLUDES} "${PetIGA_SOURCE_DIR}/include")
+include_directories (${PETSC_INCLUDES} ${PETSC_PACKAGE_INCLUDES}
+                    "${PetIGA_SOURCE_DIR}/${PETSC_ARCH}/include"
+                    "${PetIGA_SOURCE_DIR}/include")
 add_definitions (${PETSC_DEFINITIONS})
 
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PetIGA_BINARY_DIR}/lib" CACHE PATH "Output directory for PetIGA archives")

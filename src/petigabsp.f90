@@ -1,16 +1,36 @@
 ! -*- f90 -*-
 
-subroutine DersBasisFuns(i,uu,p,n,U,ders)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+subroutine IGA_DersBasisFuns(i,uu,p,d,U,N) &
+  bind(C, name="IGA_DersBasisFuns")
+  use PetIGA
   implicit none
-  integer(kind=C_INT),    intent(in) :: i, p, n
-  real   (kind=C_DOUBLE), intent(in) :: uu, U(0:i+p)
-  real   (kind=C_DOUBLE), intent(out):: ders(0:p,0:n)
-  integer(kind=C_INT)    :: j, k, r, s1, s2, rk, pk, j1, j2
-  real   (kind=C_DOUBLE) :: saved, temp, d
-  real   (kind=C_DOUBLE) :: left(p), right(p)
-  real   (kind=C_DOUBLE) :: ndu(0:p,0:p), a(0:1,0:p)
+  interface
+     pure subroutine DersBasisFuns(i,uu,p,d,U,ders)
+       use PetIGA
+       integer(kind=IGA_INT),  intent(in)  :: i, p, d
+       real   (kind=IGA_REAL), intent(in)  :: uu, U(0:i+p)
+       real   (kind=IGA_REAL), intent(out) :: ders(0:p,0:d)
+     end subroutine DersBasisFuns
+  end interface
+  integer(kind=IGA_INT),  intent(in),value :: i, p, d
+  real   (kind=IGA_REAL), intent(in),value :: uu
+  real   (kind=IGA_REAL), intent(in)       :: U(0:i+p)
+  real   (kind=IGA_REAL), intent(out)      :: N(0:d,0:p)
+  real   (kind=IGA_REAL)  :: ders(0:p,0:d)
+  call DersBasisFuns(i,uu,p,d,U,ders)
+  N = transpose(ders)
+end subroutine IGA_DersBasisFuns
+
+pure subroutine DersBasisFuns(i,uu,p,n,U,ders)
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INT),  intent(in)  :: i, p, n
+  real   (kind=IGA_REAL), intent(in)  :: uu, U(0:i+p)
+  real   (kind=IGA_REAL), intent(out) :: ders(0:p,0:n)
+  integer(kind=IGA_INT)   :: j, k, r, s1, s2, rk, pk, j1, j2
+  real   (kind=IGA_REAL)  :: saved, temp, d
+  real   (kind=IGA_REAL)  :: left(p), right(p)
+  real   (kind=IGA_REAL)  :: ndu(0:p,0:p), a(0:1,0:p)
   ndu(0,0) = 1.0
   do j = 1, p
      left(j)  = uu - U(i+1-j)
@@ -63,26 +83,3 @@ subroutine DersBasisFuns(i,uu,p,n,U,ders)
      r = r * (p-k)
   end do
 end subroutine DersBasisFuns
-
-subroutine IGA_DersBasisFuns(i,uu,p,d,U,N) &
-  bind(C, name="IGA_DersBasisFuns")
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
-  implicit none
-  interface
-     subroutine DersBasisFuns(i,uu,p,d,U,ders)
-       use ISO_C_BINDING, only: C_INT, C_LONG
-       use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
-       integer(kind=C_INT),    intent(in) :: i, p, d
-       real   (kind=C_DOUBLE), intent(in) :: uu, U(0:i+p)
-       real   (kind=C_DOUBLE), intent(out):: ders(0:p,0:d)
-     end subroutine DersBasisFuns
-  end interface
-  integer(kind=C_INT),    intent(in),value :: i, p, d
-  real   (kind=C_DOUBLE), intent(in),value :: uu
-  real   (kind=C_DOUBLE), intent(in)       :: U(0:i+p)
-  real   (kind=C_DOUBLE), intent(out)      :: N(0:d,0:p)
-  real   (kind=C_DOUBLE) ders(0:p,0:d)
-  call DersBasisFuns(i,uu,p,d,U,ders)
-  N = transpose(ders)
-end subroutine IGA_DersBasisFuns

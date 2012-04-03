@@ -2,15 +2,14 @@ subroutine IGA_Quadrature_1D(&
      inq,iX,iW, &
      X, W)      &
   bind(C, name="IGA_Quadrature_1D")
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  use PetIGA
   implicit none
-  integer, parameter :: dim = 1
-  integer(kind=C_INT   ), intent(in),value :: inq
-  real   (kind=C_DOUBLE), intent(in)  :: iX(inq), iW(inq)
-  real   (kind=C_DOUBLE), intent(out) :: X(dim,inq)
-  real   (kind=C_DOUBLE), intent(out) :: W(inq)
-  integer :: iq
+  integer(kind=IGA_INT ), parameter        :: dim = 1
+  integer(kind=IGA_INT ), intent(in),value :: inq
+  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq)
+  real   (kind=IGA_REAL), intent(out) :: X(dim,inq)
+  real   (kind=IGA_REAL), intent(out) :: W(inq)
+  integer(kind=IGA_INT )  :: iq
   forall (iq=1:inq)
      X(:,iq) = (/ iX(iq) /)
      W(iq)   = iW(iq)
@@ -23,26 +22,26 @@ subroutine IGA_ShapeFuns_1D(&
      Cw,detJac,Jac,         &
      N0,N1,N2,N3)           &
   bind(C, name="IGA_ShapeFuns_1D")
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
+  use PetIGA
   implicit none
-  integer(kind=C_INT   ), parameter        :: dim = 1
-  integer(kind=C_INT   ), intent(in),value :: geometry
-  integer(kind=C_INT   ), intent(in),value :: rational
-  integer(kind=C_INT   ), intent(in),value :: inq, ina, ind
-  real   (kind=C_DOUBLE), intent(in)  :: iJ, iN(0:ind,ina,inq)
-  real   (kind=C_DOUBLE), intent(in)  :: Cw(dim+1,ina)
-  real   (kind=C_DOUBLE), intent(out) :: detJac(     inq)
-  real   (kind=C_DOUBLE), intent(out) :: Jac(dim,dim,inq)
-  real   (kind=C_DOUBLE), intent(out) :: N0(       ina,inq)
-  real   (kind=C_DOUBLE), intent(out) :: N1(   dim,ina,inq)
-  real   (kind=C_DOUBLE), intent(out) :: N2(dim**2,ina,inq)
-  real   (kind=C_DOUBLE), intent(out) :: N3(dim**3,ina,inq)
-  integer :: ia,iq
-  integer :: na,nd
+  integer(kind=IGA_INT ), parameter        :: dim = 1
+  integer(kind=IGA_INT ), intent(in),value :: geometry
+  integer(kind=IGA_INT ), intent(in),value :: rational
+  integer(kind=IGA_INT ), intent(in),value :: inq, ina, ind
+  real   (kind=IGA_REAL), intent(in)  :: iJ, iN(0:ind,ina,inq)
+  real   (kind=IGA_REAL), intent(in)  :: Cw(dim+1,ina)
+  real   (kind=IGA_REAL), intent(out) :: detJac(     inq)
+  real   (kind=IGA_REAL), intent(out) :: Jac(dim,dim,inq)
+  real   (kind=IGA_REAL), intent(out) :: N0(       ina,inq)
+  real   (kind=IGA_REAL), intent(out) :: N1(   dim,ina,inq)
+  real   (kind=IGA_REAL), intent(out) :: N2(dim**2,ina,inq)
+  real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina,inq)
 
-  real(kind=C_DOUBLE) :: C(dim,ina)
-  real(kind=C_DOUBLE) :: w(    ina)
+  integer(kind=IGA_INT ) :: ia,iq
+  integer(kind=IGA_INT ) :: na,nd
+  real   (kind=IGA_REAL) :: C(dim,ina)
+  real   (kind=IGA_REAL) :: w(    ina)
+
   if (geometry /= 0) then
      C = Cw(1:dim,:)
   end if
@@ -87,21 +86,19 @@ subroutine IGA_ShapeFuns_1D(&
 
 contains
 
-subroutine TensorBasisFuns(&
+pure subroutine TensorBasisFuns(&
      ina,ind,iN,&
      nd,N0,N1,N2,N3)
-  use ISO_C_BINDING, only: C_INT, C_LONG
-  use ISO_C_BINDING, only: C_FLOAT, C_DOUBLE
   implicit none
-  integer(kind=C_INT   ), parameter        :: dim = 1
-  integer(kind=C_INT   ), intent(in),value :: ina, ind
-  real   (kind=C_DOUBLE), intent(in)  :: iN(0:ind,ina)
-  integer(kind=C_INT   ), intent(in)  :: nd
-  real   (kind=C_DOUBLE), intent(out) :: N0(            ina)
-  real   (kind=C_DOUBLE), intent(out) :: N1(        dim,ina)
-  real   (kind=C_DOUBLE), intent(out) :: N2(    dim,dim,ina)
-  real   (kind=C_DOUBLE), intent(out) :: N3(dim,dim,dim,ina)
-  integer :: ia
+  integer(kind=IGA_INT ), parameter        :: dim = 1
+  integer(kind=IGA_INT ), intent(in),value :: ina, ind
+  real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina)
+  integer(kind=IGA_INT ), intent(in)  :: nd
+  real   (kind=IGA_REAL), intent(out) :: N0(            ina)
+  real   (kind=IGA_REAL), intent(out) :: N1(        dim,ina)
+  real   (kind=IGA_REAL), intent(out) :: N2(    dim,dim,ina)
+  real   (kind=IGA_REAL), intent(out) :: N3(dim,dim,dim,ina)
+  integer(kind=IGA_INT ) :: ia
   !
   forall (ia=1:ina)
      N0(ia) = iN(0,ia)
