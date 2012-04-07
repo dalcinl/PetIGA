@@ -5,6 +5,7 @@ TARGETS = InputOutput \
           Poisson \
           PatternFormation \
           CahnHilliard2D \
+          CahnHilliard3D \
           NavierStokesVMS
 ALL: ${TARGETS}
 clean::
@@ -52,6 +53,9 @@ PatternFormation: PatternFormation.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 CahnHilliard2D: CahnHilliard2D.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+CahnHilliard3D: CahnHilliard3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 NavierStokesVMS: NavierStokesVMS.o chkopts
