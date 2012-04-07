@@ -4,7 +4,7 @@ PetscClassId IGA_CLASSID = 0;
 
 static PetscBool IGAPackageInitialized = PETSC_FALSE;
 PetscBool IGARegisterAllCalled = PETSC_FALSE;
-PetscLogEvent IGA_Event = 0;
+PetscLogEvent IGA_FormScalar = 0;
 PetscLogEvent IGA_FormSystem = 0;
 PetscLogEvent IGA_FormFunction = 0;
 PetscLogEvent IGA_FormJacobian = 0;
@@ -47,7 +47,7 @@ PetscErrorCode IGAInitializePackage(const char path[])
   /* Register Constructors */
   ierr = IGARegisterAll(path);CHKERRQ(ierr);
   /* Register Events */
-  ierr = PetscLogEventRegister("IGAEvent",IGA_CLASSID,&IGA_Event);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("IGAFormScalar",IGA_CLASSID,&IGA_FormScalar);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormSystem",IGA_CLASSID,&IGA_FormSystem);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormFunction",IGA_CLASSID,&IGA_FormFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);

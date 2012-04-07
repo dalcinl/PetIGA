@@ -326,11 +326,11 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidPointer(V,2);
+  if (PetscUnlikely(point->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
     PetscInt n = point->nen * point->dof;
-    if (PetscUnlikely(point->index < 0))
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
     if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     if (PetscUnlikely(!point->wvec[point->nvec])) {
@@ -350,6 +350,8 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidPointer(M,2);
+  if (PetscUnlikely(point->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
     PetscInt n = point->nen * point->dof;
@@ -365,22 +367,35 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointAddArray"
+PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],PetscScalar A[])
+{
+  PetscInt  i;
+  PetscReal JW;
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidScalarPointer(a,2);
+  PetscValidScalarPointer(A,3);
+  if (PetscUnlikely(point->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
+  JW = point->detJac*point->weight;
+  for (i=0; i<n; i++) A[i] += a[i] * JW;
+  PetscLogFlopsNoError(2*n);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointAddVec"
 PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F[])
 {
+  PetscInt       n;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidScalarPointer(f,2);
   PetscValidScalarPointer(F,3);
-  if (PetscUnlikely(point->index < 0))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  {
-    PetscInt nen = point->nen;
-    PetscInt dof = point->dof;
-    PetscReal JW = point->detJac*point->weight;
-    PetscInt i, n = nen*dof;
-    for (i=0; i<n; i++) F[i] += f[i] * JW;
-  }
+  n = point->nen*point->dof;
+  ierr = IGAPointAddArray(point,n,f,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -388,18 +403,13 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
 #define __FUNCT__ "IGAPointAddMat"
 PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K[])
 {
+  PetscInt       n;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidScalarPointer(k,2);
   PetscValidScalarPointer(K,3);
-  if (PetscUnlikely(point->index < 0))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  {
-    PetscInt nen = point->nen;
-    PetscInt dof = point->dof;
-    PetscReal JW = point->detJac*point->weight;
-    PetscInt i, n = (nen*dof)*(nen*dof);
-    for (i=0; i<n; i++) K[i] += k[i] * JW;
-  }
+  n = point->nen*point->dof;
+  ierr = IGAPointAddArray(point,n*n,k,K);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

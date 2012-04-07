@@ -105,6 +105,7 @@ extern PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,Pe
 
 /* ---------------------------------------------------------------- */
 
+typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
 typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
@@ -395,10 +396,14 @@ extern PetscErrorCode IGAPointGetDel2 (IGAPoint p,const PetscScalar U[],PetscSca
 extern PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[]);
 extern PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[]);
 
+extern PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],PetscScalar A[]);
 extern PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F[]);
 extern PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K[]);
 
 /* ---------------------------------------------------------------- */
+
+extern PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S[],
+                                    IGAUserScalar Scalar,void *ctx);
 
 extern PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 extern PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B,
