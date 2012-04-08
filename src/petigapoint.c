@@ -207,7 +207,7 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
   if (PetscUnlikely(der < 0 || der >= sizeof(point->shape)/sizeof(PetscReal*)))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
             "Requested derivative must be in range [0,%d], got %D",
-            (int)(sizeof(point->shape)/sizeof(PetscReal*)),der);
+            (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
   *shapefuns = point->shape[der];
   PetscFunctionReturn(0);
 }
