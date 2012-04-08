@@ -12,12 +12,12 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt  nen,dim;
   IGAPointGetSizes(p,&nen,0,&dim);
 
-  PetscReal x[3];
+  PetscReal x[3] = {0,0,0};
   IGAPointGetPoint(p,x);
 
   const PetscReal *N0,*N1;
   IGAPointGetShapeFuns(p,0,&N0);
-  IGAPointGetShapeFuns(p,0,&N1);
+  IGAPointGetShapeFuns(p,1,&N1);
 
   PetscInt a,b,i;
   for (a=0; a<nen; a++) {
