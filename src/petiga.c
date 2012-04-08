@@ -514,6 +514,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom)
 PetscErrorCode IGASetUp(IGA iga)
 {
   PetscInt       i;
+  PetscInt       p_max;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -536,10 +537,17 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
+
+  p_max = 0;
+  for (i=0; i<iga->dim; i++) {
+    PetscInt p = iga->axis[i]->p;
+    p_max = PetscMax(p_max,p);
+  }
+
   for (i=0; i<3; i++) {
     PetscInt p = iga->axis[i]->p;
     PetscInt q = p+1;
-    PetscInt d = PetscMin(p,3); /* XXX */
+    PetscInt d = PetscMin(p_max,3); /* XXX */
     if (!iga->rule[i]->nqp)
       {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
     if (!iga->basis[i]->nel)
