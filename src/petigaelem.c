@@ -102,15 +102,15 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     PetscInt i,dim = element->dim;
     PetscInt nel=1,nen=1,nqp=1;
     for (i=0; i<dim; i++) {
-      element->range[i][0] = iga->elem_start[i];
-      element->range[i][1] = iga->elem_start[i] + iga->elem_width[i];
-      nel *= iga->elem_width[i];
+      element->start[i] = iga->elem_start[i];
+      element->width[i] = iga->elem_width[i];
+      nel *= element->width[i];
       nen *= BD[i]->nen;
       nqp *= BD[i]->nqp;
     }
     for (i=dim; i<3; i++) {
-      element->range[i][0] = 0;
-      element->range[i][1] = 1;
+      element->start[i] = 0;
+      element->width[i] = 1;
     }
     element->index = -1;
     element->count = nel;
@@ -119,11 +119,12 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   }
   { /* */
     PetscInt dim = element->dim;
-    PetscInt nqp = element->nqp;
     PetscInt nen = element->nen;
+    PetscInt nqp = element->nqp;
 
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*(dim+1),PetscReal,&element->geometry);CHKERRQ(ierr);
+
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->detJac);CHKERRQ(ierr);
@@ -133,6 +134,8 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->shape[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->shape[3]);CHKERRQ(ierr);
 
+    ierr = PetscMemzero(element->point,   sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->weight,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->jacobian,sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
@@ -164,9 +167,7 @@ PetscErrorCode IGAElementBegin(IGAElement element)
   iga = element->parent;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
-  if (iga->vec_geom) {
-    ierr = VecGetArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);
-  }
+  if (iga->vec_geom) {ierr = VecGetArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);}
   element->index = -1;
   PetscFunctionReturn(0);
 }
@@ -175,8 +176,10 @@ PetscErrorCode IGAElementBegin(IGAElement element)
 #define __FUNCT__ "IGAElementNext"
 PetscBool IGAElementNext(IGAElement element)
 {
-  PetscInt i,dim = element->dim;
-  PetscInt *ID   = element->ID;
+  PetscInt i,dim  = element->dim;
+  PetscInt *start = element->start;
+  PetscInt *width = element->width;
+  PetscInt *ID    = element->ID;
   PetscInt index;
   /* */
   element->nvec = 0;
@@ -189,11 +192,9 @@ PetscBool IGAElementNext(IGAElement element)
   }
   /* */
   for (i=0; i<dim; i++) {
-    PetscInt *range = element->range[i];
-    PetscInt size  = range[1] - range[0];
-    PetscInt coord = index % size;
-    index = (index - coord) / size;
-    ID[i] = coord + range[0];
+    PetscInt coord = index % width[i];
+    index = (index - coord) / width[i];
+    ID[i] = coord + start[i];
   }
   IGAElementBuildMapping(element);
   IGAElementBuildFix(element);
@@ -209,9 +210,7 @@ PetscErrorCode IGAElementEnd(IGAElement element)
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   iga = element->parent;
-  if (iga->vec_geom) {
-    ierr = VecRestoreArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);
-  }
+  if (iga->vec_geom) {ierr = VecRestoreArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);}
   element->index = -1;
   PetscFunctionReturn(0);
 }

@@ -218,7 +218,7 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec, PetscViewer viewer)
   if (!rank) {
     ierr = PetscBinaryRead(fd,array,n,PETSC_SCALAR);CHKERRQ(ierr);
     if (size > 1) {
-      const PetscInt *range = vec->map->range;
+      const PetscInt *range = vec->map->range; /* XXX */
       n = 1;
       for (i=1; i<size; i++)
         n = PetscMax(n,range[i+1] - range[i]);

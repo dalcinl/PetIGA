@@ -271,7 +271,8 @@ struct _n_IGAElement {
   /**/
   PetscInt count;
   PetscInt index;
-  PetscInt range[3][2];
+  PetscInt start[3];
+  PetscInt width[3];
   PetscInt ID[3];
 
   PetscInt nqp;

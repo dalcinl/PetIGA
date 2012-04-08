@@ -89,6 +89,8 @@ PetscErrorCode IGAReset(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   iga->setup = PETSC_FALSE;
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
+  iga->geometry = PETSC_NULL;
+  iga->rational = PETSC_FALSE;
   ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_dof);CHKERRQ(ierr);
