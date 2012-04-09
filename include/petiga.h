@@ -24,7 +24,7 @@ typedef struct _n_IGAPoint    *IGAPoint;
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAAxis {
-  PetscInt   refct;
+  PetscInt refct;
   /**/
   PetscBool  periodic; /* periodicity */
   PetscInt   p; /* polynomial order   */
@@ -48,7 +48,7 @@ extern PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,Pe
 extern PetscErrorCode IGAAxisCheck(IGAAxis axis);
 
 struct _n_IGARule {
-  PetscInt   refct;
+  PetscInt refct;
   /**/
   PetscInt  nqp;      /* number of quadrature points */
   PetscReal *point;   /* [nqp] quadrature points  */
@@ -65,7 +65,7 @@ extern PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[]
 extern PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[]);
 
 struct _n_IGABasis {
-  PetscInt   refct;
+  PetscInt refct;
   /**/
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
@@ -89,7 +89,7 @@ extern PetscErrorCode IGABasisReference(IGABasis basis);
 extern PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d);
 
 struct _n_IGABoundary {
-  PetscInt   refct;
+  PetscInt refct;
   /**/
   PetscInt    dof;
   PetscInt    nbc;
@@ -267,7 +267,7 @@ extern PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAElement {
-  PetscInt   refct;
+  PetscInt refct;
   /**/
   PetscInt count;
   PetscInt index;
