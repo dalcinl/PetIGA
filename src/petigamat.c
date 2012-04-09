@@ -58,18 +58,6 @@ PetscInt BasisStencil(IGA iga,PetscInt iA,PetscInt jA,PetscInt kA,PetscInt *sten
 }
 
 PETSC_STATIC_INLINE
-PetscInt UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
-{
-  PetscInt n,c;
-  for (c=0; c<bs; c++)
-    ubrows[c] = c + row*bs;
-  for (n=0; n<count; n++)
-    for (c=0; c<bs; c++)
-      ubcols[c+n*bs] = c + indices[n]*bs;
-  return 0;
-}
-
-PETSC_STATIC_INLINE
 #undef  __FUNCT__
 #define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
@@ -92,7 +80,23 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 }
 
 PETSC_STATIC_INLINE
-#undef __FUNCT__
+#undef  __FUNCT__
+#define __FUNCT__ "UnblockIndices"
+PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
+{
+  PetscInt       n,c;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  for (c=0; c<bs; c++)
+    ubrows[c] = c + row*bs;
+  for (n=0; n<count; n++)
+    for (c=0; c<bs; c++)
+      ubcols[c+n*bs] = c + indices[n]*bs;
+  PetscFunctionReturn(0);
+}
+
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
 #define __FUNCT__ "L2GFilterUpperTriangular"
 /*
   This helper is for of SBAIJ preallocation, to discard the lower-triangular values
