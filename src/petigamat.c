@@ -84,8 +84,7 @@ PETSC_STATIC_INLINE
 #define __FUNCT__ "UnblockIndices"
 PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
 {
-  PetscInt       n,c;
-  PetscErrorCode ierr;
+  PetscInt n,c;
   PetscFunctionBegin;
   for (c=0; c<bs; c++)
     ubrows[c] = c + row*bs;
