@@ -50,7 +50,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
     if (kind) {
       DM  dm_geom;
       Vec vec_geom_global,vec_geom_local;
-      PetscScalar min_w,max_w;
+      PetscReal min_w,max_w;
       ierr = IGACreateGeomDM(iga,&dm_geom);CHKERRQ(ierr);
       ierr = DMCreateGlobalVector(dm_geom,&vec_geom_global);CHKERRQ(ierr);
       if (!skipheader) {
