@@ -31,7 +31,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscReal x[3] = {0,0,0};
   IGAPointGetPoint(p,x);

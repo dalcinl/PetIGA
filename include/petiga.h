@@ -105,7 +105,7 @@ extern PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,Pe
 
 /* ---------------------------------------------------------------- */
 
-typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
+typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
 typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);

@@ -26,7 +26,7 @@ PetscScalar GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,Petsc
 
 #undef  __FUNCT__
 #define __FUNCT__ "Stats"
-PetscErrorCode Stats(IGAPoint p,PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)ctx;
