@@ -256,8 +256,6 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscScalar stats[3] = {0,0,0};
   ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
 
-  PetscScalar SS[3];
-  MPI_Reduce(&stats[0],&SS[0],3,MPI_DOUBLE,MPI_SUM,0,PETSC_COMM_WORLD);
   PetscPrintf(PETSC_COMM_WORLD,"%.16e %.16e %.16e %.16e\n",t,stats[0],stats[1],stats[2]);
 
   PetscFunctionReturn(0);
