@@ -14,7 +14,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
   PetscReal x[3] = {0,0,0};
   IGAPointGetPoint(p,x);
-  PetscReal f = Function(x[0],x[1],x[2]);
+  PetscScalar f = Function(x[0],x[1],x[2]);
 
   const PetscReal *N;
   IGAPointGetShapeFuns(p,0,(const PetscReal**)&N);
@@ -35,12 +35,12 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 {
   PetscReal x[3] = {0,0,0};
   IGAPointGetPoint(p,x);
-  PetscReal f = Function(x[0],x[1],x[2]);
+  PetscScalar f = Function(x[0],x[1],x[2]);
 
-  PetscReal u;
+  PetscScalar u;
   IGAPointGetValue(p,U,&u);
 
-  PetscReal e = u - f;
+  PetscReal e = PetscAbsScalar(u - f);
   S[0] = e*e;
 
   return 0;
