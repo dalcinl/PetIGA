@@ -8,7 +8,7 @@ subroutine IGA_GetPoint(nen,dim,N,Xw,X) &
   real   (kind=IGA_REAL), intent(in)       :: N(nen)
   real   (kind=IGA_REAL), intent(in)       :: Xw(dim+1,nen)
   real   (kind=IGA_REAL), intent(out)      :: X(dim)
-  integer a
+  integer(kind=IGA_INT )  :: a
   ! X = matmul(Xw(1:dim,:),N)
   X = 0
   do a = 1, nen
@@ -24,7 +24,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   real   (kind=IGA_REAL  ), intent(in)       :: N(nen)
   real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
   real   (kind=IGA_SCALAR), intent(out)      :: V(dof)
-  integer a, i
+  integer(kind=IGA_INT   )  :: a, i
   ! V = matmul(N,transpose(U))
   V = 0
   do a = 1, nen
@@ -40,7 +40,7 @@ subroutine IGA_GetGrad(nen,dof,dim,N,U,V) &
   real   (kind=IGA_REAL  ), intent(in)       :: N(dim,nen)
   real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
   real   (kind=IGA_SCALAR), intent(out)      :: V(dim,dof)
-  integer a, c
+  integer(kind=IGA_INT   )  :: a, c
   ! V = matmul(N,transpose(U))
   V = 0
   do a = 1, nen
@@ -58,7 +58,7 @@ subroutine IGA_GetHess(nen,dof,dim,N,U,V) &
   real   (kind=IGA_REAL  ), intent(in)       :: N(dim*dim,nen)
   real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
   real   (kind=IGA_SCALAR), intent(out)      :: V(dim*dim,dof)
-  integer(kind=IGA_INT   ) :: a, i
+  integer(kind=IGA_INT   )  :: a, i
   ! V = matmul(N,transpose(U))
   V = 0
   do a = 1, nen
@@ -76,7 +76,7 @@ subroutine IGA_GetDel2(nen,dof,dim,N,U,V) &
   real   (kind=IGA_REAL  ), intent(in)       :: N(dim,dim,nen)
   real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
   real   (kind=IGA_SCALAR), intent(out)      :: V(dof)
-  integer a, c, i
+  integer(kind=IGA_INT   )  :: a, c, i
   V = 0
   do a = 1, nen
      do c = 1, dof
@@ -96,7 +96,7 @@ end subroutine IGA_GetDel2
 !  real   (kind=IGA_REAL  ), intent(in)       :: N(dim**der,nen)
 !  real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
 !  real   (kind=IGA_SCALAR), intent(out)      :: V(dim**der,dof)
-!  integer(kind=IGA_INT   ) :: a, i
+!  integer(kind=IGA_INT   )  :: a, i
 !  ! V = matmul(N,transpose(U))
 !  V = 0
 !  do a = 1, nen
@@ -115,7 +115,7 @@ subroutine IGA_Interpolate(nen,dof,dim,der,N,U,V) &
   real   (kind=IGA_REAL  ), intent(in)       :: N(dim**der,nen)
   real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
   real   (kind=IGA_SCALAR), intent(out)      :: V(dim**der,dof)
-  integer(kind=IGA_INT   ) :: a, i
+  integer(kind=IGA_INT   )  :: a, i
   ! V = matmul(N,transpose(U))
   V = 0
   do a = 1, nen
