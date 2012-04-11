@@ -235,7 +235,7 @@ PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
   PetscValidRealPointer(x,2);
   geometry = p->parent->parent->geometry ? PETSC_TRUE : PETSC_FALSE; /* XXX */
   if (geometry) {
-    const PetscReal *Xw = p->parent->parent->geometry;
+    const PetscReal *Xw = p->parent->geometry;
     IGA_GetPoint(p->nen,p->dim,p->shape[0],Xw,x);
   } else {
     PetscInt i,dim = p->dim;
