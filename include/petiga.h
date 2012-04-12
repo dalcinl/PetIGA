@@ -447,6 +447,10 @@ extern PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
 #define PetscValidRealPointer PetscValidDoublePointer
 #endif
 
+#if PETSC_VERSION_(3,2,0)
+extern PetscErrorCode DMSetMatType(DM,const MatType);
+#endif
+
 #if defined(PETSC_USE_DEBUG)
 #define IGACheckSetUp(iga,arg) do {                                      \
     if (PetscUnlikely(!(iga)->setup))                                    \
