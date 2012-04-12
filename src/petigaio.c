@@ -47,38 +47,62 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       ierr = IGAAxisGetKnots(axis,0,&U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m+1,PETSC_REAL);CHKERRQ(ierr);
     }
-    if (kind) {
-      DM  dm_geom;
-      Vec vec_geom_global,vec_geom_local;
-      PetscReal min_w,max_w;
-      ierr = IGACreateGeomDM(iga,&dm_geom);CHKERRQ(ierr);
-      ierr = DMCreateGlobalVector(dm_geom,&vec_geom_global);CHKERRQ(ierr);
-      if (!skipheader) {
-        ierr = VecLoad(vec_geom_global,viewer);CHKERRQ(ierr);
-      } else {
-        Vec vec_geom_natural;
-        ierr = DMDACreateNaturalVector(dm_geom,&vec_geom_natural);CHKERRQ(ierr);
-        ierr = VecLoad_Binary_SkipHeader(vec_geom_natural,viewer);CHKERRQ(ierr);
-        ierr = DMDANaturalToGlobalBegin(dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
-        ierr = DMDANaturalToGlobalEnd  (dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
-        ierr = VecDestroy(&vec_geom_natural);CHKERRQ(ierr);
-      }
-      ierr = DMCreateLocalVector(dm_geom,&vec_geom_local);CHKERRQ(ierr);
-      ierr = DMGlobalToLocalBegin(dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
-      ierr = DMGlobalToLocalEnd  (dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
-
-      ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
-      ierr = VecDuplicate(vec_geom_local,&iga->vec_geom);CHKERRQ(ierr);
-      ierr = VecCopy(vec_geom_local,iga->vec_geom);CHKERRQ(ierr);
-      ierr = VecStrideMin(vec_geom_global,dim,PETSC_NULL,&min_w);CHKERRQ(ierr);
-      ierr = VecStrideMax(vec_geom_global,dim,PETSC_NULL,&max_w);CHKERRQ(ierr);
-      iga->rational = (PetscAbs(max_w-min_w) > 100*PETSC_MACHINE_EPSILON) ? PETSC_TRUE : PETSC_FALSE;
-
-      ierr = VecDestroy(&vec_geom_global);CHKERRQ(ierr);
-      ierr = VecDestroy(&vec_geom_local);CHKERRQ(ierr);
-      ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);
-    }
+    if (kind) { ierr = IGALoadGeometry(iga,viewer); }
   }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALoadGeometry"
+PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
+{
+  PetscBool      isbinary;
+  PetscBool      skipheader;
+  PetscInt       dim;
+  PetscReal      min_w,max_w;
+  DM             dm_geom;
+  Vec            vec_geom_natural,vec_geom_global,vec_geom_local;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+  PetscCheckSameComm(iga,1,viewer,2);
+
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
+  if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
+  ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
+
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGACreateGeomDM(iga,&dm_geom);CHKERRQ(ierr);
+
+  ierr = DMDACreateNaturalVector(dm_geom,&vec_geom_natural);CHKERRQ(ierr);
+  if (!skipheader) {
+    ierr = VecLoad(vec_geom_natural,viewer);CHKERRQ(ierr);
+  } else {
+    ierr = VecLoad_Binary_SkipHeader(vec_geom_natural,viewer);CHKERRQ(ierr);
+  }
+  ierr = DMCreateGlobalVector(dm_geom,&vec_geom_global);CHKERRQ(ierr);
+  ierr = DMDANaturalToGlobalBegin(dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
+  ierr = DMDANaturalToGlobalEnd  (dm_geom,vec_geom_natural,INSERT_VALUES,vec_geom_global);CHKERRQ(ierr);
+  ierr = VecDestroy(&vec_geom_natural);CHKERRQ(ierr);
+
+  ierr = DMCreateLocalVector(dm_geom,&vec_geom_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalBegin(dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
+  ierr = DMGlobalToLocalEnd  (dm_geom,vec_geom_global,INSERT_VALUES,vec_geom_local);CHKERRQ(ierr);
+  ierr = VecStrideMin(vec_geom_global,dim,PETSC_NULL,&min_w);CHKERRQ(ierr);
+  ierr = VecStrideMax(vec_geom_global,dim,PETSC_NULL,&max_w);CHKERRQ(ierr);
+  ierr = VecDestroy(&vec_geom_global);CHKERRQ(ierr);
+
+  ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
+  ierr = VecDuplicate(vec_geom_local,&iga->vec_geom);CHKERRQ(ierr);
+  ierr = VecCopy(vec_geom_local,iga->vec_geom);CHKERRQ(ierr);
+  ierr = VecDestroy(&vec_geom_local);CHKERRQ(ierr);
+
+  ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);
+
+  iga->geometry = PETSC_NULL;
+  iga->rational = (PetscAbs(max_w-min_w) > 100*PETSC_MACHINE_EPSILON) ? PETSC_TRUE : PETSC_FALSE;
+
   PetscFunctionReturn(0);
 }
 

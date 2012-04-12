@@ -216,6 +216,7 @@ extern PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);
 extern PetscErrorCode IGASetFromOptions(IGA iga);
 
 extern PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
+extern PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer);
 extern PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
 extern PetscErrorCode IGARead(IGA iga,const char filename[]);
 extern PetscErrorCode IGAWrite(IGA iga,const char filename[]);
