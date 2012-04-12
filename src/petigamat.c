@@ -143,6 +143,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
   ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
   ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
+#if !PETSC_VERSION_(3,2,0)
+  ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
+#endif
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
 
   ierr = IGAGetDofDM(iga,&dm);CHKERRQ(ierr);
@@ -211,8 +214,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = PetscLayoutSetBlockSize(A->rmap,bs);CHKERRQ(ierr);
     ierr = PetscLayoutSetBlockSize(A->cmap,bs);CHKERRQ(ierr);
   }
-#else
-  ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
 #endif
 
   ierr = MatSetLocalToGlobalMapping(A,ltog,ltog);CHKERRQ(ierr);
