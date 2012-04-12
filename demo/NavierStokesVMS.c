@@ -1,5 +1,8 @@
 #include "petiga.h"
 
+PetscLogEvent NS_Residual = 0;
+PetscLogEvent NS_Tangent  = 0;
+
 typedef struct {
   PetscReal nu;
   PetscScalar fx,fy,fz;
@@ -90,6 +93,8 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *Re,void *ctx)
 {
+  //PetscLogEventBegin(NS_Residual,0,0,0,0);
+
   AppCtx *user = (AppCtx *)ctx;
   PetscReal nu = user->nu;
 
@@ -167,6 +172,8 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
     R[a][2] = Ruz;
     R[a][3] = Rp;
   }
+
+  //PetscLogEventEnd(NS_Residual,0,0,0,0);
   return 0;
 }
 
@@ -177,6 +184,8 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
                        PetscReal t,const PetscScalar *U,
                        PetscScalar *Ke,void *ctx)
 {
+  //PetscLogEventBegin(NS_Tangent,0,0,0,0);
+
   AppCtx *user = (AppCtx *)ctx;
   PetscReal nu = user->nu;
 
@@ -246,6 +255,8 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
           K[a][i][b][j] += T[i][j];
     }
   }
+
+  //PetscLogEventEnd(NS_Tangent,0,0,0,0);
   return 0;
 }
 
@@ -280,6 +291,15 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
   }
 
   ierr = DMDAVecRestoreArrayDOF(da,U,&u);CHKERRQ(ierr);
+
+  PetscReal v; Vec pert;
+  ierr = VecDuplicate(U,&pert);CHKERRQ(ierr);
+  ierr = VecSetRandom(pert,PETSC_NULL);CHKERRQ(ierr);
+  ierr = VecMax(U,PETSC_NULL,&v);CHKERRQ(ierr);
+  ierr = VecAXPY(U,0.05*v,pert);CHKERRQ(ierr);
+  ierr = VecStrideSet(U,3,0.0);CHKERRQ(ierr);
+  ierr = VecDestroy(&pert);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -320,6 +340,9 @@ int main(int argc, char *argv[]) {
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
+  ierr = PetscLogEventRegister("NS_Residual",IGA_CLASSID,&NS_Residual);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("NS_Tangent", IGA_CLASSID,&NS_Tangent );CHKERRQ(ierr);
+
   AppCtx user;
   user.nu = 1.47200e-4;
   user.fx = 3.37204e-3;
@@ -331,7 +354,7 @@ int main(int argc, char *argv[]) {
   PetscReal Ly = 2.0;
   PetscReal Lz = 2.0/3.0*PI;
 
-  PetscInt N[3] = {16,16,16}, nN = 3; 
+  PetscInt N[3] = {16,16,16}, nN = 3;
   PetscInt p[3] = { 2, 2, 2}, np = 3;
   PetscInt C[3] = {-1,-1,-1}, nC = 3;
   PetscBool output = PETSC_FALSE;
@@ -352,7 +375,7 @@ int main(int argc, char *argv[]) {
   if (C[1] == -1) C[1] = p[1]-1;
   if (C[2] == -1) C[2] = p[2]-1;
   PetscInt i;
-  for (i=0; i<3; i++) { 
+  for (i=0; i<3; i++) {
     if (p[i] < 2 || C[i] < 1) /* Problem requires a p>=2 C1 basis */
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
               "Problem requires minimum of p = 2 and C = 1");
@@ -420,6 +443,7 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
+
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
