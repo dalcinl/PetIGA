@@ -23,6 +23,17 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "Error"
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+{
+  PetscScalar u;
+  IGAPointGetValue(p,U,&u);
+  PetscReal e = PetscAbsScalar(u - 1.0);
+  S[0] = e*e;
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
@@ -79,11 +90,16 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
+  PetscScalar error = 0;
+  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
+  error = PetscSqrtReal(PetscRealPart(error));
+  PetscBool print_error = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(0,"-print_error",&print_error,0);CHKERRQ(ierr);
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
-  if (draw && dim <= 2) {
-    ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  }
+  if (draw && dim <= 2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
