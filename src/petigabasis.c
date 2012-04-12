@@ -90,6 +90,8 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   PetscValidPointer(basis,1);
   PetscValidPointer(axis,2);
   PetscValidPointer(rule,3);
+  if (d < 0) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                      "Derivative order must be grather than zero, got %D",d);
 
   p = axis->p;
   m = axis->m;
