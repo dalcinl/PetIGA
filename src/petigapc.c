@@ -87,25 +87,30 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
       ierr = MatGetRowIJ(Ad,0,PETSC_FALSE,compressed,&na,&ia,&ja,&done);CHKERRQ(ierr);
       if (done) {
         PetscInt m,n,M,N,bs;
-        PetscInt cstart,cend;
-        PetscInt j,*newja;
+        PetscInt j,cstart,*newja;
         const MatType mtype;
         ierr = MatGetType(A,&mtype);
         ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
         ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
         ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
-        ierr = MatGetOwnershipRangeColumn(A,&cstart,&cend);CHKERRQ(ierr);
+        ierr = MatGetOwnershipRangeColumn(A,&cstart,PETSC_NULL);CHKERRQ(ierr);
+        if (baij || sbaij) cstart /= bs;
 
         ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
         ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
         ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
+        #if !PETSC_VERSION_(3,2,0)
+        ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
+        #endif
 
         ierr = PetscMalloc1(ia[na],PetscInt,&newja);CHKERRQ(ierr);
         for (j=0; j<ia[na]; j++) newja[j] = ja[j] + cstart;
         ierr = MatMPIAIJSetPreallocationCSR  (mat,   ia,newja,PETSC_NULL);CHKERRQ(ierr);
         ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,PETSC_NULL);CHKERRQ(ierr);
         ierr = MatMPISBAIJSetPreallocationCSR(mat,bs,ia,newja,PETSC_NULL);CHKERRQ(ierr);
+        #if PETSC_VERSION_(3,2,0)
         ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
+        #endif
         ierr = PetscFree(newja);CHKERRQ(ierr);
       }
       ierr = MatRestoreRowIJ(Ad,0,PETSC_FALSE,compressed,&na,&ia,&ja,&done);CHKERRQ(ierr);
