@@ -14,34 +14,33 @@ PetscScalar Peaks(PetscReal x, PetscReal y)
 PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *ctx)
 {
   PetscInt nen=p->nen;
-  PetscInt dof=p->dof;
-  PetscScalar (*F)[dof] = (PetscScalar (*)[dof])Fe;
 
   PetscReal xy[2];
   IGAPointGetPoint(p,xy);
   PetscReal x = xy[0];
   PetscReal y = xy[1];
 
-  PetscScalar U0[dof],U1[dof][2];
-  IGAPointGetValue(p,Ue,&U0[0]);
-  IGAPointGetGrad (p,Ue,&U1[0][0]);
-  PetscScalar PETSC_UNUSED u = U0[0], u_x = U1[0][0], u_y = U1[0][1];
-  PetscScalar PETSC_UNUSED v = U0[1], v_x = U1[1][0], v_y = U1[1][1];
-  PetscScalar PETSC_UNUSED w = U0[2], w_x = U1[2][0], w_y = U1[2][1];
-  PetscScalar PETSC_UNUSED r = U0[3], r_x = U1[3][0], r_y = U1[3][1];
+  PetscScalar u0[4],u1[4][2];
+  IGAPointGetValue(p,Ue,&u0[0]);
+  IGAPointGetGrad (p,Ue,&u1[0][0]);
+  PetscScalar PETSC_UNUSED u = u0[0], u_x = u1[0][0], u_y = u1[0][1];
+  PetscScalar PETSC_UNUSED v = u0[1], v_x = u1[1][0], v_y = u1[1][1];
+  PetscScalar PETSC_UNUSED w = u0[2], w_x = u1[2][0], w_y = u1[2][1];
+  PetscScalar PETSC_UNUSED r = u0[3], r_x = u1[3][0], r_y = u1[3][1];
 
-  PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
+  const PetscReal *N0, (*N1)[2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal **)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
 
   PetscInt a;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];
     PetscReal Na_y = N1[a][1];
-    F[a][0] = Na*u - Na * Peaks(x,y);
-    F[a][1] = Na_x*v_x + Na_y*v_y - Na * 1.0;
-    F[a][2] = Na*w + Na_x*w_x + Na_y*w_y - Na * 1.0;
-    F[a][3] = Na_x*r_x + Na_y*r_y - Na * 1*exp(r);
+    Fe[a*4+0] = Na*u - Na * Peaks(x,y);
+    Fe[a*4+1] = Na_x*v_x + Na_y*v_y - Na * 1.0;
+    Fe[a*4+2] = Na*w + Na_x*w_x + Na_y*w_y - Na * 1.0;
+    Fe[a*4+3] = Na_x*r_x + Na_y*r_y - Na * 1*exp(r);
   }
   return 0;
 }
@@ -51,15 +50,14 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
 PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *ctx)
 {
   PetscInt nen=p->nen;
-  PetscInt dof=p->dof;
-  PetscScalar (*J)[dof][nen][dof] = (PetscScalar (*)[dof][nen][dof])Je;
 
-  PetscScalar U0[dof];
-  IGAPointGetValue(p,Ue,&U0[0]);
-  PetscScalar PETSC_UNUSED r = U0[3];
+  PetscScalar u0[4];
+  IGAPointGetValue(p,Ue,&u0[0]);
+  PetscScalar PETSC_UNUSED r = u0[3];
 
-  PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
+  const PetscReal *N0, (*N1)[2];
+  IGAPointGetShapeFuns(p,0,(const PetscReal **)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {
@@ -70,10 +68,10 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
       PetscReal Nb   = N0[b];
       PetscReal Nb_x = N1[b][0];
       PetscReal Nb_y = N1[b][1];
-      J[a][0][b][0] = Na*Nb;
-      J[a][1][b][1] = Na_x*Nb_x + Na_y*Nb_y;
-      J[a][2][b][2] = Na*Nb + Na_x*Nb_x + Na_y*Nb_y;
-      J[a][3][b][3] = Na_x*Nb_x + Na_y*Nb_y - Na*Nb * 1*exp(r);
+      Je[a*nen*16+0*nen*4+b*4+0] = Na*Nb;
+      Je[a*nen*16+1*nen*4+b*4+1] = Na_x*Nb_x + Na_y*Nb_y;
+      Je[a*nen*16+2*nen*4+b*4+2] = Na*Nb + Na_x*Nb_x + Na_y*Nb_y;
+      Je[a*nen*16+3*nen*4+b*4+3] = Na_x*Nb_x + Na_y*Nb_y - Na*Nb * 1*exp(r);
     }
   }
   return 0;
@@ -144,7 +142,7 @@ int main(int argc, char *argv[]) {
   ierr = SNESSolve(snes,0,x);CHKERRQ(ierr);
 
   ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  
+
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = SNESDestroy(&snes);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
