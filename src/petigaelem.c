@@ -687,7 +687,7 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementAssembleVec"
-PetscErrorCode IGAElementAssembleVec(IGAElement element,PetscScalar F[],Vec vec)
+PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec)
 {
   PetscInt       nn,*ii;
   PetscErrorCode ierr;
@@ -707,7 +707,7 @@ PetscErrorCode IGAElementAssembleVec(IGAElement element,PetscScalar F[],Vec vec)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementAssembleMat"
-PetscErrorCode IGAElementAssembleMat(IGAElement element,PetscScalar K[],Mat mat)
+PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat)
 {
   PetscInt       nn,*ii;
   PetscErrorCode ierr;

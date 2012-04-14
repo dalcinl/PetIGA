@@ -342,8 +342,8 @@ extern PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[]);
 extern PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[]);
 extern PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[]);
 
-extern PetscErrorCode IGAElementAssembleVec(IGAElement element,PetscScalar F[],Vec vec);
-extern PetscErrorCode IGAElementAssembleMat(IGAElement element,PetscScalar K[],Mat mat);
+extern PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec);
+extern PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat);
 
 /* ---------------------------------------------------------------- */
 
