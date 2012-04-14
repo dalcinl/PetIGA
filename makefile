@@ -11,22 +11,33 @@ all:
 	@${OMAKE} chkpetsc_dir  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	@${OMAKE} chkpetiga_dir PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	@${OMAKE} all-legacy    PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-cmake_cc=-DCMAKE_C_COMPILER:FILEPATH=${PCC}  -DCMAKE_C_FLAGS:STRING='${PETSCFLAGS} ${CPP_FLAGS} ${CPPFLAGS}'
-cmake_fc=-DCMAKE_Fortran_COMPILER:FILEPATH=${FC} -DCMAKE_Fortran_FLAGS:STRING='${PETSCFLAGS} ${FPP_FLAGS} ${FPPFLAGS}'
-${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt:
-	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
-	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc} 2>&1 > ${PETIGA_DIR}/${PETSC_ARCH}/conf/cmake.log
-cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
-cmake-build: cmake-boot
-	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
-all-cmake:
-	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+.PHONY: all
+
+#
+# Legacy build
+#
 all-legacy:
 	@${MKDIR} ${PETSC_ARCH}/conf ${PETSC_ARCH}/include ${PETSC_ARCH}/lib
 	@${OMAKE} all_build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETSC_ARCH}/include
 all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build sharedlibs
-.PHONY: all cmake-boot cmake-build all-cmake all-legacy all_build
+.PHONY: all-legacy all_build
+
+#
+# CMake build
+#
+cmake_cc=-DCMAKE_C_COMPILER:FILEPATH=${PCC}  -DCMAKE_C_FLAGS:STRING='${PETSCFLAGS} ${CPP_FLAGS} ${CPPFLAGS}'
+cmake_fc=-DCMAKE_Fortran_COMPILER:FILEPATH=${FC} -DCMAKE_Fortran_FLAGS:STRING='${PETSCFLAGS} ${FPP_FLAGS} ${FPPFLAGS}'
+${PETIGA_DIR}/${PETSC_ARCH}/conf:
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
+${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: ${PETIGA_DIR}/${PETSC_ARCH}/conf
+	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc} 2>&1 > ${PETIGA_DIR}/${PETSC_ARCH}/conf/cmake.log
+cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
+cmake-build: cmake-boot
+	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
+all-cmake: ${PETIGA_DIR}/${PETSC_ARCH}/conf
+	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+.PHONY: cmake-boot cmake-build all-cmake
 
 #
 # Check if PETSC_DIR variable specified is valid
