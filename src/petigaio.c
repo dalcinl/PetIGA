@@ -47,7 +47,9 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       ierr = IGAAxisGetKnots(axis,0,&U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m+1,PETSC_REAL);CHKERRQ(ierr);
     }
-    if (kind) { ierr = IGALoadGeometry(iga,viewer); }
+    if (kind) {
+      ierr = IGALoadGeometry(iga,viewer);CHKERRQ(ierr);
+    }
   }
   PetscFunctionReturn(0);
 }

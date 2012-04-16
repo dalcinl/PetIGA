@@ -311,8 +311,8 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAAxisCheck"
-PetscErrorCode IGAAxisCheck(IGAAxis axis)
+#define __FUNCT__ "IGAAxisSetUp"
+PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 {
   PetscFunctionBegin;
   PetscValidPointer(axis,1);

@@ -440,7 +440,7 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
 
   if (!dm_base) {ierr = IGAGetDofDM (iga,&dm_base);CHKERRQ(ierr);}
   if (!dm_base) {ierr = IGAGetGeomDM(iga,&dm_base);CHKERRQ(ierr);}
-  if ( dm_base) {PetscValidHeaderSpecific(iga,DM_CLASSID,0);}
+  if ( dm_base) {PetscValidHeaderSpecific(iga,IGA_CLASSID,0);}
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if (dm_base) {
@@ -450,12 +450,19 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *_dm)
                        &swidth,&btype[0],&btype[1],&btype[2],0);CHKERRQ(ierr);
     ierr = DMDAGetOwnershipRanges(dm_base,&ranges[0],&ranges[1],&ranges[2]);CHKERRQ(ierr);
   } else {
-    IGABasis *BD = iga->basis;
+    IGAAxis *AX = iga->axis;
     swidth = 0;
     for (i=0; i<dim; i++) {
-      swidth   = PetscMax(swidth,BD[i]->p); /* XXX Overestimated !! */
-      sizes[i] = BD[i]->nnp;
-      btype[i] = BD[i]->periodic ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
+      PetscBool wrap = AX[i]->periodic;
+      PetscInt  p = AX[i]->p;
+      PetscInt  m = AX[i]->m;
+      PetscInt  n = m - p - 1;
+      PetscReal *U = AX[i]->U;
+      PetscInt  s;
+      for (s=1; s<p && U[m-p] == U[m-p+s]; s++);
+      sizes[i] = wrap ? n-p+s : n+1;
+      btype[i] = wrap ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
+      swidth   = PetscMax(swidth,p); /* XXX Overestimated !! */
     }
     for (i=0; i<dim; i++)
       if (iga->proc_sizes[i] > 0)
@@ -524,7 +531,7 @@ PetscErrorCode IGASetUp(IGA iga)
     iga->dof = 1;  /* XXX Error ? */
 
   for (i=0; i<iga->dim; i++) {
-    ierr = IGAAxisCheck(iga->axis[i]);CHKERRQ(ierr);
+    ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);
   }
   for (i=iga->dim; i<3; i++) {
     ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);

@@ -45,7 +45,7 @@ extern PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[]);
 extern PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[]);
 extern PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt r,PetscReal u[],PetscInt C);
 extern PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C);
-extern PetscErrorCode IGAAxisCheck(IGAAxis axis);
+extern PetscErrorCode IGAAxisSetUp(IGAAxis axis);
 
 struct _n_IGARule {
   PetscInt refct;
