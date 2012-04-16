@@ -46,15 +46,15 @@ subroutine IGA_ShapeFuns_2D(&
 
   integer(kind=IGA_INT ) :: ia,iq
   integer(kind=IGA_INT ) :: ja,jq
-  integer(kind=IGA_INT ) :: na,nd
+  integer(kind=IGA_INT ) :: i,na,nd
   real   (kind=IGA_REAL) :: C(dim,ina,jna)
   real   (kind=IGA_REAL) :: w(    ina,jna)
 
   if (geometry /= 0) then
-     C = Cw(1:dim,:,:)
-  end if
-  if (rational /= 0) then
      w = Cw(dim+1,:,:)
+     forall (i=1:dim)
+        C(i,:,:) = C(i,:,:) / w
+     end forall
   end if
 
   nd = max(1,min(ind,jnd,3))
