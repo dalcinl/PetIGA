@@ -45,7 +45,7 @@ subroutine IGA_ShapeFuns_1D(&
   if (geometry /= 0) then
      w = Cw(dim+1,:)
      forall (i=1:dim)
-        C(i,:) = C(i,:) / w
+        C(i,:) = Cw(i,:) / w
      end forall
   end if
 
