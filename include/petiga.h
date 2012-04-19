@@ -27,6 +27,7 @@ struct _n_IGAAxis {
   PetscInt refct;
   /**/
   PetscBool  periodic; /* periodicity */
+  PetscInt   nel,nnp;  /* span, basis */
   PetscInt   p; /* polynomial order   */
   PetscInt   m; /* last knot index    */
   PetscReal *U; /* knot vector        */

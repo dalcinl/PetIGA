@@ -63,9 +63,8 @@ PetscErrorCode IGABasisReference(IGABasis basis)
 }
 
 EXTERN_C_BEGIN
-static PetscInt SpanCount(PetscInt n, PetscInt p, PetscReal U[]);
-static PetscInt SpanIndex(PetscInt n, PetscInt p, PetscReal U[],PetscInt index[]);
-extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern PetscInt IGA_SpanIndex(PetscInt n, PetscInt p, const PetscReal U[],PetscInt index[]);
+extern void     IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -73,7 +72,7 @@ EXTERN_C_END
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
   PetscBool      periodic;
-  PetscInt       p,m,n,s;
+  PetscInt       p,m,n;
   PetscReal      *U,*X,*W;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
@@ -102,13 +101,12 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   X   = rule->point;
   W   = rule->weight;
 
-  nel = SpanCount(n,p,U);
+  periodic = axis->periodic;
+  nel = axis->nel;
+  nnp = axis->nnp;
   nen = p+1;
   ndr = d+1;
 
-  periodic = axis->periodic;
-  for (s=1; s<p && U[m-p] == U[m-p+s]; s++);
-  nnp = periodic ? n-p+s : n+1;
 
   ierr = PetscMalloc1(nel,PetscInt,&span);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel,PetscReal,&detJ);CHKERRQ(ierr);
@@ -120,7 +118,7 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   for (iqp=0; iqp<nqp; iqp++) {
     weight[iqp] = W[iqp];
   }
-  SpanIndex(n,p,U,span);
+  IGA_SpanIndex(n,p,U,span);
   for (iel=0; iel<nel; iel++) {
     PetscInt  k = span[iel];
     PetscReal u0 = U[k], u1 = U[k+1];
@@ -153,22 +151,4 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   basis->offset   = offset;
 
   PetscFunctionReturn(0);
-}
-
-static PetscInt SpanCount(PetscInt n, PetscInt p, PetscReal U[])
-{
-  PetscInt i, span = 0;
-  for (i=p; i<=n; i++)
-    if (U[i] != U[i+1])
-      span++;
-  return span;
-}
-
-static PetscInt SpanIndex(PetscInt n, PetscInt p, PetscReal U[],PetscInt index[])
-{
-  PetscInt i, span = 0;
-  for (i=p; i<=n; i++)
-    if (U[i] != U[i+1])
-      index[span++] = i;
-  return span;
 }

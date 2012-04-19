@@ -551,10 +551,8 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt p = iga->axis[i]->p;
     PetscInt q = p+1;
     PetscInt d = PetscMin(p_max,3); /* XXX */
-    if (!iga->rule[i]->nqp)
-      {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
-    if (!iga->basis[i]->nel)
-      {ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);}
+    ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
+    ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);
   }
 
   if (!iga->vectype) {
