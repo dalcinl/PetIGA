@@ -573,6 +573,7 @@ PetscErrorCode IGASetUp(IGA iga)
   {
     PetscInt i;
     PetscInt dim = iga->dim;
+    IGAAxis  *AX = iga->axis;
     IGABasis *BD = iga->basis;
     PetscInt *proc_rank = iga->proc_rank;
     PetscInt *proc_sizes = iga->proc_sizes;
@@ -624,7 +625,7 @@ PetscErrorCode IGASetUp(IGA iga)
       PetscInt first = node_start[i];
       PetscInt last  = node_start[i] + node_width[i] - 1;
       PetscInt start = 0, end = nel;
-      if (BD[i]->periodic) middle = 0; /* XXX Is this optimal? */
+      if (AX[i]->periodic) middle = 0; /* XXX Is this optimal? */
       for (iel=0; iel<nel; iel++) {
         if (offset[iel] + middle < first) start++;
         if (offset[iel] + middle > last)  end--;

@@ -348,6 +348,7 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
+    IGAAxis  *AX = element->parent->axis;
     IGABasis *BD = element->parent->basis;
     PetscInt *ID = element->ID;
     PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
@@ -357,7 +358,7 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
     for (i=0; i<dim; i++) {
       PetscInt e = BD[i]->nel-1;
       PetscInt n = BD[i]->nnp-1;
-      if (BD[i]->periodic) continue;
+      if (AX[i]->periodic) continue;
       if (ID[i] == 0) { A0[i] = 0; onboundary = PETSC_TRUE; }
       if (ID[i] == e) { A1[i] = n; onboundary = PETSC_TRUE; }
     }

@@ -68,20 +68,19 @@ extern PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],Pet
 struct _n_IGABasis {
   PetscInt refct;
   /**/
+  PetscInt  nnp;      /* number of global basis functions */
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
   PetscInt  p,d;      /* polynomial order, last derivative index */
 
-  PetscReal *detJ;   /* [nel]              */
-  PetscReal *weight; /* [nqp]              */
-  PetscReal *point;  /* [nel][nqp]         */
-  PetscReal *value;  /* [nel][nqp][nen][d] */
-  /**/
-  PetscBool periodic; /* periodicity */
-  PetscInt  nnp;      /* number of global basis functions */
-  PetscInt  *span;    /* [nel] span index                 */
-  PetscInt  *offset;  /* [nel] basis offset               */
+  PetscInt  *span;    /* [nel] span index   */
+  PetscInt  *offset;  /* [nel] basis offset */
+
+  PetscReal *detJ;    /* [nel]              */
+  PetscReal *weight;  /* [nqp]              */
+  PetscReal *point;   /* [nel][nqp]         */
+  PetscReal *value;   /* [nel][nqp][nen][d] */
 };
 extern PetscErrorCode IGABasisCreate(IGABasis *basis);
 extern PetscErrorCode IGABasisDestroy(IGABasis *basis);
