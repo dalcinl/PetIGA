@@ -42,7 +42,6 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   basis->nen = 0;
   basis->p   = 0;
   basis->d   = 0;
-  ierr = PetscFree(basis->span);CHKERRQ(ierr);
   ierr = PetscFree(basis->offset);CHKERRQ(ierr);
   ierr = PetscFree(basis->detJ);CHKERRQ(ierr);
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
@@ -62,8 +61,7 @@ PetscErrorCode IGABasisReference(IGABasis basis)
 }
 
 EXTERN_C_BEGIN
-extern PetscInt IGA_SpanIndex(PetscInt n, PetscInt p, const PetscReal U[],PetscInt index[]);
-extern void     IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -71,12 +69,12 @@ EXTERN_C_END
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
   PetscInt       p,m,n;
-  PetscReal      *U,*X,*W;
+  PetscInt       nnp;
+  const PetscInt *span;
+  const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
   PetscInt       nen,ndr;
-  PetscInt       nnp;
-  PetscInt       *span;
   PetscInt       *offset;
   PetscReal      *detJ;
   PetscReal      *weight;
@@ -99,24 +97,17 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   X   = rule->point;
   W   = rule->weight;
 
-  nnp = axis->nnp;
-  nel = axis->nel;
-  nen = p+1;
-  ndr = d+1;
+  nel  = axis->nel;
+  nnp  = axis->nnp;
+  span = axis->span;
+  nen  = p+1;
+  ndr  = d+1;
 
-  ierr = PetscMalloc1(nel,PetscInt,&span);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel,PetscInt,&offset);CHKERRQ(ierr);
-
   ierr = PetscMalloc1(nel,PetscReal,&detJ);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,PetscReal,&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp,PetscReal,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp*nen*ndr,PetscReal,&value);CHKERRQ(ierr);
-
-  IGA_SpanIndex(n,p,U,span);
-  for (iel=0; iel<nel; iel++) {
-    PetscInt k = span[iel];
-    offset[iel] = k-p;
-  }
 
   for (iqp=0; iqp<nqp; iqp++) {
     weight[iqp] = W[iqp];
@@ -132,6 +123,7 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
       u[iqp] = (X[iqp] + 1) * J + u0;
       IGA_DersBasisFuns(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
     }
+    offset[iel] = k-p;
   }
 
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
@@ -142,7 +134,6 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   basis->nen    = nen;
   basis->p      = p;
   basis->d      = d;
-  basis->span   = span;
   basis->offset = offset;
 
   basis->detJ   = detJ;

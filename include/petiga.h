@@ -26,11 +26,12 @@ typedef struct _n_IGAPoint    *IGAPoint;
 struct _n_IGAAxis {
   PetscInt refct;
   /**/
-  PetscBool  periodic; /* periodicity */
-  PetscInt   nel,nnp;  /* span, basis */
-  PetscInt   p; /* polynomial order   */
-  PetscInt   m; /* last knot index    */
-  PetscReal *U; /* knot vector        */
+  PetscBool  periodic; /* periodicity  */
+  PetscInt   nel,nnp;  /* spans, bases */
+  PetscInt   *span;    /* span indices */
+  PetscInt   p; /* polynomial order    */
+  PetscInt   m; /* last knot index     */
+  PetscReal *U; /* knot vector         */
 };
 extern PetscErrorCode IGAAxisCreate(IGAAxis *axis);
 extern PetscErrorCode IGAAxisDestroy(IGAAxis *axis);
@@ -74,9 +75,7 @@ struct _n_IGABasis {
   PetscInt  nen;      /* number of local basis functions */
   PetscInt  p,d;      /* polynomial order, last derivative index */
 
-  PetscInt  *span;    /* [nel] span index   */
   PetscInt  *offset;  /* [nel] basis offset */
-
   PetscReal *detJ;    /* [nel]              */
   PetscReal *weight;  /* [nqp]              */
   PetscReal *point;   /* [nel][nqp]         */

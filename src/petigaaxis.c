@@ -10,9 +10,11 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   PetscValidPointer(_axis,1);
   ierr = PetscNew(struct _n_IGAAxis,_axis);CHKERRQ(ierr);
   (*_axis)->refct = 1; axis = *_axis;
-  ierr = PetscMalloc(2*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
+  ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
+  ierr = PetscMalloc1(2,PetscReal,&axis->U);CHKERRQ(ierr);
   axis->periodic = PETSC_FALSE;
   axis->nel = axis->nnp = 1;
+  axis->span[0] = 0;
   axis->p = 0;
   axis->m = 1;
   axis->U[0] = -0.5;
@@ -31,6 +33,7 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
   axis = *_axis; *_axis = 0;
   if (!axis) PetscFunctionReturn(0);
   if (--axis->refct > 0) PetscFunctionReturn(0);
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscFree(axis->U);CHKERRQ(ierr);
   ierr = PetscFree(axis);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -44,13 +47,18 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscFunctionBegin;
   if (!axis) PetscFunctionReturn(0);
   PetscValidPointer(axis,1);
+  if (axis->nel != 1) {
+    ierr = PetscFree(axis->span);CHKERRQ(ierr);
+    ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
+  }
   if (axis->m != 1) {
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
-    ierr = PetscMalloc(2*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
+    ierr = PetscMalloc1(2,PetscReal,&axis->U);CHKERRQ(ierr);
   }
   axis->periodic = PETSC_FALSE;
   axis->periodic = PETSC_FALSE;
   axis->nel = axis->nnp = 1;
+  axis->span[0] = 0;
   axis->p = 0;
   axis->m = 1;
   axis->U[0] = -0.5;
@@ -321,6 +329,7 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 {
   PetscInt p,m,n;
   const PetscReal *U;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (axis->p < 1)
@@ -356,7 +365,6 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 #endif
 
   axis->nel = IGA_SpanCount(n,p,U);
-
   if (axis->periodic) {
     PetscInt s=1;
     while(s<p && U[m-p] == U[m-p+s]) s++;
@@ -364,6 +372,9 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   } else {
     axis->nnp = n+1;
   }
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
+  ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
+  IGA_SpanIndex(n,p,U,axis->span);
 
   PetscFunctionReturn(0);
 }
