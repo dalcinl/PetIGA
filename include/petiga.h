@@ -11,6 +11,8 @@
 #include <petscdmda.h>
 PETSC_EXTERN_CXX_BEGIN
 
+typedef ISLocalToGlobalMapping LGMap;
+
 /* ---------------------------------------------------------------- */
 
 typedef struct _n_IGAAxis     *IGAAxis;
@@ -176,25 +178,36 @@ struct _p_IGA {
   IGARule  rule[3];
   IGABasis basis[3];
   IGABoundary boundary[3][2];
-  IGAElement iterator;
+  IGAElement  iterator;
 
+  PetscInt proc_rank[3];
+  PetscInt proc_sizes[3];
+  
   const PetscScalar *geometry;
   PetscBool          rational;
   Vec                vec_geom;
   DM                 dm_geom;
 
-  PetscInt proc_rank[3];
-  PetscInt proc_sizes[3];
+  PetscInt elem_sizes[3];
+  PetscInt elem_start[3];
+  PetscInt elem_width[3];
+
   PetscInt node_sizes[3];
   PetscInt node_start[3];
   PetscInt node_width[3];
   PetscInt ghost_start[3];
   PetscInt ghost_width[3];
-  PetscInt elem_sizes[3];
-  PetscInt elem_start[3];
-  PetscInt elem_width[3];
 
-  DM       dm_dof;
+  AO         ao;
+  AO         aob;
+  LGMap      lgmap;
+  LGMap      lgmapb;
+  VecScatter g2l;
+  VecScatter l2g;
+  PetscInt   nwork;
+  Vec        vwork[16];
+  DM         dm_dof;
+
 };
 
 extern PetscClassId IGA_CLASSID;
@@ -230,13 +243,14 @@ extern PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);
 extern PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis);
 extern PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary);
 
-extern PetscErrorCode IGACreateDM(IGA iga,PetscInt dof,DM *dm);
-extern PetscErrorCode IGACreateDofDM(IGA iga,DM *dm_dof);
-extern PetscErrorCode IGACreateGeomDM(IGA iga,DM *dm_geom);
-
 extern PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
-extern PetscErrorCode IGAGetDofDM(IGA iga,DM *dm_dof);
-extern PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm_geom);
+
+extern PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm_elem);
+extern PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node);
+extern PetscErrorCode IGACreateAO(IGA iga,PetscInt bs,AO *ao);
+extern PetscErrorCode IGACreateLGMap(IGA iga,PetscInt bs,LGMap *lgmap);
+extern PetscErrorCode IGACreateVector(IGA iga,PetscInt bs,Vec *global,Vec *ghost);
+extern PetscErrorCode IGACreateScatter(IGA iga,PetscInt bs,Vec *gvec,Vec *lvec,VecScatter *g2l,VecScatter *l2g);
 
 extern PetscErrorCode IGASetVecType(IGA iga,const VecType vectype);
 extern PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
@@ -244,10 +258,9 @@ extern PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
 extern PetscErrorCode IGACreateVec(IGA iga,Vec *vec);
 extern PetscErrorCode IGACreateMat(IGA iga,Mat *mat);
 
-extern PetscErrorCode IGAGetLocalVec(IGA iga,Vec *gvec);
+extern PetscErrorCode IGACreateLocalVec(IGA iga, Vec *lvec);
+extern PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec);
 extern PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec);
-extern PetscErrorCode IGAGetGlobalVec(IGA iga,Vec *gvec);
-extern PetscErrorCode IGARestoreGlobalVec(IGA iga,Vec *gvec);
 extern PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec);
 extern PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
 

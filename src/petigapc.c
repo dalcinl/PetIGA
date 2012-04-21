@@ -55,6 +55,7 @@ typedef struct {
   Mat mat;
 } PC_EBE;
 
+/*
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetFromOptions_EBE"
 static PetscErrorCode PCSetFromOptions_EBE(PC pc)
@@ -62,6 +63,7 @@ static PetscErrorCode PCSetFromOptions_EBE(PC pc)
   PetscFunctionBegin;
   PetscFunctionReturn(0);
 }
+*/
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetUp_EBE_CreateMatrix"
@@ -93,7 +95,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           PetscInt m,n,M,N,bs;
           PetscInt j,cstart,*newja;
           const MatType mtype;
-          ierr = MatGetType(A,&mtype);
+          ierr = MatGetType(A,&mtype);;CHKERRQ(ierr);
           ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
           ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
           ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
@@ -312,7 +314,7 @@ PetscErrorCode PCCreate_EBE(PC pc)
   pc->ops->setup               = PCSetUp_EBE;
   pc->ops->reset               = PCReset_EBE;
   pc->ops->destroy             = PCDestroy_EBE;
-  pc->ops->setfromoptions      = PCSetFromOptions_EBE;
+  pc->ops->setfromoptions      = 0;/*PCSetFromOptions_EBE;*/
   pc->ops->view                = PCView_EBE;
   pc->ops->apply               = PCApply_EBE;
   pc->ops->applytranspose      = PCApplyTranspose_EBE;
