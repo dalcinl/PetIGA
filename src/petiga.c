@@ -53,7 +53,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   iga = *_iga; *_iga = 0;
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);;
+  if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);
 
   ierr = PetscFree(iga->userops);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);

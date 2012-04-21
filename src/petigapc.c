@@ -95,7 +95,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           PetscInt m,n,M,N,bs;
           PetscInt j,cstart,*newja;
           const MatType mtype;
-          ierr = MatGetType(A,&mtype);;CHKERRQ(ierr);
+          ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
           ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
           ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
           ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
