@@ -135,15 +135,16 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
   PetscFunctionReturn(0);
 }
 
-PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[], PetscInt start, PetscInt end, PetscInt bs,
-                                   PetscInt N, const PetscInt idx[], PetscInt idxout[])
+static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],
+                                          PetscInt start, PetscInt end,PetscInt bs,
+                                          PetscInt N, const PetscInt idx[], PetscInt idxout[])
 {
-  PetscInt i,j,Nout=0;
+  PetscInt i,c,Nout=0;
   for (i=0; i<N; i++) {
     PetscInt index = lgmap[idx[i]];
     if (index >= start && index < end)
-      for (j=0; j<bs; j++)
-        idxout[Nout++] = index*bs+j;
+      for (c=0; c<bs; c++)
+        idxout[Nout++] = c + index*bs;
   }
   return Nout;
 }
@@ -153,11 +154,16 @@ PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[], PetscInt start, Petsc
 static PetscErrorCode PCSetUp_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
+  IGA            iga = 0;
   Mat            A,B;
   PetscErrorCode ierr;
   PetscFunctionBegin;
 
   A = pc->pmat;
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+
   if (pc->flag != SAME_NONZERO_PATTERN) {
     ierr = MatDestroy(&ebe->mat);CHKERRQ(ierr);
   }
@@ -166,8 +172,8 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
   }
   B = ebe->mat;
 
+  ierr = MatZeroEntries(B);CHKERRQ(ierr);
   {
-    IGA          iga = 0;
     IGAElement   element;
     PetscInt     nen,dof;
     PetscInt     n,*indices;
@@ -177,10 +183,6 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     const PetscInt *ltogmap;
     const PetscInt *mapping;
     ISLocalToGlobalMapping map;
-
-    ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-    if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
-    PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
     ierr = IGAElementGetSizes(element,&nen,&dof,0);CHKERRQ(ierr);
@@ -202,7 +204,6 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
     ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
 
-    ierr = MatZeroEntries(B);CHKERRQ(ierr);
     ierr = IGAElementBegin(element);CHKERRQ(ierr);
     while (IGAElementNext(element)) {
       ierr = IGAElementGetMapping(element,&nen,&mapping);CHKERRQ(ierr);
@@ -225,14 +226,14 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
       ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
     }
     ierr = IGAElementEnd(element);CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
     ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
   }
+  ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
