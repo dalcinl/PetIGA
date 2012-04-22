@@ -1,16 +1,16 @@
 ! -*- f90 -*-
 
-pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
+pure subroutine GeometryMap(ord,nen,X,detJ,Jac,N0,N1,N2,N3)
   implicit none
   !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
-  integer(kind=IGA_INT ), intent(in)    :: nd,num
-  real   (kind=IGA_REAL), intent(in)    :: X(dim,num)
+  integer(kind=IGA_INT ), intent(in)    :: ord, nen
+  real   (kind=IGA_REAL), intent(in)    :: X(dim,nen)
   real   (kind=IGA_REAL), intent(out)   :: detJ
   real   (kind=IGA_REAL), intent(out)   :: Jac(dim,dim)
-  real   (kind=IGA_REAL), intent(inout) :: N0(            num)
-  real   (kind=IGA_REAL), intent(inout) :: N1(        dim,num)
-  real   (kind=IGA_REAL), intent(inout) :: N2(    dim,dim,num)
-  real   (kind=IGA_REAL), intent(inout) :: N3(dim,dim,dim,num)
+  real   (kind=IGA_REAL), intent(inout) :: N0(            nen)
+  real   (kind=IGA_REAL), intent(inout) :: N1(        dim,nen)
+  real   (kind=IGA_REAL), intent(inout) :: N2(    dim,dim,nen)
+  real   (kind=IGA_REAL), intent(inout) :: N3(dim,dim,dim,nen)
 
   integer(kind=IGA_INT ) :: idx
   integer(kind=IGA_INT ) :: i, j, k, l
@@ -21,19 +21,19 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
   real   (kind=IGA_REAL) :: E1(dim,dim)
   real   (kind=IGA_REAL) :: E2(dim,dim,dim)
   real   (kind=IGA_REAL) :: E3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL) :: R1(        dim,num)
-  real   (kind=IGA_REAL) :: R2(    dim,dim,num)
-  real   (kind=IGA_REAL) :: R3(dim,dim,dim,num)
+  real   (kind=IGA_REAL) :: R1(        dim,nen)
+  real   (kind=IGA_REAL) :: R2(    dim,dim,nen)
+  real   (kind=IGA_REAL) :: R3(dim,dim,dim,nen)
 
   ! gradient of the mapping
   Jac  = matmul(X,transpose(N1))
   detJ = Determinant(dim,Jac)
   ! 1st derivatives
-  if (nd >= 1) then
+  if (ord >= 1) then
      X1 = Jac
      E1 = Inverse(dim,X1,detJ)
      R1 = 0
-     do idx = 1,num
+     do idx = 1,nen
         do i = 1,dim
            do a = 1,dim
               R1(i,idx) = N1(a,idx)*E1(a,i) +  R1(i,idx)
@@ -42,12 +42,12 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
      end do
   endif
   ! 2nd derivatives
-  if (nd >= 2) then
+  if (ord >= 2) then
      X2 = 0
      do b = 1,dim
         do a = 1,dim
            do i = 1,dim
-              do idx = 1,num
+              do idx = 1,nen
                  X2(i,a,b) = X(i,idx)*N2(a,b,idx) + X2(i,a,b)
               end do
            end do
@@ -68,7 +68,7 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
         end do
      end do
      R2 = 0
-     do idx = 1,num
+     do idx = 1,nen
         do j = 1,dim
            do i = 1,dim
               do b = 1,dim
@@ -82,13 +82,13 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
      end do
   endif
   ! 3rd derivatives
-  if (nd >= 3) then
+  if (ord >= 3) then
      X3 = 0
      do c = 1,dim
         do b = 1,dim
            do a = 1,dim
               do i = 1,dim
-                 do idx = 1,num
+                 do idx = 1,nen
                     X3(i,a,b,c) = X(i,idx)*N3(a,b,c,idx) + X3(i,a,b,c)
                  end do
               end do
@@ -117,7 +117,7 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
         end do
      end do
      R3 = 0
-     do idx = 1,num
+     do idx = 1,nen
         do k = 1,dim
            do j = 1,dim
               do i = 1,dim
@@ -138,9 +138,9 @@ pure subroutine GeometryMap(nd,num,X,detJ,Jac,N0,N1,N2,N3)
      end do
   end if
   !
-  if (nd >= 1) N1 = R1
-  if (nd >= 2) N2 = R2
-  if (nd >= 3) N3 = R3
+  if (ord >= 1) N1 = R1
+  if (ord >= 2) N2 = R2
+  if (ord >= 3) N3 = R3
 
 end subroutine GeometryMap
 

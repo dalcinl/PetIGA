@@ -1,20 +1,20 @@
 ! -*- f90 -*-
 
-pure subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
+pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   implicit none
-  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
-  integer(kind=IGA_INT ), intent(in)    :: nd, na
-  real   (kind=IGA_REAL), intent(in)    :: w(na)
-  real   (kind=IGA_REAL), intent(inout) :: R0(            na)
-  real   (kind=IGA_REAL), intent(inout) :: R1(        dim,na)
-  real   (kind=IGA_REAL), intent(inout) :: R2(    dim,dim,na)
-  real   (kind=IGA_REAL), intent(inout) :: R3(dim,dim,dim,na)
+  !integer(kiord=IGA_INT), parameter    :: dim = 1,2,3
+  integer(kind=IGA_INT ), intent(in)    :: ord, nen
+  real   (kind=IGA_REAL), intent(in)    :: W(nen)
+  real   (kind=IGA_REAL), intent(inout) :: R0(            nen)
+  real   (kind=IGA_REAL), intent(inout) :: R1(        dim,nen)
+  real   (kind=IGA_REAL), intent(inout) :: R2(    dim,dim,nen)
+  real   (kind=IGA_REAL), intent(inout) :: R3(dim,dim,dim,nen)
   !
   integer(kind=IGA_INT ) :: a, i, j, k
   real   (kind=IGA_REAL) :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
   !
-  forall (a=1:na)
-     R0(a) = w(a) * R0(a)
+  forall (a=1:nen)
+     R0(a) = W(a) * R0(a)
   end forall
   W0 = sum(R0)
   R0 = R0 / W0
@@ -25,7 +25,7 @@ pure subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
   end forall
   R1 = R1 / W0
   !
-  if (nd < 2) return
+  if (ord < 2) return
   forall (i=1:dim, j=1:dim)
      W2(i,j) = sum(w*R2(i,j,:))
      R2(i,j,:) = w*R2(i,j,:)   - R0(:)*W2(i,j) &
@@ -33,7 +33,7 @@ pure subroutine Rationalize(nd,na,w,R0,R1,R2,R3)
   end forall
   R2 = R2 / W0
   !
-  if (nd < 3) return
+  if (ord < 3) return
   forall (i=1:dim, j=1:dim, k=1:dim)
      W3(i,j,k) = sum(w*R3(i,j,k,:))
      R3(i,j,k,:) = w*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &

@@ -38,30 +38,31 @@ subroutine IGA_ShapeFuns_1D(&
   real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina,inq)
 
   integer(kind=IGA_INT ) :: ia,iq
-  integer(kind=IGA_INT ) :: i,na,nd
+  integer(kind=IGA_INT ) :: i,nen,ord
   real   (kind=IGA_REAL) :: C(dim,ina)
-  real   (kind=IGA_REAL) :: w(    ina)
+  real   (kind=IGA_REAL) :: W(    ina)
 
   if (geometry /= 0) then
-     w = Cw(dim+1,:)
+     W = Cw(dim+1,:)
      forall (i=1:dim)
-        C(i,:) = Cw(i,:) / w
+        C(i,:) = Cw(i,:) / W
      end forall
   end if
 
-  nd = max(1,min(ind,3))
-  na = ina
+  nen = ina
+  ord = max(1,min(ind,3))
   do iq=1,inq
      call TensorBasisFuns(&
+          ord,&
           ina,ind,iN(:,:,iq),&
-          nd,&
           N0(  :,iq),&
           N1(:,:,iq),&
           N2(:,:,iq),&
           N3(:,:,iq))
      if (rational /= 0) then
         call Rationalize(&
-             nd,na,w,&
+             ord,&
+             nen,W,&
              N0(  :,iq),&
              N1(:,:,iq),&
              N2(:,:,iq),&
@@ -69,7 +70,8 @@ subroutine IGA_ShapeFuns_1D(&
      endif
      if (geometry /= 0) then
         call GeometryMap(&
-             nd,na,C,&
+             ord,&
+             nen,C,&
              detJac( iq),&
              Jac(:,:,iq),&
              N0(  :,iq),&
@@ -87,13 +89,14 @@ subroutine IGA_ShapeFuns_1D(&
 contains
 
 pure subroutine TensorBasisFuns(&
+     ord,&
      ina,ind,iN,&
-     nd,N0,N1,N2,N3)
+     N0,N1,N2,N3)
   implicit none
   integer(kind=IGA_INT ), parameter        :: dim = 1
+  integer(kind=IGA_INT ), intent(in),value :: ord
   integer(kind=IGA_INT ), intent(in),value :: ina, ind
   real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina)
-  integer(kind=IGA_INT ), intent(in)  :: nd
   real   (kind=IGA_REAL), intent(out) :: N0(            ina)
   real   (kind=IGA_REAL), intent(out) :: N1(        dim,ina)
   real   (kind=IGA_REAL), intent(out) :: N2(    dim,dim,ina)
@@ -108,12 +111,12 @@ pure subroutine TensorBasisFuns(&
      N1(1,ia) = iN(1,ia)
   end forall
   !
-  if (nd < 2) return
+  if (ord < 2) return
   forall (ia=1:ina)
      N2(1,1,ia) = iN(2,ia)
   end forall
   !
-  if (nd < 3) return
+  if (ord < 3) return
   forall (ia=1:ina)
      N3(1,1,1,ia) = iN(3,ia)
   end forall
