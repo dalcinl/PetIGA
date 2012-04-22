@@ -11,6 +11,7 @@ PetscLogEvent IGA_FormJacobian = 0;
 
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_EBE(PC);
+extern PetscErrorCode PCCreate_BBB(PC);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -21,7 +22,8 @@ PetscErrorCode IGARegisterAll(const char path[])
   PetscFunctionBegin;
   IGARegisterAllCalled = PETSC_TRUE;
   ierr = PCRegisterAll(path);CHKERRQ(ierr);
-  ierr = PCRegisterDynamic("ebe",path,"PCCreate_EBE",PCCreate_EBE);CHKERRQ(ierr);
+  ierr = PCRegisterDynamic(PCEBE,path,"PCCreate_EBE",PCCreate_EBE);CHKERRQ(ierr);
+  ierr = PCRegisterDynamic(PCBBB,path,"PCCreate_BBB",PCCreate_BBB);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

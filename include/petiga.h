@@ -420,6 +420,7 @@ extern PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S[],
                                     IGAUserScalar Scalar,void *ctx);
 
 #define PCEBE "ebe"
+#define PCBBB "bbb"
 extern PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 extern PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B,
                                     IGAUserSystem System,void *ctx);

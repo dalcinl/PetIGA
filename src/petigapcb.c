@@ -1,0 +1,378 @@
+#include "petiga.h"
+#if PETSC_VERSION_(3,2,0)
+#include "private/pcimpl.h"
+#else
+#include "petsc-private/pcimpl.h"
+#endif
+#include "petigapc.h"
+
+typedef struct {
+  PetscInt dim,dof;
+  PetscInt overlap[3];
+  PetscInt ghost_start[3];
+  PetscInt ghost_width[3];
+  LGMap    lgmap;
+  Mat      mat;
+} PC_BBB;
+
+PETSC_STATIC_INLINE
+PetscInt Index3D(const PetscInt start[3],const PetscInt width[3],
+                 PetscInt i,PetscInt j,PetscInt k)
+{
+  if (start) { i -= start[0]; j -= start[1]; k -= start[2]; }
+  return i + j * width[0] + k * width[0] * width[1];
+}
+
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
+#define __FUNCT__ "ComputeOverlap"
+PetscInt ComputeOverlap(LGMap l2g,
+                        PetscInt bs,PetscInt Astart,PetscInt Aend,
+                        const PetscInt gstart[3],const PetscInt gwidth[3],
+                        const PetscInt overlap[3],
+                        PetscInt iA,PetscInt jA,PetscInt kA,
+                        PetscInt *count,PetscInt indices[])
+{
+  PetscInt igs = gstart[0], ige = gstart[0]+gwidth[0], iov = overlap[0];
+  PetscInt jgs = gstart[1], jge = gstart[1]+gwidth[1], jov = overlap[1];
+  PetscInt kgs = gstart[2], kge = gstart[2]+gwidth[2], kov = overlap[2];
+  PetscInt i, iL = PetscMax(iA-iov,igs), iR = PetscMin(iA+iov,ige-1);
+  PetscInt j, jL = PetscMax(jA-jov,jgs), jR = PetscMin(jA+jov,jge-1);
+  PetscInt k, kL = PetscMax(kA-kov,kgs), kR = PetscMin(kA+kov,kge-1);
+  PetscInt c, pos = 0;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  for (i=iL; i<=iR; i++)
+    for (j=jL; j<=jR; j++)
+      for (k=kL; k<=kR; k++) {
+        PetscInt Aglobal, Alocal = Index3D(gstart,gwidth,i,j,k);
+        ierr = ISLocalToGlobalMappingApply(l2g,1,&Alocal,&Aglobal);CHKERRQ(ierr);
+        if (PetscUnlikely(Aglobal < Astart || Aglobal >= Aend)) continue;
+        for (c=0; c<bs; c++) indices[pos++] = c + bs*Aglobal;
+      }
+  *count = pos;
+  PetscFunctionReturn(0);
+}
+
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
+#define __FUNCT__ "InferMatrixType"
+PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
+{
+  void (*f)(void) = 0;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  *aij = *baij = *sbaij = PETSC_FALSE;
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if ( f) {*aij = PETSC_TRUE; goto done;};
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if ( f) {*baij = PETSC_TRUE; goto done;};
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPISBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqSBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
+  if ( f) {*sbaij = PETSC_TRUE; goto done;};
+ done:
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCSetUp_BBB_CreateMatrix"
+static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
+{
+  MPI_Comm       comm = ((PetscObject)A)->comm;
+  PetscBool      aij,baij,sbaij;
+  PetscInt       m,n,M,N,bs;
+  const MatType  mtype;
+  Mat            mat;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
+  ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
+  ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
+  ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
+
+  ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
+  #if PETSC_VERSION_(3,2,0)
+  ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
+  ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
+  #else
+  ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
+  ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
+  ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
+  #endif
+  ierr = InferMatrixType(mat,&aij,&baij,&sbaij);CHKERRQ(ierr);
+
+ if (aij || baij || sbaij) {
+   PetscInt i, dim = bbb->dim, dof = bbb->dof;
+   PetscInt *overlap = bbb->overlap;
+   PetscInt dnnz=1, onnz=0;
+   for (i=0; i<dim; i++) dnnz *= (4*overlap[i] + 1);
+   if (aij) {
+     dnnz *= dof; onnz *= dof;
+     ierr = MatSeqAIJSetPreallocation(mat,dnnz,0);CHKERRQ(ierr);
+     ierr = MatMPIAIJSetPreallocation(mat,dnnz,0,onnz,0);CHKERRQ(ierr);
+   } else if (baij) {
+     ierr = MatSeqBAIJSetPreallocation(mat,dof,dnnz,0);CHKERRQ(ierr);
+     ierr = MatMPIBAIJSetPreallocation(mat,dof,dnnz,0,onnz,0);CHKERRQ(ierr);
+   } else if (sbaij) {
+     ierr = MatSeqSBAIJSetPreallocation(mat,dof,dnnz,0);CHKERRQ(ierr);
+     ierr = MatMPISBAIJSetPreallocation(mat,dof,dnnz,0,onnz,0);CHKERRQ(ierr);
+   }
+   ierr = MatSetOption(mat,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
+ } else {
+   ierr = MatSetUp(mat);CHKERRQ(ierr);
+ }
+ *B = mat;
+ PetscFunctionReturn(0);
+}
+
+extern PetscErrorCode IGA_Grid_CreateLGMap(MPI_Comm,PetscInt,PetscInt,const PetscInt[],const PetscInt[],const PetscInt[],AO,LGMap*);
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCSetUp_BBB"
+static PetscErrorCode PCSetUp_BBB(PC pc)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  IGA            iga = 0;
+  Mat            A,B;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  A = pc->pmat;
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+
+  if (!pc->setupcalled) {
+    MPI_Comm comm;
+    PetscInt i, dim = iga->dim;
+    const PetscInt *sizes = iga->node_sizes;
+    const PetscInt *start = iga->node_start;
+    const PetscInt *width = iga->node_width;
+    PetscInt *overlap = bbb->overlap;
+    PetscInt *gstart  = bbb->ghost_start;
+    PetscInt *gwidth  = bbb->ghost_width;
+    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+    bbb->dim = iga->dim;
+    bbb->dof = iga->dof;
+    for (i=0; i<dim; i++) {
+      PetscInt p = iga->axis[i]->p;
+      if (overlap[i] < 0)
+        overlap[i] = p/2;
+      else
+        overlap[i] = PetscMin(overlap[i], p);
+    }
+    for (i=0; i<dim; i++) {
+      gstart[i] = start[i] - overlap[i];
+      gwidth[i] = width[i] + overlap[i];
+      if (gstart[i] < 0)
+        gstart[i] = iga->ghost_start[i];
+      if (gstart[i]+gwidth[i] >= sizes[i])
+        gwidth[i] = iga->ghost_width[i];
+    }
+    for (i=dim; i<3; i++) {
+      overlap[i] = 0;
+      gstart[i]  = 0;
+      gwidth[i]  = 1;
+    }
+    ierr = IGA_Grid_CreateLGMap(comm,dim,1,sizes,gstart,gwidth,iga->aob,&bbb->lgmap);CHKERRQ(ierr);
+  }
+
+  if (pc->flag != SAME_NONZERO_PATTERN) {
+    ierr = MatDestroy(&bbb->mat);CHKERRQ(ierr);
+  }
+  if (!bbb->mat) {
+    ierr = PCSetUp_BBB_CreateMatrix(bbb,A,&bbb->mat);CHKERRQ(ierr);
+  }
+  B = bbb->mat;
+
+  ierr = MatZeroEntries(B);CHKERRQ(ierr);
+  {
+    PetscInt       i,j,k,dim,dof;
+    const PetscInt *start,*width;
+    const PetscInt *gstart,*gwidth;
+    const PetscInt *overlap;
+    LGMap          lgmap = 0;
+    PetscInt       rstart,rend;
+    PetscInt       n,*indices;
+    PetscBLASInt   m,*ipiv,info,lwork;
+    PetscScalar    *values,*work,lwkopt;
+
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+
+    start   = iga->node_start;
+    width   = iga->node_width;
+
+    gstart  = bbb->ghost_start;
+    gwidth  = bbb->ghost_width;
+    lgmap   = bbb->lgmap;
+    overlap = bbb->overlap;
+
+    ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
+    rstart /= dof; rend /= dof;
+
+    for (n=dof, i=0; i<dim; n *= (2*overlap[i++] + 1));
+
+    ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
+    m = PetscBLASIntCast(n); lwork = -1; work = &lwkopt;
+    ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
+    LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
+    lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
+    ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
+
+    for (k=start[2]; k<start[2]+width[2]; k++)
+      for (j=start[1]; j<start[1]+width[1]; j++)
+        for (i=start[0]; i<start[0]+width[0]; i++)
+          {
+            ierr = ComputeOverlap(lgmap,dof,rstart,rend,gstart,gwidth,overlap,i,j,k,&n,indices);CHKERRQ(ierr);
+            /* get element matrix from global matrix */
+            ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
+            /* compute inverse of element matrix */
+            if (PetscLikely(n > 1)) {
+              m = PetscBLASIntCast(n);
+              LAPACKgetrf_(&m,&m,values,&m,ipiv,&info);
+              if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetrf_");
+              if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
+              ierr = PetscLogFlops((1/3.*n*n*n         +2/3.*n));CHKERRQ(ierr); /* multiplications */
+              ierr = PetscLogFlops((1/3.*n*n*n-1/2.*n*n+1/6.*n));CHKERRQ(ierr); /* additions */
+              LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
+              if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetri_");
+              if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
+              ierr = PetscLogFlops((2/3.*n*n*n+1/2.*n*n+5/6.*n));CHKERRQ(ierr); /* multiplications */
+              ierr = PetscLogFlops((2/3.*n*n*n-3/2.*n*n+5/6.*n));CHKERRQ(ierr); /* additions */
+            } else if (PetscLikely(n == 1)) {
+              if (values[0] != (PetscScalar)0.0) values[0] = (PetscScalar)1.0/values[0];
+              ierr = PetscLogFlops(1);CHKERRQ(ierr);
+            }
+            /* add values back into preconditioner matrix */
+            ierr = MatSetValues(B,n,indices,n,indices,values,ADD_VALUES);CHKERRQ(ierr);
+            ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
+          }
+
+    ierr = PetscFree2(indices,values);CHKERRQ(ierr);
+    ierr = PetscFree(ipiv);CHKERRQ(ierr);
+    ierr = PetscFree(work);CHKERRQ(ierr);
+  }
+
+  ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCSetFromOptions_BBB"
+static PetscErrorCode PCSetFromOptions_BBB(PC pc)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  PetscBool      flg;
+  PetscInt       i,no=3,overlap[3];
+  PetscErrorCode ierr;
+  for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
+  PetscFunctionBegin;
+  ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
+  if (flg) for (i=0; i<3; i++) {
+      PetscInt ov = (i<no) ? overlap[i] : overlap[0];
+      bbb->overlap[i] = ov;
+    }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCApply_BBB"
+static PetscErrorCode PCApply_BBB(PC pc, Vec x,Vec y)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = MatMult(bbb->mat,x,y);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCApplyTranspose_BBB"
+static PetscErrorCode PCApplyTranspose_BBB(PC pc, Vec x,Vec y)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = MatMultTranspose(bbb->mat,x,y);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCView_BBB"
+static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  PetscInt       *ov = bbb->overlap;
+  PetscBool      isascii;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
+  if (!isascii) PetscFunctionReturn(0);
+  if (!bbb->mat) PetscFunctionReturn(0);
+  ierr = PetscViewerASCIIPushTab(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"overlap: %D,%D,%D\n",ov[0],ov[1],ov[2]);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"basis-by-basis matrix:\n");CHKERRQ(ierr);
+  ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO);CHKERRQ(ierr);
+  ierr = MatView(bbb->mat,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPopTab(viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCReset_BBB"
+static PetscErrorCode PCReset_BBB(PC pc)
+{
+  PC_BBB         *bbb = (PC_BBB*)pc->data;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = ISLocalToGlobalMappingDestroy(&bbb->lgmap);CHKERRQ(ierr);
+  ierr = MatDestroy(&bbb->mat);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "PCDestroy_BBB"
+static PetscErrorCode PCDestroy_BBB(PC pc)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PCReset_BBB(pc);CHKERRQ(ierr);
+  ierr = PetscFree(pc->data);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+EXTERN_C_BEGIN
+#undef  __FUNCT__
+#define __FUNCT__ "PCCreate_BBB"
+PetscErrorCode PCCreate_BBB(PC pc)
+{
+  PC_BBB         *bbb = 0;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PetscNewLog(pc,PC_BBB,&bbb);CHKERRQ(ierr);
+  pc->data = (void*)bbb;
+
+  bbb->overlap[0] = PETSC_DECIDE;
+  bbb->overlap[1] = PETSC_DECIDE;
+  bbb->overlap[2] = PETSC_DECIDE;
+  bbb->mat        = PETSC_NULL;
+
+  pc->ops->setup               = PCSetUp_BBB;
+  pc->ops->reset               = PCReset_BBB;
+  pc->ops->destroy             = PCDestroy_BBB;
+  pc->ops->setfromoptions      = PCSetFromOptions_BBB;
+  pc->ops->view                = PCView_BBB;
+  pc->ops->apply               = PCApply_BBB;
+  pc->ops->applytranspose      = PCApplyTranspose_BBB;
+
+  PetscFunctionReturn(0);
+}
+EXTERN_C_END
