@@ -33,7 +33,7 @@
   #elif defined(PETSC_USE_REAL_DOUBLE)
     #define LAPACKgetri_ dgetri_
   #else /* (PETSC_USE_REAL_QUAD) */
-    #define LAPACKgeqri_ qgeqri_
+    #define LAPACKgetri_ qgetri_
   #endif
 #else
   #if defined(PETSC_USE_REAL_SINGLE)
