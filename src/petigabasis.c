@@ -68,8 +68,7 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInit"
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p,m;
-  PetscInt       nnp;
+  PetscInt       p,nnp;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
@@ -89,7 +88,6 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
                       "Derivative order must be grather than zero, got %D",d);
 
   p = axis->p;
-  m = axis->m;
   U = axis->U;
 
   nqp = rule->nqp;
