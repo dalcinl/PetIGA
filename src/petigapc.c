@@ -55,16 +55,6 @@ typedef struct {
   Mat mat;
 } PC_EBE;
 
-/*
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetFromOptions_EBE"
-static PetscErrorCode PCSetFromOptions_EBE(PC pc)
-{
-  PetscFunctionBegin;
-  PetscFunctionReturn(0);
-}
-*/
-
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetUp_EBE_CreateMatrix"
 static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
@@ -162,7 +152,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
   A = pc->pmat;
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   if (pc->flag != SAME_NONZERO_PATTERN) {
     ierr = MatDestroy(&ebe->mat);CHKERRQ(ierr);
@@ -238,6 +228,16 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
   PetscFunctionReturn(0);
 }
 
+/*
+#undef  __FUNCT__
+#define __FUNCT__ "PCSetFromOptions_EBE"
+static PetscErrorCode PCSetFromOptions_EBE(PC pc)
+{
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+*/
+
 #undef  __FUNCT__
 #define __FUNCT__ "PCApply_EBE"
 static PetscErrorCode PCApply_EBE(PC pc, Vec x,Vec y)
@@ -271,10 +271,12 @@ static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
   ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
   if (!ebe->mat) PetscFunctionReturn(0);
-  ierr = PetscViewerASCIIPrintf(viewer,"element-by-element preconditioner matrix:\n");CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPushTab(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"element-by-element matrix:\n");CHKERRQ(ierr);
   ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO);CHKERRQ(ierr);
   ierr = MatView(ebe->mat,viewer);CHKERRQ(ierr);
   ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPopTab(viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
