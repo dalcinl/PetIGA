@@ -82,6 +82,18 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
+#define __FUNCT__ "L2GApply"
+PetscErrorCode L2GApply(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = ISLocalToGlobalMappingApply(ltog,1,row,row);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingApply(ltog,*cnt,col,col);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
 #define __FUNCT__ "UnblockIndices"
 PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
 {
@@ -97,31 +109,13 @@ PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const Pets
 
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
-#define __FUNCT__ "L2GApply"
-PetscErrorCode L2GApply(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  ierr = ISLocalToGlobalMappingApply(ltog,1,row,row);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingApply(ltog,*cnt,col,col);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "L2GApplyFilterLT"
-/*
-  This helper is for of SBAIJ preallocation, to discard the lower-triangular values
-  which are difficult to identify in the local ordering with periodic domain.
-*/
-PetscErrorCode L2GApplyFilterLT(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
+#define __FUNCT__ "FilterLowerTriangular"
+PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 {
   PetscInt       i,n;
-  PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = L2GApply(ltog,row,cnt,col);CHKERRQ(ierr);
   for (i=0,n=0; i<*cnt; i++)
-    if (col[i] >= *row)
+    if (col[i] >= row)
       col[n++] = col[i];
   *cnt = n;
   PetscFunctionReturn(0);
@@ -171,7 +165,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   maxnnz = 1;
   for(i=0; i<dim; i++)
     maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
-  
+
   n = Product(width);
   N = Product(sizes);
 
@@ -185,7 +179,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatSetType(A,mtype);CHKERRQ(ierr);
 #endif
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
-
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
   ierr = IGA_Grid_CreateLGMap(comm,dim,1,sizes,gstart,gwidth,aob,&ltogb);CHKERRQ(ierr);
@@ -207,7 +200,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
               PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
               if (aij) {
                 if (bs == 1) {
-                  ierr = MatPreallocateSetLocal(ltog,1,&row,ltogb,count,indices,dnz,onz);CHKERRQ(ierr);
+                  ierr = MatPreallocateSetLocal(ltog,1,&row,ltog,count,indices,dnz,onz);CHKERRQ(ierr);
                 } else {
                   ierr = UnblockIndices(bs,row,count,indices,ubrows,ubcols);CHKERRQ(ierr);
                   ierr = MatPreallocateSetLocal(ltog,bs,ubrows,ltog,count*bs,ubcols,dnz,onz);CHKERRQ(ierr);
@@ -215,7 +208,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
               } else if (baij) {
                 ierr = MatPreallocateSetLocal(ltogb,1,&row,ltogb,count,indices,dnz,onz);CHKERRQ(ierr);
               } else if (sbaij) {
-                ierr = L2GApplyFilterLT(ltogb,&row,&count,indices);CHKERRQ(ierr);
+                ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
+                ierr = FilterLowerTriangular(row,&count,indices);CHKERRQ(ierr);
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
             }
@@ -233,6 +227,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
       ierr = PetscFree(indices);CHKERRQ(ierr);
     }
     ierr = MatPreallocateFinalize(dnz,onz);CHKERRQ(ierr);
+    ierr = MatSetOption(A,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   } else {
     ierr = MatSetUp(A);CHKERRQ(ierr);
   }
@@ -250,28 +245,26 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscInt i,j,k;
     PetscInt n = maxnnz,*indices=0,*ubrows,*ubcols=0;PetscScalar *values=0;
     ierr = PetscMalloc2(n,PetscInt,&indices,n*bs*n*bs,PetscScalar,&values);CHKERRQ(ierr);
-    ierr = PetscMemzero(values,n*bs*n*bs*sizeof(PetscScalar));CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+    ierr = PetscMemzero(values,n*bs*n*bs*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=start[2]; k<start[2]+width[2]; k++)
       for (j=start[1]; j<start[1]+width[1]; j++)
         for (i=start[0]; i<start[0]+width[0]; i++)
           { /* */
             PetscInt row   = Index3D(gstart,gwidth,i,j,k);
             PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
+            ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
             if (aij) {
               if (bs == 1) {
-                ierr = L2GApply(ltog,&row,&count,indices);CHKERRQ(ierr);
                 ierr = MatSetValues(A,1,&row,count,indices,values,INSERT_VALUES);CHKERRQ(ierr);
               } else {
-                ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
                 ierr = UnblockIndices(bs,row,count,indices,ubrows,ubcols);CHKERRQ(ierr);
                 ierr = MatSetValues(A,bs,ubrows,count*bs,ubcols,values,INSERT_VALUES);CHKERRQ(ierr);
               }
             } else if (baij) {
-              ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
               ierr = MatSetValuesBlocked(A,1,&row,count,indices,values,INSERT_VALUES);CHKERRQ(ierr);
             } else if (sbaij) {
-              ierr = L2GApplyFilterLT(ltogb,&row,&count,indices);CHKERRQ(ierr);
+              ierr = FilterLowerTriangular(row,&count,indices);CHKERRQ(ierr);
               ierr = MatSetValuesBlocked(A,1,&row,count,indices,values,INSERT_VALUES);CHKERRQ(ierr);
             }
           }
@@ -279,6 +272,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatAssemblyEnd  (A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatSetOption(A,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
+    /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
+    /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   }
   ierr = ISLocalToGlobalMappingDestroy(&ltog);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&ltogb);CHKERRQ(ierr);
@@ -286,9 +282,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
   ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
 
-  ierr = MatSetOption(A,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
-  /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
-  /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   *mat = A;
 
