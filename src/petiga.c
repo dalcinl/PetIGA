@@ -58,6 +58,12 @@ PetscErrorCode IGADestroy(IGA *_iga)
   ierr = PetscFree(iga->userops);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
+  if (iga->fieldname) {
+    for (i=0; i<iga->dof; i++) {
+      ierr = PetscFree(iga->fieldname[i]);CHKERRQ(ierr);
+    }
+    ierr = PetscFree(iga->fieldname);CHKERRQ(ierr);
+  }
 
   for (i=0; i<3; i++) {
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
@@ -228,6 +234,50 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
   iga->dof = dof;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetFieldName"
+PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidCharPointer(name,3);
+  if (iga->dof < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+            "Must call IGASetDof() first");
+  if (field < 0 || field >= iga->dof)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+  if (!iga->fieldname) {
+    ierr = PetscMalloc1(iga->dof,char,&iga->fieldname);CHKERRQ(ierr);
+    ierr = PetscMemzero(iga->fieldname,iga->dof*sizeof(char));CHKERRQ(ierr);
+  }
+  ierr = PetscFree(iga->fieldname[field]);CHKERRQ(ierr);
+  ierr = PetscStrallocpy(name,&iga->fieldname[field]);CHKERRQ(ierr);
+  if (iga->dm_dof) {ierr = DMDASetFieldName(iga->dm_dof,field,name);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetFieldName"
+PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(name,3);
+  if (iga->dof < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+            "Must call IGASetDof() first");
+  if (field < 0 || field >= iga->dof)
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+  if (iga->fieldname)
+    *name = iga->fieldname[field];
+  else
+    *name = 0;
   PetscFunctionReturn(0);
 }
 
@@ -1014,6 +1064,11 @@ PetscErrorCode IGASetUp(IGA iga)
   ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
 
   ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_dof);CHKERRQ(ierr);
+  if (iga->fieldname) {
+    for (i=0; i<iga->dof; i++) {
+      ierr = DMDASetFieldName(iga->dm_dof,i,iga->fieldname[i]);CHKERRQ(ierr);
+    }
+  }
 
   /* build the block application ordering */
   ierr = IGACreateAO(iga,1,&iga->aob);CHKERRQ(ierr);
