@@ -68,7 +68,7 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInit"
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p,m,n;
+  PetscInt       p,m;
   PetscInt       nnp;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
@@ -91,7 +91,6 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   p = axis->p;
   m = axis->m;
   U = axis->U;
-  n = m-p-1;
 
   nqp = rule->nqp;
   X   = rule->point;
