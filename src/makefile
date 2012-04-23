@@ -8,7 +8,7 @@ ALL: lib
 SOURCEH  = ../include/petiga.h petigapc.h
 SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigaksp.c petigasnes.c petigats.c petigaio.c
 SOURCEF1 = petigaftn.F90
-SOURCEF2 = petigabsp.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90 petigaint.f90
+SOURCEF2 = petigabsp.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90 petigageo.f90 petigaint.f90
 SOURCEF  = ${SOURCEF1} ${SOURCEF2}
 OBJSC    = ${SOURCEC:.c=.o}
 OBJSF    = ${SOURCEF1:.F90=.o} ${SOURCEF2:.f90=.o}

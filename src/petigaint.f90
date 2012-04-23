@@ -1,18 +1,18 @@
 ! -*- f90 -*-
 
-subroutine IGA_GetPoint(nen,dim,N,Xw,X) &
+subroutine IGA_GetPoint(nen,dim,N,C,X) &
   bind(C, name="IGA_GetPoint")
   use PetIGA
   implicit none
   integer(kind=IGA_INT ), intent(in),value :: nen,dim
   real   (kind=IGA_REAL), intent(in)       :: N(nen)
-  real   (kind=IGA_REAL), intent(in)       :: Xw(dim+1,nen)
+  real   (kind=IGA_REAL), intent(in)       :: C(dim,nen)
   real   (kind=IGA_REAL), intent(out)      :: X(dim)
   integer(kind=IGA_INT )  :: a
-  ! X = matmul(Xw(1:dim,:),N)
+  ! X = matmul(C,N)
   X = 0
   do a = 1, nen
-     X = X + N(a) * Xw(1:dim,a)
+     X = X + N(a) * C(:,a)
   end do
 end subroutine IGA_GetPoint
 

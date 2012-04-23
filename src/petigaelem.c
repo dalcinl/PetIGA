@@ -65,11 +65,16 @@ PetscErrorCode IGAElementReset(IGAElement element)
   PetscValidPointer(element,1);
   element->index = -1;
   ierr = PetscFree(element->mapping);CHKERRQ(ierr);
-  ierr = PetscFree(element->geometry);CHKERRQ(ierr);
+  ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
+  ierr = PetscFree(element->geometryW);CHKERRQ(ierr);
   ierr = PetscFree(element->point);CHKERRQ(ierr);
   ierr = PetscFree(element->weight);CHKERRQ(ierr);
   ierr = PetscFree(element->detJac);CHKERRQ(ierr);
   ierr = PetscFree(element->jacobian);CHKERRQ(ierr);
+  ierr = PetscFree(element->basis[0]);CHKERRQ(ierr);
+  ierr = PetscFree(element->basis[1]);CHKERRQ(ierr);
+  ierr = PetscFree(element->basis[2]);CHKERRQ(ierr);
+  ierr = PetscFree(element->basis[3]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[0]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[1]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[2]);CHKERRQ(ierr);
@@ -123,12 +128,19 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     PetscInt nqp = element->nqp;
 
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nen*(dim+1),PetscReal,&element->geometry);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nen*(dim),PetscReal,&element->geometryX);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen      ,PetscReal,&element->geometryW);CHKERRQ(ierr);
 
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->detJac);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim*dim,PetscReal,&element->jacobian);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nqp*nen,PetscReal,&element->basis[0]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nen*dim,PetscReal,&element->basis[1]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->basis[2]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->basis[3]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen,PetscReal,&element->shape[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim,PetscReal,&element->shape[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->shape[2]);CHKERRQ(ierr);
@@ -138,6 +150,10 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     ierr = PetscMemzero(element->weight,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->jacobian,sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->basis[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->basis[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->basis[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->basis[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
@@ -161,13 +177,11 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
 PetscErrorCode IGAElementBegin(IGAElement element)
 {
   IGA            iga;
-  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   iga = element->parent;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
-  if (iga->vec_geom) {ierr = VecGetArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);}
   element->index = -1;
   PetscFunctionReturn(0);
 }
@@ -206,11 +220,9 @@ PetscBool IGAElementNext(IGAElement element)
 PetscErrorCode IGAElementEnd(IGAElement element)
 {
   IGA            iga;
-  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   iga = element->parent;
-  if (iga->vec_geom) {ierr = VecRestoreArrayRead(iga->vec_geom,&iga->geometry);CHKERRQ(ierr);}
   element->index = -1;
   PetscFunctionReturn(0);
 }
@@ -393,12 +405,13 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
 #define __FUNCT__ "IGAElementBuildMapping"
 PetscErrorCode IGAElementBuildMapping(IGAElement element)
 {
+  IGA iga;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  iga = element->parent;
   { /* */
-    IGA      iga = element->parent;
     IGABasis *BD = iga->basis;
     PetscInt *ID = element->ID;
     PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
@@ -420,36 +433,41 @@ PetscErrorCode IGAElementBuildMapping(IGAElement element)
       }
     }
   }
-  if (element->parent->geometry) {
-    const PetscScalar *arrayX = element->parent->geometry;
-    PetscReal *Cw = element->geometry;
-    PetscInt *mapping = element->mapping;
-    PetscInt nen = element->nen;
-    PetscInt dim = element->dim;
-    PetscInt a,i,pos=0;
-    for (a=0; a<nen; a++) {
-      const PetscScalar *X = arrayX + mapping[a]*(dim+1);
-      for (i=0; i<(dim+1); i++)
-        Cw[pos++] = PetscRealPart(X[i]);
-    }
+  element->geometry = iga->geometry;
+  element->rational = iga->geometry;
+  if (element->geometry || element->rational) {
+    const PetscReal *arrayX = iga->geometryX;
+    const PetscReal *arrayW = iga->geometryW;
+    const PetscInt *map = element->mapping;
+    PetscReal *X = element->geometryX;
+    PetscReal *W = element->geometryW;
+    PetscInt a,nen = element->nen;
+    PetscInt i,dim = element->dim;
+    if (element->geometry)
+      for (a=0; a<nen; a++)
+        for (i=0; i<dim; i++)
+          X[i + a*dim] = arrayX[i + map[a]*dim];
+    if (element->rational)
+      for (a=0; a<nen; a++)
+        W[a] = arrayW[map[a]];
   }
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
-extern void IGA_Quadrature_1D(PetscInt,const PetscReal[],const PetscReal[],
-                              PetscReal[],PetscReal[]);
-extern void IGA_Quadrature_2D(PetscInt,const PetscReal[],const PetscReal[],
-                              PetscInt,const PetscReal[],const PetscReal[],
-                              PetscReal[],PetscReal[]);
-extern void IGA_Quadrature_3D(PetscInt,const PetscReal[],const PetscReal[],
-                              PetscInt,const PetscReal[],const PetscReal[],
-                              PetscInt,const PetscReal[],const PetscReal[],
-                              PetscReal[],PetscReal[]);
+extern void IGA_Quadrature_1D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
+extern void IGA_Quadrature_2D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
+extern void IGA_Quadrature_3D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
+                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
 EXTERN_C_END
 
 #define IGA_Quadrature_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight
+  BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight,BD[i]->detJ+ID[i]
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildQuadrature"
@@ -466,67 +484,94 @@ PetscErrorCode IGAElementBuildQuadrature(IGAElement element)
     case 3: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
                               IGA_Quadrature_ARGS(ID,BD,1),
                               IGA_Quadrature_ARGS(ID,BD,2),
-                              element->point,element->weight); break;
+                              element->point,element->weight,
+                              element->detJac,element->jacobian); break;
     case 2: IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
                               IGA_Quadrature_ARGS(ID,BD,1),
-                              element->point,element->weight); break;
+                              element->point,element->weight,
+                              element->detJac,element->jacobian); break;
     case 1: IGA_Quadrature_1D(IGA_Quadrature_ARGS(ID,BD,0),
-                              element->point,element->weight); break;
+                              element->point,element->weight,
+                              element->detJac,element->jacobian); break;
     }
   }
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
-extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             const PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             const PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],const PetscReal[],
-                             const PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns(PetscInt,
+                          PetscInt,PetscInt,PetscInt,
+                          PetscInt,const PetscReal[],
+                          const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                          PetscReal[],PetscReal[],PetscReal[],PetscReal[],
+                          PetscReal[],PetscReal[]);
 EXTERN_C_END
 
-#define IGA_ShapeFuns_ARGS(ID,BD,i) \
+#define IGA_BasisFuns_ARGS(ID,BD,i) \
   BD[i]->nqp,BD[i]->nen,BD[i]->d,   \
-  BD[i]->detJ+ID[i],BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*(BD[i]->d+1)
+  BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*(BD[i]->d+1)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildShapeFuns"
 PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
 {
+  PetscInt order;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  { /* XXX */
+    IGABasis *BD = element->parent->basis;
+    order = 3;
+    order = PetscMin(order,BD[0]->d);
+    order = PetscMin(order,BD[1]->d);
+    order = PetscMin(order,BD[2]->d);
+    order = PetscMax(order,1);
+  }
   {
-    PetscBool geometry = element->parent->geometry ? PETSC_TRUE : PETSC_FALSE;
-    PetscBool rational = geometry ? element->parent->rational : PETSC_FALSE;
     IGABasis *BD  = element->parent->basis;
     PetscInt *ID  = element->ID;
-    PetscReal *Cw = element->geometry;
-    PetscReal *dJ = element->detJac;
-    PetscReal *J  = element->jacobian;
-    PetscReal **N = element->shape;
+    PetscReal **N = element->basis;
     switch (element->dim) {
-    case 3: IGA_ShapeFuns_3D(geometry,rational,
-                             IGA_ShapeFuns_ARGS(ID,BD,0),
-                             IGA_ShapeFuns_ARGS(ID,BD,1),
-                             IGA_ShapeFuns_ARGS(ID,BD,2),
-                             Cw,dJ,J,N[0],N[1],N[2],N[3]); break;
-    case 2: IGA_ShapeFuns_2D(geometry,rational,
-                             IGA_ShapeFuns_ARGS(ID,BD,0),
-                             IGA_ShapeFuns_ARGS(ID,BD,1),
-                             Cw,dJ,J,N[0],N[1],N[2],N[3]); break;
-    case 1: IGA_ShapeFuns_1D(geometry,rational,
-                             IGA_ShapeFuns_ARGS(ID,BD,0),
-                             Cw,dJ,J,N[0],N[1],N[2],N[3]); break;
+    case 3: IGA_BasisFuns_3D(order,
+                             element->rational,element->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             IGA_BasisFuns_ARGS(ID,BD,1),
+                             IGA_BasisFuns_ARGS(ID,BD,2),
+                             N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_BasisFuns_2D(order,
+                             element->rational,element->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             IGA_BasisFuns_ARGS(ID,BD,1),
+                             N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_BasisFuns_1D(order,
+                             element->rational,element->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             N[0],N[1],N[2],N[3]); break;
     }
+  }
+  {
+    PetscReal *X  = element->geometryX;
+    PetscReal **M = element->basis;
+    PetscReal **N = element->shape;
+    IGA_ShapeFuns(order,
+                  element->dim,element->nen,element->nqp,
+                  element->geometry,X,
+                  M[0],M[1],M[2],M[3],
+                  N[0],N[1],N[2],N[3],
+                  element->detJac,element->jacobian);
   }
   PetscFunctionReturn(0);
 }

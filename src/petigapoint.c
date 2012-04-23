@@ -229,14 +229,12 @@ EXTERN_C_END
 #define __FUNCT__ "IGAPointGetPoint"
 PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
 {
-  PetscBool geometry;
   PetscFunctionBegin;
   PetscValidPointer(p,1);
   PetscValidRealPointer(x,2);
-  geometry = p->parent->parent->geometry ? PETSC_TRUE : PETSC_FALSE; /* XXX */
-  if (geometry) {
-    const PetscReal *Xw = p->parent->geometry;
-    IGA_GetPoint(p->nen,p->dim,p->shape[0],Xw,x);
+  if (p->parent->geometry) {
+    const PetscReal *X = p->parent->geometryX;
+    IGA_GetPoint(p->nen,p->dim,p->shape[0],X,x);
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *X = p->point;

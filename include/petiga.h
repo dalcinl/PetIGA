@@ -184,10 +184,12 @@ struct _p_IGA {
   PetscInt proc_rank[3];
   PetscInt proc_sizes[3];
   
-  const PetscScalar *geometry;
-  PetscBool          rational;
-  Vec                vec_geom;
-  DM                 dm_geom;
+  PetscBool geometry;
+  PetscBool rational;
+  PetscReal *geometryX;
+  PetscReal *geometryW;
+  Vec       vec_geom;
+  DM        dm_geom;
 
   PetscInt elem_sizes[3];
   PetscInt elem_start[3];
@@ -296,15 +298,19 @@ struct _n_IGAElement {
   PetscInt dof;
   PetscInt dim;
 
-  PetscInt  *mapping;  /*   [nen]        */
-  PetscReal *geometry; /*   [nen][dim+1] */
+  PetscInt  *mapping;   /*   [nen]      */
+
+  PetscBool geometry;
+  PetscBool rational;
+  PetscReal *geometryX; /*   [nen][dim] */
+  PetscReal *geometryW; /*   [nen]      */
 
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
   PetscReal *jacobian; /*   [nqp][dim][dim]           */
-  PetscReal *shape[4]; /*0: [nqp][nen]                */
-                       /*1: [nqp][nen][dim]           */
+  PetscReal *basis[4]; /*0: [nqp][nen]                */
+  PetscReal *shape[4]; /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
                        /*3: [nqp][nen][dim][dim][dim] */
 

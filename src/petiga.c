@@ -34,7 +34,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
-  iga->geometry = PETSC_NULL;
+  iga->geometry = PETSC_FALSE;
   iga->rational = PETSC_FALSE;
   iga->vec_geom = PETSC_NULL;
 
@@ -89,8 +89,10 @@ PetscErrorCode IGAReset(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   iga->setup = PETSC_FALSE;
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
-  iga->geometry = PETSC_NULL;
+  iga->geometry = PETSC_FALSE;
   iga->rational = PETSC_FALSE;
+  ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_geom);CHKERRQ(ierr);
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
@@ -128,8 +130,8 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   {
     MPI_Comm  comm;
-    PetscBool geometry = iga->vec_geom ? PETSC_TRUE : PETSC_FALSE;
-    PetscBool rational = geometry ? iga->rational : PETSC_FALSE;
+    PetscBool geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
+    PetscBool rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
     PetscInt  i,dim,dof;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);

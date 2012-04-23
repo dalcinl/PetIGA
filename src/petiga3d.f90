@@ -1,8 +1,8 @@
 subroutine IGA_Quadrature_3D(&
-     inq,iX,iW, &
-     jnq,jX,jW, &
-     knq,kX,kW, &
-     X, W)      &
+     inq,iX,iW,iJ, &
+     jnq,jX,jW,jJ, &
+     knq,kX,kW,kJ, &
+     X,W,detJ,J)   &
   bind(C, name="IGA_Quadrature_3D")
   use PetIGA
   implicit none
@@ -10,104 +10,76 @@ subroutine IGA_Quadrature_3D(&
   integer(kind=IGA_INT ), intent(in),value :: inq
   integer(kind=IGA_INT ), intent(in),value :: jnq
   integer(kind=IGA_INT ), intent(in),value :: knq
-  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq)
-  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq)
-  real   (kind=IGA_REAL), intent(in)  :: kX(knq), kW(knq)
-  real   (kind=IGA_REAL), intent(out) :: X(dim,inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: W(inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq), iJ
+  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq), jJ
+  real   (kind=IGA_REAL), intent(in)  :: kX(knq), kW(knq), kJ
+  real   (kind=IGA_REAL), intent(out) :: X(dim,    inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: W(        inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: detJ(     inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: J(dim,dim,inq,jnq,knq)
   integer(kind=IGA_INT ) :: iq
   integer(kind=IGA_INT ) :: jq
   integer(kind=IGA_INT ) :: kq
   forall (iq=1:inq, jq=1:jnq, kq=1:knq)
      X(:,iq,jq,kq) = (/ iX(iq),  jX(jq),  kX(kq) /)
      W(  iq,jq,kq) =    iW(iq) * jW(jq) * kW(kq)
+     detJ( iq,jq,kq) = iJ * jJ * kJ
+     J(:,:,iq,jq,kq) = 0
+     J(1,1,iq,jq,kq) = iJ
+     J(2,2,iq,jq,kq) = jJ
+     J(3,3,iq,jq,kq) = kJ
   end forall
 end subroutine IGA_Quadrature_3D
 
-subroutine IGA_ShapeFuns_3D(&
-     geometry,rational,     &
-     inq,ina,ind,iJ,iN,     &
-     jnq,jna,jnd,jJ,jN,     &
-     knq,kna,knd,kJ,kN,     &
-     Cw,detJac,Jac,         &
+subroutine IGA_BasisFuns_3D(&
+     order,                 &
+     rational,W,            &
+     inq,ina,ind,iN,        &
+     jnq,jna,jnd,jN,        &
+     knq,kna,knd,kN,        &
      N0,N1,N2,N3)           &
-  bind(C, name="IGA_ShapeFuns_3D")
+  bind(C, name="IGA_BasisFuns_3D")
   use PetIGA
   implicit none
   integer(kind=IGA_INT ), parameter        :: dim = 3
-  integer(kind=IGA_INT ), intent(in),value :: geometry
+  integer(kind=IGA_INT ), intent(in),value :: order
   integer(kind=IGA_INT ), intent(in),value :: rational
   integer(kind=IGA_INT ), intent(in),value :: inq, ina, ind
   integer(kind=IGA_INT ), intent(in),value :: jnq, jna, jnd
   integer(kind=IGA_INT ), intent(in),value :: knq, kna, knd
-  real   (kind=IGA_REAL), intent(in)  :: iJ, iN(0:ind,ina,inq)
-  real   (kind=IGA_REAL), intent(in)  :: jJ, jN(0:jnd,jna,jnq)
-  real   (kind=IGA_REAL), intent(in)  :: kJ, kN(0:knd,kna,knq)
-  real   (kind=IGA_REAL), intent(in)  :: Cw(dim+1,ina,jna,kna)
-  real   (kind=IGA_REAL), intent(out) :: detJac(     inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: Jac(dim,dim,inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: N0(       ina,jna,kna,inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: N1(   dim,ina,jna,kna,inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: N2(dim**2,ina,jna,kna,inq,jnq,knq)
-  real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina,jna,kna,inq,jnq,knq)
-
+  real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina,inq)
+  real   (kind=IGA_REAL), intent(in)  :: jN(0:jnd,jna,jnq)
+  real   (kind=IGA_REAL), intent(in)  :: kN(0:knd,kna,knq)
+  real   (kind=IGA_REAL), intent(in)  :: W(dim+1,  ina*jna*kna)
+  real   (kind=IGA_REAL), intent(out) :: N0(       ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: N1(   dim,ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: N2(dim**2,ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina*jna*kna,inq,jnq,knq)
   integer(kind=IGA_INT ) :: ia,iq
   integer(kind=IGA_INT ) :: ja,jq
   integer(kind=IGA_INT ) :: ka,kq
-  integer(kind=IGA_INT ) :: i,nen,ord
-  real   (kind=IGA_REAL) :: C(dim,ina,jna,kna)
-  real   (kind=IGA_REAL) :: W(    ina,jna,kna)
-
-  if (geometry /= 0) then
-     W = Cw(dim+1,:,:,:)
-     forall (i=1:dim)
-        C(i,:,:,:) = Cw(i,:,:,:) / W
-     end forall
-  end if
-
+  integer(kind=IGA_INT ) :: nen
   nen = ina*jna*kna
-  ord = max(1,min(ind,jnd,knd,3))
   do kq=1,knq
      do jq=1,jnq
         do iq=1,inq
            call TensorBasisFuns(&
-                ord,&
+                order,&
                 ina,ind,iN(:,:,iq),&
                 jna,jnd,jN(:,:,jq),&
                 kna,knd,kN(:,:,kq),&
-                N0(  :,:,:,iq,jq,kq),&
-                N1(:,:,:,:,iq,jq,kq),&
-                N2(:,:,:,:,iq,jq,kq),&
-                N3(:,:,:,:,iq,jq,kq))
+                N0(  :,iq,jq,kq),&
+                N1(:,:,iq,jq,kq),&
+                N2(:,:,iq,jq,kq),&
+                N3(:,:,iq,jq,kq))
            if (rational /= 0) then
               call Rationalize(&
-                   ord,&
+                   order,&
                    nen,W,&
-                   N0(  :,:,:,iq,jq,kq),&
-                   N1(:,:,:,:,iq,jq,kq),&
-                   N2(:,:,:,:,iq,jq,kq),&
-                   N3(:,:,:,:,iq,jq,kq))
-           end if
-           if (geometry /= 0) then
-              call GeometryMap(&
-                   ord,&
-                   nen,C,&
-                   detJac( iq,jq,kq),&
-                   Jac(:,:,iq,jq,kq),&
-                   N0(  :,:,:,iq,jq,kq),&
-                   N1(:,:,:,:,iq,jq,kq),&
-                   N2(:,:,:,:,iq,jq,kq),&
-                   N3(:,:,:,:,iq,jq,kq))
-              detJac( iq,jq,kq) = detJac( iq,jq,kq) * (iJ*jJ*kJ)
-              Jac(1,:,iq,jq,kq) = Jac(1,:,iq,jq,kq) * iJ
-              Jac(2,:,iq,jq,kq) = Jac(2,:,iq,jq,kq) * jJ
-              Jac(3,:,iq,jq,kq) = Jac(3,:,iq,jq,kq) * kJ
-           else
-              detJac( iq,jq,kq) = (iJ*jJ*kJ)
-              Jac(:,:,iq,jq,kq) = 0
-              Jac(1,1,iq,jq,kq) = iJ
-              Jac(2,2,iq,jq,kq) = jJ
-              Jac(3,3,iq,jq,kq) = kJ
+                   N0(  :,iq,jq,kq),&
+                   N1(:,:,iq,jq,kq),&
+                   N2(:,:,iq,jq,kq),&
+                   N3(:,:,iq,jq,kq))
            end if
         end do
      end do
@@ -115,7 +87,7 @@ subroutine IGA_ShapeFuns_3D(&
 
 contains
 
-pure subroutine TensorBasisFuns(&
+subroutine TensorBasisFuns(&
      ord,&
      ina,ind,iN,&
      jna,jnd,jN,&
@@ -193,6 +165,5 @@ pure subroutine TensorBasisFuns(&
 end subroutine TensorBasisFuns
 
 include 'petigarat.f90.in'
-include 'petigageo.f90.in'
 
-end subroutine IGA_ShapeFuns_3D
+end subroutine IGA_BasisFuns_3D

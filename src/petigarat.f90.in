@@ -2,7 +2,7 @@
 
 pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   implicit none
-  !integer(kiord=IGA_INT), parameter    :: dim = 1,2,3
+  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
   integer(kind=IGA_INT ), intent(in)    :: ord, nen
   real   (kind=IGA_REAL), intent(in)    :: W(nen)
   real   (kind=IGA_REAL), intent(inout) :: R0(            nen)
