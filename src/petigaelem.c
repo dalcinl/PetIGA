@@ -416,7 +416,7 @@ PetscErrorCode IGAElementBuildMapping(IGAElement element)
     PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
     PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
     PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
-    PetscInt *start = iga->ghost_start, *width = iga->ghost_width;
+    PetscInt *start = iga->node_gstart, *width = iga->node_gwidth;
     PetscInt istart = start[0], istride = 1;
     PetscInt jstart = start[1], jstride = width[0];
     PetscInt kstart = start[2], kstride = width[0]*width[1];

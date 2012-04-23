@@ -150,8 +150,8 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     MPI_Comm comm;
     PetscInt i, dim = iga->dim;
     const PetscInt *sizes = iga->node_sizes;
-    const PetscInt *start = iga->node_start;
-    const PetscInt *width = iga->node_width;
+    const PetscInt *start = iga->node_lstart;
+    const PetscInt *width = iga->node_lwidth;
     PetscInt *overlap = bbb->overlap;
     PetscInt *gstart  = bbb->ghost_start;
     PetscInt *gwidth  = bbb->ghost_width;
@@ -169,9 +169,9 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
       gstart[i] = start[i] - overlap[i];
       gwidth[i] = width[i] + overlap[i];
       if (gstart[i] < 0)
-        gstart[i] = iga->ghost_start[i];
+        gstart[i] = iga->node_gstart[i];
       if (gstart[i]+gwidth[i] >= sizes[i])
-        gwidth[i] = iga->ghost_width[i];
+        gwidth[i] = iga->node_gwidth[i];
     }
     for (i=dim; i<3; i++) {
       overlap[i] = 0;
@@ -204,8 +204,8 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
 
-    start   = iga->node_start;
-    width   = iga->node_width;
+    start   = iga->node_lstart;
+    width   = iga->node_lwidth;
 
     gstart  = bbb->ghost_start;
     gwidth  = bbb->ghost_width;

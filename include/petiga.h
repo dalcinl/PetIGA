@@ -185,6 +185,11 @@ struct _p_IGA {
   PetscInt proc_rank[3];
   PetscInt proc_sizes[3];
   
+  PetscInt  elem_sizes[3];
+  PetscInt  elem_start[3];
+  PetscInt  elem_width[3];
+  DM        dm_elem;
+
   PetscBool geometry;
   PetscBool rational;
   PetscReal *geometryX;
@@ -194,20 +199,15 @@ struct _p_IGA {
   PetscInt  geom_lwidth[3];
   PetscInt  geom_gstart[3];
   PetscInt  geom_gwidth[3];
-  DM        dm_geom;
   Vec       vec_geom;
-
-  PetscInt  elem_sizes[3];
-  PetscInt  elem_start[3];
-  PetscInt  elem_width[3];
-  DM        dm_elem;
+  DM        dm_geom;
 
   PetscInt  node_sizes[3];
-  PetscInt  node_start[3];
-  PetscInt  node_width[3];
-  PetscInt  ghost_start[3];
-  PetscInt  ghost_width[3];
-  DM        dm_dof;
+  PetscInt  node_lstart[3];
+  PetscInt  node_lwidth[3];
+  PetscInt  node_gstart[3];
+  PetscInt  node_gwidth[3];
+  DM        dm_node;
 
   AO         ao,aob;
   LGMap      lgmap,lgmapb;

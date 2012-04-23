@@ -34,10 +34,6 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
-  iga->geometry = PETSC_FALSE;
-  iga->rational = PETSC_FALSE;
-  iga->vec_geom = PETSC_NULL;
-
   PetscFunctionReturn(0);
 }
 
@@ -87,18 +83,21 @@ PetscErrorCode IGAReset(IGA iga)
   PetscFunctionBegin;
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+
   iga->setup = PETSC_FALSE;
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
 
+  /* element */
   ierr = DMDestroy(&iga->dm_elem);CHKERRQ(ierr);
-
+  /* geometry */
   iga->geometry = PETSC_FALSE;
   iga->rational = PETSC_FALSE;
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->dm_geom);CHKERRQ(ierr);
-  
+  /* node */
+  ierr = DMDestroy(&iga->dm_node);CHKERRQ(ierr);
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
   ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
@@ -107,7 +106,6 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
-  ierr = DMDestroy(&iga->dm_dof);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -153,7 +151,7 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
     }
     { /* */
       PetscInt isum[2],imin[2],imax[2],iloc[2] = {1, 1};
-      for (i=0; i<dim; i++) {iloc[0] *= iga->node_width[i]; iloc[1] *= iga->elem_width[i];}
+      for (i=0; i<dim; i++) {iloc[0] *= iga->node_lwidth[i]; iloc[1] *= iga->elem_width[i];}
       ierr = MPI_Allreduce(&iloc,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
       ierr = MPI_Allreduce(&iloc,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
       ierr = MPI_Allreduce(&iloc,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
@@ -164,8 +162,8 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
     }
     if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) {
         PetscMPIInt rank; PetscInt *ranks = iga->proc_rank;
-        PetscInt *nnp = iga->node_width, tnnp = 1, *snp = iga->node_start;
-        PetscInt *nel = iga->elem_width, tnel = 1, *sel = iga->elem_start;
+        PetscInt *nnp = iga->node_lwidth, tnnp = 1, *snp = iga->node_lstart;
+        PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
         for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
         ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
         ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);CHKERRQ(ierr);
@@ -293,7 +291,7 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   }
   ierr = PetscFree(iga->fieldname[field]);CHKERRQ(ierr);
   ierr = PetscStrallocpy(name,&iga->fieldname[field]);CHKERRQ(ierr);
-  if (iga->dm_dof) {ierr = DMDASetFieldName(iga->dm_dof,field,name);CHKERRQ(ierr);}
+  if (iga->dm_node) {ierr = DMDASetFieldName(iga->dm_node,field,name);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -659,7 +657,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node)
     for (i=0; i<dim; i++) {
       procs[i] = iga->proc_sizes[i];
       sizes[i] = iga->node_sizes[i];
-      width[i] = iga->node_width[i];
+      width[i] = iga->node_lwidth[i];
       ierr = PetscMalloc1(procs[i],PetscInt,&ranges[i]);CHKERRQ(ierr);
       ierr = MPI_Allgather(&width[i],1,MPIU_INT,ranges[i],1,MPIU_INT,subcomms[i]);CHKERRQ(ierr);
     }
@@ -922,8 +920,8 @@ PetscErrorCode IGACreateAO(IGA iga,PetscInt bs,AO *ao)
 
   comm   = ((PetscObject)iga)->comm;
   sizes  = iga->node_sizes;
-  lstart = iga->node_start;
-  lwidth = iga->node_width;
+  lstart = iga->node_lstart;
+  lwidth = iga->node_lwidth;
   ierr = IGA_Grid_CreateAO(comm,iga->dim,bs,sizes,lstart,lwidth,ao);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
@@ -944,8 +942,8 @@ PetscErrorCode IGACreateLGMap(IGA iga,PetscInt bs,LGMap *lgmap)
 
   comm   = ((PetscObject)iga)->comm;
   sizes  = iga->node_sizes;
-  gstart = iga->ghost_start;
-  gwidth = iga->ghost_width;
+  gstart = iga->node_gstart;
+  gwidth = iga->node_gwidth;
   ierr = IGA_Grid_CreateLGMap(comm,iga->dim,1,sizes,gstart,gwidth,iga->aob,lgmap);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
@@ -967,8 +965,8 @@ PetscErrorCode IGACreateVector(IGA iga,PetscInt bs,Vec *global,Vec *local)
 
   comm   = ((PetscObject)iga)->comm;
   sizes  = iga->node_sizes;
-  lwidth = iga->node_width;
-  gwidth = iga->ghost_width;
+  lwidth = iga->node_lwidth;
+  gwidth = iga->node_gwidth;
   ierr = IGA_Grid_CreateVector(comm,iga->dim,bs,sizes,lwidth,gwidth,iga->vectype,global,local);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
@@ -1006,10 +1004,10 @@ PetscErrorCode IGACreateScatter(IGA iga,PetscInt bs,Vec *gvec,Vec *lvec,VecScatt
   if (lvec) *lvec = vghost;
 
   comm   = ((PetscObject)iga)->comm;
-  lstart = iga->node_start;
-  lwidth = iga->node_width;
-  gstart = iga->ghost_start;
-  gwidth = iga->ghost_width;
+  lstart = iga->node_lstart;
+  lwidth = iga->node_lwidth;
+  gstart = iga->node_gstart;
+  gwidth = iga->node_gwidth;
   ierr = IGA_Grid_CreateScatter(comm,iga->dim,bs,lstart,lwidth,gstart,gwidth,
                                  lgmap,vglobal,vghost,g2l,l2g);CHKERRQ(ierr);
 
@@ -1118,10 +1116,10 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *elem_start  = iga->elem_start;
     PetscInt *elem_width  = iga->elem_width;
     PetscInt *node_sizes  = iga->node_sizes;
-    PetscInt *node_start  = iga->node_start;
-    PetscInt *node_width  = iga->node_width;
-    PetscInt *ghost_start = iga->ghost_start;
-    PetscInt *ghost_width = iga->ghost_width;
+    PetscInt *node_lstart = iga->node_lstart;
+    PetscInt *node_lwidth = iga->node_lwidth;
+    PetscInt *node_gstart = iga->node_gstart;
+    PetscInt *node_gwidth = iga->node_gwidth;
     for (i=0; i<iga->dim; i++) {
       PetscBool wrap = AX[i]->periodic;
       PetscInt nel = AX[i]->nel;
@@ -1135,17 +1133,17 @@ PetscErrorCode IGASetUp(IGA iga)
       if (efirst > 0     ) nfirst = span[efirst-1] - p + mid + 1;
       if (elast  < nel-1 ) nlast  = span[elast]    - p + mid;
       node_sizes[i]  = nnp;
-      node_start[i]  = nfirst;
-      node_width[i]  = nlast + 1 - nfirst;
-      ghost_start[i] = span[efirst] - p;
-      ghost_width[i] = span[elast]  + p + 1 - span[efirst];
+      node_lstart[i]  = nfirst;
+      node_lwidth[i]  = nlast + 1 - nfirst;
+      node_gstart[i] = span[efirst] - p;
+      node_gwidth[i] = span[elast]  + p + 1 - span[efirst];
     }
     for (i=iga->dim; i<3; i++) {
       node_sizes[i]  = 1;
-      node_start[i]  = 0;
-      node_width[i]  = 1;
-      ghost_start[i] = 0;
-      ghost_width[i] = 1;
+      node_lstart[i] = 0;
+      node_lwidth[i] = 1;
+      node_gstart[i] = 0;
+      node_gwidth[i] = 1;
     }
   }
   { /* geometry partitioning */
@@ -1161,10 +1159,10 @@ PetscErrorCode IGASetUp(IGA iga)
       PetscInt p = iga->axis[i]->p;
       PetscInt n = m - p - 1;
       geom_sizes[i]  = n + 1;
-      geom_lstart[i] = iga->node_start[i];
-      geom_lwidth[i] = iga->node_width[i];
-      geom_gstart[i] = iga->ghost_start[i];
-      geom_gwidth[i] = iga->ghost_width[i];
+      geom_lstart[i] = iga->node_lstart[i];
+      geom_lwidth[i] = iga->node_lwidth[i];
+      geom_gstart[i] = iga->node_gstart[i];
+      geom_gwidth[i] = iga->node_gwidth[i];
       if (rank == size-1)
         geom_lwidth[i] = geom_sizes[i] - geom_gstart[i];
     }
@@ -1178,10 +1176,10 @@ PetscErrorCode IGASetUp(IGA iga)
   }
 
   /* */
-  ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_dof);CHKERRQ(ierr);
+  ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_node);CHKERRQ(ierr);
   if (iga->fieldname)
     for (i=0; i<iga->dof; i++)
-      {ierr = DMDASetFieldName(iga->dm_dof,i,iga->fieldname[i]);CHKERRQ(ierr);}
+      {ierr = DMDASetFieldName(iga->dm_node,i,iga->fieldname[i]);CHKERRQ(ierr);}
   /* build the block application ordering */
   ierr = IGACreateAO(iga,1,&iga->aob);CHKERRQ(ierr);
   /* build the scalar and block local to global mappings */

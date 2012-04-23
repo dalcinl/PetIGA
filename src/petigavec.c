@@ -33,8 +33,8 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   IGACheckSetUp(iga,1);
   /* */
   bs = iga->dof;
-  n  = Product(iga->node_width);
   N  = Product(iga->node_sizes);
+  n  = Product(iga->node_lwidth);
   ierr = VecCreate(((PetscObject)iga)->comm,vec);CHKERRQ(ierr);
   ierr = VecSetSizes(*vec,n*bs,N*bs);CHKERRQ(ierr);
   ierr = VecSetBlockSize(*vec,bs);CHKERRQ(ierr);
@@ -45,7 +45,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
   { /* XXX */
-    ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->dm_dof);CHKERRQ(ierr);
+    ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->dm_node);CHKERRQ(ierr);
     ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_MPI_DA);CHKERRQ(ierr);
     ierr = VecSetOperation(*vec,VECOP_LOAD,(void(*)(void))VecLoad_Default_DA);CHKERRQ(ierr);
   } /* XXX */
@@ -64,7 +64,7 @@ PetscErrorCode IGACreateLocalVec(IGA iga, Vec *vec)
   IGACheckSetUp(iga,1);
   /* */
   bs = iga->dof;
-  n  = Product(iga->ghost_width);
+  n  = Product(iga->node_gwidth);
   ierr = VecCreate(PETSC_COMM_SELF,vec);CHKERRQ(ierr);
   ierr = VecSetSizes(*vec,n*bs,n*bs);CHKERRQ(ierr);
   ierr = VecSetBlockSize(*vec,bs);CHKERRQ(ierr);

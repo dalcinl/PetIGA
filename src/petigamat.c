@@ -152,8 +152,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   aob = iga->aob;
 
   sizes = iga->node_sizes;
-  start = iga->node_start;
-  width = iga->node_width;
+  start = iga->node_lstart;
+  width = iga->node_lwidth;
   for (i=0; i<dim; i++) {
     PetscInt first = start[i];
     PetscInt last  = first + width[i] - 1;
@@ -286,7 +286,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   *mat = A;
 
   { /* XXX */
-    ierr = PetscObjectCompose((PetscObject)*mat,"DM",(PetscObject)iga->dm_dof);CHKERRQ(ierr);
+    ierr = PetscObjectCompose((PetscObject)*mat,"DM",(PetscObject)iga->dm_node);CHKERRQ(ierr);
     ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
     if (size > 1) { /* change viewer to display matrix in natural ordering */
       ierr = MatShellSetOperation(*mat,MATOP_VIEW,(void (*)(void))MatView_MPI_DA);CHKERRQ(ierr);
