@@ -563,15 +563,16 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   }
   if (element->parent->dim == element->parent->nsd) /* XXX */
   {
-    PetscReal *X  = element->geometryX;
     PetscReal **M = element->basis;
     PetscReal **N = element->shape;
+    PetscReal *dJ = element->detJac;
+    PetscReal *J  = element->jacobian;
     IGA_ShapeFuns(order,
                   element->dim,element->nen,element->nqp,
-                  element->geometry,X,
+                  element->geometry,element->geometryX,
                   M[0],M[1],M[2],M[3],
                   N[0],N[1],N[2],N[3],
-                  element->detJac,element->jacobian);
+                  dJ,J);
   }
   PetscFunctionReturn(0);
 }

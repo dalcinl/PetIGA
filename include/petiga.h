@@ -189,28 +189,31 @@ struct _p_IGA {
   PetscBool rational;
   PetscReal *geometryX;
   PetscReal *geometryW;
-  Vec       vec_geom;
+  PetscInt  geom_sizes[3];
+  PetscInt  geom_lstart[3];
+  PetscInt  geom_lwidth[3];
+  PetscInt  geom_gstart[3];
+  PetscInt  geom_gwidth[3];
   DM        dm_geom;
+  Vec       vec_geom;
 
-  PetscInt elem_sizes[3];
-  PetscInt elem_start[3];
-  PetscInt elem_width[3];
+  PetscInt  elem_sizes[3];
+  PetscInt  elem_start[3];
+  PetscInt  elem_width[3];
+  DM        dm_elem;
 
-  PetscInt node_sizes[3];
-  PetscInt node_start[3];
-  PetscInt node_width[3];
-  PetscInt ghost_start[3];
-  PetscInt ghost_width[3];
+  PetscInt  node_sizes[3];
+  PetscInt  node_start[3];
+  PetscInt  node_width[3];
+  PetscInt  ghost_start[3];
+  PetscInt  ghost_width[3];
+  DM        dm_dof;
 
-  AO         ao;
-  AO         aob;
-  LGMap      lgmap;
-  LGMap      lgmapb;
-  VecScatter g2l;
-  VecScatter l2g;
+  AO         ao,aob;
+  LGMap      lgmap,lgmapb;
+  VecScatter g2l,l2g;
   PetscInt   nwork;
   Vec        vwork[16];
-  DM         dm_dof;
 
 };
 
@@ -254,6 +257,7 @@ extern PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundar
 extern PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 
 extern PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm_elem);
+extern PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm_geom);
 extern PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node);
 extern PetscErrorCode IGACreateAO(IGA iga,PetscInt bs,AO *ao);
 extern PetscErrorCode IGACreateLGMap(IGA iga,PetscInt bs,LGMap *lgmap);

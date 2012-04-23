@@ -1,16 +1,16 @@
 ! -*- f90 -*-
 
 subroutine IGA_ShapeFuns(&
-     ord,                &
+     order,              &
      dim,nen,nqp,        &
      geometry,X,         &
      M0,M1,M2,M3,        &
      N0,N1,N2,N3,        &
-     DetJac,Jac)         &
+     DetF,F)             &
   bind(C, name="IGA_ShapeFuns")
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), intent(in),value :: ord
+  integer(kind=IGA_INT ), intent(in),value :: order
   integer(kind=IGA_INT ), intent(in),value :: dim
   integer(kind=IGA_INT ), intent(in),value :: nen, nqp
   integer(kind=IGA_INT ), intent(in),value :: geometry
@@ -23,43 +23,38 @@ subroutine IGA_ShapeFuns(&
   real   (kind=IGA_REAL), intent(out)   :: N1(dim,   nen,nqp)
   real   (kind=IGA_REAL), intent(out)   :: N2(dim**2,nen,nqp)
   real   (kind=IGA_REAL), intent(out)   :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(inout) :: DetJac(       nqp)
-  real   (kind=IGA_REAL), intent(inout) :: Jac(dim,dim,  nqp)
+  real   (kind=IGA_REAL), intent(inout) :: DetF(nqp)
+  real   (kind=IGA_REAL), intent(inout) :: F(dim,dim,nqp)
 
   integer(kind=IGA_INT )  :: q, i
-  real   (kind=IGA_REAL)  :: qDJ, qJ(dim,dim)
+  real   (kind=IGA_REAL)  :: DG, G(dim,dim)
 
   if (geometry /= 0) then
      do q=1,nqp
         call IsoparametricMapping(&
-             ord,&
+             order,&
              dim,nen,X,&
              M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
              N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
-             qDJ,qJ)
-        detJac(q)  = detJac(q)  * qDJ
-        Jac(:,:,q) = Jac(:,:,q) * qJ
+             DG,G)
+        DetF(q) = DetF(q) * DG
+        F(:,:,q) = matmul(F(:,:,q),transpose(G))
      end do
   else
      N0 = M0; N1 = M1;
      N2 = M2; N3 = M3;
-     detJac = 1
-     Jac = 0
-     forall(i=1:dim)
-        Jac(i,i,:) = 1
-     end forall
   end if
 
 contains
 
 pure subroutine IsoparametricMapping(&
-     ord,&
+     order,&
      dim,nen,X,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3,&
-     DetJ,Jaco)
+     DetG,Grad)
   implicit none
-  integer(kind=IGA_INT ), intent(in)  :: ord
+  integer(kind=IGA_INT ), intent(in)  :: order
   integer(kind=IGA_INT ), intent(in)  :: dim, nen
   real   (kind=IGA_REAL), intent(in)  :: X(dim,nen)
   real   (kind=IGA_REAL), intent(in)  :: N0(            nen)
@@ -70,7 +65,7 @@ pure subroutine IsoparametricMapping(&
   real   (kind=IGA_REAL), intent(out) :: R1(        dim,nen)
   real   (kind=IGA_REAL), intent(out) :: R2(    dim,dim,nen)
   real   (kind=IGA_REAL), intent(out) :: R3(dim,dim,dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: DetJ, Jaco(dim,dim)
+  real   (kind=IGA_REAL), intent(out) :: DetG, Grad(dim,dim)
 
   integer(kind=IGA_INT ) :: idx
   integer(kind=IGA_INT ) :: i, j, k, l
@@ -82,121 +77,122 @@ pure subroutine IsoparametricMapping(&
   real   (kind=IGA_REAL) :: E2(dim,dim,dim)
   real   (kind=IGA_REAL) :: E3(dim,dim,dim,dim)
 
+  ! gradient of the mapping
+  Grad = matmul(X,transpose(N1))
+  DetG = Determinant(dim,Grad)
+
   ! 0th derivatives
   R0 = N0
-  ! gradient of the mapping
-  Jaco = matmul(X,transpose(N1))
-  DetJ = Determinant(dim,Jac)
+
   ! 1st derivatives
-  if (ord >= 1) then
-     X1 = Jaco
-     E1 = Inverse(dim,X1,DetJ)
-     R1 = 0
-     do idx = 1,nen
+  if (order < 1) return
+  X1 = Grad
+  E1 = Inverse(dim,X1,DetG)
+  R1 = 0
+  do idx = 1,nen
+     do i = 1,dim
+        do a = 1,dim
+           R1(i,idx) = N1(a,idx)*E1(a,i) +  R1(i,idx)
+        end do
+     end do
+  end do
+
+  ! 2nd derivatives
+  if (order < 2) return
+  X2 = 0
+  do b = 1,dim
+     do a = 1,dim
         do i = 1,dim
-           do a = 1,dim
-              R1(i,idx) = N1(a,idx)*E1(a,i) +  R1(i,idx)
+           do idx = 1,nen
+              X2(i,a,b) = X(i,idx)*N2(a,b,idx) + X2(i,a,b)
            end do
         end do
      end do
-  endif
-  ! 2nd derivatives
-  if (ord >= 2) then
-     X2 = 0
+  end do
+  E2 = 0
+  do j = 1,dim
+     do i = 1,dim
+        do c = 1,dim
+           do b = 1,dim
+              do a = 1,dim
+                 do k = 1,dim
+                    E2(c,i,j) = - X2(k,a,b)*E1(a,i)*E1(b,j)*E1(c,k) + E2(c,i,j)
+                 end do
+              end do
+           end do
+        end do
+     end do
+  end do
+  R2 = 0
+  do idx = 1,nen
+     do j = 1,dim
+        do i = 1,dim
+           do b = 1,dim
+              do a = 1,dim
+                 R2(i,j,idx) = N2(a,b,idx)*E1(a,i)*E1(b,j) + R2(i,j,idx)
+              end do
+              R2(i,j,idx) = N1(b,idx)*E2(b,i,j) + R2(i,j,idx)
+           end do
+        end do
+     end do
+  end do
+
+  ! 3rd derivatives
+  if (order < 3) return
+  X3 = 0
+  do c = 1,dim
      do b = 1,dim
         do a = 1,dim
            do i = 1,dim
               do idx = 1,nen
-                 X2(i,a,b) = X(i,idx)*N2(a,b,idx) + X2(i,a,b)
+                 X3(i,a,b,c) = X(i,idx)*N3(a,b,c,idx) + X3(i,a,b,c)
               end do
            end do
         end do
      end do
-     E2 = 0
+  end do
+  E3 = 0
+  do k = 1,dim
      do j = 1,dim
         do i = 1,dim
-           do c = 1,dim
-              do b = 1,dim
-                 do a = 1,dim
-                    do k = 1,dim
-                       E2(c,i,j) = - X2(k,a,b)*E1(a,i)*E1(b,j)*E1(c,k) + E2(c,i,j)
+           do d = 1,dim
+              do a = 1,dim
+                 do b = 1,dim
+                    do l = 1,dim
+                       do c = 1,dim
+                          E3(d,i,j,k) = - X3(l,c,b,a)*E1(c,i)*E1(b,j)*E1(a,k)*E1(d,l) + E3(d,i,j,k)
+                       end do
+                       E3(d,i,j,k) = - X2(l,b,a)*( E1(a,j)*E2(b,i,k) &
+                            + E1(a,k)*E2(b,i,j) &
+                            + E1(b,i)*E2(a,j,k) )*E1(d,l) + E3(d,i,j,k)
                     end do
                  end do
               end do
            end do
         end do
      end do
-     R2 = 0
-     do idx = 1,nen
-        do j = 1,dim
-           do i = 1,dim
-              do b = 1,dim
-                 do a = 1,dim
-                    R2(i,j,idx) = N2(a,b,idx)*E1(a,i)*E1(b,j) + R2(i,j,idx)
-                 end do
-                 R2(i,j,idx) = N1(b,idx)*E2(b,i,j) + R2(i,j,idx)
-              end do
-           end do
-        end do
-     end do
-  endif
-  ! 3rd derivatives
-  if (ord >= 3) then
-     X3 = 0
-     do c = 1,dim
-        do b = 1,dim
-           do a = 1,dim
-              do i = 1,dim
-                 do idx = 1,nen
-                    X3(i,a,b,c) = X(i,idx)*N3(a,b,c,idx) + X3(i,a,b,c)
-                 end do
-              end do
-           end do
-        end do
-     end do
-     E3 = 0
+  end do
+  R3 = 0
+  do idx = 1,nen
      do k = 1,dim
         do j = 1,dim
            do i = 1,dim
-              do d = 1,dim
-                 do a = 1,dim
-                    do b = 1,dim
-                       do l = 1,dim
-                          do c = 1,dim
-                             E3(d,i,j,k) = - X3(l,c,b,a)*E1(c,i)*E1(b,j)*E1(a,k)*E1(d,l) + E3(d,i,j,k)
-                          end do
-                          E3(d,i,j,k) = - X2(l,b,a)*( E1(a,j)*E2(b,i,k) &
-                                                    + E1(a,k)*E2(b,i,j) &
-                                                    + E1(b,i)*E2(a,j,k) )*E1(d,l) + E3(d,i,j,k)
-                       end do
+              do a = 1,dim
+                 do b = 1,dim
+                    do c = 1,dim
+                       R3(i,j,k,idx) = N3(c,b,a,idx)*E1(c,i)*E1(b,j)*E1(a,k) + R3(i,j,k,idx)
                     end do
+                    R3(i,j,k,idx) = N2(b,a,idx)*( E1(a,j)*E2(b,i,k) &
+                         + E1(a,k)*E2(b,i,j) &
+                         + E1(b,i)*E2(a,j,k) ) + R3(i,j,k,idx)
                  end do
+                 R3(i,j,k,idx) = N1(a,idx)*E3(a,i,j,k) + R3(i,j,k,idx)
               end do
            end do
         end do
      end do
-     R3 = 0
-     do idx = 1,nen
-        do k = 1,dim
-           do j = 1,dim
-              do i = 1,dim
-                 do a = 1,dim
-                    do b = 1,dim
-                       do c = 1,dim
-                          R3(i,j,k,idx) = N3(c,b,a,idx)*E1(c,i)*E1(b,j)*E1(a,k) + R3(i,j,k,idx)
-                       end do
-                       R3(i,j,k,idx) = N2(b,a,idx)*( E1(a,j)*E2(b,i,k) &
-                                                   + E1(a,k)*E2(b,i,j) &
-                                                   + E1(b,i)*E2(a,j,k) ) + R3(i,j,k,idx)
-                    end do
-                    R3(i,j,k,idx) = N1(a,idx)*E3(a,i,j,k) + R3(i,j,k,idx)
-                 end do
-              end do
-           end do
-        end do
-     end do
-  end if
-  !
+  end do
+
 end subroutine IsoparametricMapping
 
 pure function Determinant(dim,A) result (detA)
