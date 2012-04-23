@@ -127,6 +127,10 @@ PetscBool IGAPointNext(IGAPoint point)
   point->weight   = parent->weight[index];
   point->detJac   = parent->detJac[index];
   point->jacobian = parent->jacobian + index * dim*dim;
+  point->basis[0] = parent->basis[0] + index * nen;
+  point->basis[1] = parent->basis[1] + index * nen*dim;
+  point->basis[2] = parent->basis[2] + index * nen*dim*dim;
+  point->basis[3] = parent->basis[3] + index * nen*dim*dim*dim;
   point->shape[0] = parent->shape[0] + index * nen;
   point->shape[1] = parent->shape[1] + index * nen*dim;
   point->shape[2] = parent->shape[2] + index * nen*dim*dim;

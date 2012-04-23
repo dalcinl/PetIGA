@@ -982,6 +982,9 @@ PetscErrorCode IGASetUp(IGA iga)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
 
+  if (iga->nsd < 1) /* XXX */
+    iga->nsd = iga->dim; 
+
   if (iga->dof < 1)
     iga->dof = 1;  /* XXX Error ? */
 

@@ -124,13 +124,14 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
   }
   { /* */
     PetscInt dim = element->dim;
+    PetscInt nsd = element->parent->nsd;
     PetscInt nen = element->nen;
     PetscInt nqp = element->nqp;
 
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
 
-    ierr = PetscMalloc1(nen*(dim),PetscReal,&element->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nen      ,PetscReal,&element->geometryW);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*nsd,PetscReal,&element->geometryX);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen    ,PetscReal,&element->geometryW);CHKERRQ(ierr);
 
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
@@ -221,7 +222,6 @@ PetscErrorCode IGAElementEnd(IGAElement element)
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  iga = element->parent;
   element->index = -1;
   PetscFunctionReturn(0);
 }
@@ -433,7 +433,7 @@ PetscErrorCode IGAElementBuildMapping(IGAElement element)
     }
   }
   element->geometry = iga->geometry;
-  element->rational = iga->geometry;
+  element->rational = iga->rational;
   if (element->geometry || element->rational) {
     const PetscReal *arrayX = iga->geometryX;
     const PetscReal *arrayW = iga->geometryW;
@@ -441,11 +441,11 @@ PetscErrorCode IGAElementBuildMapping(IGAElement element)
     PetscReal *X = element->geometryX;
     PetscReal *W = element->geometryW;
     PetscInt a,nen = element->nen;
-    PetscInt i,dim = element->dim;
+    PetscInt i,nsd = iga->nsd;
     if (element->geometry)
       for (a=0; a<nen; a++)
-        for (i=0; i<dim; i++)
-          X[i + a*dim] = arrayX[i + map[a]*dim];
+        for (i=0; i<nsd; i++)
+          X[i + a*nsd] = arrayX[i + map[a]*nsd];
     if (element->rational)
       for (a=0; a<nen; a++)
         W[a] = arrayW[map[a]];
@@ -561,6 +561,7 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
                              N[0],N[1],N[2],N[3]); break;
     }
   }
+  if (element->parent->dim == element->parent->nsd) /* XXX */
   {
     PetscReal *X  = element->geometryX;
     PetscReal **M = element->basis;

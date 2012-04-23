@@ -172,8 +172,8 @@ struct _p_IGA {
   char       **fieldname;
 
   PetscBool setup;
-  PetscInt  dim; // parametric dimension of the function space
-  PetscInt  nsd; // spatial dimension of the geometry
+  PetscInt  dim; /* parametric dimension of the function space*/
+  PetscInt  nsd; /* spatial dimension of the geometry */
   PetscInt  dof;
 
   IGAAxis  axis[3];
@@ -385,8 +385,8 @@ struct _n_IGAPoint {
   PetscReal weight;    /*   []    */
   PetscReal detJac;    /*   []    */
   PetscReal *jacobian; /*   [dim][dim] */
-  PetscReal *shape[4]; /*0: [nen]      */
-                       /*1: [nen][dim] */
+  PetscReal *basis[4]; /*0: [nen]      */
+  PetscReal *shape[4]; /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
 
