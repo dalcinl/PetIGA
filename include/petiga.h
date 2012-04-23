@@ -172,7 +172,8 @@ struct _p_IGA {
   char       **fieldname;
 
   PetscBool setup;
-  PetscInt  dim;
+  PetscInt  dim; // parametric dimension of the function space
+  PetscInt  nsd; // spatial dimension of the geometry
   PetscInt  dof;
 
   IGAAxis  axis[3];
@@ -238,6 +239,8 @@ extern PetscErrorCode IGAWrite(IGA iga,const char filename[]);
 
 extern PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 extern PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);
+extern PetscErrorCode IGASetSpatialDim(IGA iga,PetscInt nsd);
+extern PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd);
 extern PetscErrorCode IGASetDof(IGA iga,PetscInt dof);
 extern PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof);
 extern PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[]);

@@ -65,6 +65,9 @@ CahnHilliard3D: CahnHilliard3D.o chkopts
 NavierStokesVMS: NavierStokesVMS.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+ClassicalShell: ClassicalShell.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 
 OPTS=-nox -malloc_debug -malloc_dump
 

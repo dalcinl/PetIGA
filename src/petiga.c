@@ -203,7 +203,7 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscValidLogicalCollectiveInt(iga,dim,2);
   if (dim < 1 || dim > 3)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Number of space dimensions must be in range [1,3], got %D",dim);
+             "Number of parametric dimensions must be in range [1,3], got %D",dim);
   if (iga->dim > 0 && iga->dim != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
@@ -219,6 +219,35 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dim,2);
   *dim = iga->dim;
+  PetscFunctionReturn(0);
+}
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetSpatialDim"
+PetscErrorCode IGASetSpatialDim(IGA iga,PetscInt nsd)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,nsd,2);
+  if (nsd < 1 || nsd > 3)
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Number of space dimensions must be in range [1,3], got %D",nsd);
+  if (iga->nsd > 0 && iga->nsd != nsd)
+    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Cannot change IGA dim from %D after it was set to %D",iga->nsd,nsd);
+  iga->nsd = nsd;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetSpatialDim"
+PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(nsd,2);
+  *nsd = iga->nsd;
   PetscFunctionReturn(0);
 }
 

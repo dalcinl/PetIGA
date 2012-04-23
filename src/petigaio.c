@@ -61,7 +61,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
   PetscBool      skipheader;
-  PetscInt       dim;
+  PetscInt       nsd;
   PetscReal      min_w,max_w;
   DM             dm_geom;
   Vec            nvec,gvec;
@@ -79,10 +79,10 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 
   ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
 
-  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  ierr = IGACreateNodeDM(iga,(dim+1),&dm_geom);CHKERRQ(ierr);
+  ierr = IGAGetSpatialDim(iga,&nsd);CHKERRQ(ierr);
+  ierr = IGACreateNodeDM(iga,nsd+1,&dm_geom);CHKERRQ(ierr);
   ierr = DMDACreateNaturalVector(dm_geom,&nvec);CHKERRQ(ierr);
-  ierr = IGACreateScatter(iga,(dim+1),&gvec,&iga->vec_geom,&g2l,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGACreateScatter(iga,nsd+1,&gvec,&iga->vec_geom,&g2l,PETSC_NULL);CHKERRQ(ierr);
 
   /* viewer -> natural*/
   if (!skipheader) 
@@ -95,8 +95,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   /* global -> local */
   ierr = VecScatterBegin(g2l,gvec,iga->vec_geom,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2l,gvec,iga->vec_geom,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecStrideMin(gvec,(dim),PETSC_NULL,&min_w);CHKERRQ(ierr);
-  ierr = VecStrideMax(gvec,(dim),PETSC_NULL,&max_w);CHKERRQ(ierr);
+  ierr = VecStrideMin(gvec,nsd,PETSC_NULL,&min_w);CHKERRQ(ierr);
+  ierr = VecStrideMax(gvec,nsd,PETSC_NULL,&max_w);CHKERRQ(ierr);
 
   ierr = VecScatterDestroy(&g2l);CHKERRQ(ierr);
   ierr = VecDestroy(&gvec);CHKERRQ(ierr);
@@ -107,25 +107,25 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   iga->rational = (PetscAbs(max_w-min_w) > 100*PETSC_MACHINE_EPSILON) ? PETSC_TRUE : PETSC_FALSE;
   {
     PetscInt n,bs;
-    PetscInt nnp,dim;
+    PetscInt nnp,nsd;
     PetscInt a,i,pos;
     const PetscScalar *Xw;
     PetscReal *X,*W;
     ierr = VecGetSize(iga->vec_geom,&n);CHKERRQ(ierr);
     ierr = VecGetBlockSize(iga->vec_geom,&bs);CHKERRQ(ierr);
     ierr = VecGetArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
-    nnp = n / bs; dim = bs - 1; 
-    ierr = PetscMalloc1(nnp*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
+    nnp = n / bs; nsd = bs - 1; 
+    ierr = PetscMalloc1(nnp*nsd,PetscReal,&iga->geometryX);CHKERRQ(ierr);
     ierr = PetscMalloc1(nnp,    PetscReal,&iga->geometryW);CHKERRQ(ierr);
     X = iga->geometryX;
     W = iga->geometryW;
     for (pos=0,a=0; a<nnp; a++) {
-      for (i=0; i<dim; i++)
-        X[i+a*dim] = PetscRealPart(Xw[pos++]); 
+      for (i=0; i<nsd; i++)
+        X[i+a*nsd] = PetscRealPart(Xw[pos++]); 
       W[a] = PetscRealPart(Xw[pos++]);
       if (W[a] != 0.0)
-        for (i=0; i<dim; i++)
-          X[i+a*dim] /= W[a];
+        for (i=0; i<nsd; i++)
+          X[i+a*nsd] /= W[a];
     }
     ierr = VecRestoreArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
   }
