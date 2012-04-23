@@ -219,7 +219,6 @@ PetscBool IGAElementNext(IGAElement element)
 #define __FUNCT__ "IGAElementEnd"
 PetscErrorCode IGAElementEnd(IGAElement element)
 {
-  IGA            iga;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   iga = element->parent;
