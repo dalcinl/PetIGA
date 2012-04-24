@@ -81,6 +81,7 @@ PetscErrorCode IGAPointSetUp(IGAPoint point)
   point->nen = element->nen;
   point->dof = element->dof;
   point->dim = element->dim;
+  point->nsd = element->nsd;
 
   point->count = element->nqp;
   point->index = -1;
@@ -109,32 +110,64 @@ PetscErrorCode IGAPointBegin(IGAPoint point)
 #define __FUNCT__ "IGAPointNext"
 PetscBool IGAPointNext(IGAPoint point)
 {
-  IGAElement parent = point->parent;
+  IGAElement element;
   PetscInt nen = point->nen;
   PetscInt dim = point->dim;
+  PetscInt nsd = point->nsd;
   PetscInt index;
   /* */
   point->nvec = 0;
   point->nmat = 0;
   /* */
   index = ++point->index;
+  if (PetscUnlikely(index == 0)) goto setup;
   if (PetscUnlikely(index >= point->count)) {
     point->index = -1;
     return PETSC_FALSE;
   }
   /* */
-  point->point    = parent->point + index * dim;
-  point->weight   = parent->weight[index];
-  point->detJac   = parent->detJac[index];
-  point->jacobian = parent->jacobian + index * dim*dim;
-  point->basis[0] = parent->basis[0] + index * nen;
-  point->basis[1] = parent->basis[1] + index * nen*dim;
-  point->basis[2] = parent->basis[2] + index * nen*dim*dim;
-  point->basis[3] = parent->basis[3] + index * nen*dim*dim*dim;
-  point->shape[0] = parent->shape[0] + index * nen;
-  point->shape[1] = parent->shape[1] + index * nen*dim;
-  point->shape[2] = parent->shape[2] + index * nen*dim*dim;
-  point->shape[3] = parent->shape[3] + index * nen*dim*dim*dim;
+  point->point    += dim;
+  point->weight   += 1;
+  point->detJac   += 1;
+
+  point->basis[0] += nen;
+  point->basis[1] += nen*dim;
+  point->basis[2] += nen*dim*dim;
+  point->basis[3] += nen*dim*dim*dim;
+
+  point->jacobian += dim*dim;
+  point->shape[0] += nen;
+  point->shape[1] += nen*dim;
+  point->shape[2] += nen*dim*dim;
+  point->shape[3] += nen*dim*dim*dim;
+
+  return PETSC_TRUE;
+
+ setup:
+
+  element = point->parent;
+
+  point->point    = element->point;
+  point->weight   = element->weight;
+  point->detJac   = element->detJac;
+
+  point->basis[0] = element->basis[0];
+  point->basis[1] = element->basis[1];
+  point->basis[2] = element->basis[2];
+  point->basis[3] = element->basis[3];
+
+  point->jacobian = element->jacobian;
+  if (element->geometry && dim == nsd) { /* XXX */
+    point->shape[0] = element->shape[0];
+    point->shape[1] = element->shape[1];
+    point->shape[2] = element->shape[2];
+    point->shape[3] = element->shape[3];
+  } else {
+    point->shape[0] = element->basis[0];
+    point->shape[1] = element->basis[1];
+    point->shape[2] = element->basis[2];
+    point->shape[3] = element->basis[3];
+  }
   return PETSC_TRUE;
 }
 
@@ -184,7 +217,7 @@ PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],Pe
   if (qpoint) PetscValidPointer(qpoint,3);
   if (weight) PetscValidRealPointer(weight,4);
   if (qpoint) *qpoint = point->point;
-  if (weight) *weight = point->weight;
+  if (weight) *weight = point->weight[0];
   PetscFunctionReturn(0);
 }
 
@@ -196,8 +229,23 @@ PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscR
   PetscValidPointer(point,1);
   if (detJac)   PetscValidRealPointer(detJac,2);
   if (jacobian) PetscValidRealPointer(jacobian,3);
-  if (detJac)   *detJac   = point->detJac;
+  if (detJac)   *detJac   = point->detJac[0];
   if (jacobian) *jacobian = point->jacobian;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetBasisFuns"
+PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidPointer(basisfuns,2);
+  if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+            "Requested derivative must be in range [0,%d], got %D",
+            (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
+  *basisfuns = point->basis[der];
   PetscFunctionReturn(0);
 }
 
@@ -380,7 +428,7 @@ PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],
   PetscValidScalarPointer(A,3);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  JW = point->detJac*point->weight;
+  JW = point->detJac[0] * point->weight[0];
   for (i=0; i<n; i++) A[i] += a[i] * JW;
   PetscLogFlopsNoError(2*n);
   PetscFunctionReturn(0);

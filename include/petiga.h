@@ -301,22 +301,27 @@ struct _n_IGAElement {
   PetscInt nen;
   PetscInt dof;
   PetscInt dim;
+  PetscInt nsd;
 
   PetscInt  *mapping;   /*   [nen]      */
 
   PetscBool geometry;
   PetscBool rational;
-  PetscReal *geometryX; /*   [nen][dim] */
+  PetscReal *geometryX; /*   [nen][nsd] */
   PetscReal *geometryW; /*   [nen]      */
 
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
-  PetscReal *jacobian; /*   [nqp][dim][dim]           */
   PetscReal *basis[4]; /*0: [nqp][nen]                */
-  PetscReal *shape[4]; /*1: [nqp][nen][dim]           */
+                       /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
                        /*3: [nqp][nen][dim][dim][dim] */
+  PetscReal *jacobian; /*   [nqp][nsd][dim]           */
+  PetscReal *shape[4]; /*0: [nqp][nen]                */
+                       /*1: [nqp][nen][nsd]           */
+                       /*2: [nqp][nen][nsd][nsd]      */
+                       /*3: [nqp][nen][nsd][nsd][nsd] */
 
   IGA      parent;
   IGAPoint iterator;
@@ -381,15 +386,20 @@ struct _n_IGAPoint {
   PetscInt nen;
   PetscInt dof;
   PetscInt dim;
+  PetscInt nsd;
 
   PetscReal *point;    /*   [dim] */
-  PetscReal weight;    /*   []    */
-  PetscReal detJac;    /*   []    */
-  PetscReal *jacobian; /*   [dim][dim] */
-  PetscReal *basis[4]; /*0: [nen]      */
-  PetscReal *shape[4]; /*1: [nen][dim] */
+  PetscReal *weight;   /*   [1]   */
+  PetscReal *detJac;   /*   [1]   */
+  PetscReal *basis[4]; /*0: [nen] */
+                       /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
+  PetscReal *jacobian; /*   [dim][nsd] */
+  PetscReal *shape[4]; /*0: [nen]  */
+                       /*1: [nen][nsd] */
+                       /*2: [nen][nsd][nsd] */
+                       /*3: [nen][nsd][nsd][nsd] */
 
   IGAElement  parent;
 
@@ -410,6 +420,7 @@ extern PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 extern PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim);
 extern PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],PetscReal *weigth);
 extern PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *jacobian[]);
+extern PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[]);
 extern PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[]);
 
 extern PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);

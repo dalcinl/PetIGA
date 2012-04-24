@@ -1,6 +1,6 @@
 subroutine IGA_Quadrature_1D(&
-     inq,iX,iW,iJ, &
-     X,W,detJ,J)   &
+     inq,iX,iW,iJ,           &
+     X,W,detJ,J)             &
   bind(C, name="IGA_Quadrature_1D")
   use PetIGA
   implicit none
@@ -20,6 +20,7 @@ subroutine IGA_Quadrature_1D(&
      J(1,1,iq) = iJ
   end forall
 end subroutine IGA_Quadrature_1D
+
 
 subroutine IGA_BasisFuns_1D(&
      order,                 &
@@ -104,17 +105,16 @@ end subroutine IGA_BasisFuns_1D
 
 
 subroutine IGA_ShapeFuns_1D(&
-     order,geometry, &
-     nqp,nen,X,      &
-     M0,M1,M2,M3,    &
-     N0,N1,N2,N3,    &
-     DetF,F)         &
+     order,                 &
+     nqp,nen,X,             &
+     M0,M1,M2,M3,           &
+     N0,N1,N2,N3,           &
+     DetF,F)                &
   bind(C, name="IGA_ShapeFuns_1D")
   use PetIGA
   implicit none
   integer(kind=IGA_INT ), parameter        :: dim = 1
   integer(kind=IGA_INT ), intent(in),value :: order
-  integer(kind=IGA_INT ), intent(in),value :: geometry
   integer(kind=IGA_INT ), intent(in),value :: nqp
   integer(kind=IGA_INT ), intent(in),value :: nen
   real   (kind=IGA_REAL), intent(in)    :: X(dim+1,nen)
@@ -128,26 +128,12 @@ subroutine IGA_ShapeFuns_1D(&
   real   (kind=IGA_REAL), intent(out)   :: N3(dim**3,nen,nqp)
   real   (kind=IGA_REAL), intent(inout) :: DetF(nqp)
   real   (kind=IGA_REAL), intent(inout) :: F(dim,dim,nqp)
-
-  if (geometry /= 0) then
-     call GeometryMapping(&
-          order,&
-          nqp,nen,&
-          X,&
-          M0,M1,M2,M3,&
-          N0,N1,N2,N3,&
-          DetF,F)
-  else
-     N0 = M0
-     N1 = M1
-     if (order < 2) return
-     N2 = M2
-     if (order < 3) return
-     N3 = M3
-  end if
-
+  call GeometryMapping(&
+       order,&
+       nqp,nen,X,&
+       M0,M1,M2,M3,&
+       N0,N1,N2,N3,&
+       DetF,F)
 contains
-
 include 'petigageo.f90.in'
-
 end subroutine IGA_ShapeFuns_1D
