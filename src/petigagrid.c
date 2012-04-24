@@ -193,6 +193,10 @@ PetscErrorCode IGA_Grid_SetAOBlock(IGA_Grid g,AO aob)
   ierr = PetscObjectReference((PetscObject)aob);CHKERRQ(ierr);
   ierr = AODestroy(&g->aob);CHKERRQ(ierr);
   g->aob = aob;
+  if (g->dof == 1 && !g->ao) {
+    ierr = PetscObjectReference((PetscObject)g->aob);CHKERRQ(ierr);
+    g->ao = g->aob;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -211,6 +215,10 @@ PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid g,AO *aob)
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *aob = g->aob;
+  if (g->dof == 1 && !g->ao) {
+    ierr = PetscObjectReference((PetscObject)g->aob);CHKERRQ(ierr);
+    g->ao = g->aob;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -229,6 +237,10 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *ao = g->ao;
+  if (g->dof == 1 && !g->aob) {
+    ierr = PetscObjectReference((PetscObject)g->ao);CHKERRQ(ierr);
+    g->aob = g->ao;
+  }
   PetscFunctionReturn(0);
 }
 

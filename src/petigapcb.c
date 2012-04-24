@@ -1,4 +1,5 @@
 #include "petiga.h"
+#include "petigagrid.h"
 #if PETSC_VERSION_(3,2,0)
 #include "private/pcimpl.h"
 #else
@@ -129,8 +130,6 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
  PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode IGA_Grid_CreateLGMap(MPI_Comm,PetscInt,PetscInt,const PetscInt[],const PetscInt[],const PetscInt[],AO,LGMap*);
-
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetUp_BBB"
 static PetscErrorCode PCSetUp_BBB(PC pc)
@@ -148,14 +147,14 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
   if (!pc->setupcalled) {
     MPI_Comm comm;
+    IGA_Grid grid;
     PetscInt i, dim = iga->dim;
     const PetscInt *sizes = iga->node_sizes;
-    const PetscInt *start = iga->node_lstart;
-    const PetscInt *width = iga->node_lwidth;
+    const PetscInt *lstart = iga->node_lstart;
+    const PetscInt *lwidth = iga->node_lwidth;
     PetscInt *overlap = bbb->overlap;
     PetscInt *gstart  = bbb->ghost_start;
     PetscInt *gwidth  = bbb->ghost_width;
-    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     bbb->dim = iga->dim;
     bbb->dof = iga->dof;
     for (i=0; i<dim; i++) {
@@ -166,8 +165,8 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
         overlap[i] = PetscMin(overlap[i], p);
     }
     for (i=0; i<dim; i++) {
-      gstart[i] = start[i] - overlap[i];
-      gwidth[i] = width[i] + overlap[i];
+      gstart[i] = lstart[i] - overlap[i];
+      gwidth[i] = lwidth[i] + overlap[i];
       if (gstart[i] < 0)
         gstart[i] = iga->node_gstart[i];
       if (gstart[i]+gwidth[i] >= sizes[i])
@@ -178,7 +177,13 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
       gstart[i]  = 0;
       gwidth[i]  = 1;
     }
-    ierr = IGA_Grid_CreateLGMap(comm,dim,1,sizes,gstart,gwidth,iga->aob,&bbb->lgmap);CHKERRQ(ierr);
+    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+    ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_Init(grid,iga->dim,1,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+    ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMapBlock(grid,&bbb->lgmap);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)bbb->lgmap);CHKERRQ(ierr);
+    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
 
   if (pc->flag != SAME_NONZERO_PATTERN) {

@@ -260,10 +260,6 @@ extern PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 extern PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm_elem);
 extern PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm_geom);
 extern PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node);
-extern PetscErrorCode IGACreateAO(IGA iga,PetscInt bs,AO *ao);
-extern PetscErrorCode IGACreateLGMap(IGA iga,PetscInt bs,LGMap *lgmap);
-extern PetscErrorCode IGACreateVector(IGA iga,PetscInt bs,Vec *global,Vec *ghost);
-extern PetscErrorCode IGACreateScatter(IGA iga,PetscInt bs,Vec *gvec,Vec *lvec,VecScatter *g2l,VecScatter *l2g);
 
 extern PetscErrorCode IGASetVecType(IGA iga,const VecType vectype);
 extern PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
