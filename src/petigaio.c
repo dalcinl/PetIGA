@@ -34,15 +34,12 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
     ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
-      PetscBool periodic;
       PetscInt  p,m;
       PetscReal *U;
       ierr = PetscViewerBinaryRead(viewer,buf,3,PETSC_INT);CHKERRQ(ierr);
-      periodic = buf[0] ? PETSC_TRUE : PETSC_FALSE;
       p = buf[1];
       m = buf[2]-1;
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisSetPeriodic(axis,periodic);CHKERRQ(ierr);
       ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = IGAAxisSetKnots(axis,m,0);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,0,&U);CHKERRQ(ierr);CHKERRQ(ierr);
@@ -190,67 +187,65 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
     ierr = PetscViewerBinaryWrite(viewer,buf,i,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
-      PetscBool periodic;
       PetscInt  p,m;
       PetscReal *U;
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisGetPeriodic(axis,&periodic);CHKERRQ(ierr);
       ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
-      buf[0] = periodic;
+      buf[0] = 0; /* XXX Unused! */
       buf[1] = p;
       buf[2] = m+1;
       ierr = PetscViewerBinaryWrite(viewer,buf,3,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
       ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL,PETSC_FALSE);CHKERRQ(ierr);
     }
-    if (iga->geometry && iga->vec_geom) {
-      PetscInt   dim;
-      DM         dm_geom;
-      Vec        nvec,gvec,lvec;
-      VecScatter l2g;
-
-      ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
-
-      ierr = IGACreateGeomDM(iga,dim+1,&dm_geom);CHKERRQ(ierr);
-      ierr = DMDACreateNaturalVector(dm_geom,&nvec);CHKERRQ(ierr);
-      {
-        MPI_Comm comm = ((PetscObject)iga)->comm;
-        PetscInt bs      = dim+1;
-        PetscInt *sizes  = iga->geom_sizes;
-        PetscInt *lstart = iga->geom_lstart;
-        PetscInt *lwidth = iga->geom_lwidth;
-        PetscInt *gstart = iga->geom_gstart;
-        PetscInt *gwidth = iga->geom_gwidth;
-        IGA_Grid grid;
-        ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
-        ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-        ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
-        ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
-        ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
-        ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
-        ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
-        ierr = PetscObjectReference((PetscObject)l2g);CHKERRQ(ierr);
-        ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
-      }
-      ierr = VecCopy(iga->vec_geom,lvec);CHKERRQ(ierr);
-
-      /* local -> global */
-      ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-      ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-      /* global -> naural */
-      ierr = DMDAGlobalToNaturalBegin(dm_geom,gvec,INSERT_VALUES,nvec);CHKERRQ(ierr);
-      ierr = DMDAGlobalToNaturalEnd  (dm_geom,gvec,INSERT_VALUES,nvec);CHKERRQ(ierr);
-      /* natural -> viewer */
-      ierr = VecView(nvec,viewer);CHKERRQ(ierr);
-
-      ierr = VecScatterDestroy(&l2g);CHKERRQ(ierr);
-      ierr = VecDestroy(&lvec);CHKERRQ(ierr);
-      ierr = VecDestroy(&gvec);CHKERRQ(ierr);
-      ierr = VecDestroy(&nvec);CHKERRQ(ierr);
-      ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);
-    }
-    ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   }
+  if (iga->geometry && iga->vec_geom) {
+    PetscInt   dim;
+    DM         dm_geom;
+    Vec        nvec,gvec,lvec;
+    VecScatter l2g;
+
+    ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
+
+    ierr = IGACreateGeomDM(iga,dim+1,&dm_geom);CHKERRQ(ierr);
+    ierr = DMDACreateNaturalVector(dm_geom,&nvec);CHKERRQ(ierr);
+    {
+      MPI_Comm comm = ((PetscObject)iga)->comm;
+      PetscInt bs      = dim+1;
+      PetscInt *sizes  = iga->geom_sizes;
+      PetscInt *lstart = iga->geom_lstart;
+      PetscInt *lwidth = iga->geom_lwidth;
+      PetscInt *gstart = iga->geom_gstart;
+      PetscInt *gwidth = iga->geom_gwidth;
+      IGA_Grid grid;
+      ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
+      ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+      ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
+      ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
+      ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
+      ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
+      ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
+      ierr = PetscObjectReference((PetscObject)l2g);CHKERRQ(ierr);
+      ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
+    }
+    ierr = VecCopy(iga->vec_geom,lvec);CHKERRQ(ierr);
+
+    /* local -> global */
+    ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    /* global -> naural */
+    ierr = DMDAGlobalToNaturalBegin(dm_geom,gvec,INSERT_VALUES,nvec);CHKERRQ(ierr);
+    ierr = DMDAGlobalToNaturalEnd  (dm_geom,gvec,INSERT_VALUES,nvec);CHKERRQ(ierr);
+    /* natural -> viewer */
+    ierr = VecView(nvec,viewer);CHKERRQ(ierr);
+
+    ierr = VecScatterDestroy(&l2g);CHKERRQ(ierr);
+    ierr = VecDestroy(&lvec);CHKERRQ(ierr);
+    ierr = VecDestroy(&gvec);CHKERRQ(ierr);
+    ierr = VecDestroy(&nvec);CHKERRQ(ierr);
+    ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);
+  }
+  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

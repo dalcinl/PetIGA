@@ -330,12 +330,13 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 #define __FUNCT__ "IGAGetAxis"
 PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
 {
+  PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(axis,3);
-  if (iga->dim <= 0) SETERRQ (((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
-  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index %D, but dim %D",i,iga->dim);
+  dim = (iga->dim > 0) ? iga->dim : 3;
+  if (i <    0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be nonnegative, got %D",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be in range [0,%D], got %D",dim-1,i);
   *axis = iga->axis[i];
   PetscFunctionReturn(0);
 }
