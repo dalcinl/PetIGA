@@ -10,15 +10,20 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   PetscValidPointer(_axis,1);
   ierr = PetscNew(struct _n_IGAAxis,_axis);CHKERRQ(ierr);
   (*_axis)->refct = 1; axis = *_axis;
-  ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
-  ierr = PetscMalloc1(2,PetscReal,&axis->U);CHKERRQ(ierr);
-  axis->periodic = PETSC_FALSE;
-  axis->nel = axis->nnp = 1;
-  axis->span[0] = 0;
+
+  /* */
   axis->p = 0;
   axis->m = 1;
+  ierr = PetscMalloc1(axis->m+1,PetscReal,&axis->U);CHKERRQ(ierr);
   axis->U[0] = -0.5;
   axis->U[1] = +0.5;
+  /* */
+  axis->periodic = PETSC_FALSE;
+  axis->nnp = 1;
+  axis->nel = 1;
+  ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
+  axis->span[0] = 0;
+
   PetscFunctionReturn(0);
 }
 
@@ -33,8 +38,8 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
   axis = *_axis; *_axis = 0;
   if (!axis) PetscFunctionReturn(0);
   if (--axis->refct > 0) PetscFunctionReturn(0);
-  ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscFree(axis->U);CHKERRQ(ierr);
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscFree(axis);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -47,22 +52,25 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscFunctionBegin;
   if (!axis) PetscFunctionReturn(0);
   PetscValidPointer(axis,1);
-  if (axis->nel != 1) {
-    ierr = PetscFree(axis->span);CHKERRQ(ierr);
-    ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
-  }
+
   if (axis->m != 1) {
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     ierr = PetscMalloc1(2,PetscReal,&axis->U);CHKERRQ(ierr);
   }
-  axis->periodic = PETSC_FALSE;
-  axis->periodic = PETSC_FALSE;
-  axis->nel = axis->nnp = 1;
-  axis->span[0] = 0;
   axis->p = 0;
   axis->m = 1;
   axis->U[0] = -0.5;
   axis->U[1] = +0.5;
+
+  if (axis->nel != 1) {
+    ierr = PetscFree(axis->span);CHKERRQ(ierr);
+    ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
+  }
+  axis->periodic = PETSC_FALSE;
+  axis->nnp = 1;
+  axis->nel = 1;
+  axis->span[0] = 0;
+
   PetscFunctionReturn(0);
 }
 
@@ -348,12 +356,14 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   {
     PetscInt k = 1;
     while (k <= m) {
-      PetscInt i=k, s=1;
+      PetscInt i = k, s = 1;
+      /* check increasing sequence */
       if (U[k-1] > U[k])
         SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                  "Knot sequence must be increasing, "
                  "got U[%D]=%G > U[%D]=%G",
                  k-1,U[k-1],k,U[k]);
+      /* check multiplicity */
       while (++k < m && U[k-1] == U[k]) s++;
       if (s > p)
         SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
@@ -364,17 +374,18 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   }
 #endif
 
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
   axis->nel = IGA_SpanCount(n,p,U);
+  ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
+  IGA_SpanIndex(n,p,U,axis->span);
+
   if (axis->periodic) {
-    PetscInt s=1;
-    while(s<p && U[m-p] == U[m-p+s]) s++;
+    PetscInt s = 1;
+    while(s < p && U[m-p] == U[m-p+s]) s++;
     axis->nnp = n-p+s;
   } else {
     axis->nnp = n+1;
   }
-  ierr = PetscFree(axis->span);CHKERRQ(ierr);
-  ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
-  IGA_SpanIndex(n,p,U,axis->span);
 
   PetscFunctionReturn(0);
 }
