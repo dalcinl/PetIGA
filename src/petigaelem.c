@@ -510,12 +510,18 @@ extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
                              PetscInt,PetscInt,PetscInt,const PetscReal[],
                              PetscInt,PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_ShapeFuns(PetscInt,
-                          PetscInt,PetscInt,PetscInt,
-                          PetscInt,const PetscReal[],
-                          const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                          PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-                          PetscReal[],PetscReal[]);
+EXTERN_C_END
+
+EXTERN_C_BEGIN
+extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 #define IGA_BasisFuns_ARGS(ID,BD,i) \
@@ -544,19 +550,19 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     PetscInt *ID  = element->ID;
     PetscReal **N = element->basis;
     switch (element->dim) {
-    case 3: IGA_BasisFuns_3D(order,
-                             element->rational,element->geometryW,
+    case 3: IGA_BasisFuns_3D(order,element->rational,
+                             element->geometryW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              IGA_BasisFuns_ARGS(ID,BD,2),
                              N[0],N[1],N[2],N[3]); break;
-    case 2: IGA_BasisFuns_2D(order,
-                             element->rational,element->geometryW,
+    case 2: IGA_BasisFuns_2D(order,element->rational,
+                             element->geometryW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              N[0],N[1],N[2],N[3]); break;
-    case 1: IGA_BasisFuns_1D(order,
-                             element->rational,element->geometryW,
+    case 1: IGA_BasisFuns_1D(order,element->rational,
+                             element->geometryW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              N[0],N[1],N[2],N[3]); break;
     }
@@ -567,12 +573,26 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     PetscReal **N = element->shape;
     PetscReal *dJ = element->detJac;
     PetscReal *J  = element->jacobian;
-    IGA_ShapeFuns(order,
-                  element->dim,element->nen,element->nqp,
-                  element->geometry,element->geometryX,
-                  M[0],M[1],M[2],M[3],
-                  N[0],N[1],N[2],N[3],
-                  dJ,J);
+    switch (element->dim) {
+    case 3: IGA_ShapeFuns_3D(order,element->geometry,
+                             element->nqp,element->nen,
+                             element->geometryX,
+                             M[0],M[1],M[2],M[3],
+                             N[0],N[1],N[2],N[3],
+                             dJ,J); break;
+    case 2: IGA_ShapeFuns_2D(order,element->geometry,
+                             element->nqp,element->nen,
+                             element->geometryX,
+                             M[0],M[1],M[2],M[3],
+                             N[0],N[1],N[2],N[3],
+                             dJ,J); break;
+    case 1: IGA_ShapeFuns_1D(order,element->geometry,
+                             element->nqp,element->nen,
+                             element->geometryX,
+                             M[0],M[1],M[2],M[3],
+                             N[0],N[1],N[2],N[3],
+                             dJ,J); break;
+    }
   }
   PetscFunctionReturn(0);
 }

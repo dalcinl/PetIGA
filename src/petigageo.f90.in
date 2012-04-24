@@ -1,19 +1,17 @@
 ! -*- f90 -*-
 
-subroutine IGA_ShapeFuns(&
-     order,              &
-     dim,nen,nqp,        &
-     geometry,X,         &
-     M0,M1,M2,M3,        &
-     N0,N1,N2,N3,        &
-     DetF,F)             &
-  bind(C, name="IGA_ShapeFuns")
+pure subroutine GeometryMapping(&
+     order,&
+     nqp,nen,&
+     X,&
+     M0,M1,M2,M3,&
+     N0,N1,N2,N3,&
+     DetF,F)
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), intent(in),value :: order
-  integer(kind=IGA_INT ), intent(in),value :: dim
-  integer(kind=IGA_INT ), intent(in),value :: nen, nqp
-  integer(kind=IGA_INT ), intent(in),value :: geometry
+  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
+  integer(kind=IGA_INT ), intent(in)    :: order
+  integer(kind=IGA_INT ), intent(in)    :: nen, nqp
   real   (kind=IGA_REAL), intent(in)    :: X(dim+1,nen)
   real   (kind=IGA_REAL), intent(in)    :: M0(       nen,nqp)
   real   (kind=IGA_REAL), intent(in)    :: M1(dim,   nen,nqp)
@@ -27,35 +25,31 @@ subroutine IGA_ShapeFuns(&
   real   (kind=IGA_REAL), intent(inout) :: F(dim,dim,nqp)
 
   integer(kind=IGA_INT )  :: q, i
-  real   (kind=IGA_REAL)  :: DG, G(dim,dim)
+  real   (kind=IGA_REAL)  :: DetG, G(dim,dim)
 
-  if (geometry /= 0) then
-     do q=1,nqp
-        call IsoparametricMapping(&
-             order,&
-             dim,nen,X,&
-             M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
-             N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
-             DG,G)
-        DetF(q) = DetF(q) * DG
-        F(:,:,q) = matmul(F(:,:,q),transpose(G))
-     end do
-  else
-     N0 = M0; N1 = M1;
-     N2 = M2; N3 = M3;
-  end if
+  do q=1,nqp
+     call Isoparametric(&
+          order,&
+          nen,X,&
+          M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
+          N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
+          DetG,G)
+     DetF(q) = DetF(q) * DetG
+     F(:,:,q) = matmul(F(:,:,q),transpose(G))
+  end do
 
-contains
+end subroutine GeometryMapping
 
-pure subroutine IsoparametricMapping(&
+pure subroutine Isoparametric(&
      order,&
-     dim,nen,X,&
+     nen,X,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3,&
      DetG,Grad)
+  use PetIGA
   implicit none
   integer(kind=IGA_INT ), intent(in)  :: order
-  integer(kind=IGA_INT ), intent(in)  :: dim, nen
+  integer(kind=IGA_INT ), intent(in)  :: nen
   real   (kind=IGA_REAL), intent(in)  :: X(dim,nen)
   real   (kind=IGA_REAL), intent(in)  :: N0(            nen)
   real   (kind=IGA_REAL), intent(in)  :: N1(        dim,nen)
@@ -85,7 +79,6 @@ pure subroutine IsoparametricMapping(&
   R0 = N0
 
   ! 1st derivatives
-  if (order < 1) return
   X1 = Grad
   E1 = Inverse(dim,X1,DetG)
   R1 = 0
@@ -193,7 +186,7 @@ pure subroutine IsoparametricMapping(&
      end do
   end do
 
-end subroutine IsoparametricMapping
+end subroutine Isoparametric
 
 pure function Determinant(dim,A) result (detA)
   implicit none
@@ -244,5 +237,3 @@ pure function Inverse(dim,A,detA) result (invA)
      invA = 0
   end select
 end function Inverse
-
-end subroutine IGA_ShapeFuns
