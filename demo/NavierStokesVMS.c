@@ -120,7 +120,7 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscScalar uy_xx=der2_u[1][0][0],uy_yy=der2_u[1][1][1],uy_zz=der2_u[1][2][2];
   PetscScalar uz_xx=der2_u[2][0][0],uz_yy=der2_u[2][1][1],uz_zz=der2_u[2][2][2];
 
-  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->jacobian;
+  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->gradX;
   PetscScalar tauM,tauC;
   Tau(GradMap,dt,u,nu,&tauM,&tauC);
   PetscScalar ux_s,uy_s,uz_s,p_s;
@@ -195,7 +195,7 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
   PetscScalar uy=u[1];
   PetscScalar uz=u[2];
 
-  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->jacobian;
+  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->gradX;
   PetscScalar tauM,tauC;
   Tau(GradMap,dt,u,nu,&tauM,&tauC);
 

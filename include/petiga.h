@@ -317,7 +317,7 @@ struct _n_IGAElement {
                        /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
                        /*3: [nqp][nen][dim][dim][dim] */
-  PetscReal *jacobian; /*   [nqp][nsd][dim]           */
+  PetscReal *gradX;    /*   [nqp][nsd][dim]           */
   PetscReal *shape[4]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][nsd]           */
                        /*2: [nqp][nen][nsd][nsd]      */
@@ -395,7 +395,7 @@ struct _n_IGAPoint {
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
-  PetscReal *jacobian; /*   [dim][nsd] */
+  PetscReal *gradX;    /*   [dim][nsd] */
   PetscReal *shape[4]; /*0: [nen]  */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */

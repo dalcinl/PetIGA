@@ -135,7 +135,7 @@ PetscBool IGAPointNext(IGAPoint point)
   point->basis[2] += nen*dim*dim;
   point->basis[3] += nen*dim*dim*dim;
 
-  point->jacobian += dim*dim;
+  point->gradX    += dim*dim;
   point->shape[0] += nen;
   point->shape[1] += nen*dim;
   point->shape[2] += nen*dim*dim;
@@ -156,7 +156,7 @@ PetscBool IGAPointNext(IGAPoint point)
   point->basis[2] = element->basis[2];
   point->basis[3] = element->basis[3];
 
-  point->jacobian = element->jacobian;
+  point->gradX = element->gradX;
   if (element->geometry && dim == nsd) { /* XXX */
     point->shape[0] = element->shape[0];
     point->shape[1] = element->shape[1];
@@ -223,14 +223,14 @@ PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],Pe
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetJacobian"
-PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *jacobian[])
+PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *gradX[])
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  if (detJac)   PetscValidRealPointer(detJac,2);
-  if (jacobian) PetscValidRealPointer(jacobian,3);
-  if (detJac)   *detJac   = point->detJac[0];
-  if (jacobian) *jacobian = point->jacobian;
+  if (detJac) PetscValidRealPointer(detJac,2);
+  if (gradX)  PetscValidRealPointer(gradX,3);
+  if (detJac) *detJac   = point->detJac[0];
+  if (gradX)  *gradX = point->gradX;
   PetscFunctionReturn(0);
 }
 
