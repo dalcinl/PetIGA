@@ -1133,8 +1133,8 @@ PetscErrorCode IGASetUp(IGA iga)
       if (efirst > 0     ) nfirst = span[efirst-1] - p + mid + 1;
       if (elast  < nel-1 ) nlast  = span[elast]    - p + mid;
       node_sizes[i]  = nnp;
-      node_lstart[i]  = nfirst;
-      node_lwidth[i]  = nlast + 1 - nfirst;
+      node_lstart[i] = nfirst;
+      node_lwidth[i] = nlast + 1 - nfirst;
       node_gstart[i] = span[efirst] - p;
       node_gwidth[i] = span[elast]  + p + 1 - span[efirst];
     }
