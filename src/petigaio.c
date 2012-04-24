@@ -90,14 +90,17 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     IGA_Grid grid;
     ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetGlobalVec(grid,iga->vectype,&gvec);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLocalVec (grid,iga->vectype,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal(grid,iga->vectype,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetScatterG2L(grid,&g2l);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)g2l);CHKERRQ(ierr);
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
+  ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
+  iga->vec_geom = lvec;
 
   ierr = IGACreateGeomDM(iga,dim+1,&dm_geom);CHKERRQ(ierr);
   ierr = DMDACreateNaturalVector(dm_geom,&nvec);CHKERRQ(ierr);
@@ -109,19 +112,17 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   /* natural -> global */
   ierr = DMDANaturalToGlobalBegin(dm_geom,nvec,INSERT_VALUES,gvec);CHKERRQ(ierr);
   ierr = DMDANaturalToGlobalEnd  (dm_geom,nvec,INSERT_VALUES,gvec);CHKERRQ(ierr);
-   /* global -> local */
+  /* global -> local */
   ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecStrideMin(gvec,dim,PETSC_NULL,&min_w);CHKERRQ(ierr);
   ierr = VecStrideMax(gvec,dim,PETSC_NULL,&max_w);CHKERRQ(ierr);
 
   ierr = VecScatterDestroy(&g2l);CHKERRQ(ierr);
+  ierr = VecDestroy(&lvec);CHKERRQ(ierr);
   ierr = VecDestroy(&gvec);CHKERRQ(ierr);
   ierr = VecDestroy(&nvec);CHKERRQ(ierr);
   ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);
-
-  ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
-  iga->vec_geom = lvec;
 
   iga->geometry = PETSC_TRUE;
   iga->rational = (PetscAbs(max_w-min_w) > 100*PETSC_MACHINE_EPSILON) ? PETSC_TRUE : PETSC_FALSE;
@@ -182,7 +183,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
   { /* */
     PetscInt i=0,buf[3];
     PetscInt kind,dim;
-    kind = iga->vec_geom ? (1 + (PetscInt)iga->rational) : 0;
+    kind = iga->geometry ? (1 + (PetscInt)iga->rational) : 0;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     if (!skipheader) buf[i++] = IGA_FILE_CLASSID;
     buf[i++] = kind; buf[i++] = dim;
@@ -223,13 +224,15 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
         IGA_Grid grid;
         ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
         ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-        ierr = IGA_Grid_GetGlobalVec(grid,iga->vectype,&gvec);CHKERRQ(ierr);
+        ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
+        ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
         ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
         ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
+        ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
         ierr = PetscObjectReference((PetscObject)l2g);CHKERRQ(ierr);
         ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
       }
-      lvec = iga->vec_geom;
+      ierr = VecCopy(iga->vec_geom,lvec);CHKERRQ(ierr);
 
       /* local -> global */
       ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
@@ -240,6 +243,8 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
       /* natural -> viewer */
       ierr = VecView(nvec,viewer);CHKERRQ(ierr);
 
+      ierr = VecScatterDestroy(&l2g);CHKERRQ(ierr);
+      ierr = VecDestroy(&lvec);CHKERRQ(ierr);
       ierr = VecDestroy(&gvec);CHKERRQ(ierr);
       ierr = VecDestroy(&nvec);CHKERRQ(ierr);
       ierr = DMDestroy(&dm_geom);CHKERRQ(ierr);

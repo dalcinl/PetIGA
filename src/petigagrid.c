@@ -256,8 +256,8 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetGlobalVec"
-PetscErrorCode IGA_Grid_GetGlobalVec(IGA_Grid g,const VecType vtype,Vec *gvec)
+#define __FUNCT__ "IGA_Grid_GetVecGlobal"
+PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -280,8 +280,8 @@ PetscErrorCode IGA_Grid_GetGlobalVec(IGA_Grid g,const VecType vtype,Vec *gvec)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetLocalVec"
-PetscErrorCode IGA_Grid_GetLocalVec(IGA_Grid g,const VecType vtype,Vec *lvec)
+#define __FUNCT__ "IGA_Grid_GetVecLocal"
+PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -316,8 +316,8 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
     PetscInt nghost;
     const PetscInt *ighost;
     ierr = IGA_Grid_GetLGMap(g,&lgmap);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetGlobalVec(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLocalVec (g,VECSTANDARD,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetSize(lgmap,&nghost);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetIndices(lgmap,&ighost);CHKERRQ(ierr);
     ierr = ISCreateGeneral(g->comm,nghost,ighost,PETSC_USE_POINTER,&isghost);CHKERRQ(ierr);
@@ -354,8 +354,8 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
     Vec gvec,lvec;
     PetscInt start,nlocal,*ilocal;
     PetscInt c,i,j,k,pos = 0,index = 0, bs = g->dof;
-    ierr = IGA_Grid_GetGlobalVec(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLocalVec (g,VECSTANDARD,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
     ierr = VecGetOwnershipRange(gvec,&start,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(nlocal*sizeof(PetscInt),&ilocal);CHKERRQ(ierr);

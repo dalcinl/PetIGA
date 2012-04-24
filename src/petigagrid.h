@@ -40,8 +40,8 @@ PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid,AO*);
 PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
 PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
 PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
-PetscErrorCode IGA_Grid_GetGlobalVec(IGA_Grid,const VecType,Vec*);
-PetscErrorCode IGA_Grid_GetLocalVec (IGA_Grid,const VecType,Vec*);
+PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid,const VecType,Vec*);
+PetscErrorCode IGA_Grid_GetVecLocal (IGA_Grid,const VecType,Vec*);
 PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
 PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
 
