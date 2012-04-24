@@ -8,10 +8,10 @@
 */
 
 #include <petsc.h>
-#include <petscdmda.h>
 PETSC_EXTERN_CXX_BEGIN
 
 typedef ISLocalToGlobalMapping LGMap;
+#define LGMap LGMap
 
 /* ---------------------------------------------------------------- */
 
