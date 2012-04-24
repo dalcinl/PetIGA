@@ -269,7 +269,7 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
   ierr = VecZeroEntries(U);CHKERRQ(ierr);
 
   DM da;
-  ierr = IGAGetDofDM(iga,&da);CHKERRQ(ierr);
+  ierr = IGACreateNodeDM(iga,4,&da);CHKERRQ(ierr);
   DMDALocalInfo info;
   ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
   PetscScalar ****u;
@@ -291,6 +291,8 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
   }
 
   ierr = DMDAVecRestoreArrayDOF(da,U,&u);CHKERRQ(ierr);
+
+  ierr = DMDestroy(&da);CHKERRQ(ierr);
 
   PetscReal v; Vec pert;
   ierr = VecDuplicate(U,&pert);CHKERRQ(ierr);
