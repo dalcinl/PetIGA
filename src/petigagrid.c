@@ -67,14 +67,6 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   PetscFunctionBegin;
   if (!g) PetscFunctionReturn(0);
   PetscValidPointer(g,1);
-  ierr = AODestroy(&g->ao);CHKERRQ(ierr);
-  ierr = AODestroy(&g->aob);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
-  ierr = VecScatterDestroy(&g->g2l);CHKERRQ(ierr);
-  ierr = VecScatterDestroy(&g->l2g);CHKERRQ(ierr);
-  ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
-  ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
   for (i=0; i<3; i++) {
     g->sizes[i]       = 1;
     g->local_start[i] = 0;
@@ -82,6 +74,14 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
     g->ghost_start[i] = 0;
     g->ghost_width[i] = 1;
   }
+  ierr = AODestroy(&g->ao);CHKERRQ(ierr);
+  ierr = AODestroy(&g->aob);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
+  ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&g->g2l);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&g->l2g);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -92,7 +92,7 @@ PetscErrorCode IGA_Grid_Destroy(IGA_Grid *grid)
   IGA_Grid       g;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  if (!g) PetscFunctionReturn(0);
+  if (!grid) PetscFunctionReturn(0);
   PetscValidPointer(grid,1);
   PetscValidPointer(*grid,1);
   g = *grid; *grid = 0;
@@ -183,15 +183,29 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_SetAOBlock"
+PetscErrorCode IGA_Grid_SetAOBlock(IGA_Grid g,AO aob)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(aob,AO_CLASSID,2);
+  ierr = PetscObjectReference((PetscObject)aob);CHKERRQ(ierr);
+  ierr = AODestroy(&g->aob);CHKERRQ(ierr);
+  g->aob = aob;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_GetAOBlock"
 PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid g,AO *aob)
 {
-  PetscInt       napp,*iapp;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(g,1);
   PetscValidPointer(aob,2);
   if (!g->aob) {
+    PetscInt napp,*iapp;
     ierr = IGA_Grid_LocalIndices(g,1,&napp,&iapp);CHKERRQ(ierr);
     ierr = AOCreateMemoryScalable(g->comm,napp,iapp,PETSC_NULL,&g->aob);CHKERRQ(ierr);
     ierr = PetscFree(iapp);CHKERRQ(ierr);
@@ -215,6 +229,20 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *ao = g->ao;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_SetLGMapBlock"
+PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid g,LGMap lgmapb)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(lgmapb,IS_LTOGM_CLASSID,2);
+  ierr = PetscObjectReference((PetscObject)lgmapb);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
+  g->lgmapb = lgmapb;
   PetscFunctionReturn(0);
 }
 

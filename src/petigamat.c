@@ -1,4 +1,5 @@
 #include "petiga.h"
+#include "petigagrid.h"
 
 #if PETSC_VERSION_(3,2,0)
 #include "private/matimpl.h"
@@ -130,12 +131,13 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   MPI_Comm       comm;
   PetscMPIInt    size;
   PetscBool      aij,baij,sbaij;
-  PetscInt       i,dim,*sizes,*start,*width;
+  PetscInt       i,dim;
+  PetscInt       *sizes;
+  PetscInt       *lstart,*lwidth;
   PetscInt       gstart[3] = {0,0,0};
   PetscInt       gwidth[3] = {1,1,1};
   PetscInt       maxnnz;
   PetscInt       n,N,bs;
-  AO             aob;
   LGMap          ltog,ltogb;
   const MatType  mtype;
   Mat            A;
@@ -149,25 +151,35 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
   mtype = iga->mattype;
-  aob = iga->aob;
 
-  sizes = iga->node_sizes;
-  start = iga->node_lstart;
-  width = iga->node_lwidth;
+  sizes  = iga->node_sizes;
+  lstart = iga->node_lstart;
+  lwidth = iga->node_lwidth;
   for (i=0; i<dim; i++) {
-    PetscInt first = start[i];
-    PetscInt last  = first + width[i] - 1;
+    PetscInt first = lstart[i];
+    PetscInt last  = first + lwidth[i] - 1;
     PetscInt gfirst,glast;
     BasisStencil(iga,i,first,&gstart[i],&glast);
     BasisStencil(iga,i,last,&gfirst,&glast);
     gwidth[i] = glast + 1 - gstart[i];
   }
+  {
+    IGA_Grid grid;
+    ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+    ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMapBlock(grid,&ltogb);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMap(grid,&ltog);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)ltogb);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)ltog);CHKERRQ(ierr);
+    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
+  }
+
+  n = Product(lwidth);
+  N = Product(sizes);
   maxnnz = 1;
   for(i=0; i<dim; i++)
     maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
-
-  n = Product(width);
-  N = Product(sizes);
 
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
 #if PETSC_VERSION_(3,2,0)
@@ -181,8 +193,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
-  ierr = IGA_Grid_CreateLGMap(comm,dim,1,sizes,gstart,gwidth,aob,&ltogb);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingUnBlock(ltogb,bs,&ltog);CHKERRQ(ierr);
   if (aij || baij || sbaij) {
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
     PetscInt *dnz = 0, *onz = 0;
@@ -192,9 +202,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
       PetscInt n = maxnnz,*indices=0,*ubrows,*ubcols=0;
       ierr = PetscMalloc1(n,PetscInt,&indices);CHKERRQ(ierr);
       ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
-      for (k=start[2]; k<start[2]+width[2]; k++)
-        for (j=start[1]; j<start[1]+width[1]; j++)
-          for (i=start[0]; i<start[0]+width[0]; i++)
+      for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
+        for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
+          for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
             { /* */
               PetscInt row   = Index3D(gstart,gwidth,i,j,k);
               PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
@@ -247,9 +257,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = PetscMalloc2(n,PetscInt,&indices,n*bs*n*bs,PetscScalar,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
     ierr = PetscMemzero(values,n*bs*n*bs*sizeof(PetscScalar));CHKERRQ(ierr);
-    for (k=start[2]; k<start[2]+width[2]; k++)
-      for (j=start[1]; j<start[1]+width[1]; j++)
-        for (i=start[0]; i<start[0]+width[0]; i++)
+    for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
+      for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
+        for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
           { /* */
             PetscInt row   = Index3D(gstart,gwidth,i,j,k);
             PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
