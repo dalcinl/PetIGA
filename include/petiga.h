@@ -249,6 +249,7 @@ extern PetscErrorCode IGASetDof(IGA iga,PetscInt dof);
 extern PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof);
 extern PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[]);
 extern PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[]);
+extern PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors);
 
 extern PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis);
 extern PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);

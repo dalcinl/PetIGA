@@ -273,6 +273,17 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAGetDof"
+PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dof,2);
+  *dof = iga->dof;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetFieldName"
 PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
 {
@@ -317,13 +328,33 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAGetDof"
-PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
+#define __FUNCT__ "IGASetProcessors"
+PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 {
+  PetscMPIInt    size;
+  PetscInt       k,dim,np[3],prod;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dof,2);
-  *dof = iga->dof;
+  dim = (iga->dim > 0) ? iga->dim : 3;
+  if (i <    0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be nonnegative, got %D",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be in range [0,%D], got %D",dim-1,i);
+  ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
+  if (processors < 1)
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
+             "Number of processors must be nonnegative, got %D",processors);
+  if (size % processors != 0)
+    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
+             "Number of processors %D is incompatible with communicator size %d",processors,(int)size);
+  for (k=0; k<dim; k++)
+    np[k] = iga->proc_sizes[k];
+  np[i] = prod = processors;
+  for (k=0; k<dim; k++)
+    if (k!=i && np[k]>0) prod *= np[k];
+  if (size % prod != 0)
+    SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
+             "Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
+  iga->proc_sizes[i] = processors;
   PetscFunctionReturn(0);
 }
 
@@ -472,7 +503,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
-        iga->proc_sizes[i] = procs[i]; /* XXX Use IGGASetProcessors() */
+        PetscInt np = procs[i];
+        if (np > 0) {ierr = IGASetProcessors(iga,i,np);CHKERRQ(ierr);}
       }
     /* parametric axis */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
