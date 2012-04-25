@@ -4,6 +4,44 @@ typedef struct {
   PetscReal nu,E,t,k;
 } AppCtx;
 
+PetscErrorCode BetaRhoKappa(PetscReal N,PetscReal N_xi,PetscReal N_eta,
+			    PetscReal A1,PetscReal A1_xi,PetscReal A1_eta,
+			    PetscReal A2,PetscReal A2_xi,PetscReal A2_eta,
+			    PetscReal b1, PetscReal b2,
+			    PetscReal (*Beta)[3],PetscReal (*Rho)[2],PetscReal (*Kappa)[3])
+{
+  PetscFunctionBegin;
+
+  Beta[0][0] = 1./A1*N_xi;
+  Beta[0][1] = 1./A1/A2*A2_xi*N;
+  Beta[0][2] = 0.5*(N_eta-A1_eta*N/A1)/A2;
+  Beta[1][0] = 1./A1/A2*A1_eta*N;
+  Beta[1][1] = 1./A2*N_eta;
+  Beta[1][2] = 0.5*(1./A1*N_xi-1./A1/A2*A2_xi*N);
+  Beta[2][0] = b1*N;
+  Beta[2][1] = b2*N;
+  Beta[2][2] = 0.;
+
+  memset(Rho,0,10*sizeof(PetscReal));
+  Rho[0][0] = b1*N;
+  Rho[1][1] = b2*N;
+  Rho[2][0] = -N_xi/A1;
+  Rho[2][1] = -N_eta/A2;
+  Rho[3][0] = N;
+  Rho[4][1] = N;
+
+  memset(Kappa,0,15*sizeof(PetscReal));
+  Kappa[0][2] = 0.5*(-b1/A2*N_eta+b2/A1/A2*A1_eta*N);
+  Kappa[1][2] = 0.5*(-b2/A1*N_xi+b1/A1/A2*A2_xi*N);
+  Kappa[3][0] = 1./A1*N_xi;
+  Kappa[3][1] = 1./A1/A2*A2_xi*N;
+  Kappa[3][2] = 0.5*(1./A2*N_eta-1./A1/A2*A1_eta*N);
+  Kappa[4][0] = 1./A1/A2*A1_eta*N;
+  Kappa[4][1] = 1./A2*N_eta;
+  Kappa[4][2] = 0.5*(1./A1*N_xi-1./A1/A2*A2_xi*N);
+
+  PetscFunctionReturn(0);
+}
 
 EXTERN_C_BEGIN
 extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
@@ -58,7 +96,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   A2 = sqrt(grad_g[0][1]*grad_g[0][1]+grad_g[1][1]*grad_g[1][1]+grad_g[2][1]*grad_g[2][1]);
   b1 = -1./A1/A1 * (n[0]*hess_g[0][0][0]+n[1]*hess_g[1][0][0]+n[2]*hess_g[2][0][0]);
   b2 = -1./A2/A2 * (n[0]*hess_g[0][1][1]+n[1]*hess_g[1][1][1]+n[2]*hess_g[2][1][1]);
-  
+
   PetscReal dA1[2]; dA1[0] = dA1[1] = 0.;
   PetscReal dA2[2]; dA2[0] = dA2[1] = 0.;
 
@@ -74,35 +112,10 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
     PetscReal Na_y  = N1[a][1];
 
     PetscReal dBeta[3][3];
-    dBeta[0][0] = 1./A1*Na_x;
-    dBeta[0][1] = 1./A1/A2*dA2[0]*Na;
-    dBeta[0][2] = 0.5*(1./A2*Na_y-1./A1/A2*dA1[1]*Na);
-    dBeta[1][0] = 1./A1/A2*dA1[1]*Na;
-    dBeta[1][1] = 1./A2*Na_y;
-    dBeta[1][2] = 0.5*(1./A1*Na_x-1./A1/A2*dA2[0]*Na);
-    dBeta[2][0] = b1*Na;
-    dBeta[2][1] = b2*Na;
-    dBeta[2][2] = 0;
-
     PetscReal dRho[5][2];
-    memset(dRho,0,sizeof(dRho));
-    dRho[0][0] = b1*Na;
-    dRho[1][1] = b2*Na;
-    dRho[2][0] = -1./A1*Na_x;
-    dRho[2][1] = -1./A2*Na_y;
-    dRho[3][0] = Na;
-    dRho[4][1] = Na;
-
     PetscReal dKappa[5][3];
-    memset(dKappa,0,sizeof(dKappa));
-    dKappa[0][2] = -b1/A2*Na_y+b2/A1/A2*dA1[1]*Na;
-    dKappa[1][2] = -b2/A1*Na_x+b1/A1/A2*dA2[0]*Na;
-    dKappa[3][0] = 1/A1*Na_x;
-    dKappa[3][1] = 1./A1/A2*dA2[0]*Na;
-    dKappa[3][2] = 0.5*(1./A2*Na_y-1./A1/A2*dA1[1]*Na);
-    dKappa[4][0] = 1./A1/A2*dA1[1]*Na;
-    dKappa[4][1] = 1./A2*Na_y;
-    dKappa[4][2] = 0.5*(1./A1*Na_x-1./A1/A2*dA2[0]*Na);
+    BetaRhoKappa(Na,Na_x,Na_y,A1,dA1[0],dA1[1],A2,dA2[0],dA2[1],b1,b2,
+		 dBeta,dRho,dKappa);
 
     for (b=0; b<nen; b++) {
       PetscReal Nb    = N0[b];
@@ -110,37 +123,11 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
       PetscReal Nb_y  = N1[b][1];
 
       PetscReal Beta[3][3];
-      Beta[0][0] = 1./A1*Nb_x;
-      Beta[0][1] = 1./A1/A2*dA2[0]*Nb;
-      Beta[0][2] = 0.5*(1./A2*Nb_y-1./A1/A2*dA1[1]*Nb);
-      Beta[1][0] = 1./A1/A2*dA1[1]*Nb;
-      Beta[1][1] = 1./A2*Nb_y;
-      Beta[1][2] = 0.5*(1./A1*Nb_x-1./A1/A2*dA2[0]*Nb);
-      Beta[2][0] = b1*Nb;
-      Beta[2][1] = b2*Nb;
-      Beta[2][2] = 0;
-
       PetscReal Rho[5][2];
-      memset(Rho,0,sizeof(Rho));
-      Rho[0][0] = b1*Nb;        
-      Rho[1][1] = b2*Nb;
-      Rho[2][0] = -1./A1*Nb_x;
-      Rho[2][1] = -1./A2*Nb_y;
-      Rho[3][0] = Nb;
-      Rho[4][1] = Nb;
-
       PetscReal Kappa[5][3];
-      memset(Kappa,0,sizeof(Kappa));
-      Kappa[0][2] = -b1/A2*Nb_y+b2/A1/A2*dA1[1]*Nb;
-      Kappa[1][2] = -b2/A1*Nb_x+b1/A1/A2*dA2[0]*Nb;
-      Kappa[3][0] = 1/A1*Nb_x;
-      Kappa[3][1] = 1./A1/A2*dA2[0]*Nb;
-      Kappa[3][2] = 0.5*(1./A2*Nb_y-1./A1/A2*dA1[1]*Nb);
-      Kappa[4][0] = 1./A1/A2*dA1[1]*Nb;
-      Kappa[4][1] = 1./A2*Nb_y;
-      Kappa[4][2] = 0.5*(1./A1*Nb_x-1./A1/A2*dA2[0]*Nb);
+      BetaRhoKappa(Nb,Nb_x,Nb_y,A1,dA1[0],dA1[1],A2,dA2[0],dA2[1],b1,b2,
+		   Beta,Rho,Kappa);
 
-      /* ----- */
       PetscScalar T[5][5];
       memset(T,0,sizeof(T));
 
@@ -158,25 +145,10 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 	  T[i][j] += E*t*t*t/12./(1-nu*nu)*(nu*(dKappa[i][0]+dKappa[i][1])*(Kappa[j][0]+Kappa[j][1])
 					    +(1-nu)*(dKappa[i][0]*Kappa[j][0]+2.*dKappa[i][2]*Kappa[j][2]+dKappa[i][1]*Kappa[j][1])); 
 
-      /* for (i=0;i<5;i++) { */
-      /* 	for (j=0;j<5;j++) { */
-      /* 	  printf("%.1e  \t",T[i][j]*A1*A2); */
-      /* 	} */
-      /* 	printf("\n"); */
-      /* } */
-      /* printf("\n"); */
-      /* printf("\n"); */
-
-      /* ----- */
       for (i=0;i<5;i++)
-        for (j=0;j<5;j++) {
+        for (j=0;j<5;j++) 
           KK[a][i][b][j] += T[i][j]*A1*A2;
-	  double v = KK[a][i][b][j];
-	  if (v!=v) {
-	    printf("%d,%d NaN!!!\n",i,j);
-	    exit(1);
-	  }
-	}
+	
     }
   }
 
@@ -212,15 +184,15 @@ int main(int argc, char *argv[]) {
   // Boundary conditions on u = 1, v = [0:1]
   ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
+  ierr = IGABoundarySetValue(bnd,3,0.0);CHKERRQ(ierr);
   // Boundary conditions on u = [0:1], v = 0
   ierr = IGAGetBoundary(iga,1,0,&bnd);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,3,0.0);CHKERRQ(ierr);
+  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
   // Boundary conditions on u = [0:1], v = 1
   ierr = IGAGetBoundary(iga,1,1,&bnd);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,3,0.0);CHKERRQ(ierr);
+  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -238,7 +210,6 @@ int main(int argc, char *argv[]) {
   
   PetscInt fdof;
   VecGetSize(b,&fdof);
-  //fdof /= 5; fdof-=1; fdof+=3;
   fdof -= 3;
   VecSetValue(b,fdof,-0.25,INSERT_VALUES);
   //VecSet(b,0);
@@ -249,7 +220,8 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  //ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
+  //ierr = VecView(x,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+  // ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
   PetscScalar sol;
   VecGetValues(x,1,&fdof,&sol);
   printf("x[%d]=%g\n",fdof,sol);
