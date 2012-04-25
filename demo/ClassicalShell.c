@@ -101,15 +101,20 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscReal dA2[2]; dA2[0] = dA2[1] = 0.;
 
   // get basis functions 
-  const PetscReal *N0 = p->basis[0], (*N1)[2] = (const PetscReal (*)[2])(p->basis[1]);
+  const PetscReal *N0         = p->basis[0];
+  const PetscReal (*N1)[2]    = (const PetscReal (*)[2])(p->basis[1]);
+  //const PetscReal (*N2)[2][2] = (const PetscReal (*)[2][2])(p->basis[2]);
 
   PetscInt    i,j;
   PetscInt a,b,nen=p->nen;
   PetscScalar (*KK)[5][nen][5] = (PetscScalar (*)[5][nen][5])K;
   for (a=0; a<nen; a++) {
-    PetscReal Na    = N0[a];
-    PetscReal Na_x  = N1[a][0];
-    PetscReal Na_y  = N1[a][1];
+    PetscReal Na     = N0[a];
+    PetscReal Na_x   = N1[a][0];
+    PetscReal Na_y   = N1[a][1];
+    //PetscReal Na_xx  = N2[a][0][0];
+    //PetscReal Na_xy  = N2[a][0][1];
+    //PetscReal Na_yy  = N2[a][1][1];
 
     PetscReal dBeta[3][3];
     PetscReal dRho[5][2];
@@ -118,9 +123,12 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 		 dBeta,dRho,dKappa);
 
     for (b=0; b<nen; b++) {
-      PetscReal Nb    = N0[b];
-      PetscReal Nb_x  = N1[b][0];
-      PetscReal Nb_y  = N1[b][1];
+      PetscReal Nb     = N0[b];
+      PetscReal Nb_x   = N1[b][0];
+      PetscReal Nb_y   = N1[b][1];
+      //PetscReal Nb_xx  = N2[b][0][0];
+      //PetscReal Nb_xy  = N2[b][0][1];
+      //PetscReal Nb_yy  = N2[b][1][1];
 
       PetscReal Beta[3][3];
       PetscReal Rho[5][2];
