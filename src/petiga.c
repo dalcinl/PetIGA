@@ -444,10 +444,11 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   {
     PetscBool flg;
-    PetscInt  i,n;
-    PetscBool perds[3]    = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscInt  i,nw,nb;
+    PetscBool wraps[3]    = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
     PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
-    PetscInt  no,degrs[3] = {2,2,2};
+    PetscInt  nd,degrs[3] = {2,2,2};
+    PetscInt  nq,quadr[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  ne,elems[3] = {16,16,16}; /* XXX Too coarse for 1D/2D ? */
     PetscReal bbox[3][2]  = {{0,1},{0,1},{0,1}};
@@ -457,8 +458,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscInt dim = iga->dim;
     PetscInt dof = iga->dof;
 
-    for (i=0; i<dim; i++) perds[i] = iga->axis[i]->periodic;
-    for (i=0; i<dim; i++) degrs[i] = iga->axis[i]->p;
+    for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
+    for (i=0; i<dim; i++) if (iga->axis[i]->p   > 0) degrs[i] = iga->axis[i]->p;
+    for (i=0; i<dim; i++) if (iga->rule[i]->nqp > 0) quadr[i] = iga->rule[i]->nqp;
 
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
     if (iga->setup) goto setupcalled;
@@ -467,39 +469,52 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsInt("-iga_dof","Number of DOFs per node","IGASetDof",iga->dof,&dof,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
     if (iga->dim < 1) dim = 3;
-    /* */
+    /* processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
         iga->proc_sizes[i] = procs[i]; /* XXX Use IGGASetProcessors() */
       }
-    ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",perds,(n=dim,&n),&flg);CHKERRQ(ierr);
+    /* parametric axis */
+    ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-        PetscBool periodic = (i<n) ? perds[i] : perds[0];
-        ierr = IGAAxisSetPeriodic(iga->axis[i],periodic);CHKERRQ(ierr);
+        PetscBool w = (i<nw) ? wraps[i] : wraps[0]; if (nw==0) w = PETSC_TRUE;
+        ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
-    ierr = PetscOptionsIntArray("-iga_degree","Polynomial degree","IGAAxisSetDegree",degrs,(no=dim,&no),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-iga_degree","Polynomial degree","IGAAxisSetDegree",degrs,(nd=dim,&nd),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-        PetscInt degree = (i<no) ? degrs[i] : degrs[0];
-        ierr = IGAAxisSetDegree(iga->axis[i],degree);CHKERRQ(ierr);
+        PetscInt p = (i<nd) ? degrs[i] : degrs[0];
+        if(p > 1) {ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);}
       }
-    ierr = PetscOptionsRealArray("-iga_bounding_box", "Bounding box", "IGAAxisInitUniform",&bbox[0][0],(n=2*dim,&n),&flg);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),&flg);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray("-iga_elements","Elements","IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
+    if (flg) {
+      for (i=0; i<dim; i++) {
+        PetscInt p = iga->axis[i]->p; if (p > 1) continue;
+        p = (degrs[i] > 0) ? degrs[i] : 2; /* XXX Default degree? */
+        ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
+      }
+      for (i=0; i<dim; i++) {
+        PetscInt C = (i<nc) ? conts[i] : conts[0];
+        PetscInt N = (i<ne) ? elems[i] : elems[0];
+        PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
+        ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
+      }
+    }
+    /* quadrature rule */
+    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-        PetscInt continuity = (i<nc) ? conts[i] : conts[0];
-        PetscInt elements   = (i<ne) ? elems[i] : elems[0];
-        PetscReal *U        = (i<n) ? &bbox[i][0] : &bbox[0][0];
-        if (iga->axis[i]->p < 1) {ierr = IGAAxisSetDegree(iga->axis[i],degrs[i]);CHKERRQ(ierr);} /* XXX Default degree? */
-        ierr = IGAAxisInitUniform(iga->axis[i],elements,U[0],U[1],continuity);CHKERRQ(ierr);
+        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
+        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
       }
   setupcalled:
     /* */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
     if (iga->mattype)  {ierr = PetscStrncpy(mtype,iga->mattype,sizeof(mtype));CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_vec_type","Vector type","VecSetType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsList("-iga_vec_type","Vector type","IGASetVecType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_mat_type","Matrix type","MatSetType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
     /* */
     ierr = PetscOptionsName("-iga_view",         "Information on IGA context",       "IGAView",PETSC_NULL);CHKERRQ(ierr);
@@ -697,15 +712,21 @@ PetscErrorCode IGASetUp(IGA iga)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
 
-  if (iga->nsd < 1) /* XXX */
-    iga->nsd = iga->dim;
-
   if (iga->dof < 1)
     iga->dof = 1;  /* XXX Error ? */
 
+  if (iga->nsd < 1) /* XXX */
+    iga->nsd = iga->dim;
+
   for (i=0; i<iga->dim; i++) {
     ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);
+    if (iga->rule[i]->nqp < 1) {
+      PetscInt p = iga->axis[i]->p;
+      PetscInt q = p + 1;
+      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
+    }
   }
+
   for (i=iga->dim; i<3; i++) {
     ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
@@ -721,10 +742,7 @@ PetscErrorCode IGASetUp(IGA iga)
       p_max = PetscMax(p_max,p);
     }
     for (i=0; i<3; i++) {
-      PetscInt p = iga->axis[i]->p;
-      PetscInt q = p+1; /* XXX */
       PetscInt d = PetscMin(p_max,3); /* XXX */
-      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
       ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);
     }
   }
