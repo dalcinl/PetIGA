@@ -62,6 +62,9 @@ CahnHilliard2D: CahnHilliard2D.o chkopts
 CahnHilliard3D: CahnHilliard3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+NavierStokesKorteweg2D: NavierStokesKorteweg2D.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 NavierStokesVMS: NavierStokesVMS.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
