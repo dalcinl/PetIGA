@@ -122,8 +122,6 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
   PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode IGA_Grid_CreateLGMap(MPI_Comm,PetscInt,PetscInt,const PetscInt[],const PetscInt[],const PetscInt[],AO,LGMap*);
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateMat"
 PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
