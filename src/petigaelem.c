@@ -539,14 +539,7 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  { /* XXX */
-    IGABasis *BD = element->parent->basis;
-    order = 3;
-    order = PetscMin(order,BD[0]->d);
-    order = PetscMin(order,BD[1]->d);
-    order = PetscMin(order,BD[2]->d);
-    order = PetscMax(order,1);
-  }
+  order = element->parent->order;
   {
     IGABasis *BD  = element->parent->basis;
     PetscInt *ID  = element->ID;

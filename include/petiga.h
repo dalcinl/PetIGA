@@ -173,9 +173,10 @@ struct _p_IGA {
   char       **fieldname;
 
   PetscBool setup;
-  PetscInt  dim; /* parametric dimension of the function space*/
-  PetscInt  nsd; /* spatial dimension of the geometry */
-  PetscInt  dof;
+  PetscInt  dim;   /* parametric dimension of the function space*/
+  PetscInt  nsd;   /* spatial dimension of the geometry */
+  PetscInt  dof;   /* number of degrees of freedom per node */
+  PetscInt  order; /* maximum derivative order */
 
   IGAAxis  axis[3];
   IGARule  rule[3];

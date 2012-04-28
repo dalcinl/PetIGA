@@ -768,15 +768,14 @@ PetscErrorCode IGASetUp(IGA iga)
   }
 
   { /* */
-    PetscInt p_max = 0;
+    PetscInt order = 0;
     for (i=0; i<iga->dim; i++) {
       PetscInt p = iga->axis[i]->p;
-      p_max = PetscMax(p_max,p);
+      order = PetscMax(order,p);
     }
-    for (i=0; i<3; i++) {
-      PetscInt d = PetscMin(p_max,3); /* XXX */
-      ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],d);CHKERRQ(ierr);
-    }
+    order = PetscMin(order,3); /* XXX */
+    order = PetscMax(order,1); /* XXX */
+    iga->order = order;
   }
 
   if (!iga->vectype) {
@@ -921,6 +920,9 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
 
+  for (i=0; i<3; i++) {
+    ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+  }
   iga->iterator->parent = iga;
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
 
