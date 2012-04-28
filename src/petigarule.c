@@ -87,7 +87,10 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
   PetscFunctionReturn(0);
 }
 
-static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[]);
+static PetscErrorCode GaussLegendreRule(PetscInt q, PetscReal X[], PetscReal W[]);
+/*
+static PetscErrorCode GaussLobattoRule(PetscInt q, PetscReal X[], PetscReal W[]);
+*/
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARuleInit"
@@ -102,7 +105,7 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
              "Number of quadrature points must be grather than zero, got %D",nqp);
   ierr = PetscMalloc1(nqp,PetscReal,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,PetscReal,&weight);CHKERRQ(ierr);
-  if (GaussRule(nqp,point,weight) != 0)
+  if (GaussLegendreRule(nqp,point,weight) != 0)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points %D not implemented",nqp);
   ierr = IGARuleReset(rule);CHKERRQ(ierr);
@@ -152,7 +155,7 @@ PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal 
   PetscFunctionReturn(0);
 }
 
-static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
+static PetscErrorCode GaussLegendreRule(PetscInt q, PetscReal X[], PetscReal W[])
 {
   switch (q)  {
   case (1): /* p = 1 */
@@ -268,3 +271,50 @@ static PetscErrorCode GaussRule(PetscInt q, PetscReal X[], PetscReal W[])
   }
   return 0;
 }
+
+#if 0
+static PetscErrorCode GaussLobattoRule(PetscInt q, PetscReal X[], PetscReal W[])
+{
+  switch (q)  {
+  case (2): /* p = 1 */
+    X[0] = -1.0;
+    X[1] = -X[0];
+    W[0] =  1.0;
+    W[1] =  W[0];
+    break;
+  case (3): /* p = 3 */
+    X[0] = -1.0;
+    X[1] =  0.0;
+    X[2] = -X[0];
+    W[0] =  0.3333333333333333333333333333333333; /* 1/3 */
+    W[1] =  1.3333333333333333333333333333333333; /* 4/3 */
+    W[2] =  W[0];
+    break;
+  case (4): /* p = 5 */
+    X[0] = -1.0;
+    X[1] = -0.44721359549995793928183473374625525; /* 1/sqrt(5) */
+    X[2] = -X[1];
+    X[3] = -X[0];
+    W[0] =  0.16666666666666666666666666666666667; /* 1/6 */
+    W[1] =  0.83333333333333333333333333333333333; /* 5/6 */
+    W[2] =  W[1];
+    W[3] =  W[0];
+    break;
+  case (5): /* p = 7 */
+    X[0] = -1;
+    X[1] = -0.65465367070797714379829245624685835; /* sqrt(3/7) */
+    X[2] =  0.0;
+    X[3] = -X[1];
+    X[4] = -X[0];
+    W[0] =  0.10000000000000000000000000000000000; /*  1/10 */
+    W[1] =  0.54444444444444444444444444444444444; /* 49/90 */
+    W[2] =  0.71111111111111111111111111111111111; /* 32/45 */
+    W[3] =  W[1];
+    W[4] =  W[0];
+    break;
+  default:
+    return -1;
+  }
+  return 0;
+}
+#endif
