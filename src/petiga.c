@@ -879,7 +879,7 @@ PetscErrorCode IGASetUp(IGA iga)
       geom_gstart[i] = iga->node_gstart[i];
       geom_gwidth[i] = iga->node_gwidth[i];
       if (rank == size-1)
-        geom_lwidth[i] = geom_sizes[i] - geom_gstart[i];
+        geom_lwidth[i] = geom_sizes[i] - geom_lstart[i];
     }
     for (i=iga->dim; i<3; i++) {
       geom_sizes[i]  = 1;
