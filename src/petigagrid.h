@@ -21,7 +21,7 @@ struct _n_IGA_Grid {
   AO         ao,aob;
   LGMap      lgmap,lgmapb;
   Vec        gvec,lvec;
-  VecScatter g2l,l2g;
+  VecScatter g2l,l2g,g2n;
 };
 
 PetscErrorCode IGA_Grid_Create(MPI_Comm,IGA_Grid*);
@@ -46,6 +46,7 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid,const VecType,Vec*);
 PetscErrorCode IGA_Grid_GetVecLocal (IGA_Grid,const VecType,Vec*);
 PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
 PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
+PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid,VecScatter*);
 
 PETSC_EXTERN_CXX_END
 #endif/*PETIGAGRID_H*/
