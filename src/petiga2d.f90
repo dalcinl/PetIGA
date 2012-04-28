@@ -17,7 +17,8 @@ subroutine IGA_Quadrature_2D(&
   integer(kind=IGA_INT ) :: iq
   integer(kind=IGA_INT ) :: jq
   forall (iq=1:inq, jq=1:jnq)
-     X(:,iq,jq) = (/ iX(iq),  jX(jq) /)
+     X(1,iq,jq) = iX(iq)
+     X(2,iq,jq) = jX(jq)
      W(  iq,jq) =    iW(iq) * jW(jq)
      detJ( iq,jq) = iJ * jJ
      J(:,:,iq,jq) = 0

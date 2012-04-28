@@ -21,8 +21,10 @@ subroutine IGA_Quadrature_3D(&
   integer(kind=IGA_INT ) :: jq
   integer(kind=IGA_INT ) :: kq
   forall (iq=1:inq, jq=1:jnq, kq=1:knq)
-     X(:,iq,jq,kq) = (/ iX(iq),  jX(jq),  kX(kq) /)
-     W(  iq,jq,kq) =    iW(iq) * jW(jq) * kW(kq)
+     X(1,iq,jq,kq) = iX(iq)
+     X(2,iq,jq,kq) = jX(jq)
+     X(3,iq,jq,kq) = kX(kq)
+     W(  iq,jq,kq) = iW(iq) * jW(jq) * kW(kq)
      detJ( iq,jq,kq) = iJ * jJ * kJ
      J(:,:,iq,jq,kq) = 0
      J(1,1,iq,jq,kq) = iJ

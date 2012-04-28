@@ -14,6 +14,7 @@ subroutine IGA_Quadrature_1D(&
   integer(kind=IGA_INT )  :: iq
   forall (iq=1:inq)
      X(:,iq) = (/ iX(iq) /)
+     X(1,iq) = iX(iq)
      W(iq)   = iW(iq)
      detJ( iq) = iJ
      J(:,:,iq) = 0
