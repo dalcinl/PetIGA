@@ -124,8 +124,8 @@ PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid g,PetscInt bs,PetscInt *nlocal,Pet
     PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
     PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
     PetscInt c,i,j,k,pos = 0;
-    nloc = lwidth[0]*lwidth[1]*lwidth[2];
-    ierr = PetscMalloc(nloc*bs*sizeof(PetscInt),&iloc);CHKERRQ(ierr);
+    nloc = bs*lwidth[0]*lwidth[1]*lwidth[2];
+    ierr = PetscMalloc(nloc*sizeof(PetscInt),&iloc);CHKERRQ(ierr);
     for (k=klstart; k<klend; k++)
       for (j=jlstart; j<jlend; j++)
         for (i=ilstart; i<ilend; i++)
@@ -162,8 +162,8 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
     PetscInt kgstart = gstart[2], kgend = gstart[2]+gwidth[2];
     /* compute local ghosted indices in global natural numbering */
     PetscInt c,i,j,k,pos = 0;
-    nght = gwidth[0]*gwidth[1]*gwidth[2];
-    ierr = PetscMalloc(nght*bs*sizeof(PetscInt),&ight);CHKERRQ(ierr);
+    nght = bs*gwidth[0]*gwidth[1]*gwidth[2];
+    ierr = PetscMalloc(nght*sizeof(PetscInt),&ight);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++) {
       for (j=jgstart; j<jgend; j++) {
         for (i=igstart; i<igend; i++) {
