@@ -220,7 +220,8 @@ int main(int argc, char *argv[]) {
   VecGetSize(b,&fdof);
   fdof -= 3;
   VecSetValue(b,fdof,-0.25,INSERT_VALUES);
-  //VecSet(b,0);
+  VecAssemblyBegin(b);
+  VecAssemblyEnd(b);
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
@@ -228,24 +229,30 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  //ierr = VecView(x,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  // ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  PetscScalar sol;
-  VecGetValues(x,1,&fdof,&sol);
-  printf("x[%d]=%g\n",fdof,sol);
+  int rank,size;
+  MPI_Comm_rank(PETSC_COMM_WORLD,&rank);
+  MPI_Comm_size(PETSC_COMM_WORLD,&size);
+  if(rank == size-1){ 
+    PetscScalar sol;
+    VecGetValues(x,1,&fdof,&sol);
+    PetscPrintf(PETSC_COMM_SELF,"x[%d]=%g\n",fdof,sol);
+  }
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
-  ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
   PetscBool flag = PETSC_FALSE;
   PetscReal secs = -1;
-  ierr = PetscOptionsHasName(0,"-sleep",&flag);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(0,"-sleep",&secs,0);CHKERRQ(ierr);
-  if (flag) {ierr = PetscSleep(secs);CHKERRQ(ierr);}
+  ierr = PetscOptionsHasName(0,"-draw",&flag);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(0,"-draw",&secs,0);CHKERRQ(ierr);
+  if (flag) {
+    ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
+    ierr = PetscSleep(secs);CHKERRQ(ierr);
+  }
 
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
