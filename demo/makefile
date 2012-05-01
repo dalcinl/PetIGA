@@ -2,6 +2,7 @@ TARGETS = InputOutput \
           L2Proj1D L2Proj2D \
           Poisson1D Poisson2D Poisson3D \
           L2Projection \
+          AdvectionDiffusion \
           Laplace \
           Poisson \
           PatternFormation \
@@ -48,6 +49,9 @@ L2Projection: L2Projection.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Laplace: Laplace.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+AdvectionDiffusion: AdvectionDiffusion.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Poisson: Poisson.o chkopts
