@@ -488,7 +488,7 @@ extern PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
 #endif
 
 #if PETSC_VERSION_(3,2,0)
-extern PetscErrorCode DMSetMatType(DM,const MatType);
+#define PetscObjectTypeCompare PetscTypeCompare
 #endif
 
 #if defined(PETSC_USE_DEBUG)

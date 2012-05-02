@@ -223,7 +223,7 @@ static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
   PetscBool      isascii;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
   if (!ebe->mat) PetscFunctionReturn(0);
   ierr = PetscViewerASCIIPushTab(viewer);CHKERRQ(ierr);

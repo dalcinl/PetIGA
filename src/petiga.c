@@ -115,7 +115,6 @@ PetscErrorCode IGAReset(IGA iga)
 #define __FUNCT__ "IGAView"
 PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 {
-  PetscBool         isstring;
   PetscBool         isascii;
   PetscBool         isbinary;
   PetscViewerFormat format;
@@ -126,11 +125,13 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
   if (!iga->setup) PetscFunctionReturn(0); /* XXX */
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
-  if (isbinary) {ierr = IGASave(iga,viewer);CHKERRQ(ierr);}
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERSTRING,&isstring);CHKERRQ(ierr);
-  ierr = PetscTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
+
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
+  if (isbinary) { ierr = IGASave(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
+
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
+
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   {
     MPI_Comm  comm;
@@ -1078,18 +1079,3 @@ PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *I
   if (IEJacCtx)   iga->userops->IEJacCtx   = IEJacCtx;
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_(3,2,0)
-#include "private/dmimpl.h"
-#undef  __FUNCT__
-#define __FUNCT__ "DMSetMatType"
-PetscErrorCode DMSetMatType(DM dm,const MatType mattype)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = PetscFree(dm->mattype);CHKERRQ(ierr);
-  ierr = PetscStrallocpy(mattype,&dm->mattype);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-#endif
