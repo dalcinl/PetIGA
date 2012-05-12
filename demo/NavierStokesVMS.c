@@ -17,9 +17,19 @@ void Tau(PetscReal GradMap[][3],
   PetscReal C_I = 1.0/12.0;
 
   PetscReal J[3][3] = {{0}};
-  J[0][0] = 1.0/GradMap[0][0];
-  J[1][1] = 1.0/GradMap[1][1];
-  J[2][2] = 1.0/GradMap[2][2];
+  PetscReal d = +GradMap[0][0]*(GradMap[1][1]*GradMap[2][2]-GradMap[2][1]*GradMap[1][2])
+    -GradMap[0][1]*(GradMap[1][0]*GradMap[2][2]-GradMap[1][2]*GradMap[2][0])
+    +GradMap[0][2]*(GradMap[1][0]*GradMap[2][1]-GradMap[1][1]*GradMap[2][0]);
+  double invd = 1./d;
+  J[0][0] =  (GradMap[1][1]*GradMap[2][2]-GradMap[2][1]*GradMap[1][2])*invd;
+  J[1][0] = -(GradMap[0][1]*GradMap[2][2]-GradMap[0][2]*GradMap[2][1])*invd;
+  J[2][0] =  (GradMap[0][1]*GradMap[1][2]-GradMap[0][2]*GradMap[1][1])*invd;
+  J[0][1] = -(GradMap[1][0]*GradMap[2][2]-GradMap[1][2]*GradMap[2][0])*invd;
+  J[1][1] =  (GradMap[0][0]*GradMap[2][2]-GradMap[0][2]*GradMap[2][0])*invd;
+  J[2][1] = -(GradMap[0][0]*GradMap[1][2]-GradMap[1][0]*GradMap[0][2])*invd;
+  J[0][2] =  (GradMap[1][0]*GradMap[2][1]-GradMap[2][0]*GradMap[1][1])*invd;
+  J[1][2] = -(GradMap[0][0]*GradMap[2][1]-GradMap[2][0]*GradMap[0][1])*invd;
+  J[2][2] =  (GradMap[0][0]*GradMap[1][1]-GradMap[1][0]*GradMap[0][1])*invd;
 
   PetscInt i,j,k;
 
