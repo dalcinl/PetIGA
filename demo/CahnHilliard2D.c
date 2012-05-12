@@ -1,9 +1,38 @@
 #include "petiga.h"
 
 typedef struct { 
+  IGA iga;
   PetscReal theta,cbar,alpha;
   PetscReal L0,lambda;
 } AppCtx;
+
+#undef __FUNCT__
+#define __FUNCT__ "GinzburgLandauFreeEnergy"
+PetscScalar GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,AppCtx *user)
+{
+  PetscReal E,omc = 1.0-c;
+  E=c*log(c)+omc*log(omc)+2.0*user->theta*c*omc+user->theta/3.0/user->alpha*fabs(cx*cx+cy*cy);
+  return E;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Stats"
+PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+{
+  PetscFunctionBegin;
+  AppCtx *user = (AppCtx *)ctx;
+ 
+  PetscScalar c,c1[3];
+  IGAPointGetValue(p,U,&c); 
+  IGAPointGetGrad(p,U,&c1[0]);
+  PetscScalar diff = c - user->cbar;
+
+  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],user); // Free energy
+  S[1] = diff*diff;                                    // Second moment
+  S[2] = S[1]*diff;                                    // Third moment
+  
+  PetscFunctionReturn(0);
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "Mobility"
@@ -12,6 +41,24 @@ void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M
   if (M)   *M   = c*(1-c);
   if (dM)  *dM  = 1-2*c;
   if (d2M) *d2M = -2;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "StatsMonitor"
+PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  AppCtx *user = (AppCtx *)mctx;
+
+  PetscScalar stats[3] = {0,0,0};
+  ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
+
+  PetscScalar dt;
+  TSGetTimeStep(ts,&dt);
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e %.16e %.16e\n",t,dt,stats[0],stats[1],stats[2]);
+
+  PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
@@ -279,6 +326,10 @@ int main(int argc, char *argv[]) {
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSAlphaSetAdapt(ts,TSAlphaAdaptDefault,PETSC_NULL);CHKERRQ(ierr); 
 
+  if (monitor) {
+    user.iga = iga;
+    ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+  }
   if (output) {
     ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
   }
