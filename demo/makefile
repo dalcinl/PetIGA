@@ -72,6 +72,9 @@ NavierStokesKorteweg2D: NavierStokesKorteweg2D.o chkopts
 NavierStokesVMS: NavierStokesVMS.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+ShallowWater: ShallowWater.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 ClassicalShell: ClassicalShell.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
