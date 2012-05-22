@@ -2,7 +2,14 @@
 #define PETIGAGRID_H
 
 #include <petsc.h>
+
+#if PETSC_VERSION_(3,2,0)
 PETSC_EXTERN_CXX_BEGIN
+#endif
+
+#ifndef PETSC_EXTERN
+#define PETSC_EXTERN extern
+#endif
 
 #ifndef LGMap
 #define LGMap ISLocalToGlobalMapping
@@ -24,29 +31,32 @@ struct _n_IGA_Grid {
   VecScatter g2l,l2g,g2n;
 };
 
-PetscErrorCode IGA_Grid_Create(MPI_Comm,IGA_Grid*);
-PetscErrorCode IGA_Grid_Init(IGA_Grid,
-                             PetscInt,PetscInt,
-                             const PetscInt[],
-                             const PetscInt[],
-                             const PetscInt[],
-                             const PetscInt[],
-                             const PetscInt[]);
-PetscErrorCode IGA_Grid_Reset(IGA_Grid);
-PetscErrorCode IGA_Grid_Destroy(IGA_Grid*);
-PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid,PetscInt,PetscInt*,PetscInt*[]);
-PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid,PetscInt,PetscInt*,PetscInt*[]);
-PetscErrorCode IGA_Grid_SetAOBlock(IGA_Grid,AO);
-PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid,AO*);
-PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
-PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid,LGMap);
-PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
-PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
-PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid,const VecType,Vec*);
-PetscErrorCode IGA_Grid_GetVecLocal (IGA_Grid,const VecType,Vec*);
-PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
-PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
-PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid,VecScatter*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_Create(MPI_Comm,IGA_Grid*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_Init(IGA_Grid,
+                                          PetscInt,PetscInt,
+                                          const PetscInt[],
+                                          const PetscInt[],
+                                          const PetscInt[],
+                                          const PetscInt[],
+                                          const PetscInt[]);
+PETSC_EXTERN PetscErrorCode IGA_Grid_Reset(IGA_Grid);
+PETSC_EXTERN PetscErrorCode IGA_Grid_Destroy(IGA_Grid*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid,PetscInt,PetscInt*,PetscInt*[]);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid,PetscInt,PetscInt*,PetscInt*[]);
+PETSC_EXTERN PetscErrorCode IGA_Grid_SetAOBlock(IGA_Grid,AO);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid,AO*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid,LGMap);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid,const VecType,Vec*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecLocal (IGA_Grid,const VecType,Vec*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid,VecScatter*);
 
-PETSC_EXTERN_CXX_END
+#if PETSC_VERSION_(3,2,0)
+PETSC_EXTERN_CXX_BEGIN
+#endif
+
 #endif/*PETIGAGRID_H*/
