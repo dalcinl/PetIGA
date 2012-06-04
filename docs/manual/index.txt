@@ -2,9 +2,9 @@
 PetIGA
 ======
 
-:Authors:      Nathaniel Collier, Lisandro Dalcin
-:Contact:       nathaniel.collier@gmail.com, dalcinl@gmail.com
-:Organization: KAUST_, CONICET_
+:Authors:      Lisandro Dalcin, Nathaniel Collier
+:Contact:      dalcinl@gmail.com, nathaniel.collier@gmail.com
+:Organization: CONICET_, KAUST_
 :Date:         |today|
 
 .. include:: abstract.txt
