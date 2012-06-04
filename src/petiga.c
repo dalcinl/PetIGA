@@ -3,6 +3,21 @@
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreate"
+/*@
+   IGACreate - Creates the default IGA context.
+   
+   Collective on MPI_Comm
+
+   Input Parameter:
+.  comm - MPI communicator
+
+   Output Parameter:
+.  _iga - location to put the IGA context
+
+   Level: normal
+
+.keywords: IGA, create
+@*/
 PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 {
   PetscInt       i;
@@ -40,6 +55,18 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGADestroy"
+/*@
+   IGADestroy - Destroys the IGA context.
+   
+   Collective on IGA
+
+   Input Parameter:
+.  _iga - context obtained from IGACreate
+
+   Level: normal
+
+.keywords: IGA, destroy
+@*/
 PetscErrorCode IGADestroy(IGA *_iga)
 {
   PetscInt       i;
@@ -201,6 +228,19 @@ PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetDim"
+/*@
+   IGASetDim - Sets the dimension of the parameter space
+   
+   Logically Collective on IGA
+
+   Input Parameters:
+.  iga - the IGA context
+.  dim - the dimension of the parameter space
+
+   Level: normal
+
+.keywords: IGA, dimension
+@*/
 PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
 {
   PetscFunctionBegin;
@@ -227,9 +267,21 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
   PetscFunctionReturn(0);
 }
 
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetSpatialDim"
+/*@
+   IGASetSpatialDim - Sets the dimension of the geometry
+   
+   Logically Collective on IGA
+
+   Input Parameters:
+.  iga - the IGA context
+.  dim - the dimension of the geometry
+
+   Level: normal
+
+.keywords: IGA, dimension
+@*/
 PetscErrorCode IGASetSpatialDim(IGA iga,PetscInt nsd)
 {
   PetscFunctionBegin;
@@ -258,6 +310,19 @@ PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetDof"
+/*@
+   IGASetDof - Sets the number of degrees of freedom per basis
+   
+   Logically Collective on IGA
+
+   Input Parameters:
+.  iga - the IGA context
+.  dof - the number of dofs per basis
+
+   Level: normal
+
+.keywords: IGA, dofs
+@*/
 PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
 {
   PetscFunctionBegin;
@@ -265,7 +330,7 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscValidLogicalCollectiveInt(iga,dof,2);
   if (dof < 1)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Number of DOFs per node must be greather than one, got %D",dof);
+             "Number of DOFs per node must be greater than one, got %D",dof);
   if (iga->dof > 0 && iga->dof != dof)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
@@ -286,6 +351,21 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetFieldName"
+/*@
+   IGASetFieldName - Sets the names of individual field components in
+   multicomponent vectors associated with a IGA.
+   
+   Not Collective
+
+   Input Parameters:
+.  iga - the IGA context
+.  field - the field number associated to a dof of the IGA (0,1,...dof-1)
+.  name - the name of the field
+
+   Level: normal
+
+.keywords: IGA, field, name
+@*/
 PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
 {
   PetscErrorCode ierr;
@@ -361,6 +441,22 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetAxis"
+/*@
+   IGAGetAxis - Returns a pointer to the i^th axis associated with the IGA
+   
+   Not Collective
+
+   Input Parameters:
+.  iga - the IGA context
+.  i - the axis index
+
+   Output Parameter:
+.  axis - the axis context
+
+   Level: normal
+
+.keywords: IGA, axis
+@*/
 PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
 {
   PetscInt dim;
@@ -404,6 +500,30 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetBoundary"
+/*@
+   IGAGetBoundary - Returns a pointer to a specific side of the i^th
+   boundary associated with the IGA.
+   
+   Not Collective
+
+   Input Parameters:
+.  iga - the IGA context
+.  i - the boundary index
+.  side - the side index: 0 (left) or 1 (right)
+
+   Output Parameter:
+.  boundary - the boundary context
+
+   Notes: 
+   A side marker of 0 corresponds to the boundary associated to the
+   minimum knot value of the i^th axis. A side marker of 1 corresponds
+   to the boundary associated to the minimum knot value of the i^th
+   axis.
+
+   Level: normal
+
+.keywords: IGA, boundary
+@*/
 PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary)
 {
   PetscErrorCode ierr;
@@ -469,6 +589,20 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetFromOptions"
+/*@
+   IGASetFromOptions - Call this in your code to allow IGA options to
+   be set from the command line. This routine should be called before
+   IGASetUp().
+
+   Collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
 PetscErrorCode IGASetFromOptions(IGA iga)
 {
   PetscErrorCode ierr;
@@ -732,6 +866,18 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp"
+/*@
+   IGASetUp - Sets up the internal data structures for the later use of the IGA. 
+
+   Collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
 PetscErrorCode IGASetUp(IGA iga)
 {
   PetscInt       i;
