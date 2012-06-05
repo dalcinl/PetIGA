@@ -4,6 +4,38 @@ extern PetscLogEvent IGA_FormSystem;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormSystem"
+/*@
+   IGAFormSystem - Form the matrix and vector which represents the
+   discretized a(w,u)=L(w).
+   
+   Collective on Mat/Vec
+
+   Input Parameters:
++  iga - the IGA context
+.  System - the function which evaluates a(w,u) and L(w)
+-  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+
+   Output Parameters:
++  matA - the matrix obtained from discretization of a(w,u)
+-  vecB - the vector obtained from discretization of L(w)
+
+   Details of System:
+$  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
+
++  p - point at which to evaluate a(w,u)=L(w)
+.  K - contribution to a(w,u)
+.  F - contribution to L(w)
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Notes: 
+   This routine is used to solve a steady, linear problem. It performs
+   matrix/vector assembly standard in FEM. The user provides a routine
+   which evaluates the bilinear form at a point.
+
+   Level: normal
+
+.keywords: IGA, setup linear system, matrix assembly, vector assembly
+@*/
 PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void *ctx)
 {
   IGAElement     element;
@@ -52,6 +84,22 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateKSP"
+/*@
+   IGACreateKSP - Creates a KSP (linear solver) which uses the same
+   communicators as the IGA.
+   
+   Logically collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Output Parameter:
+.  ksp - the KSP
+
+   Level: normal
+
+.keywords: IGA, create, KSP
+@*/
 PetscErrorCode IGACreateKSP(IGA iga, KSP *ksp)
 {
   MPI_Comm       comm;

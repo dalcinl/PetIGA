@@ -4,6 +4,39 @@ extern PetscLogEvent IGA_FormScalar;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormScalar"
+/*@
+   IGAFormScalar - Evaluates a linear functional of a given vector
+   
+   Collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+.  vecU - the vector to be used in computing the scalars
+.  n - the number of scalars being computed
+.  Scalar - the function which represents the linear functional
+-  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+
+   Output Parameter:
+.  S - an array [0:n-1] of scalars produced by Scalar
+
+   Details of Scalar:
+$  PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
+
++  p - point at which to evaluate the functional
+.  U - the vector
+.  n - the number of scalars being computed
+.  S - an array [0:n-1] of scalars 
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Notes: 
+   This function can be used to evaluate linear functionals of the
+   solution. Use this when you wish to compute errors in the energy
+   norm or moments of the solution.
+
+   Level: normal
+
+.keywords: IGA, evaluating linear functional
+@*/
 PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
                              IGAUserScalar Scalar,void *ctx)
 {

@@ -250,6 +250,19 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARead"
+/*@
+   IGARead - reads a IGA which has been saved in binary format
+   
+   Collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+-  filename - the file name which contains the IGA information
+
+   Level: normal
+
+.keywords: IGA, read
+@*/
 PetscErrorCode IGARead(IGA iga,const char filename[])
 {
   MPI_Comm       comm;
@@ -272,6 +285,19 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAWrite"
+/*@
+   IGAWrite - writes a IGA to a file in binary format
+   
+   Collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+-  filename - the file name in which the IGA information is saved
+
+   Level: normal
+
+.keywords: IGA, write
+@*/
 PetscErrorCode IGAWrite(IGA iga,const char filename[])
 {
   MPI_Comm       comm;

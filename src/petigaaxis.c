@@ -86,6 +86,21 @@ PetscErrorCode IGAAxisReference(IGAAxis axis)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisCopy"
+/*@
+   IGAAxisCopy - Copies an axis. axis <-- base
+   
+   Logically Collective on IGAAxis
+
+   Input Parameters:
+.  base - the axis
+
+   Input Parameters:
+.  axis - the copy
+
+   Level: normal
+
+.keywords: IGA, axis, copy
+@*/
 PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
 {
   PetscErrorCode ierr;
@@ -116,6 +131,19 @@ PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *axis)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisSetPeriodic"
+/*@
+   IGAAxisSetPeriodic - Sets the axis periodicity
+   
+   Logically Collective on IGAAxis
+
+   Input Parameters:
++  axis - the IGAAxis context
+-  periodic - TRUE or FALSE
+
+   Level: normal
+
+.keywords: IGA, axis, periodic
+@*/
 PetscErrorCode IGAAxisSetPeriodic(IGAAxis axis,PetscBool periodic)
 {
   PetscFunctionBegin;
@@ -137,13 +165,26 @@ PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisSetDegree"
+/*@
+   IGAAxisSetDegree - Sets the axis degree
+   
+   Logically Collective on IGAAxis
+
+   Input Parameters:
++  axis - the IGAAxis context
+-  p - the polynomial degree
+
+   Level: normal
+
+.keywords: IGA, axis, degree
+@*/
 PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
 {
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (p < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Polynomial degree must be greather than zero, got %D",p);
+             "Polynomial degree must be greater than zero, got %D",p);
   axis->p = p;
   PetscFunctionReturn(0);
 }
@@ -271,6 +312,27 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitUniform"
+/*@
+   IGAAxisInitUniform - Initializes an axis with uniformly spaces knots.
+   
+   Logically Collective on IGAAxis
+
+   Input Parameters:
++  axis - the IGAAxis context
+.  N - the number of equally-spaced, nonzero spans (elements)
+.  Ui - the initial knot value
+.  Uf - the final knot value
+-  C - the global continuity order
+
+   Notes: You must have called IGAAxisSetDegree() prior to this
+   command. Creates a function space which consists of N spans of
+   piecewise polynomials of the degree set with continuity order C at
+   element interfaces.
+
+   Level: normal
+
+.keywords: IGA, axis, initialize, uniform
+@*/
 PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C)
 {
   PetscInt       i,j,k;
@@ -287,7 +349,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
             "Must call IGAAxisSetDegree() first");
   if (N < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Number of elements must be grather than zero, got %D",N);
+             "Number of elements must be greater than zero, got %D",N);
   if (Ui >= Uf)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Initial value %G must be less than final value %G",Ui,Uf);
@@ -368,7 +430,7 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
       if (s > p)
         SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                  "Knot U[%D]=%G has multiplicity %D "
-                 "greather than polynomial degree %D",
+                 "greater than polynomial degree %D",
                  i,U[i],s,p);
     }
   }

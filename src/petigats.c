@@ -368,6 +368,22 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateTS"
+/*@
+   IGACreateTS - Creates a TS (time stepper) which uses the same
+   communicators as the IGA.
+   
+   Logically collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Output Parameter:
+.  ts - the TS
+
+   Level: normal
+
+.keywords: IGA, create, TS
+@*/
 PetscErrorCode IGACreateTS(IGA iga, TS *ts)
 {
   MPI_Comm       comm;

@@ -102,7 +102,7 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
   PetscValidPointer(rule,1);
   if (nqp < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points must be grather than zero, got %D",nqp);
+             "Number of quadrature points must be greater than zero, got %D",nqp);
   ierr = PetscMalloc1(nqp,PetscReal,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,PetscReal,&weight);CHKERRQ(ierr);
   if (GaussLegendreRule(nqp,point,weight) != 0)
@@ -127,7 +127,7 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
   PetscValidPointer(w,4);
   if (q < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points must be grather than zero, got %D",q);
+             "Number of quadrature points must be greater than zero, got %D",q);
   ierr = PetscMalloc1(q,PetscReal,&xx);CHKERRQ(ierr);
   ierr = PetscMalloc1(q,PetscReal,&ww);CHKERRQ(ierr);
   ierr = PetscMemcpy(xx,x,q*sizeof(PetscReal));CHKERRQ(ierr);

@@ -70,6 +70,20 @@ PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABoundarySetValue"
+/*@
+   IGABoundarySetValue - Used to set a constant Dirichlet condition on the given boundary.
+   
+   Logically Collective on IGABoundary
+
+   Input Parameters:
++  boundary - the IGAAxis context
+.  field - the index of the field on which to enforce the condition
+-  value - the value to set
+
+   Level: normal
+
+.keywords: IGA, boundary, Dirichlet
+@*/
 PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value)
 {
   PetscInt dof;

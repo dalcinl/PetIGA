@@ -23,6 +23,23 @@ PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateVec"
+/*@
+   IGACreateVec - Creates a vector with the correct parallel layout
+   required for computing a vector using the discretization
+   information provided in the IGA.
+   
+   Collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Output Parameter:
+.  vec - the vector
+
+   Level: normal
+
+.keywords: IGA, create, vector
+@*/
 PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
 {
   PetscInt       bs,n,N;

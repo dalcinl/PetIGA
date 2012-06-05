@@ -124,6 +124,23 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateMat"
+/*@
+   IGACreateMat - Creates a matrix with the correct parallel layout
+   required for computing a matrix using the discretization
+   information provided in the IGA.
+   
+   Collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Output Parameter:
+.  mat - the matrix with properly allocated nonzero structure
+
+   Level: normal
+
+.keywords: IGA, create, matrix
+@*/
 PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
