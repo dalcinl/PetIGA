@@ -616,43 +616,36 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscInt  nd,degrs[3] = {2,2,2};
     PetscInt  nq,quadr[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
-    PetscInt  ne,elems[3] = {16,16,16}; /* XXX Too coarse for 1D/2D ? */
+    PetscInt  ne,elems[3] = {16,16,16}; 
     PetscReal bbox[3][2]  = {{0,1},{0,1},{0,1}};
 
     char vtype[256] = VECSTANDARD;
     char mtype[256] = MATBAIJ;
     PetscInt dim = iga->dim;
-    PetscInt dof = iga->dof;
 
+    /* Periodicity, degree, and quadrature are initially what they are intially set to */
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
     for (i=0; i<dim; i++) if (iga->axis[i]->p   > 0) degrs[i] = iga->axis[i]->p;
     for (i=0; i<dim; i++) if (iga->rule[i]->nqp > 0) quadr[i] = iga->rule[i]->nqp;
 
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+
+    /* If setup has been called, then many options are not available so skip them. */
     if (iga->setup) goto setupcalled;
     
+    /* Load the geometry */
     char filename[PETSC_MAX_PATH_LEN] = {0};
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
-    if (filename[0] != 0) {ierr = IGARead(iga,filename);CHKERRQ(ierr);}
-    ierr = PetscOptionsInt("-iga_dim","Number of dimensions",   "IGASetDim",iga->dim,&dim,&flg);CHKERRQ(ierr);
-    if (flg) {ierr = IGASetDim(iga,dim);CHKERRQ(ierr);}
-    /* quadrature rule */
-    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
-    if (flg) for (i=0; i<dim; i++) {
-        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
-        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
-      }
-    if (filename[0] != 0) { return 0;}
-    ierr = PetscOptionsInt("-iga_dof","Number of DOFs per node","IGASetDof",iga->dof,&dof,&flg);CHKERRQ(ierr);
-    if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
-    if (iga->dim < 1) dim = 3;
+    if (filename[0] != 0) {ierr = IGARead(iga,filename);CHKERRQ(ierr); goto quadrature;}
+
     /* processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
         PetscInt np = procs[i];
         if (np > 0) {ierr = IGASetProcessors(iga,i,np);CHKERRQ(ierr);}
       }
-    /* parametric axis */
+
+    /* set axis details */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscBool w = (i<nw) ? wraps[i] : wraps[0]; if (nw==0) w = PETSC_TRUE;
@@ -666,20 +659,24 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
-    if (flg) {
-      for (i=0; i<dim; i++) {
-        PetscInt p = iga->axis[i]->p; if (p > 1) continue;
-        p = (degrs[i] > 0) ? degrs[i] : 2; /* XXX Default degree? */
-        ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
-      }
-      for (i=0; i<dim; i++) {
-        PetscInt C = (i<nc) ? conts[i] : conts[0];
-        PetscInt N = (i<ne) ? elems[i] : elems[0];
-        PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
-        ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
-      }
+
+    for (i=0; i<dim; i++) {
+      PetscInt p = iga->axis[i]->p;
+      if (p < 1) { ierr = IGAAxisSetDegree(iga->axis[i],degrs[i]);CHKERRQ(ierr); }
+      PetscInt C = (i<nc) ? conts[i] : conts[0];
+      PetscInt N = (i<ne) ? elems[i] : elems[0];
+      PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
+      ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
     }
    
+  quadrature:
+    /* Set quadrature rule */
+    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
+        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+      }
+
   setupcalled:
     /* */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}

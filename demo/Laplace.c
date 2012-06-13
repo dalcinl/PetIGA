@@ -1,8 +1,8 @@
 #include "petiga.h"
 
 #undef  __FUNCT__
-#define __FUNCT__ "System"
-PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+#define __FUNCT__ "SystemLaplace"
+PetscErrorCode SystemLaplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,&nen,0,&dim);
@@ -18,14 +18,38 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
         Kab += N1[a*dim+i]*N1[b*dim+i];
       K[a*nen+b] = Kab;
     }
-    F[a] = 0.0;
   }
   return 0;
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "SystemPoisson"
+PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
+  PetscInt nen,dim;
+  IGAPointGetSizes(p,&nen,0,&dim);
+
+  const PetscReal *N;
+  IGAPointGetShapeFuns(p,0,&N);
+  const PetscReal *N1;
+  IGAPointGetShapeFuns(p,1,&N1);
+
+  PetscInt a,b,i;
+  for (a=0; a<nen; a++) {
+    for (b=0; b<nen; b++) {
+      PetscScalar Kab = 0.0;
+      for (i=0; i<dim; i++)
+        Kab += N1[a*dim+i]*N1[b*dim+i];
+      K[a*nen+b] = Kab;
+    }
+    F[a] = 1.0*N[a];
+  }
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "ErrorLaplace"
+PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscScalar u;
   IGAPointGetValue(p,U,&u);
@@ -38,51 +62,92 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
+  /*
+    This code solves the Laplace problem in one of the following ways:
+    
+    1) On the parametric unit domain [0,1]^dim (default)
+    
+      To solve on the parametric domain, do not specify a geometry
+      file. You may change the discretization by altering the
+      dimension of the space (-dim), the number of uniform elements in
+      each direction (-iga_elements), the polynomial order
+      (-iga_degree), and the continuity (-iga_continuity). Note that
+      the boundary conditions for this problem are such that the
+      solution is always u(x)=1 (unit Dirichlet on the left side and
+      free Neumann on the right). The error in the solution may be
+      computed by using the -print_error command.
+
+    2) On a geometry
+
+      If a geometry file is specified (-iga_geometry), then the code
+      will solve the Poisson problem on this geometry. The forcing is
+      set to 1 and we have 0 Dirichlet conditions everywhere. We use
+      this mode to test geometries as the solution should display the
+      same symmetry as the geometry. The discretization will be what
+      is read in from the geometry and is not editable from the
+      commandline.
+
+   */
+
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  PetscInt  i;
-  PetscInt  dim = 3;
-  PetscInt  dof = 1;
-  PetscInt  N[3] = {16,16,16};
-  PetscInt  p[3] = { 2, 2, 2};
-  PetscInt  C[3] = {-1,-1,-1};
-  PetscInt  n1=3, n2=3, n3=3;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,PETSC_NULL);CHKERRQ(ierr);
-  n1 = n2 = n3 = dim;
-  ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&n1,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-p","polynomial order",       __FILE__,p,&n2,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-C","global continuity order",__FILE__,C,&n3,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (n1<3) N[2] = N[0]; if (n1<2) N[1] = N[0];
-  if (n2<3) p[2] = p[0]; if (n2<2) p[1] = p[0];
-  if (n3<3) C[2] = C[0]; if (n3<2) C[1] = C[0];
-  for (i=0; i<dim; i++)  if (C[i] ==-1) C[i] = p[i] - 1;
+  // Setup options
+
+  PetscInt  i; 
+  PetscInt  dim = 3; 
+  PetscBool print_error = PETSC_FALSE; 
+  PetscBool draw = PETSC_FALSE; 
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr); 
+  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsEnd();CHKERRQ(ierr); 
+
+  // Initialize the discretization
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
+  ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
-  ierr = IGASetDof(iga,dof);CHKERRQ(ierr);
-  for (i=0; i<dim; i++) {
-    IGAAxis axis;
-    ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-    ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
-    ierr = IGAAxisInitUniform(axis,N[i],0.0,1.0,C[i]);CHKERRQ(ierr);
-    IGABoundary bnd;
-    ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
-  }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  ierr = IGAView(iga,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
+
+  // Set boundary conditions
+
+  if (iga->geometry) {
+    for(i=0; i<dim; i++) {
+      IGABoundary bnd;
+      ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+      ierr = IGAGetBoundary(iga,i,1,&bnd);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+    }
+  }else{
+    for (i=0; i<dim; i++) {
+      IGABoundary bnd;
+      ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
+    }
+  }
+  
+  // Assemble
 
   Mat A;
   Vec x,b;
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGAFormSystem(iga,A,b,System,PETSC_NULL);CHKERRQ(ierr);
+  if (iga->geometry){
+    ierr = IGAFormSystem(iga,A,b,SystemPoisson,PETSC_NULL);CHKERRQ(ierr);
+  }else{
+    ierr = IGAFormSystem(iga,A,b,SystemLaplace,PETSC_NULL);CHKERRQ(ierr);
+  }
   ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
+
+  // Solve
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
@@ -90,16 +155,28 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
-  PetscBool print_error = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(0,"-print_error",&print_error,0);CHKERRQ(ierr);
-  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+  // Various post-processing options
 
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
+  if (iga->geometry) {
+    MPI_Comm        comm;
+    PetscViewer     viewer;
+    ierr = PetscObjectGetComm((PetscObject)x,&comm);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryOpen(comm,"solution.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+    ierr = VecView(x,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  }
+
+  if (print_error && !iga->geometry) {
+    PetscScalar error = 0;
+    ierr = IGAFormScalar(iga,x,1,&error,ErrorLaplace,PETSC_NULL);CHKERRQ(ierr);
+    error = PetscSqrtReal(PetscRealPart(error));
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);
+  }
+
   if (draw && dim <= 2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+
+  // Cleanup
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
