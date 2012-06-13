@@ -8,7 +8,8 @@ TARGETS = InputOutput \
           PatternFormation \
           CahnHilliard2D \
           CahnHilliard3D \
-          NavierStokesVMS
+          NavierStokesVMS \
+	  Elasticity3D
 ALL: ${TARGETS}
 clean::
 	-@${RM} ${TARGETS}
@@ -76,6 +77,9 @@ ShallowWater: ShallowWater.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 ClassicalShell: ClassicalShell.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+Elasticity3D: Elasticity3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 
