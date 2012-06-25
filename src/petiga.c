@@ -632,11 +632,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* If setup has been called, then many options are not available so skip them. */
     if (iga->setup) goto setupcalled;
-    
-    /* Load the geometry */
-    char filename[PETSC_MAX_PATH_LEN] = {0};
-    ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
-    if (filename[0] != 0) {ierr = IGARead(iga,filename);CHKERRQ(ierr); goto quadrature;}
 
     /* processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
@@ -668,8 +663,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
       ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
     }
-   
-  quadrature:
+
+    /* Load the geometry */
+    char filename[PETSC_MAX_PATH_LEN] = {0};
+    ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
+    if (filename[0] != 0) {ierr = IGARead(iga,filename);CHKERRQ(ierr);}
+
     /* Set quadrature rule */
     ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
