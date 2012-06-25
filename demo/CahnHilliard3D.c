@@ -276,65 +276,40 @@ int main(int argc, char *argv[]) {
   user.theta = 1.5;    /* temperature/critical temperature */
   user.L0    = 1.0;    /* length scale */
 
-  /* Set discretization options */
-  PetscInt N=64, p=2, C=PETSC_DECIDE;
   PetscBool output = PETSC_FALSE; 
   PetscBool monitor = PETSC_FALSE; 
   char initial[PETSC_MAX_PATH_LEN] = {0};
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard2D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard3D Options","CH3D");CHKERRQ(ierr);
   ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-ch_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-ch_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-ch_cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-ch_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (C == PETSC_DECIDE) C = p-1;
-
-  user.lambda = 1.0/N/N; /* mesh size parameter */
-  
-  if (p < 2 || C < 1) /* Problem requires a p>=2 C1 basis */
-    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Problem requires minimum of p = 2 and C = 1");
-  if (p <= C)         /* Check C < p */
-    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Discretization inconsistent: polynomial order must be greater than degree of continuity");
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,3);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  IGAAxis axis0;
-  ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisSetPeriodic(axis0,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis0,p);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,N,0.0,1.0,C);CHKERRQ(ierr);
-  IGAAxis axis1;
-  ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis0,axis1);CHKERRQ(ierr);
-  IGAAxis axis2;
-  ierr = IGAGetAxis(iga,2,&axis2);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis0,axis2);CHKERRQ(ierr);
+  user.lambda = 1.0/iga->elem_sizes[0]/iga->elem_sizes[1]/iga->elem_sizes[2]; /* mesh size parameter */
 
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
-
-  ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-10);CHKERRQ(ierr);
-
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSAlphaSetAdapt(ts,TSAlphaAdaptDefault,PETSC_NULL);CHKERRQ(ierr); 
 
   if (monitor) {
     user.iga = iga;
+    PetscPrintf(PETSC_COMM_WORLD,"#Time                  Free Energy            Second moment          Third moment\n");
     ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
   }
   if (output) {
