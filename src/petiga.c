@@ -5,7 +5,7 @@
 #define __FUNCT__ "IGACreate"
 /*@
    IGACreate - Creates the default IGA context.
-   
+
    Collective on MPI_Comm
 
    Input Parameter:
@@ -57,7 +57,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 #define __FUNCT__ "IGADestroy"
 /*@
    IGADestroy - Destroys the IGA context.
-   
+
    Collective on IGA
 
    Input Parameter:
@@ -230,7 +230,7 @@ PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
 #define __FUNCT__ "IGASetDim"
 /*@
    IGASetDim - Sets the dimension of the parameter space
-   
+
    Logically Collective on IGA
 
    Input Parameters:
@@ -271,7 +271,7 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
 #define __FUNCT__ "IGASetSpatialDim"
 /*@
    IGASetSpatialDim - Sets the dimension of the geometry
-   
+
    Logically Collective on IGA
 
    Input Parameters:
@@ -312,7 +312,7 @@ PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd)
 #define __FUNCT__ "IGASetDof"
 /*@
    IGASetDof - Sets the number of degrees of freedom per basis
-   
+
    Logically Collective on IGA
 
    Input Parameters:
@@ -354,7 +354,7 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 /*@
    IGASetFieldName - Sets the names of individual field components in
    multicomponent vectors associated with a IGA.
-   
+
    Not Collective
 
    Input Parameters:
@@ -443,7 +443,7 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 #define __FUNCT__ "IGAGetAxis"
 /*@
    IGAGetAxis - Returns a pointer to the i^th axis associated with the IGA
-   
+
    Not Collective
 
    Input Parameters:
@@ -503,7 +503,7 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
 /*@
    IGAGetBoundary - Returns a pointer to a specific side of the i^th
    boundary associated with the IGA.
-   
+
    Not Collective
 
    Input Parameters:
@@ -514,7 +514,7 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
    Output Parameter:
 .  boundary - the boundary context
 
-   Notes: 
+   Notes:
    A side marker of 0 corresponds to the boundary associated to the
    minimum knot value of the i^th axis. A side marker of 1 corresponds
    to the boundary associated to the maximum knot value of the i^th
@@ -616,12 +616,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscInt  nd,degrs[3] = {2,2,2};
     PetscInt  nq,quadr[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
-    PetscInt  ne,elems[3] = {16,16,16}; 
+    PetscInt  ne,elems[3] = {16,16,16};
     PetscReal bbox[3][2]  = {{0,1},{0,1},{0,1}};
-
-    char vtype[256] = VECSTANDARD;
-    char mtype[256] = MATBAIJ;
-    PetscInt dim = iga->dim;
+    char      filename[PETSC_MAX_PATH_LEN] = {0};
+    char      vtype[256] = VECSTANDARD;
+    char      mtype[256] = MATBAIJ;
+    PetscInt  dim = iga->dim;
 
     /* Periodicity, degree, and quadrature are initially what they are intially set to */
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
@@ -633,43 +633,49 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* If setup has been called, then many options are not available so skip them. */
     if (iga->setup) goto setupcalled;
 
-    /* processor grid */
+    /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
         PetscInt np = procs[i];
         if (np > 0) {ierr = IGASetProcessors(iga,i,np);CHKERRQ(ierr);}
       }
 
-    /* set axis details */
+    /* Periodicity */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-        PetscBool w = (i<nw) ? wraps[i] : wraps[0]; if (nw==0) w = PETSC_TRUE;
+        PetscBool w = (i<nw) ? wraps[i] : wraps[0];
+        if (nw == 0) w = PETSC_TRUE;
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
-    ierr = PetscOptionsIntArray("-iga_degree","Polynomial degree","IGAAxisSetDegree",degrs,(nd=dim,&nd),&flg);CHKERRQ(ierr);
-    if (flg) for (i=0; i<dim; i++) {
-        PetscInt p = (i<nd) ? degrs[i] : degrs[0];
-        if(p > 1) {ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);}
-      }
-    ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
 
-    for (i=0; i<dim; i++) {
-      PetscInt p = iga->axis[i]->p;
-      if (p < 1) { ierr = IGAAxisSetDegree(iga->axis[i],degrs[i]);CHKERRQ(ierr); }
-      PetscInt C = (i<nc) ? conts[i] : conts[0];
-      PetscInt N = (i<ne) ? elems[i] : elems[0];
-      PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
-      ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
+    /* Geometry */
+    ierr = PetscOptionsString   ("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
+    if (flg) { /* load from file */
+      ierr = IGARead(iga,filename);CHKERRQ(ierr);
+      ierr = PetscOptionsReject("-iga_degree",    PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsReject("-iga_limits",    PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsReject("-iga_continuity",PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsReject("-iga_elements",  PETSC_NULL);CHKERRQ(ierr);
+    } else { /* set axis details */
+      ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),PETSC_NULL);CHKERRQ(ierr);
+      for (i=0; i<dim; i++) {
+        PetscBool  w = iga->axis[i]->periodic;
+        PetscInt   p = (i<nd) ? degrs[i] : degrs[0];
+        PetscInt   C = (i<nc) ? conts[i] : conts[0];
+        PetscInt   N = (i<ne) ? elems[i] : elems[0];
+        PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
+        if (p < 1) p = iga->axis[i]->p; if (p < 1) p = 2;
+        ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
+        ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
+        ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
+        ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
+      }
     }
 
-    /* Load the geometry */
-    char filename[PETSC_MAX_PATH_LEN] = {0};
-    ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
-    if (filename[0] != 0) {ierr = IGARead(iga,filename);CHKERRQ(ierr);}
-
-    /* Set quadrature rule */
+    /* Quadrature rule */
     ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
@@ -677,7 +683,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
 
   setupcalled:
-    /* */
+    /* Matrix and Vector type */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
     if (iga->mattype)  {ierr = PetscStrncpy(mtype,iga->mattype,sizeof(mtype));CHKERRQ(ierr);}
@@ -685,11 +691,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
     ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
-    /* */
+    /* View options, handled in IGASetUp() */
     ierr = PetscOptionsName("-iga_view",         "Information on IGA context",       "IGAView",PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_info",    "Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_detailed","Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_binary",  "Save to file in binary format",    "IGAView",PETSC_NULL);CHKERRQ(ierr);
+
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
   }
@@ -823,7 +830,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm_geom)
 /*@
    IGACreateNodeDM - Creates a DM using the distributed pattern of the
    nodes of the IGA.
-   
+
    Collective on IGA
 
    Input Parameters:
@@ -893,7 +900,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node)
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp"
 /*@
-   IGASetUp - Sets up the internal data structures for the later use of the IGA. 
+   IGASetUp - Sets up the internal data structures for the later use of the IGA.
 
    Collective on IGA
 
@@ -1235,7 +1242,7 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
 .  U - state vector
 .  R - function vector
 -  ctx - [optional] user-defined context for evaluation routine
-   
+
    Level: normal
 
 .keywords: IGA, options
@@ -1271,13 +1278,13 @@ $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method 
+.  shift - positive parameter which depends on the time integration method
 .  V - time derivative of the state vector
 .  t - time at step/stage being solved
 .  U - state vector
 .  J - Jacobian matrix
 -  ctx - [optional] user-defined context for evaluation routine
-   
+
    Level: normal
 
 .keywords: IGA, options
@@ -1321,7 +1328,7 @@ $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
 .  U0 - state vector at t0
 .  R - function vector
 -  ctx - [optional] user-defined context for evaluation routine
-   
+
    Level: normal
 
 .keywords: IGA, options
@@ -1358,7 +1365,7 @@ $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method 
+.  shift - positive parameter which depends on the time integration method
 .  V0 - time derivative of the state vector at t0
 .  t1 - time at step/stage being solved
 .  U1 - state vector at t1
@@ -1366,7 +1373,7 @@ $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
 .  U0 - state vector at t0
 .  J - Jacobian matrix
 -  ctx - [optional] user-defined context for evaluation routine
-   
+
    Level: normal
 
 .keywords: IGA, options
