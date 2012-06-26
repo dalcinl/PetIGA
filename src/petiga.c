@@ -41,7 +41,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   iga->dof = -1;
 
   for (i=0; i<3; i++) {
-    ierr = IGAAxisCreate(&iga->axis[i] );CHKERRQ(ierr);
+    ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][0]);CHKERRQ(ierr);
