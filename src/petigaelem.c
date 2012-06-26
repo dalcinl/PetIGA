@@ -371,8 +371,8 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
     PetscBool onboundary = PETSC_FALSE;
     PetscInt i,dim = element->dim;
     for (i=0; i<dim; i++) {
-      PetscInt e = BD[i]->nel-1;
-      PetscInt n = BD[i]->nnp-1;
+      PetscInt e = AX[i]->nel-1;
+      PetscInt n = AX[i]->nnp-1;
       if (AX[i]->periodic) continue;
       if (ID[i] == 0) { A0[i] = 0; onboundary = PETSC_TRUE; }
       if (ID[i] == e) { A1[i] = n; onboundary = PETSC_TRUE; }

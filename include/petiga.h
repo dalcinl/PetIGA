@@ -79,7 +79,6 @@ PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x
 struct _n_IGABasis {
   PetscInt refct;
   /**/
-  PetscInt  nnp;      /* number of global basis functions */
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
