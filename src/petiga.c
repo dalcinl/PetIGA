@@ -442,7 +442,7 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetAxis"
 /*@
-   IGAGetAxis - Returns a pointer to the i^th axis associated with the IGA
+   IGAGetAxis - Returns a pointer to the i^th parametric axis associated with the IGA
 
    Not Collective
 
@@ -470,6 +470,22 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
   PetscFunctionReturn(0);
 }
 
+/*@
+   IGAGetRule - Returns a pointer to the i^th quadrature rule associated with the IGA
+
+   Not Collective
+
+   Input Parameters:
++  iga - the IGA context
+-  i - the axis index
+
+   Output Parameter:
+.  rule - the quadrature rule context
+
+   Level: normal
+
+.keywords: IGA, quadrature rule
+@*/
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetRule"
 PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
@@ -481,20 +497,6 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
   if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
   if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
   *rule = iga->rule[i];
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetBasis"
-PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(basis,3);
-  if (iga->dim <= 0) SETERRQ (((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
-  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
-  *basis = iga->basis[i];
   PetscFunctionReturn(0);
 }
 
@@ -540,6 +542,20 @@ PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boun
     ierr = IGABoundaryInit(iga->boundary[i][side],iga->dof);CHKERRQ(ierr);
   }
   *boundary = iga->boundary[i][side];
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetBasis"
+PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(basis,3);
+  IGACheckSetUp(iga,1);
+  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
+  *basis = iga->basis[i];
   PetscFunctionReturn(0);
 }
 
