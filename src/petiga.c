@@ -942,7 +942,6 @@ PetscErrorCode IGASetUp(IGA iga)
   for (i=iga->dim; i<3; i++) {
     ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
-    ierr = IGABasisReset(iga->basis[i]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
