@@ -738,6 +738,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   if (size == 1 || dim == 1)
     for (i=0; i<dim; i++)
       {ierr = MPI_Comm_dup(comm,&subcomms[i]);CHKERRQ(ierr);}
+#ifndef PETSC_HAVE_MPIUNI
   else {
     MPI_Comm    cartcomm;
     PetscMPIInt i,ndims,dims[3],periods[3]={0,0,0},reorder=0;
@@ -751,6 +752,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
     }
     ierr = MPI_Comm_free(&cartcomm);CHKERRQ(ierr);
   }
+#endif /*PETSC_HAVE_MPIUNI*/
   PetscFunctionReturn(0);
 }
 
