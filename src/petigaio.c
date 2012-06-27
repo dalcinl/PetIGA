@@ -75,6 +75,9 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
   ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
+  if (dim < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+            "Must call IGASetSpatialDim() first");
   {
     MPI_Comm comm = ((PetscObject)iga)->comm;
     PetscInt bs      = dim+1;
@@ -131,12 +134,13 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     PetscReal *X,*W;
     ierr = VecGetSize(iga->vec_geom,&n);CHKERRQ(ierr);
     ierr = VecGetBlockSize(iga->vec_geom,&bs);CHKERRQ(ierr);
-    ierr = VecGetArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
     nnp = n / bs; dim = bs - 1;
+    ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
+    ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
     ierr = PetscMalloc1(nnp*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
     ierr = PetscMalloc1(nnp,    PetscReal,&iga->geometryW);CHKERRQ(ierr);
-    X = iga->geometryX;
-    W = iga->geometryW;
+    X = iga->geometryX; W = iga->geometryW;
+    ierr = VecGetArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<nnp; a++) {
       for (i=0; i<dim; i++)
         X[i+a*dim] = PetscRealPart(Xw[pos++]);
