@@ -664,6 +664,13 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
 
+    /* Quadrature */
+    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
+        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+      }
+
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
@@ -692,13 +699,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         }
       }
     }
-
-    /* Quadrature rule */
-    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
-    if (flg) for (i=0; i<dim; i++) {
-        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
-        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
-      }
 
   setupcalled:
     /* Matrix and Vector type */
