@@ -39,6 +39,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 
   iga->dim = -1;
   iga->dof = -1;
+  iga->order = -1;
 
   for (i=0; i<3; i++) {
     ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);
@@ -940,54 +941,19 @@ PetscErrorCode IGASetUp(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (iga->setup) PetscFunctionReturn(0);
 
+  /* --- Stage 1 --- */
+
   if (iga->dim < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
-
-  if (iga->dof < 1)
-    iga->dof = 1;  /* XXX Error ? */
-
   if (iga->nsd < 1) /* XXX */
     iga->nsd = iga->dim;
 
-  for (i=0; i<iga->dim; i++) {
-    ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);
-    if (iga->rule[i]->nqp < 1) {
-      PetscInt p = iga->axis[i]->p;
-      PetscInt q = p + 1;
-      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
-    }
-  }
-
-  for (i=iga->dim; i<3; i++) {
-    ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
-    ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
-    ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
-    ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
-  }
-
-  { /* */
-    PetscInt order = 0;
-    for (i=0; i<iga->dim; i++) {
-      PetscInt p = iga->axis[i]->p;
-      order = PetscMax(order,p);
-    }
-    order = PetscMin(order,3); /* XXX */
-    order = PetscMax(order,1); /* XXX */
-    iga->order = order;
-  }
-
-  if (!iga->vectype) {
-    const MatType vtype = VECSTANDARD;
-    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
-  }
-  if (!iga->mattype) {
-    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
-  }
-
+  for (i=0; i<iga->dim; i++)
+    {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
+  for (i=iga->dim; i<3; i++)
+    {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
   iga->setup = PETSC_TRUE;
-
   ierr = IGACreateElemDM(iga,1,&dm_elem);CHKERRQ(ierr);
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
@@ -1026,7 +992,6 @@ PetscErrorCode IGASetUp(IGA iga)
   }
   ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
   { /* node partitioning */
-    IGAAxis  *AX = iga->axis;
     PetscInt *elem_start  = iga->elem_start;
     PetscInt *elem_width  = iga->elem_width;
     PetscInt *node_sizes  = iga->node_sizes;
@@ -1035,11 +1000,11 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *node_gstart = iga->node_gstart;
     PetscInt *node_gwidth = iga->node_gwidth;
     for (i=0; i<iga->dim; i++) {
-      PetscBool wrap = AX[i]->periodic;
-      PetscInt nel = AX[i]->nel;
-      PetscInt nnp = AX[i]->nnp;
-      PetscInt p = AX[i]->p;
-      PetscInt *span = AX[i]->span;
+      PetscBool wrap = iga->axis[i]->periodic;
+      PetscInt nel = iga->axis[i]->nel;
+      PetscInt nnp = iga->axis[i]->nnp;
+      PetscInt p = iga->axis[i]->p;
+      PetscInt *span = iga->axis[i]->span;
       PetscInt efirst = elem_start[i];
       PetscInt elast  = elem_start[i] + elem_width[i] - 1;
       PetscInt nfirst = 0, nlast = nnp - 1;
@@ -1089,19 +1054,18 @@ PetscErrorCode IGASetUp(IGA iga)
     }
   }
 
-  /* */
-  ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_node);CHKERRQ(ierr);
-  if (iga->fieldname)
-    for (i=0; i<iga->dof; i++)
-      {ierr = DMDASetFieldName(iga->dm_node,i,iga->fieldname[i]);CHKERRQ(ierr);}
+  /* --- Stage 2 --- */
+
+  if (iga->dof < 1) 
+    iga->dof = 1;  /* XXX Error ? */
   {
     IGA_Grid grid;
+    /* create the grid context */
     ierr = IGA_Grid_Create(((PetscObject)iga)->comm,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_Init(grid,
                          iga->dim,iga->dof,iga->node_sizes,
                          iga->node_lstart,iga->node_lwidth,
                          iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
-
     /* build the block application ordering */
     ierr = IGA_Grid_GetAOBlock(grid,&iga->aob);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->aob);CHKERRQ(ierr);
@@ -1115,17 +1079,53 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = PetscObjectReference((PetscObject)iga->g2l);CHKERRQ(ierr);
     ierr = IGA_Grid_GetScatterL2G(grid,&iga->l2g);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->l2g);CHKERRQ(ierr);
-
+    /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
+  ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_node);CHKERRQ(ierr);
+  if (iga->fieldname)
+    for (i=0; i<iga->dof; i++)
+      {ierr = DMDASetFieldName(iga->dm_node,i,iga->fieldname[i]);CHKERRQ(ierr);}
 
-  for (i=0; i<3; i++) {
-    ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+  /* --- Stage 3 --- */
+
+  for (i=iga->dim; i<3; i++) {
+    ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
+    ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
+    ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
+    ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
+
+  if (iga->order < 0) {
+    PetscInt order = 0;
+    for (i=0; i<iga->dim; i++)
+      order = PetscMax(order,iga->axis[i]->p);
+    order = PetscMin(order,3); /* XXX */
+    order = PetscMax(order,1); /* XXX */
+    iga->order = order;
+  }
+  for (i=0; i<3; i++)
+    if (iga->rule[i]->nqp < 1) {
+      PetscInt q = iga->axis[i]->p + 1;
+      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
+    }
+  for (i=0; i<3; i++) 
+    {ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);}
   iga->iterator->parent = iga;
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
 
-  { /* */
+  if (!iga->vectype) {
+    const MatType vtype = VECSTANDARD;
+    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
+  }
+  if (!iga->mattype) {
+    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
+    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
+  }
+
+  /* --- Stage 4 --- */
+
+  {
     PetscBool flg1,flg2,info=PETSC_FALSE;
     char filename1[PETSC_MAX_PATH_LEN] = "";
     char filename2[PETSC_MAX_PATH_LEN] = "";
