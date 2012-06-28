@@ -80,15 +80,16 @@ struct _n_IGABasis {
   PetscInt refct;
   /**/
   PetscInt  nel;      /* number of elements */
+  PetscInt  nnp;      /* number of basis functions */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
   PetscInt  p,d;      /* polynomial order, last derivative index */
 
-  PetscInt  *offset;  /* [nel] basis offset */
-  PetscReal *detJ;    /* [nel]              */
-  PetscReal *weight;  /* [nqp]              */
-  PetscReal *point;   /* [nel][nqp]         */
-  PetscReal *value;   /* [nel][nqp][nen][d] */
+  PetscInt  *offset;  /* [nel] basis offset   */
+  PetscReal *detJ;    /* [nel]                */
+  PetscReal *weight;  /* [nqp]                */
+  PetscReal *point;   /* [nel][nqp]           */
+  PetscReal *value;   /* [nel][nqp][nen][d+1] */
 };
 PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);

@@ -994,21 +994,19 @@ PetscErrorCode IGASetUp(IGA iga)
   }
   ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
   { /* node partitioning */
-    PetscInt *elem_start  = iga->elem_start;
-    PetscInt *elem_width  = iga->elem_width;
     PetscInt *node_sizes  = iga->node_sizes;
     PetscInt *node_lstart = iga->node_lstart;
     PetscInt *node_lwidth = iga->node_lwidth;
     PetscInt *node_gstart = iga->node_gstart;
     PetscInt *node_gwidth = iga->node_gwidth;
     for (i=0; i<iga->dim; i++) {
-      PetscBool wrap = iga->axis[i]->periodic;
-      PetscInt nel = iga->axis[i]->nel;
-      PetscInt nnp = iga->axis[i]->nnp;
+      PetscInt nel    = iga->elem_sizes[i];
+      PetscInt efirst = iga->elem_start[i];
+      PetscInt elast  = iga->elem_start[i] + iga->elem_width[i] - 1;
       PetscInt p = iga->axis[i]->p;
+      PetscInt nnp = iga->axis[i]->nnp;
+      PetscBool wrap = iga->axis[i]->periodic;
       PetscInt *span = iga->axis[i]->span;
-      PetscInt efirst = elem_start[i];
-      PetscInt elast  = elem_start[i] + elem_width[i] - 1;
       PetscInt nfirst = 0, nlast = nnp - 1;
       PetscInt mid = wrap ? 0 : p/2; /* XXX Is this optimal? */
       if (efirst > 0     ) nfirst = span[efirst-1] - p + mid + 1;

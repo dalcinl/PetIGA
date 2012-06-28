@@ -37,6 +37,7 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   if (!basis) PetscFunctionReturn(0);
   PetscValidPointer(basis,1);
   basis->nel = 0;
+  basis->nnp = 0;
   basis->nqp = 0;
   basis->nen = 0;
   basis->p   = 0;
@@ -67,7 +68,7 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInit"
 PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p;
+  PetscInt       p,nnp;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
@@ -94,6 +95,7 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   W   = rule->weight;
 
   nel  = axis->nel;
+  nnp  = axis->nnp;
   span = axis->span;
   nen  = p+1;
   ndr  = d+1;
@@ -124,6 +126,7 @@ PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
 
   basis->nel    = nel;
+  basis->nnp    = nnp;
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->p      = p;

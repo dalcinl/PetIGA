@@ -88,7 +88,7 @@ PetscErrorCode IGAAxisReference(IGAAxis axis)
 #define __FUNCT__ "IGAAxisCopy"
 /*@
    IGAAxisCopy - Copies an axis. axis <-- base
-   
+
    Logically Collective on IGAAxis
 
    Input Parameters:
@@ -133,7 +133,7 @@ PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *axis)
 #define __FUNCT__ "IGAAxisSetPeriodic"
 /*@
    IGAAxisSetPeriodic - Sets the axis periodicity
-   
+
    Logically Collective on IGAAxis
 
    Input Parameters:
@@ -167,7 +167,7 @@ PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
 #define __FUNCT__ "IGAAxisSetDegree"
 /*@
    IGAAxisSetDegree - Sets the axis degree
-   
+
    Logically Collective on IGAAxis
 
    Input Parameters:
@@ -232,6 +232,9 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[])
     axis->U = V;
   }
   if (U) { ierr = PetscMemcpy(axis->U,U,(m+1)*sizeof(PetscReal));CHKERRQ(ierr); }
+
+  axis->nel = axis->nnp = 0;
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -307,6 +310,9 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
     }
   }
 
+  axis->nel = axis->nnp = 0;
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -314,7 +320,7 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt
 #define __FUNCT__ "IGAAxisInitUniform"
 /*@
    IGAAxisInitUniform - Initializes an axis with uniformly spaces knots.
-   
+
    Logically Collective on IGAAxis
 
    Input Parameters:
@@ -385,6 +391,9 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
     }
   }
 
+  axis->nel = axis->nnp = 0;
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -436,7 +445,9 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   }
 #endif
 
+  axis->nel = axis->nnp = 0;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
+
   axis->nel = IGA_SpanCount(n,p,U);
   ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
   IGA_SpanIndex(n,p,U,axis->span);

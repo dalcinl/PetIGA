@@ -363,17 +363,17 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
-    IGAAxis  *AX = element->parent->axis;
-    IGABasis *BD = element->parent->basis;
+    IGA      iga = element->parent;
+    IGABasis *BD = iga->basis;
     PetscInt *ID = element->ID;
     PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
     PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
     PetscBool onboundary = PETSC_FALSE;
     PetscInt i,dim = element->dim;
     for (i=0; i<dim; i++) {
-      PetscInt e = AX[i]->nel-1;
-      PetscInt n = AX[i]->nnp-1;
-      if (AX[i]->periodic) continue;
+      PetscInt e = BD[i]->nel-1; /* last element */
+      PetscInt n = BD[i]->nnp-1; /* last node */
+      if (iga->axis[i]->periodic) continue; /* XXX */
       if (ID[i] == 0) { A0[i] = 0; onboundary = PETSC_TRUE; }
       if (ID[i] == e) { A1[i] = n; onboundary = PETSC_TRUE; }
     }
