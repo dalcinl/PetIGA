@@ -948,8 +948,8 @@ PetscErrorCode IGASetUp(IGA iga)
   if (iga->dim < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
-  if (iga->nsd < 1) /* XXX */
-    iga->nsd = iga->dim;
+
+  if (iga->nsd < 1) iga->nsd = iga->dim; /* XXX */
 
   for (i=0; i<iga->dim; i++)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
@@ -1058,8 +1058,7 @@ PetscErrorCode IGASetUp(IGA iga)
 
   /* --- Stage 2 --- */
 
-  if (iga->dof < 1) 
-    iga->dof = 1;  /* XXX Error ? */
+  if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
   {
     IGA_Grid grid;
     /* create the grid context */
@@ -1084,10 +1083,20 @@ PetscErrorCode IGASetUp(IGA iga)
     /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
+
   ierr = IGACreateNodeDM(iga,iga->dof,&iga->dm_node);CHKERRQ(ierr);
   if (iga->fieldname)
     for (i=0; i<iga->dof; i++)
       {ierr = DMDASetFieldName(iga->dm_node,i,iga->fieldname[i]);CHKERRQ(ierr);}
+
+  if (!iga->vectype) {
+    const MatType vtype = VECSTANDARD;
+    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
+  }
+  if (!iga->mattype) {
+    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
+    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
+  }
 
   /* --- Stage 3 --- */
 
@@ -1111,19 +1120,10 @@ PetscErrorCode IGASetUp(IGA iga)
       PetscInt q = iga->axis[i]->p + 1;
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
-  for (i=0; i<3; i++) 
+  for (i=0; i<3; i++)
     {ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);}
   iga->iterator->parent = iga;
   ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
-
-  if (!iga->vectype) {
-    const MatType vtype = VECSTANDARD;
-    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
-  }
-  if (!iga->mattype) {
-    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
-  }
 
   /* --- Stage 4 --- */
 
