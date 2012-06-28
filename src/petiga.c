@@ -640,7 +640,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     char      filename[PETSC_MAX_PATH_LEN] = {0};
     char      vtype[256] = VECSTANDARD;
     char      mtype[256] = MATBAIJ;
-    PetscInt  dim = iga->dim;
+    PetscInt  dim,dof;
 
     /* Periodicity, degree, and quadrature are initially what they are intially set to */
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
@@ -651,6 +651,14 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* If setup has been called, then many options are not available so skip them. */
     if (iga->setup) goto setupcalled;
+
+    ierr = PetscOptionsInt("-iga_dim","Number of dimensions","IGASetDim",iga->dim,&dim,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = IGASetDim(iga,dim);CHKERRQ(ierr);}
+    dim = (iga->dim > 0) ? iga->dim : 3;
+
+    ierr = PetscOptionsInt("-iga_dof","Number of DOFs per node","IGASetDof",iga->dof,&dof,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
+    odf = (iga->dof > 0) ? iga->dof : 1;
 
     /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
