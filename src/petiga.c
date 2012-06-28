@@ -465,8 +465,8 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(axis,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i <    0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be nonnegative, got %D",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be in range [0,%D], got %D",dim-1,i);
+  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
   *axis = iga->axis[i];
   PetscFunctionReturn(0);
 }
@@ -491,12 +491,13 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
 #define __FUNCT__ "IGAGetRule"
 PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
 {
+  PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(rule,3);
-  if (iga->dim <= 0) SETERRQ (((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
-  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
+  dim = (iga->dim > 0) ? iga->dim : 3;
+  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
   *rule = iga->rule[i];
   PetscFunctionReturn(0);
 }
@@ -529,13 +530,14 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
 @*/
 PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary)
 {
+  PetscInt       dim;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(boundary,4);
-  if (iga->dim <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
-  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
+  dim = (iga->dim > 0) ? iga->dim : 3;
+  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   if (iga->dof <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (side < 0) side = 0; /* XXX error ?*/
   if (side > 1) side = 1; /* XXX error ?*/
