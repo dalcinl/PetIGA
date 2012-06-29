@@ -640,7 +640,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     char      filename[PETSC_MAX_PATH_LEN] = {0};
     char      vtype[256] = VECSTANDARD;
     char      mtype[256] = MATBAIJ;
-    PetscInt  dim,dof;
+    PetscInt  dim = (iga->dim > 0) ? iga->dim : 3;
+    PetscInt  dof = (iga->dof > 0) ? iga->dof : 1;
 
     /* Periodicity, degree, and quadrature are initially what they are intially set to */
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
