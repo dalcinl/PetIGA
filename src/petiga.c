@@ -658,7 +658,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     ierr = PetscOptionsInt("-iga_dof","Number of DOFs per node","IGASetDof",iga->dof,&dof,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
-    odf = (iga->dof > 0) ? iga->dof : 1;
+    dof = (iga->dof > 0) ? iga->dof : 1;
 
     /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);

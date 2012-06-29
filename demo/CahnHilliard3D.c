@@ -3,7 +3,8 @@
 typedef struct { 
   IGA iga;
   PetscReal theta,cbar,alpha;
-  PetscReal L0,lambda;
+  PetscReal L0,lambda,tau;
+  PetscScalar Sprev[3];
 } AppCtx;
 
 #undef  __FUNCT__
@@ -255,8 +256,11 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 
   PetscScalar stats[3] = {0,0,0};
   ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
-
+  
   PetscPrintf(PETSC_COMM_WORLD,"%.16e %.16e %.16e %.16e\n",t,stats[0],stats[1],stats[2]);
+
+  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
+  user->Sprev[0] = stats[0];
 
   PetscFunctionReturn(0);
 }
@@ -275,6 +279,8 @@ int main(int argc, char *argv[]) {
   user.alpha = 200.0;  /* thickess interface parameter */
   user.theta = 1.5;    /* temperature/critical temperature */
   user.L0    = 1.0;    /* length scale */
+  user.tau   = 1.0;
+  user.Sprev[0] = user.Sprev[1] = user.Sprev[2] = 1.0e20; 
 
   PetscBool output = PETSC_FALSE; 
   PetscBool monitor = PETSC_FALSE; 
@@ -294,7 +300,10 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  user.lambda = 1.0/iga->elem_sizes[0]/iga->elem_sizes[1]/iga->elem_sizes[2]; /* mesh size parameter */
+  PetscReal h = 1.0/sqrt(iga->elem_sizes[0]*iga->elem_sizes[0]+
+			 iga->elem_sizes[1]*iga->elem_sizes[1]+
+			 iga->elem_sizes[2]*iga->elem_sizes[2]);
+  user.lambda = user.tau*h*h; /* mesh size parameter */
 
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
