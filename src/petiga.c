@@ -419,8 +419,9 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i <    0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be nonnegative, got %D",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Axis index must be in range [0,%D], got %D",dim-1,i);
+  if (iga->setup) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot call after IGASetUp()");
+  if (i < 0)      SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim)   SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
   ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
   if (processors < 1)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
