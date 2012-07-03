@@ -3,7 +3,7 @@
 typedef struct { 
   IGA iga;
   PetscReal theta,cbar,alpha;
-  PetscReal L0,lambda;
+  PetscReal L0,lambda,Sprev[3];
 } AppCtx;
 
 #undef __FUNCT__
@@ -57,6 +57,9 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscScalar dt;
   TSGetTimeStep(ts,&dt);
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e %.16e %.16e\n",t,dt,stats[0],stats[1],stats[2]);
+
+  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
+  user->Sprev[0] = stats[0];
 
   PetscFunctionReturn(0);
 }
@@ -269,6 +272,7 @@ int main(int argc, char *argv[]) {
   user.alpha = 3000.0; /* thickess interface parameter */
   user.theta = 1.5;    /* temperature/critical temperature */
   user.L0    = 1.0;    /* length scale */
+  user.Sprev[0] = user.Sprev[1] = user.Sprev[2] = 1.0e20; 
 
   /* Set discretization options */
   PetscInt N=64, p=2, C=PETSC_DECIDE;
@@ -328,6 +332,7 @@ int main(int argc, char *argv[]) {
 
   if (monitor) {
     user.iga = iga;
+    PetscPrintf(PETSC_COMM_WORLD,"#Time        dt           Free Energy            Second moment          Third moment\n");
     ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
   }
   if (output) {
