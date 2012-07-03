@@ -947,7 +947,6 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm_node)
 PetscErrorCode IGASetUp(IGA iga)
 {
   PetscInt       i;
-  DM             dm_elem;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -965,16 +964,20 @@ PetscErrorCode IGASetUp(IGA iga)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
   for (i=iga->dim; i<3; i++)
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
+
   iga->setup = PETSC_TRUE;
-  ierr = IGACreateElemDM(iga,1,&dm_elem);CHKERRQ(ierr);
+
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
     PetscInt    *proc_rank  = iga->proc_rank;
     PetscInt    *proc_sizes = iga->proc_sizes;
     PetscMPIInt index;
+    DM          dm_elem;
+    ierr = IGACreateElemDM(iga,1,&dm_elem);CHKERRQ(ierr);
     ierr = DMDAGetInfo(dm_elem,0,0,0,0,
                        &proc_sizes[0],&proc_sizes[1],&proc_sizes[2],
                        0,0,0,0,0,0);CHKERRQ(ierr);
+    ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
     ierr = MPI_Comm_rank(comm,&index);CHKERRQ(ierr);
     for (i=0; i<iga->dim; i++) {
       proc_rank[i] = index % proc_sizes[i];
@@ -990,19 +993,22 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *elem_sizes = iga->elem_sizes;
     PetscInt *elem_start = iga->elem_start;
     PetscInt *elem_width = iga->elem_width;
-    ierr = DMDAGetInfo(dm_elem,0,
-                       &elem_sizes[0],&elem_sizes[1],&elem_sizes[2],
-                       0,0,0,0,0,0,0,0,0);CHKERRQ(ierr);
-    ierr = DMDAGetCorners(dm_elem,
-                          &elem_start[0],&elem_start[1],&elem_start[2],
-                          &elem_width[0],&elem_width[1],&elem_width[2]);CHKERRQ(ierr);
+    for (i=0; i<iga->dim; i++) {
+      PetscInt rank = iga->proc_rank[i];
+      PetscInt size = iga->proc_sizes[i];
+      PetscInt N = iga->axis[i]->nel;
+      PetscInt n = N/size + ((N % size) > rank);
+      PetscInt s = rank * (N/size) + (((N % size) > rank) ? rank : (N % size));
+      elem_sizes[i] = N;
+      elem_start[i] = s;
+      elem_width[i] = n;
+    }
     for (i=iga->dim; i<3; i++) {
       elem_sizes[i] = 1;
       elem_start[i] = 0;
       elem_width[i] = 1;
     }
   }
-  ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
   { /* node partitioning */
     PetscInt *node_sizes  = iga->node_sizes;
     PetscInt *node_lstart = iga->node_lstart;
