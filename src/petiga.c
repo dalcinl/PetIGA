@@ -666,8 +666,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
-        PetscInt np = procs[i];
-        if (np > 0) {ierr = IGASetProcessors(iga,i,np);CHKERRQ(ierr);}
+        PetscInt n = procs[i];
+        if (n > 0) {ierr = IGASetProcessors(iga,i,n);CHKERRQ(ierr);}
       }
 
     /* Periodicity */
@@ -758,8 +758,8 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   else {
     MPI_Comm    cartcomm;
     PetscMPIInt i,ndims,dims[3],periods[3]={0,0,0},reorder=0;
-    ndims = PetscMPIIntCast(dim);
-    for (i=0; i<ndims; i++) dims[i] = (PetscInt)iga->proc_sizes[ndims-1-i];
+    ndims = (PetscMPIInt)dim;
+    for (i=0; i<ndims; i++) dims[i] = (PetscMPIInt)iga->proc_sizes[ndims-1-i];
     ierr = MPI_Cart_create(comm,ndims,dims,periods,reorder,&cartcomm);CHKERRQ(ierr);
     for (i=0; i<ndims; i++) {
       PetscMPIInt remain_dims[3] = {0,0,0};
