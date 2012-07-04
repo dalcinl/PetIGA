@@ -9,6 +9,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
   PetscBool      skipheader;
+  PetscInt       descr;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -21,35 +22,51 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
   ierr = IGAReset(iga);CHKERRQ(ierr);
-  { /* */
-    PetscInt i,buf[3];
-    PetscInt kind,dim;
-    if (!skipheader) {
-      PetscInt classid;
-      ierr = PetscViewerBinaryRead(viewer,&classid,1,PETSC_INT);CHKERRQ(ierr);
-      if (classid != IGA_FILE_CLASSID) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Not an IGA in file");
-    }
-    ierr = PetscViewerBinaryRead(viewer,&kind,1,PETSC_INT);CHKERRQ(ierr);
+
+  if (!skipheader) {
+    PetscInt classid = 0;
+    ierr = PetscViewerBinaryRead(viewer,&classid,1,PETSC_INT);CHKERRQ(ierr);
+    if (classid != IGA_FILE_CLASSID) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Not an IGA in file");
+  }
+
+  ierr = PetscViewerBinaryRead(viewer,&descr,1,PETSC_INT);CHKERRQ(ierr);
+  if (descr >= 0) { /* */
+    PetscInt i,dim;
     ierr = PetscViewerBinaryRead(viewer,&dim, 1,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
       PetscInt  p,m;
       PetscReal *U;
-      ierr = PetscViewerBinaryRead(viewer,buf,3,PETSC_INT);CHKERRQ(ierr);
-      p = buf[1];
-      m = buf[2]-1;
+      ierr = PetscViewerBinaryRead(viewer,&p,1,PETSC_INT);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,&m,1,PETSC_INT);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = IGAAxisSetKnots(axis,m,0);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = IGAAxisGetKnots(axis,0,&U);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryRead(viewer,U,m+1,PETSC_REAL);CHKERRQ(ierr);
-    }
-    ierr = IGASetUp(iga);CHKERRQ(ierr);
-    if (kind) {
-      ierr = IGALoadGeometry(iga,viewer);CHKERRQ(ierr);
+      ierr = IGAAxisSetKnots(axis,m-1,PETSC_NULL);CHKERRQ(ierr);CHKERRQ(ierr);
+      ierr = IGAAxisGetKnots(axis,PETSC_NULL,&U);CHKERRQ(ierr);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
+      ierr = IGAAxisSetUp(axis);CHKERRQ(ierr);
     }
   }
+  if (PetscAbs(descr) >=1) { /* */
+    PetscInt nsd;
+    ierr = PetscViewerBinaryRead(viewer,&nsd,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = IGASetSpatialDim(iga,nsd);CHKERRQ(ierr);
+    ierr = IGASetUp(iga);CHKERRQ(ierr); /* XXX do better !!! */
+    ierr = IGALoadGeometry(iga,viewer);CHKERRQ(ierr);
+  }
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+#if 0
+  /* XXX waiting implementation ... */
+  if (PetscAbs(descr) >= 2) { /* */
+    PetscInt npd,ncd;
+    ierr = PetscViewerBinaryRead(viewer,&npd,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&ncd, 1,PETSC_INT);CHKERRQ(ierr);
+    ierr = IGASetDataDim(iga,npd,ncd);CHKERRQ(ierr);
+    if (npd > 0) {ierr = IGALoadPointData(iga,viewer);CHKERRQ(ierr);}
+    if (ncd > 0) {ierr = IGALoadCellData(iga,viewer);CHKERRQ(ierr);}
+  }
+#endif
   PetscFunctionReturn(0);
 }
 
@@ -165,7 +182,6 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   IGACheckSetUp(iga,1);
 
-  /* */
   if (viewer) {
     PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
     PetscCheckSameComm(iga,1,viewer,2);
@@ -175,35 +191,35 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
     viewer = PETSC_VIEWER_BINARY_(comm);
     if (!viewer) PetscFunctionReturn(PETSC_ERR_PLIB);
   }
-
-  /* */
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
+  if (!skipheader) {
+    PetscInt classid = IGA_FILE_CLASSID;
+    ierr = PetscViewerBinaryWrite(viewer,&classid,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+  }
   { /* */
-    PetscInt i=0,buf[3];
-    PetscInt kind,dim;
-    kind = iga->geometry ? (1 + (PetscInt)iga->rational) : 0;
+    PetscInt descr = iga->geometry ? 1 : 0;
+    ierr = PetscViewerBinaryWrite(viewer,&descr,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+  }
+  { /* */
+    PetscInt i,dim;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-    if (!skipheader) buf[i++] = IGA_FILE_CLASSID;
-    buf[i++] = kind; buf[i++] = dim;
-    ierr = PetscViewerBinaryWrite(viewer,buf,i,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_FALSE);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
-      PetscInt  p,m;
+      PetscInt  p,m,buf[2];
       PetscReal *U;
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
-      buf[0] = 0; /* XXX Unused! */
-      buf[1] = p;
-      buf[2] = m+1;
-      ierr = PetscViewerBinaryWrite(viewer,buf,3,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+      buf[0] = p; buf[1] = m+1;
+      ierr = PetscViewerBinaryWrite(viewer,buf,2,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
       ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL,PETSC_FALSE);CHKERRQ(ierr);
     }
   }
-  if (iga->geometry && iga->vec_geom) {
+  if (iga->geometry) {
     PetscInt   dim;
     Vec        nvec,gvec,lvec;
     VecScatter l2g,g2n;
@@ -256,7 +272,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 #define __FUNCT__ "IGARead"
 /*@
    IGARead - reads a IGA which has been saved in binary format
-   
+
    Collective on IGA
 
    Input Parameters:
@@ -291,7 +307,7 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
 #define __FUNCT__ "IGAWrite"
 /*@
    IGAWrite - writes a IGA to a file in binary format
-   
+
    Collective on IGA
 
    Input Parameters:

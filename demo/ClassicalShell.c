@@ -179,9 +179,11 @@ int main(int argc, char *argv[]) {
   char filename[PETSC_MAX_PATH_LEN] = "shell.dat";
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
+  ierr = IGASetDim(iga,2);CHKERRQ(ierr);
   ierr = IGASetSpatialDim(iga,3);CHKERRQ(ierr);
   ierr = IGASetDof(iga,5);CHKERRQ(ierr); // dofs = {ux,uy,uz,psix,psiy}
   ierr = IGARead(iga,filename);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   IGABoundary bnd;
   // Boundary conditions on u = 0, v = [0:1]

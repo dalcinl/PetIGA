@@ -928,8 +928,6 @@ PetscErrorCode IGASetUp(IGA iga)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
 
-  if (iga->nsd < 1) iga->nsd = iga->dim; /* XXX */
-
   for (i=0; i<iga->dim; i++)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
   for (i=iga->dim; i<3; i++)
