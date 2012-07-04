@@ -1,4 +1,5 @@
 #include "petiga.h"
+#include "petigapart.h"
 #include "petigagrid.h"
 
 #undef  __FUNCT__
@@ -191,7 +192,7 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
                                     isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
     }
     if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) {
-        PetscMPIInt rank; PetscInt *ranks = iga->proc_rank;
+        PetscMPIInt rank; PetscInt *ranks = iga->proc_ranks;
         PetscInt *nnp = iga->node_lwidth, tnnp = 1, *snp = iga->node_lstart;
         PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
         for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
@@ -784,16 +785,21 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm_elem)
   IGACheckSetUp(iga,1);
   {
     PetscInt         i,dim;
+    MPI_Comm         subcomms[3];
     PetscInt         procs[3]   = {-1,-1,-1};
     PetscInt         sizes[3]   = { 1, 1, 1};
+    PetscInt         width[3]   = { 1, 1, 1};
     PetscInt         *ranges[3] = { 0, 0, 0};
     PetscInt         swidth     = 0;
     DMDABoundaryType btype[3]   = {DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE};
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGACreateSubComms1D(iga,subcomms);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
-      sizes[i] = iga->axis[i]->nel;
-      if (iga->proc_sizes[i] > 0)
-        procs[i] = iga->proc_sizes[i];
+      procs[i] = iga->proc_sizes[i];
+      sizes[i] = iga->elem_sizes[i];
+      width[i] = iga->elem_width[i];
+      ierr = PetscMalloc1(procs[i],PetscInt,&ranges[i]);CHKERRQ(ierr);
+      ierr = MPI_Allgather(&width[i],1,MPIU_INT,ranges[i],1,MPIU_INT,subcomms[i]);CHKERRQ(ierr);
     }
     ierr = DMDACreate(((PetscObject)iga)->comm,&dm);CHKERRQ(ierr);
     ierr = DMDASetDim(dm,dim);CHKERRQ(ierr);
@@ -805,6 +811,10 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm_elem)
     ierr = DMDASetStencilWidth(dm,swidth); CHKERRQ(ierr);
     ierr = DMDASetBoundaryType(dm,btype[0],btype[1],btype[2]); CHKERRQ(ierr);
     ierr = DMSetUp(dm);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      ierr = PetscFree(ranges[i]);CHKERRQ(ierr);
+      ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
+    }
   }
   *dm_elem = dm;
   PetscFunctionReturn(0);
@@ -969,45 +979,29 @@ PetscErrorCode IGASetUp(IGA iga)
 
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
-    PetscInt    *proc_rank  = iga->proc_rank;
+    PetscMPIInt size,rank;
+    PetscInt    grid_sizes[3] = {1,1,1};
     PetscInt    *proc_sizes = iga->proc_sizes;
-    PetscMPIInt index;
-    DM          dm_elem;
-    ierr = IGACreateElemDM(iga,1,&dm_elem);CHKERRQ(ierr);
-    ierr = DMDAGetInfo(dm_elem,0,0,0,0,
-                       &proc_sizes[0],&proc_sizes[1],&proc_sizes[2],
-                       0,0,0,0,0,0);CHKERRQ(ierr);
-    ierr = DMDestroy(&dm_elem);CHKERRQ(ierr);
-    ierr = MPI_Comm_rank(comm,&index);CHKERRQ(ierr);
-    for (i=0; i<iga->dim; i++) {
-      proc_rank[i] = index % proc_sizes[i];
-      index -= proc_rank[i];
-      index /= proc_sizes[i];
-    }
+    PetscInt    *proc_ranks = iga->proc_ranks;
+    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+    ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+    for (i=0; i<iga->dim; i++)
+      grid_sizes[i] = iga->axis[i]->nel;
+    ierr = IGA_Partition(size,rank,iga->dim,grid_sizes,
+                         proc_sizes,proc_ranks);CHKERRQ(ierr);
     for (i=iga->dim; i<3; i++) {
-      proc_rank[i]  = 0;
       proc_sizes[i] = 1;
+      proc_ranks[i] = 0;
     }
   }
   { /* element partitioning */
     PetscInt *elem_sizes = iga->elem_sizes;
     PetscInt *elem_start = iga->elem_start;
     PetscInt *elem_width = iga->elem_width;
-    for (i=0; i<iga->dim; i++) {
-      PetscInt rank = iga->proc_rank[i];
-      PetscInt size = iga->proc_sizes[i];
-      PetscInt N = iga->axis[i]->nel;
-      PetscInt n = N/size + ((N % size) > rank);
-      PetscInt s = rank * (N/size) + (((N % size) > rank) ? rank : (N % size));
-      elem_sizes[i] = N;
-      elem_start[i] = s;
-      elem_width[i] = n;
-    }
-    for (i=iga->dim; i<3; i++) {
-      elem_sizes[i] = 1;
-      elem_start[i] = 0;
-      elem_width[i] = 1;
-    }
+    for (i=0; i<iga->dim; i++)
+      elem_sizes[i] = iga->axis[i]->nel;
+    ierr = IGA_Distribute(iga->dim,iga->proc_sizes,iga->proc_ranks,
+                          elem_sizes,elem_width,elem_start);CHKERRQ(ierr);
   }
   { /* node partitioning */
     PetscInt *node_sizes  = iga->node_sizes;
@@ -1048,8 +1042,8 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *geom_gstart = iga->geom_gstart;
     PetscInt *geom_gwidth = iga->geom_gwidth;
     for (i=0; i<iga->dim; i++) {
-      PetscInt rank = iga->proc_rank[i];
       PetscInt size = iga->proc_sizes[i];
+      PetscInt rank = iga->proc_ranks[i];
       PetscInt m = iga->axis[i]->m;
       PetscInt p = iga->axis[i]->p;
       PetscInt n = m - p - 1;

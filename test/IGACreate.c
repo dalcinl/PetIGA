@@ -4,13 +4,14 @@
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
-  PetscInt       i,dim;
+  PetscInt       i,dim,dof;
   IGA            iga;
   Vec            v;
   Mat            A;
   KSP            ksp;
   SNES           snes;
   TS             ts;
+  DM             dm;
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
@@ -19,6 +20,8 @@ int main(int argc, char *argv[]) {
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if (dim < 1) {ierr = IGASetDim(iga,dim=3);CHKERRQ(ierr);}
+  ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+  if (dof < 1) {ierr = IGASetDof(iga,dof=1);CHKERRQ(ierr);}
   for (i=0; i<dim; i++) {
     IGAAxis axis;
     PetscInt p,m;
@@ -30,6 +33,13 @@ int main(int argc, char *argv[]) {
     if (m < 2*p+1) {ierr = IGAAxisInitUniform(axis,16,0.0,1.0,p-1);CHKERRQ(ierr);}
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  ierr = IGACreateElemDM(iga,dof,&dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+  ierr = IGACreateGeomDM(iga,dim,&dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+  ierr = IGACreateNodeDM(iga,1,&dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&v);CHKERRQ(ierr);
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
