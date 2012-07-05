@@ -960,6 +960,11 @@ PetscErrorCode IGASetUp(IGA iga)
       elem_sizes[i] = iga->axis[i]->nel;
     ierr = IGA_Distribute(iga->dim,iga->proc_sizes,iga->proc_ranks,
                           elem_sizes,elem_width,elem_start);CHKERRQ(ierr);
+    for (i=iga->dim; i<3; i++) {
+      elem_sizes[i] = 1;
+      elem_start[i] = 0;
+      elem_width[i] = 1;
+    }
   }
   { /* node partitioning */
     PetscInt *node_sizes  = iga->node_sizes;
