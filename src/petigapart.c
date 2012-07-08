@@ -83,7 +83,7 @@ void IGA_PART3D(PetscInt size,
                 PetscInt   M,PetscInt   N,PetscInt   P,
                 PetscInt *_m,PetscInt *_n,PetscInt *_p)
 {
-  PetscInt m[3],n[3],p[3],C[3],k,i,Cmin=PETSC_MAX_INT,t;
+  PetscInt m[3],n[3],p[3],C[3],k,i=-1,Cmin=PETSC_MAX_INT,t;
   C[0] = IGA_PART3D_INNER(size,M,N,P,&m[0],&n[0],&p[0]);
   C[1] = IGA_PART3D_INNER(size,N,M,P,&n[1],&m[1],&p[1]);
   C[2] = IGA_PART3D_INNER(size,P,M,N,&p[2],&m[2],&n[2]);
