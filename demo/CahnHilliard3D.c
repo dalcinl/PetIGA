@@ -9,8 +9,8 @@ typedef struct {
 
 typedef struct {
   TS ts;
-  Vec Xp,X0,E;
-  PetscReal scale_min,scale_max,dt_min,dt_max,rtol,atol,rho; 
+  Vec X0,X1,E;
+  PetscReal scale_min,scale_max,dt_min,dt_max,tol,rho; 
 } AdaptCtx;
 
 #undef __FUNCT__
@@ -19,43 +19,38 @@ PetscErrorCode  TSAlphaAdaptBackwardEuler(TS ts,PetscReal t,Vec X,Vec Xdot, Pets
 {
   SNES                 snes;
   SNESConvergedReason  snesreason;
-  PetscReal            dt,normX,normE,Emax,scale,tf;
+  PetscReal            dt,normE,normX,Emax,scale,tf;
   PetscErrorCode       ierr;
   PetscFunctionBegin;
 
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-#if PETSC_USE_DEBUG
-  {
-    PetscBool match;
-    ierr = PetscObjectTypeCompare((PetscObject)ts,TSALPHA,&match);CHKERRQ(ierr);
-    if (!match) SETERRQ(((PetscObject)ts)->comm,1,"Only for TSALPHA");
-  }
-#endif
-
+  /* If not allocated, setup X1 and E vecs */
   AdaptCtx *adapt = (AdaptCtx *)ctx;
+  if (!adapt->X1) {ierr = VecDuplicate(adapt->X0,&adapt->X1);CHKERRQ(ierr);}
+  if (!adapt->E) {ierr = VecDuplicate(adapt->X0,&adapt->E);CHKERRQ(ierr);}
+
+  /* If the SNES fails, reject the step and reduce the step by the
+     maximum amount */
   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
   ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
   if (snesreason < 0) {
     *ok = PETSC_FALSE;
     *nextdt *= adapt->scale_min;
-    goto finally;
+    *nextdt = PetscMax(*nextdt,adapt->dt_min);
+    PetscFunctionReturn(0);
   }
+
   /* first-order aproximation to the local error */
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   ierr = TSSetTimeStep(adapt->ts,dt);CHKERRQ(ierr);
-  if (!adapt->Xp) {
-    ierr = VecDuplicate(adapt->X0,&adapt->Xp);CHKERRQ(ierr);
-    ierr = VecCopy(adapt->X0,adapt->Xp);CHKERRQ(ierr);
-  }
-  ierr = TSSolve(adapt->ts,adapt->Xp,&tf);CHKERRQ(ierr);
-  if (!adapt->E) {ierr = VecDuplicate(adapt->Xp,&adapt->E);CHKERRQ(ierr);}
-  ierr = VecWAXPY(adapt->E,-1.0,adapt->Xp,X);CHKERRQ(ierr);
+  ierr = VecCopy(adapt->X0,adapt->X1);CHKERRQ(ierr);
+  ierr = TSSolve(adapt->ts,adapt->X1,&tf);CHKERRQ(ierr);
+  ierr = VecWAXPY(adapt->E,-1.0,adapt->X1,X);CHKERRQ(ierr);
   ierr = VecNorm(adapt->E,NORM_2,&normE);CHKERRQ(ierr);
-  /* compute maximum allowable error */
   ierr = VecNorm(X,NORM_2,&normX);CHKERRQ(ierr);
-  if (normX == 0) {ierr = VecNorm(adapt->X0,NORM_2,&normX);CHKERRQ(ierr);}
-  Emax =  adapt->rtol * normX + adapt->atol;
-  /* compute next time step */
+  normE /= normX;
+
+  /* compute maximum allowable error */
+  Emax =  adapt->tol;
   if (normE > 0) {
     scale = adapt->rho * PetscRealPart(PetscSqrtScalar((PetscScalar)(Emax/normE)));
     scale = PetscMax(scale,adapt->scale_min);
@@ -65,13 +60,19 @@ PetscErrorCode  TSAlphaAdaptBackwardEuler(TS ts,PetscReal t,Vec X,Vec Xdot, Pets
     *nextdt *= scale;
   }
   /* accept or reject step */
-  if (normE <= Emax)
+  if (normE <= Emax){
     *ok = PETSC_TRUE;
-  else
+    ierr = VecCopy(X,adapt->X0);CHKERRQ(ierr);
+  }else{
     *ok = PETSC_FALSE;
-  if(*ok){ierr = VecCopy(X,adapt->Xp);CHKERRQ(ierr);}
+  }
+  
+  /* if(*ok){ */
+  /*   PetscPrintf(PETSC_COMM_WORLD,"Time step ok, error = %.3e (%.3e), dt scale = %.3e\n",normE,Emax,scale); */
+  /* }else{ */
+  /*   PetscPrintf(PETSC_COMM_WORLD,"Time step rejected, error %.3e\n",normE); */
+  /* } */
 
-  finally:
   *nextdt = PetscMax(*nextdt,adapt->dt_min);
   *nextdt = PetscMin(*nextdt,adapt->dt_max);
 
@@ -394,16 +395,16 @@ int main(int argc, char *argv[]) {
   adapt.scale_max = 5.0;
   adapt.dt_min = 1.0e-50;
   adapt.dt_max = 1.0e+20;
-  adapt.rtol = 1.0e-3; 
-  adapt.atol = 1.0e-3;
+  adapt.tol = 1.0e-3; 
   adapt.rho = 0.9; 
   adapt.E = PETSC_NULL;
-  adapt.Xp = PETSC_NULL;
+  adapt.X1 = PETSC_NULL;
   ierr = IGACreateTS(iga,&adapt.ts);CHKERRQ(ierr);
   ierr = TSSetDuration(adapt.ts,1,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(adapt.ts,1e-10);CHKERRQ(ierr);
   ierr = TSSetType(adapt.ts,TSBEULER);CHKERRQ(ierr);
   ierr = TSAlphaSetAdapt(ts,TSAlphaAdaptBackwardEuler,&adapt);CHKERRQ(ierr); 
+  ierr = TSSetFromOptions(adapt.ts);CHKERRQ(ierr);
 
   if (monitor) {
     user.iga = iga;
@@ -423,6 +424,9 @@ int main(int argc, char *argv[]) {
   ierr = VecCopy(U,adapt.X0);CHKERRQ(ierr);
   ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
   ierr = VecDestroy(&U);CHKERRQ(ierr);
+  ierr = VecDestroy(&adapt.E);CHKERRQ(ierr);
+  ierr = VecDestroy(&adapt.X0);CHKERRQ(ierr);
+  ierr = VecDestroy(&adapt.X1);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
