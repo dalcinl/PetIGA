@@ -4,80 +4,9 @@ typedef struct {
   IGA iga;
   PetscReal theta,cbar,alpha;
   PetscReal L0,lambda,tau;
-  PetscScalar Sprev[3];
+  Vec X0,E;
+  PetscScalar energy[3],time[3];
 } AppCtx;
-
-typedef struct {
-  TS ts;
-  Vec X0,X1,E;
-  PetscReal scale_min,scale_max,dt_min,dt_max,tol,rho; 
-} AdaptCtx;
-
-#undef __FUNCT__
-#define __FUNCT__ "TSAlphaAdaptBackwardEuler"
-PetscErrorCode  TSAlphaAdaptBackwardEuler(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
-{
-  SNES                 snes;
-  SNESConvergedReason  snesreason;
-  PetscReal            dt,normE,normX,Emax,scale,tf;
-  PetscErrorCode       ierr;
-  PetscFunctionBegin;
-
-  /* If not allocated, setup X1 and E vecs */
-  AdaptCtx *adapt = (AdaptCtx *)ctx;
-  if (!adapt->X1) {ierr = VecDuplicate(adapt->X0,&adapt->X1);CHKERRQ(ierr);}
-  if (!adapt->E) {ierr = VecDuplicate(adapt->X0,&adapt->E);CHKERRQ(ierr);}
-
-  /* If the SNES fails, reject the step and reduce the step by the
-     maximum amount */
-  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
-  ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
-  if (snesreason < 0) {
-    *ok = PETSC_FALSE;
-    *nextdt *= adapt->scale_min;
-    *nextdt = PetscMax(*nextdt,adapt->dt_min);
-    PetscFunctionReturn(0);
-  }
-
-  /* first-order aproximation to the local error */
-  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(adapt->ts,dt);CHKERRQ(ierr);
-  ierr = VecCopy(adapt->X0,adapt->X1);CHKERRQ(ierr);
-  ierr = TSSolve(adapt->ts,adapt->X1,&tf);CHKERRQ(ierr);
-  ierr = VecWAXPY(adapt->E,-1.0,adapt->X1,X);CHKERRQ(ierr);
-  ierr = VecNorm(adapt->E,NORM_2,&normE);CHKERRQ(ierr);
-  ierr = VecNorm(X,NORM_2,&normX);CHKERRQ(ierr);
-  normE /= normX;
-
-  /* compute maximum allowable error */
-  Emax =  adapt->tol;
-  if (normE > 0) {
-    scale = adapt->rho * PetscRealPart(PetscSqrtScalar((PetscScalar)(Emax/normE)));
-    scale = PetscMax(scale,adapt->scale_min);
-    scale = PetscMin(scale,adapt->scale_max);
-    if (!(*ok))
-      scale = PetscMin(1.0,scale);
-    *nextdt *= scale;
-  }
-  /* accept or reject step */
-  if (normE <= Emax){
-    *ok = PETSC_TRUE;
-    ierr = VecCopy(X,adapt->X0);CHKERRQ(ierr);
-  }else{
-    *ok = PETSC_FALSE;
-  }
-  
-  /* if(*ok){ */
-  /*   PetscPrintf(PETSC_COMM_WORLD,"Time step ok, error = %.3e (%.3e), dt scale = %.3e\n",normE,Emax,scale); */
-  /* }else{ */
-  /*   PetscPrintf(PETSC_COMM_WORLD,"Time step rejected, error %.3e\n",normE); */
-  /* } */
-
-  *nextdt = PetscMax(*nextdt,adapt->dt_min);
-  *nextdt = PetscMin(*nextdt,adapt->dt_max);
-
-  PetscFunctionReturn(0);
-}
 
 #undef  __FUNCT__
 #define __FUNCT__ "Mobility"
@@ -107,11 +36,8 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   PetscScalar c,c1[3];
   IGAPointGetValue(p,U,&c); 
   IGAPointGetGrad(p,U,&c1[0]);
-  PetscScalar diff = c - user->cbar;
 
-  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],c1[2],user); // Free energy
-  S[1] = diff*diff;                                          // Second moment
-  S[2] = S[1]*diff;                                          // Third moment
+  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],c1[2],user); 
   
   PetscFunctionReturn(0);
 }
@@ -268,7 +194,6 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
 #define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],Vec C)
 {
-  
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (datafile[0] != 0) { /* initial condition from datafile */
@@ -326,19 +251,105 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx;
+  if (!user->E) PetscFunctionReturn(0);
 
-  PetscScalar dt,stats[3] = {0,0,0};
-  ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
+  PetscScalar dt;
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-
-  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e %.16e %.16e\n",t,dt,stats[0],stats[1],stats[2]);
-
-  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
-  user->Sprev[0] = stats[0];
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,user->energy[0]);
+  
+  if(user->energy[0] > user->energy[1]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
 
   PetscFunctionReturn(0);
 }
 
+PetscScalar EstimateSecondDerivative(AppCtx user)
+{
+  PetscScalar dE = user.time[0]*(user.energy[2]-user.energy[1]);
+  dE += user.time[1]*(user.energy[0]-user.energy[2]);
+  dE += user.time[2]*(user.energy[1]-user.energy[0]);
+  dE /= (user.time[0]*(user.time[0]*user.time[1]-user.time[0]*user.time[2]-user.time[1]*user.time[1]+user.time[2]*user.time[2]) + user.time[1]*user.time[1]*user.time[2] - user.time[1]*user.time[2]*user.time[2]);
+  return dE;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "CHAdapt"
+PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
+{
+  SNES                 snes;
+  SNESConvergedReason  snesreason;
+  PetscReal            dt,normE,normX,Emax,scale;
+  PetscErrorCode       ierr;
+  PetscFunctionBegin;
+
+  AppCtx *th = (AppCtx *)ctx;
+
+  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
+  th->time[0]=t-dt;
+  ierr = IGAFormScalar(th->iga,X,1,&th->energy[0],Stats,ctx);CHKERRQ(ierr);
+
+  if (!th->E){
+    th->energy[1] = 1.01*th->energy[0];
+    th->energy[2] = 1.02*th->energy[0];
+    th->time[1] = -dt;
+    th->time[2] = -2.0*dt;
+  }
+
+  PetscScalar scale_min = 0.5;
+  PetscScalar scale_max = 1.5;
+  PetscScalar    dt_min = 1.0e-15;
+  PetscScalar    dt_max = 1.0e+10;
+  PetscScalar      rtol = 1.0e-3;
+  PetscScalar      atol = 1.0e-3;
+  PetscScalar       rho = 0.9;
+  PetscScalar       dE2 = EstimateSecondDerivative(*th);
+  
+  /* If the SNES fails, reject the step and reduce the step by the
+     maximum amount */
+  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
+  if (snesreason < 0 || th->energy[0] > th->energy[1]) {
+    *ok = PETSC_FALSE;
+    *nextdt *= scale_min;
+    *nextdt = PetscMax(*nextdt,dt_min);
+    PetscFunctionReturn(0);
+  }
+
+  /* first-order aproximation to the local error */
+  /* E = (X0 + dt*Xdot) - X */
+  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
+  if (!th->E) {ierr = VecDuplicate(th->X0,&th->E);CHKERRQ(ierr);}
+  ierr = VecWAXPY(th->E,dt,Xdot,th->X0);CHKERRQ(ierr);
+  ierr = VecAXPY(th->E,-1,X);CHKERRQ(ierr);
+  ierr = VecNorm(th->E,NORM_2,&normE);CHKERRQ(ierr);
+  /* compute maximum allowable error */
+  ierr = VecNorm(X,NORM_2,&normX);CHKERRQ(ierr);
+  if (normX == 0) {ierr = VecNorm(th->X0,NORM_2,&normX);CHKERRQ(ierr);}
+  Emax =  rtol * normX + atol;
+  /* compute next time step */
+  if (normE > 0) {
+    scale = rho * PetscRealPart(PetscSqrtScalar((PetscScalar)(Emax/normE)));
+    scale = PetscMax(scale,scale_min);
+    scale = PetscMin(scale,scale_max);
+    if (!(*ok))
+      scale = PetscMin(1.0,scale);
+    *nextdt *= scale;
+  }
+  /* accept or reject step */
+  if (normE <= Emax){
+    ierr = VecCopy(X,th->X0);CHKERRQ(ierr);
+    th->energy[2] = th->energy[1];
+    th->energy[1] = th->energy[0];
+    th->time[2] = th->time[1];
+    th->time[1] = th->time[0];
+    *ok = PETSC_TRUE;
+  }else{
+    *ok = PETSC_FALSE;
+  }
+
+  *nextdt = PetscMax(*nextdt,dt_min);
+  *nextdt = PetscMin(*nextdt,dt_max);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -354,7 +365,6 @@ int main(int argc, char *argv[]) {
   user.theta = 1.5;    /* temperature/critical temperature */
   user.L0    = 1.0;    /* length scale */
   user.tau   = 1.0;
-  user.Sprev[0] = user.Sprev[1] = user.Sprev[2] = 1.0e20; 
 
   PetscBool output = PETSC_FALSE; 
   PetscBool monitor = PETSC_FALSE; 
@@ -389,22 +399,8 @@ int main(int argc, char *argv[]) {
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
 
-  // Setup adaptivity
-  AdaptCtx adapt;
-  adapt.scale_min = 0.1;
-  adapt.scale_max = 5.0;
-  adapt.dt_min = 1.0e-50;
-  adapt.dt_max = 1.0e+20;
-  adapt.tol = 1.0e-3; 
-  adapt.rho = 0.9; 
-  adapt.E = PETSC_NULL;
-  adapt.X1 = PETSC_NULL;
-  ierr = IGACreateTS(iga,&adapt.ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(adapt.ts,1,1.0);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(adapt.ts,1e-10);CHKERRQ(ierr);
-  ierr = TSSetType(adapt.ts,TSBEULER);CHKERRQ(ierr);
-  ierr = TSAlphaSetAdapt(ts,TSAlphaAdaptBackwardEuler,&adapt);CHKERRQ(ierr); 
-  ierr = TSSetFromOptions(adapt.ts);CHKERRQ(ierr);
+  user.E = PETSC_NULL;
+  ierr = TSAlphaSetAdapt(ts,CHAdapt,&user);CHKERRQ(ierr); 
 
   if (monitor) {
     user.iga = iga;
@@ -420,15 +416,13 @@ int main(int argc, char *argv[]) {
   PetscReal t; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,initial,U);CHKERRQ(ierr);
-  ierr = VecDuplicate(U,&adapt.X0);CHKERRQ(ierr);
-  ierr = VecCopy(U,adapt.X0);CHKERRQ(ierr);
+  ierr = VecDuplicate(U,&user.X0);CHKERRQ(ierr);
+  ierr = VecCopy(U,user.X0);CHKERRQ(ierr);
   ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
   ierr = VecDestroy(&U);CHKERRQ(ierr);
-  ierr = VecDestroy(&adapt.E);CHKERRQ(ierr);
-  ierr = VecDestroy(&adapt.X0);CHKERRQ(ierr);
-  ierr = VecDestroy(&adapt.X1);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
+
