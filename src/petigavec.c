@@ -2,7 +2,7 @@
 
 EXTERN_C_BEGIN
 extern PetscErrorCode  VecView_MPI_DA(Vec,PetscViewer);
-extern PetscErrorCode  VecLoad_Default_DA(Vec, PetscViewer);
+extern PetscErrorCode  VecLoad_Default_DA(Vec,PetscViewer);
 EXTERN_C_END
 
 #undef  __FUNCT__  
@@ -62,7 +62,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
   { /* XXX */
-    ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->dm_node);CHKERRQ(ierr);
+    ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
     ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_MPI_DA);CHKERRQ(ierr);
     ierr = VecSetOperation(*vec,VECOP_LOAD,(void(*)(void))VecLoad_Default_DA);CHKERRQ(ierr);
   } /* XXX */

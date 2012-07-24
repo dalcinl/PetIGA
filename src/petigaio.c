@@ -117,8 +117,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
   ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
-  ierr = VecDestroy(&iga->vec_geom);CHKERRQ(ierr);
-  iga->vec_geom = lvec;
+  ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
+  iga->geom_vec = lvec;
 
   ierr = VecDuplicate(gvec,&nvec);;CHKERRQ(ierr);
   /* viewer -> natural*/
@@ -149,15 +149,15 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     PetscInt a,i,pos;
     const PetscScalar *Xw;
     PetscReal *X,*W;
-    ierr = VecGetSize(iga->vec_geom,&n);CHKERRQ(ierr);
-    ierr = VecGetBlockSize(iga->vec_geom,&bs);CHKERRQ(ierr);
+    ierr = VecGetSize(iga->geom_vec,&n);CHKERRQ(ierr);
+    ierr = VecGetBlockSize(iga->geom_vec,&bs);CHKERRQ(ierr);
     nnp = n / bs; dim = bs - 1;
     ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
     ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
     ierr = PetscMalloc1(nnp*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
     ierr = PetscMalloc1(nnp,    PetscReal,&iga->geometryW);CHKERRQ(ierr);
     X = iga->geometryX; W = iga->geometryW;
-    ierr = VecGetArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
+    ierr = VecGetArrayRead(iga->geom_vec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<nnp; a++) {
       for (i=0; i<dim; i++)
         X[i+a*dim] = PetscRealPart(Xw[pos++]);
@@ -166,7 +166,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
         for (i=0; i<dim; i++)
           X[i+a*dim] /= W[a];
     }
-    ierr = VecRestoreArrayRead(iga->vec_geom,&Xw);CHKERRQ(ierr);
+    ierr = VecRestoreArrayRead(iga->geom_vec,&Xw);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -247,7 +247,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
       ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
     }
     ierr = VecDuplicate(gvec,&nvec);;CHKERRQ(ierr);
-    ierr = VecCopy(iga->vec_geom,lvec);CHKERRQ(ierr);
+    ierr = VecCopy(iga->geom_vec,lvec);CHKERRQ(ierr);
 
     /* local -> global */
     ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
