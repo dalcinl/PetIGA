@@ -966,38 +966,6 @@ PetscErrorCode IGASetUp(IGA iga)
       elem_width[i] = 1;
     }
   }
-  { /* node partitioning */
-    PetscInt *node_sizes  = iga->node_sizes;
-    PetscInt *node_lstart = iga->node_lstart;
-    PetscInt *node_lwidth = iga->node_lwidth;
-    PetscInt *node_gstart = iga->node_gstart;
-    PetscInt *node_gwidth = iga->node_gwidth;
-    for (i=0; i<iga->dim; i++) {
-      PetscInt nel    = iga->elem_sizes[i];
-      PetscInt efirst = iga->elem_start[i];
-      PetscInt elast  = iga->elem_start[i] + iga->elem_width[i] - 1;
-      PetscInt p = iga->axis[i]->p;
-      PetscInt nnp = iga->axis[i]->nnp;
-      PetscBool wrap = iga->axis[i]->periodic;
-      PetscInt *span = iga->axis[i]->span;
-      PetscInt nfirst = 0, nlast = nnp - 1;
-      PetscInt mid = wrap ? 0 : p/2; /* XXX Is this optimal? */
-      if (efirst > 0     ) nfirst = span[efirst-1] - p + mid + 1;
-      if (elast  < nel-1 ) nlast  = span[elast]    - p + mid;
-      node_sizes[i]  = nnp;
-      node_lstart[i] = nfirst;
-      node_lwidth[i] = nlast + 1 - nfirst;
-      node_gstart[i] = span[efirst] - p;
-      node_gwidth[i] = span[elast]  + p + 1 - span[efirst];
-    }
-    for (i=iga->dim; i<3; i++) {
-      node_sizes[i]  = 1;
-      node_lstart[i] = 0;
-      node_lwidth[i] = 1;
-      node_gstart[i] = 0;
-      node_gwidth[i] = 1;
-    }
-  }
   { /* geometry partitioning */
     PetscInt *geom_sizes  = iga->geom_sizes;
     PetscInt *geom_lstart = iga->geom_lstart;
@@ -1005,18 +973,25 @@ PetscErrorCode IGASetUp(IGA iga)
     PetscInt *geom_gstart = iga->geom_gstart;
     PetscInt *geom_gwidth = iga->geom_gwidth;
     for (i=0; i<iga->dim; i++) {
-      PetscInt size = iga->proc_sizes[i];
-      PetscInt rank = iga->proc_ranks[i];
-      PetscInt m = iga->axis[i]->m;
+      PetscInt nel    = iga->elem_sizes[i];
+      PetscInt efirst = iga->elem_start[i];
+      PetscInt elast  = iga->elem_start[i] + iga->elem_width[i] - 1;
       PetscInt p = iga->axis[i]->p;
-      PetscInt n = m - p - 1;
-      geom_sizes[i]  = n + 1;
-      geom_lstart[i] = iga->node_lstart[i];
-      geom_lwidth[i] = iga->node_lwidth[i];
-      geom_gstart[i] = iga->node_gstart[i];
-      geom_gwidth[i] = iga->node_gwidth[i];
-      if (rank == size-1)
-        geom_lwidth[i] = geom_sizes[i] - geom_lstart[i];
+      PetscInt *span = iga->axis[i]->span;
+      PetscInt size,lstart,lend,gstart,gend;
+      size = span[nel-1] + 1;
+      gstart = span[efirst] - p;
+      gend = span[elast] + 1;
+      lstart = span[efirst] - p;
+      if(elast < nel-1)
+        lend = span[elast+1] - p;
+      else
+        lend = span[elast] + 1;
+      geom_sizes[i]  = size;
+      geom_lstart[i] = lstart;
+      geom_lwidth[i] = lend - lstart;
+      geom_gstart[i] = gstart;
+      geom_gwidth[i] = gend - gstart;
     }
     for (i=iga->dim; i<3; i++) {
       geom_sizes[i]  = 1;
@@ -1024,6 +999,32 @@ PetscErrorCode IGASetUp(IGA iga)
       geom_lwidth[i] = 1;
       geom_gstart[i] = 0;
       geom_gwidth[i] = 1;
+    }
+  }
+  { /* node partitioning */
+    PetscInt *node_sizes  = iga->node_sizes;
+    PetscInt *node_lstart = iga->node_lstart;
+    PetscInt *node_lwidth = iga->node_lwidth;
+    PetscInt *node_gstart = iga->node_gstart;
+    PetscInt *node_gwidth = iga->node_gwidth;
+    for (i=0; i<iga->dim; i++) {
+      PetscInt size = iga->proc_sizes[i];
+      PetscInt rank = iga->proc_ranks[i];
+      PetscInt nnp = iga->axis[i]->nnp;
+      node_sizes[i]  = nnp;
+      node_lstart[i] = iga->geom_lstart[i];
+      node_lwidth[i] = iga->geom_lwidth[i];
+      node_gstart[i] = iga->geom_gstart[i];
+      node_gwidth[i] = iga->geom_gwidth[i];
+      if (rank == size-1)
+        node_lwidth[i] = node_sizes[i] - node_lstart[i];
+    }
+    for (i=iga->dim; i<3; i++) {
+      node_sizes[i]  = 1;
+      node_lstart[i] = 0;
+      node_lwidth[i] = 1;
+      node_gstart[i] = 0;
+      node_gwidth[i] = 1;
     }
   }
 
