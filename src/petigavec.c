@@ -118,7 +118,7 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscValidPointer(lvec,2);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,2);
   IGACheckSetUp(iga,1);
-  if (iga->nwork < (PetscInt)(sizeof(iga->vwork)/sizeof(Vec))){
+  if (iga->nwork < (PetscInt)(sizeof(iga->vwork)/sizeof(Vec))) {
     iga->vwork[iga->nwork++] = *lvec;
   } else {
     ierr = VecDestroy(lvec);CHKERRQ(ierr);

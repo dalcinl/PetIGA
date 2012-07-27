@@ -305,7 +305,7 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
   PetscValidPointer(g,1);
   if (vtype) PetscValidCharPointer(vtype,2);
   PetscValidPointer(gvec,3);
-  if (!g->gvec){
+  if (!g->gvec) {
     const PetscInt *sizes = g->sizes;
     const PetscInt *width = g->local_width;
     PetscInt n  = width[0]*width[1]*width[2];
@@ -329,7 +329,7 @@ PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
   PetscValidPointer(g,1);
   if (vtype) PetscValidCharPointer(vtype,2);
   PetscValidPointer(lvec,3);
-  if (!g->lvec){
+  if (!g->lvec) {
     const PetscInt *width = g->ghost_width;
     PetscInt n  = width[0]*width[1]*width[2];
     PetscInt bs = g->dof;

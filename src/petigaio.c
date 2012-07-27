@@ -61,7 +61,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   if (PetscAbs(descr) >= 2) { /* */
     PetscInt npd,ncd;
     ierr = PetscViewerBinaryRead(viewer,&npd,1,PETSC_INT);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryRead(viewer,&ncd, 1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&ncd,1,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetDataDim(iga,npd,ncd);CHKERRQ(ierr);
     if (npd > 0) {ierr = IGALoadPointData(iga,viewer);CHKERRQ(ierr);}
     if (ncd > 0) {ierr = IGALoadCellData(iga,viewer);CHKERRQ(ierr);}

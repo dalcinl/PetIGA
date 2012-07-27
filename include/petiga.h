@@ -191,8 +191,8 @@ struct _p_IGA {
   IGABoundary boundary[3][2];
   IGAElement  iterator;
 
-  PetscInt proc_sizes[3];
-  PetscInt proc_ranks[3];
+  PetscInt  proc_sizes[3];
+  PetscInt  proc_ranks[3];
 
   PetscInt  elem_sizes[3];
   PetscInt  elem_start[3];
