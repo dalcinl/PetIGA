@@ -82,6 +82,9 @@ ClassicalShell: ClassicalShell.o chkopts
 Elasticity3D: Elasticity3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+HyperElasticity: HyperElasticity.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 
 OPTS=-nox -malloc_debug -malloc_dump
 
