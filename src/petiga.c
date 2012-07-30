@@ -1095,8 +1095,7 @@ PetscErrorCode IGASetUp(IGA iga)
     }
     ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
   }
-  iga->iterator->parent = iga;
-  ierr = IGAElementSetUp(iga->iterator);CHKERRQ(ierr);
+  ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
 
   /* --- Stage 4 --- */
 

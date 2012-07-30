@@ -350,7 +350,7 @@ struct _n_IGAElement {
 PETSC_EXTERN PetscErrorCode IGAElementCreate(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementDestroy(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementReset(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementSetUp(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementInit(IGAElement element,IGA iga);
 
 PETSC_EXTERN PetscErrorCode IGAElementBegin(IGAElement element);
 PETSC_EXTERN PetscBool      IGAElementNext(IGAElement element);
@@ -421,7 +421,7 @@ struct _n_IGAPoint {
 PETSC_EXTERN PetscErrorCode IGAPointCreate(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointReset(IGAPoint point);
-PETSC_EXTERN PetscErrorCode IGAPointSetUp(IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
 
 PETSC_EXTERN PetscErrorCode IGAPointBegin(IGAPoint point);
 PETSC_EXTERN PetscBool      IGAPointNext(IGAPoint point);

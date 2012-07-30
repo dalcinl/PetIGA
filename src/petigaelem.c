@@ -88,17 +88,16 @@ PetscErrorCode IGAElementReset(IGAElement element)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementSetUp"
-PetscErrorCode IGAElementSetUp(IGAElement element)
+#define __FUNCT__ "IGAElementInit"
+PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 {
-  IGA            iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  iga = element->parent;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
   ierr = IGAElementReset(element);CHKERRQ(ierr);
+  element->parent = iga;
 
   element->dof = iga->dof;
   element->dim = iga->dim;
@@ -162,8 +161,7 @@ PetscErrorCode IGAElementSetUp(IGAElement element)
     ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
   }
-  element->iterator->parent = element;
-  ierr = IGAPointSetUp(element->iterator);CHKERRQ(ierr);
+  ierr = IGAPointInit(element->iterator,element);CHKERRQ(ierr);
   { /* */
     PetscInt nen = element->nen;
     PetscInt dof = element->dof;

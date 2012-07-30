@@ -67,16 +67,15 @@ PetscErrorCode IGAPointReset(IGAPoint point)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointSetUp"
-PetscErrorCode IGAPointSetUp(IGAPoint point)
+#define __FUNCT__ "IGAPointInit"
+PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
 {
-  IGAElement     element;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  element = point->parent;
   PetscValidPointer(element,0);
   ierr = IGAPointReset(point);CHKERRQ(ierr);
+  point->parent = element;
 
   point->nen = element->nen;
   point->dof = element->dof;
@@ -120,12 +119,9 @@ PetscBool IGAPointNext(IGAPoint point)
   point->nmat = 0;
   /* */
   index = ++point->index;
-  if (PetscUnlikely(index == 0)) goto setup;
-  if (PetscUnlikely(index >= point->count)) {
-    point->index = -1;
-    return PETSC_FALSE;
-  }
-  /* */
+  if (PetscUnlikely(index == 0))            goto start;
+  if (PetscUnlikely(index >= point->count)) goto stop;
+
   point->point    += dim;
   point->weight   += 1;
   point->detJac   += 1;
@@ -143,7 +139,7 @@ PetscBool IGAPointNext(IGAPoint point)
 
   return PETSC_TRUE;
 
- setup:
+ start:
 
   element = point->parent;
 
@@ -169,6 +165,12 @@ PetscBool IGAPointNext(IGAPoint point)
     point->shape[3] = element->basis[3];
   }
   return PETSC_TRUE;
+
+ stop:
+
+  point->index = -1;
+  return PETSC_FALSE;
+
 }
 
 #undef  __FUNCT__
