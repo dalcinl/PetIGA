@@ -314,7 +314,7 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
     ierr = VecCreate(g->comm,&g->gvec);CHKERRQ(ierr);
     ierr = VecSetSizes(g->gvec,n*bs,N*bs);CHKERRQ(ierr);
     ierr = VecSetBlockSize(g->gvec,bs);CHKERRQ(ierr);
-    if (vtype) {ierr = VecSetType(g->gvec,vtype);CHKERRQ(ierr);}
+    ierr = VecSetType(g->gvec,vtype?vtype:VECSTANDARD);CHKERRQ(ierr);
   }
   *gvec = g->gvec;
   PetscFunctionReturn(0);
@@ -336,7 +336,7 @@ PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
     ierr = VecCreate(PETSC_COMM_SELF,&g->lvec);CHKERRQ(ierr);
     ierr = VecSetSizes(g->lvec,n*bs,n*bs);CHKERRQ(ierr);
     ierr = VecSetBlockSize(g->lvec,bs);CHKERRQ(ierr);
-    if (vtype) {ierr = VecSetType(g->lvec,vtype);CHKERRQ(ierr);}
+    ierr = VecSetType(g->lvec,vtype?vtype:VECSTANDARD);CHKERRQ(ierr);
   }
   *lvec = g->lvec;
   PetscFunctionReturn(0);
