@@ -115,7 +115,7 @@ PetscErrorCode IGAReset(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
   iga->setup = PETSC_FALSE;
-  ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
+  iga->setupstage = 0;
 
   /* element */
   ierr = VecDestroy(&iga->elem_vec);CHKERRQ(ierr);
@@ -137,6 +137,8 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
+
+  ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -429,6 +431,7 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   iga->order = order;
   PetscFunctionReturn(0);
 }
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetProcessors"
@@ -740,6 +743,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
 
   setupcalled:
+
     /* Matrix and Vector type */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
@@ -748,11 +752,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
     ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
+
     /* View options, handled in IGASetUp() */
-    ierr = PetscOptionsName("-iga_view",         "Information on IGA context",       "IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_info",    "Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_detailed","Output more detailed information", "IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_binary",  "Save to file in binary format",    "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",PETSC_NULL);CHKERRQ(ierr);
 
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -925,39 +930,25 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionReturn(0);
 }
 
+
+extern PetscErrorCode IGASetUp_Basic(IGA);
+extern PetscErrorCode IGASetUp_View(IGA);
+
 #undef  __FUNCT__
-#define __FUNCT__ "IGASetUp"
-/*@
-   IGASetUp - Sets up the internal data structures for the later use of the IGA.
-
-   Collective on IGA
-
-   Input Parameter:
-.  iga - the IGA context
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUp(IGA iga)
+#define __FUNCT__ "IGASetUp_Basic"
+PetscErrorCode IGASetUp_Basic(IGA iga)
 {
   PetscInt       i;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (iga->setup) PetscFunctionReturn(0);
+  if (iga->setupstage >= 1) PetscFunctionReturn(0);
+  iga->setupstage++;
 
-  iga->setup = PETSC_TRUE;
-
-  /* --- Stage 1 --- */
-
-  if (iga->dim < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetDim() first");
-
-  for (i=0; i<iga->dim; i++) {
-    ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);
-  }
+  for (i=0; i<iga->dim; i++)
+    {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
+  for (i=iga->dim; i<3; i++) 
+    {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
 
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
@@ -1025,6 +1016,86 @@ PetscErrorCode IGASetUp(IGA iga)
       geom_gwidth[i] = 1;
     }
   }
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUp_View"
+PetscErrorCode IGASetUp_View(IGA iga)
+{
+  PetscBool      flg1,flg2,info=PETSC_FALSE;
+  char           filename1[PETSC_MAX_PATH_LEN] = "";
+  char           filename2[PETSC_MAX_PATH_LEN] = "";
+  PetscViewer    viewer, newviewer=PETSC_NULL;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+
+  ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-iga_view",        "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
+  ierr = PetscOptionsBool(  "-iga_view_info",   "Output more detailed information","IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool(  "-iga_view_detail", "Output more detailed information","IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-iga_view_binary", "Save to file in binary format",   "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+  if ((flg1||info) && !PetscPreLoadingOn) {
+    ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename1,&viewer);CHKERRQ(ierr);
+    if (info) {ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO_DETAIL);CHKERRQ(ierr);}
+    ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+    if (info) {ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);}
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  }
+  if (flg2 && !PetscPreLoadingOn) {
+    if (filename2[0]) {
+      ierr = PetscViewerBinaryOpen(((PetscObject)iga)->comm,filename2,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+      newviewer = viewer;
+    } else {
+      viewer = PETSC_VIEWER_BINARY_(((PetscObject)iga)->comm);
+      PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+    }
+    ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&newviewer);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUp"
+/*@
+   IGASetUp - Sets up the internal data structures for the later use
+   of the IGA.
+
+   Collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
+PetscErrorCode IGASetUp(IGA iga)
+{
+  PetscInt       i;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (iga->setup) PetscFunctionReturn(0);
+
+  iga->setup = PETSC_TRUE;
+
+  /* --- Stage 1 --- */
+
+  if (iga->dim < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+            "Must call IGASetDim() first");
+  ierr = IGASetUp_Basic(iga);CHKERRQ(ierr);
+
+  /* --- Stage 2 --- */
+  iga->setupstage++;
+
   { /* node partitioning */
     PetscInt *node_sizes  = iga->node_sizes;
     PetscInt *node_lstart = iga->node_lstart;
@@ -1034,8 +1105,7 @@ PetscErrorCode IGASetUp(IGA iga)
     for (i=0; i<iga->dim; i++) {
       PetscInt size = iga->proc_sizes[i];
       PetscInt rank = iga->proc_ranks[i];
-      PetscInt nnp = iga->axis[i]->nnp;
-      node_sizes[i]  = nnp;
+      node_sizes[i]  = iga->axis[i]->nnp; /* XXX */
       node_lstart[i] = iga->geom_lstart[i];
       node_lwidth[i] = iga->geom_lwidth[i];
       node_gstart[i] = iga->geom_gstart[i];
@@ -1051,8 +1121,6 @@ PetscErrorCode IGASetUp(IGA iga)
       node_gwidth[i] = 1;
     }
   }
-
-  /* --- Stage 2 --- */
 
   if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
 
@@ -1096,9 +1164,9 @@ PetscErrorCode IGASetUp(IGA iga)
   }
 
   /* --- Stage 3 --- */
+  iga->setupstage++;
 
   for (i=iga->dim; i<3; i++) {
-    ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
@@ -1119,40 +1187,8 @@ PetscErrorCode IGASetUp(IGA iga)
   }
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
 
-  /* --- Stage 4 --- */
 
-  {
-    PetscBool flg1,flg2,info=PETSC_FALSE;
-    char filename1[PETSC_MAX_PATH_LEN] = "";
-    char filename2[PETSC_MAX_PATH_LEN] = "";
-    PetscViewer viewer;
-    ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
-    ierr = PetscOptionsString("-iga_view",         "Information on IGA context",       "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
-    ierr = PetscOptionsBool(  "-iga_view_info",    "Output more detailed information", "IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsBool(  "-iga_view_detailed","Output more detailed information", "IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsString("-iga_view_binary",  "Save to file in binary format",    "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
-    ierr = PetscOptionsEnd();CHKERRQ(ierr);
-    if ((flg1||info) && !PetscPreLoadingOn) {
-      ierr = PetscViewerASCIIOpen(((PetscObject)iga)->comm,filename1,&viewer);CHKERRQ(ierr);
-      if (info) {ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO_DETAIL);CHKERRQ(ierr);}
-      ierr = IGAView(iga,viewer);CHKERRQ(ierr);
-      if (info) {ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);}
-      ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-    }
-    if (flg2 && !PetscPreLoadingOn) {
-      PetscViewer newviewer=0;
-      if (filename2[0]) {
-        ierr = PetscViewerBinaryOpen(((PetscObject)iga)->comm,filename2,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-        newviewer = viewer;
-      } else {
-        viewer = PETSC_VIEWER_BINARY_(((PetscObject)iga)->comm);
-        PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
-      }
-      ierr = IGAView(iga,viewer);CHKERRQ(ierr);
-      ierr = PetscViewerDestroy(&newviewer);CHKERRQ(ierr);
-    }
-  }
-
+  ierr = IGASetUp_View(iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

@@ -174,12 +174,14 @@ struct _IGAOps {
 
 struct _p_IGA {
   PETSCHEADER(struct _IGAOps);
+  PetscBool  setup;
+  PetscInt   setupstage;
+
   IGAUserOps userops;
   VecType    vectype;
   MatType    mattype;
   char       **fieldname;
 
-  PetscBool setup;
   PetscInt  dim;   /* parametric dimension of the function space*/
   PetscInt  nsd;   /* spatial dimension of the geometry */
   PetscInt  dof;   /* number of degrees of freedom per node */

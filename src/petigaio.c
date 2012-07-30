@@ -1,6 +1,7 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
+extern PetscErrorCode IGASetUp_Basic(IGA);
 static PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
 #undef  __FUNCT__
@@ -45,14 +46,13 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       ierr = IGAAxisSetKnots(axis,m-1,PETSC_NULL);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,PETSC_NULL,&U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
-      ierr = IGAAxisSetUp(axis);CHKERRQ(ierr);
     }
+    ierr = IGASetUp_Basic(iga);CHKERRQ(ierr);
   }
-  if (PetscAbs(descr) >=1) { /* */
+  if (PetscAbs(descr) >= 1) { /* */
     PetscInt nsd;
     ierr = PetscViewerBinaryRead(viewer,&nsd,1,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetSpatialDim(iga,nsd);CHKERRQ(ierr);
-    ierr = IGASetUp(iga);CHKERRQ(ierr); /* XXX do better !!! */
     ierr = IGALoadGeometry(iga,viewer);CHKERRQ(ierr);
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -85,7 +85,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  IGACheckSetUp(iga,1);
+  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
