@@ -1088,11 +1088,11 @@ PetscErrorCode IGASetUp(IGA iga)
 
   if (!iga->vectype) {
     const MatType vtype = VECSTANDARD;
-    ierr = PetscStrallocpy(vtype,&iga->vectype);CHKERRQ(ierr);
+    ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);
   }
   if (!iga->mattype) {
     const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-    ierr = PetscStrallocpy(mtype,&iga->mattype);CHKERRQ(ierr);
+    ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);
   }
 
   /* --- Stage 3 --- */
