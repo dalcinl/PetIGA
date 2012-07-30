@@ -579,7 +579,7 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   PetscValidPointer(basis,3);
   IGACheckSetUp(iga,1);
   if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
+  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   *basis = iga->basis[i];
   PetscFunctionReturn(0);
 }
