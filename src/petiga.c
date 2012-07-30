@@ -412,6 +412,23 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetOrder"
+PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,order,2);
+  if (order < 0)
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Order must be nonnegative, got %D",order);
+  if (iga->order >= 0 && iga->order != order)
+    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+             "Cannot change order from %D after it was set to %D",iga->order,order);
+  iga->order = order;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetProcessors"
 PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 {
@@ -645,6 +662,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     char      mtype[256] = MATBAIJ;
     PetscInt  dim = (iga->dim > 0) ? iga->dim : 3;
     PetscInt  dof = (iga->dof > 0) ? iga->dof : 1;
+    PetscInt  order = iga->order;
 
     /* Periodicity, degree, and quadrature are initially what they are intially set to */
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
@@ -679,13 +697,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
 
-    /* Quadrature */
-    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
-    if (flg) for (i=0; i<dim; i++) {
-        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
-        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
-      }
-
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
@@ -714,6 +725,17 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         }
       }
     }
+
+    /* Order */
+    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
+    if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
+
+    /* Quadrature */
+    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
+    if (flg) for (i=0; i<dim; i++) {
+        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
+        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+      }
 
   setupcalled:
     /* Matrix and Vector type */
@@ -1073,21 +1095,19 @@ PetscErrorCode IGASetUp(IGA iga)
 
   /* --- Stage 3 --- */
 
-  if (iga->order < 0) {
-    PetscInt order = 0;
-    for (i=0; i<iga->dim; i++)
-      order = PetscMax(order,iga->axis[i]->p);
-    order = PetscMin(order,3); /* XXX */
-    order = PetscMax(order,1); /* XXX */
-    iga->order = order;
-  }
-
   for (i=iga->dim; i<3; i++) {
     ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
+
+  if (iga->order < 0)
+    for (i=0; i<iga->dim; i++)
+      iga->order = PetscMax(iga->order,iga->axis[i]->p);
+  iga->order = PetscMax(iga->order,1); /* XXX */
+  iga->order = PetscMin(iga->order,3); /* XXX */
+
   for (i=0; i<3; i++) {
     if (iga->rule[i]->nqp < 1) {
       PetscInt q = iga->axis[i]->p + 1;
