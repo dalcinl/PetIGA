@@ -94,10 +94,58 @@ PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *
     R[a][1] = Na_x*P[1][0]+Na_y*P[1][1]+Na_z*P[1][2];
     R[a][2] = Na_x*P[2][0]+Na_y*P[2][1]+Na_z*P[2][2];
   }
-
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "Jacobian"
+PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *ctx)
+{    
+
+  // Get basis functions and gradients
+  PetscReal (*N1)[3] = (PetscReal (*)[3]) pnt->shape[1];
+
+  // Put together the jacobian
+  PetscInt a,b,nen=pnt->nen;
+  PetscScalar (*J)[3][nen][3] = (PetscScalar (*)[3][nen][3])Je;
+  for (a=0; a<nen; a++) {
+    PetscReal Na_x  = N1[a][0];
+    PetscReal Na_y  = N1[a][1];
+    PetscReal Na_z  = N1[a][2];  
+    for (b=0; b<nen; b++) {
+      PetscReal Nb_x  = N1[b][0];
+      PetscReal Nb_y  = N1[b][1];
+      PetscReal Nb_z  = N1[b][2];
+
+	J[a][0][b][0] = 0;
+	J[a][1][b][0] = 0;
+	J[a][2][b][0] = 0;
+	
+	J[a][0][b][1] = 0;
+	J[a][1][b][1] = 0;
+	J[a][2][b][1] = 0;
+	
+	J[a][0][b][2] = 0;
+	J[a][1][b][2] = 0;
+	J[a][2][b][2] = 0;
+
+      if(a==b){
+	J[a][0][b][0] = 1;
+	J[a][1][b][0] = 0;
+	J[a][2][b][0] = 0;
+	
+	J[a][0][b][1] = 0;
+	J[a][1][b][1] = 1;
+	J[a][2][b][1] = 0;
+	
+	J[a][0][b][2] = 0;
+	J[a][1][b][2] = 0;
+	J[a][2][b][2] = 1;
+      }
+    }
+  }
+  return 0;
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -132,6 +180,7 @@ int main(int argc, char *argv[])
   // Setup the nonlinear solver
   SNES snes;
   ierr = IGASetUserFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetUserJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
   ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
 
