@@ -85,6 +85,9 @@ Elasticity3D: Elasticity3D.o chkopts
 HyperElasticity: HyperElasticity.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+PhaseFieldCrystal2D: PhaseFieldCrystal2D.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 
 OPTS=-nox -malloc_debug -malloc_dump
 
