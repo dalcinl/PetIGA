@@ -20,23 +20,23 @@ pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   R0 = R0 / W0
   !
   forall (i=1:dim)
-     W1(i) = sum(w*R1(i,:))
-     R1(i,:) = w*R1(i,:) - R0(:) * W1(i)
+     W1(i) = sum(W*R1(i,:))
+     R1(i,:) = W*R1(i,:) - R0(:) * W1(i)
   end forall
   R1 = R1 / W0
   !
   if (ord < 2) return
   forall (i=1:dim, j=1:dim)
-     W2(i,j) = sum(w*R2(i,j,:))
-     R2(i,j,:) = w*R2(i,j,:)   - R0(:)*W2(i,j) &
+     W2(i,j) = sum(W*R2(i,j,:))
+     R2(i,j,:) = W*R2(i,j,:)   - R0(:)*W2(i,j) &
                - R1(i,:)*W1(j) - R1(j,:)*W1(i)
   end forall
   R2 = R2 / W0
   !
   if (ord < 3) return
   forall (i=1:dim, j=1:dim, k=1:dim)
-     W3(i,j,k) = sum(w*R3(i,j,k,:))
-     R3(i,j,k,:) = w*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &
+     W3(i,j,k) = sum(W*R3(i,j,k,:))
+     R3(i,j,k,:) = W*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &
                  - R1(i,:)*W2(j,k) - R1(j,:)*W2(i,k) - R1(k,:)*W2(i,j) &
                  - R2(j,k,:)*W1(i) - R2(i,k,:)*W1(j) - R2(i,j,:)*W1(k)
   end forall
