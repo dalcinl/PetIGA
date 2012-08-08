@@ -87,6 +87,24 @@ subroutine IGA_GetDel2(nen,dof,dim,N,U,V) &
   end do
 end subroutine IGA_GetDel2
 
+subroutine IGA_Get3rdMixed(nen,dof,dim,N,U,V) &
+  bind(C, name="IGA_Get3rdMixed")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INT   ), intent(in),value :: nen,dof,dim
+  real   (kind=IGA_REAL  ), intent(in)       :: N(dim*dim*dim,nen)
+  real   (kind=IGA_SCALAR), intent(in)       :: U(dof,nen)
+  real   (kind=IGA_SCALAR), intent(out)      :: V(dim*dim*dim,dof)
+  integer(kind=IGA_INT   )  :: a, i
+  ! V = matmul(N,transpose(U))
+  V = 0
+  do a = 1, nen
+     do i = 1, dof
+        V(:,i) = V(:,i) + N(:,a) * U(i,a)
+     end do
+  end do
+end subroutine IGA_Get3rdMixed
+
 !subroutine IGA_GetDerivative(nen,dof,dim,der,N,U,V) &
 !  bind(C, name="IGA_GetDerivative")
 !  use PetIGA
