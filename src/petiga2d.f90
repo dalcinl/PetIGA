@@ -1,29 +1,30 @@
 subroutine IGA_Quadrature_2D(&
-     inq,iX,iW,iJ,           &
-     jnq,jX,jW,jJ,           &
-     X,W,detJ,J)             &
+     inq,iX,iW,iL,           &
+     jnq,jX,jW,jL,           &
+     W,J,X,L)                &
   bind(C, name="IGA_Quadrature_2D")
   use PetIGA
   implicit none
   integer(kind=IGA_INT ), parameter        :: dim = 2
   integer(kind=IGA_INT ), intent(in),value :: inq
   integer(kind=IGA_INT ), intent(in),value :: jnq
-  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq), iJ
-  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq), jJ
-  real   (kind=IGA_REAL), intent(out) :: X(dim,    inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: W(        inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: detJ(     inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: J(dim,dim,inq,jnq)
+  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq), iL
+  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq), jL
+  real   (kind=IGA_REAL), intent(out) :: W(    inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: J(    inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: X(dim,inq,jnq)
+  real   (kind=IGA_REAL), intent(out) :: L(dim,inq,jnq)
   integer(kind=IGA_INT ) :: iq
   integer(kind=IGA_INT ) :: jq
   forall (iq=1:inq, jq=1:jnq)
+     !
+     W(iq,jq) = iW(iq) * jW(jq)
+     J(iq,jq) = iL * jL
+     !
      X(1,iq,jq) = iX(iq)
      X(2,iq,jq) = jX(jq)
-     W(  iq,jq) =    iW(iq) * jW(jq)
-     detJ( iq,jq) = iJ * jJ
-     J(:,:,iq,jq) = 0
-     J(1,1,iq,jq) = iJ
-     J(2,2,iq,jq) = jJ
+     L(1,iq,jq) = iL
+     L(2,iq,jq) = jL
   end forall
 end subroutine IGA_Quadrature_2D
 
@@ -137,7 +138,7 @@ subroutine IGA_ShapeFuns_2D(&
      nqp,nen,X,             &
      M0,M1,M2,M3,           &
      N0,N1,N2,N3,           &
-     DetF,F)                &
+     DetJac,F,G)            &
   bind(C, name="IGA_ShapeFuns_2D")
   use PetIGA
   implicit none
@@ -154,14 +155,20 @@ subroutine IGA_ShapeFuns_2D(&
   real   (kind=IGA_REAL), intent(out)   :: N1(dim,   nen,nqp)
   real   (kind=IGA_REAL), intent(out)   :: N2(dim**2,nen,nqp)
   real   (kind=IGA_REAL), intent(out)   :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(inout) :: DetF(nqp)
-  real   (kind=IGA_REAL), intent(inout) :: F(dim,dim,nqp)
-  call GeometryMapping(&
-       order,&
-       nqp,nen,X,&
-       M0,M1,M2,M3,&
-       N0,N1,N2,N3,&
-       DetF,F)
+  real   (kind=IGA_REAL), intent(inout) :: DetJac(nqp)
+  real   (kind=IGA_REAL), intent(out)   :: F(dim,dim,nqp)
+  real   (kind=IGA_REAL), intent(out)   :: G(dim,dim,nqp)
+  integer(kind=IGA_INT )  :: q
+  real   (kind=IGA_REAL)  :: DetF
+  do q=1,nqp
+     call GeometryMap(&
+          order,&
+          nen,X,&
+          M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
+          N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
+          DetF,F(:,:,q),G(:,:,q))
+     DetJac(q) = DetJac(q) * DetF
+  end do
 contains
 include 'petigageo.f90.in'
 end subroutine IGA_ShapeFuns_2D

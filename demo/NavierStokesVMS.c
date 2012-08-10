@@ -10,26 +10,11 @@ typedef struct {
 
 #undef __FUNCT__
 #define __FUNCT__ "Tau"
-void Tau(PetscReal GradMap[][3],
+void Tau(PetscReal J[3][3],
          PetscReal dt,PetscScalar u[],PetscReal nu,
          PetscScalar *tauM,PetscScalar *tauC)
 {
   PetscReal C_I = 1.0/12.0;
-
-  PetscReal J[3][3] = {{0}};
-  PetscReal d = +GradMap[0][0]*(GradMap[1][1]*GradMap[2][2]-GradMap[2][1]*GradMap[1][2])
-    -GradMap[0][1]*(GradMap[1][0]*GradMap[2][2]-GradMap[1][2]*GradMap[2][0])
-    +GradMap[0][2]*(GradMap[1][0]*GradMap[2][1]-GradMap[1][1]*GradMap[2][0]);
-  double invd = 1./d;
-  J[0][0] =  (GradMap[1][1]*GradMap[2][2]-GradMap[2][1]*GradMap[1][2])*invd;
-  J[1][0] = -(GradMap[0][1]*GradMap[2][2]-GradMap[0][2]*GradMap[2][1])*invd;
-  J[2][0] =  (GradMap[0][1]*GradMap[1][2]-GradMap[0][2]*GradMap[1][1])*invd;
-  J[0][1] = -(GradMap[1][0]*GradMap[2][2]-GradMap[1][2]*GradMap[2][0])*invd;
-  J[1][1] =  (GradMap[0][0]*GradMap[2][2]-GradMap[0][2]*GradMap[2][0])*invd;
-  J[2][1] = -(GradMap[0][0]*GradMap[1][2]-GradMap[1][0]*GradMap[0][2])*invd;
-  J[0][2] =  (GradMap[1][0]*GradMap[2][1]-GradMap[2][0]*GradMap[1][1])*invd;
-  J[1][2] = -(GradMap[0][0]*GradMap[2][1]-GradMap[2][0]*GradMap[0][1])*invd;
-  J[2][2] =  (GradMap[0][0]*GradMap[1][1]-GradMap[1][0]*GradMap[0][1])*invd;
 
   PetscInt i,j,k;
 
@@ -130,9 +115,10 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscScalar uy_xx=der2_u[1][0][0],uy_yy=der2_u[1][1][1],uy_zz=der2_u[1][2][2];
   PetscScalar uz_xx=der2_u[2][0][0],uz_yy=der2_u[2][1][1],uz_zz=der2_u[2][2][2];
 
-  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->gradX;
+  PetscReal InvGradMap[3][3];
+  IGAPointGetGradMap(pnt,PETSC_NULL,&InvGradMap[0][0]);
   PetscScalar tauM,tauC;
-  Tau(GradMap,dt,u,nu,&tauM,&tauC);
+  Tau(InvGradMap,dt,u,nu,&tauM,&tauC);
   PetscScalar ux_s,uy_s,uz_s,p_s;
   FineScale(user,tauM,tauC,
             ux,ux_t,ux_x,ux_y,ux_z,ux_xx,ux_yy,ux_zz,
@@ -205,9 +191,10 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
   PetscScalar uy=u[1];
   PetscScalar uz=u[2];
 
-  PetscReal (*GradMap)[3] = (PetscReal(*)[3]) pnt->gradX;
+  PetscReal InvGradMap[3][3];
+  IGAPointGetGradMap(pnt,0,&InvGradMap[0][0]);
   PetscScalar tauM,tauC;
-  Tau(GradMap,dt,u,nu,&tauM,&tauC);
+  Tau(InvGradMap,dt,u,nu,&tauM,&tauC);
 
   PetscReal *N0 = pnt->shape[0];
   PetscReal (*N1)[3] = (PetscReal (*)[3]) pnt->shape[1];

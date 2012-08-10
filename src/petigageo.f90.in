@@ -1,53 +1,14 @@
 ! -*- f90 -*-
 
-pure subroutine GeometryMapping(&
-     order,&
-     nqp,nen,&
-     X,&
-     M0,M1,M2,M3,&
-     N0,N1,N2,N3,&
-     DetF,F)
-  use PetIGA
-  implicit none
-  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
-  integer(kind=IGA_INT ), intent(in)    :: order
-  integer(kind=IGA_INT ), intent(in)    :: nen, nqp
-  real   (kind=IGA_REAL), intent(in)    :: X(dim+1,nen)
-  real   (kind=IGA_REAL), intent(in)    :: M0(       nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M1(dim,   nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N0(       nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N1(dim,   nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(inout) :: DetF(nqp)
-  real   (kind=IGA_REAL), intent(inout) :: F(dim,dim,nqp)
-
-  integer(kind=IGA_INT )  :: q, i
-  real   (kind=IGA_REAL)  :: DetG, G(dim,dim)
-
-  do q=1,nqp
-     call Isoparametric(&
-          order,&
-          nen,X,&
-          M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
-          N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
-          DetG,G)
-     DetF(q) = DetF(q) * DetG
-     F(:,:,q) = matmul(F(:,:,q),transpose(G))
-  end do
-
-end subroutine GeometryMapping
-
-pure subroutine Isoparametric(&
+pure subroutine GeometryMap(&
      order,&
      nen,X,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3,&
-     DetG,Grad)
+     DetG,Grad,InvG)
   use PetIGA
   implicit none
+  !integer(kind=IGA_INT), parameter   :: dim = 1,2,3
   integer(kind=IGA_INT ), intent(in)  :: order
   integer(kind=IGA_INT ), intent(in)  :: nen
   real   (kind=IGA_REAL), intent(in)  :: X(dim,nen)
@@ -59,7 +20,9 @@ pure subroutine Isoparametric(&
   real   (kind=IGA_REAL), intent(out) :: R1(        dim,nen)
   real   (kind=IGA_REAL), intent(out) :: R2(    dim,dim,nen)
   real   (kind=IGA_REAL), intent(out) :: R3(dim,dim,dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: DetG, Grad(dim,dim)
+  real   (kind=IGA_REAL), intent(out) :: DetG
+  real   (kind=IGA_REAL), intent(out) :: Grad(dim,dim)
+  real   (kind=IGA_REAL), intent(out) :: InvG(dim,dim)
 
   integer(kind=IGA_INT ) :: idx
   integer(kind=IGA_INT ) :: i, j, k, l
@@ -72,15 +35,16 @@ pure subroutine Isoparametric(&
   real   (kind=IGA_REAL) :: E3(dim,dim,dim,dim)
 
   ! gradient of the mapping
-  Grad = matmul(X,transpose(N1))
+  Grad = matmul(N1,transpose(X))
   DetG = Determinant(dim,Grad)
+  InvG = Inverse(dim,DetG,Grad)
 
   ! 0th derivatives
   R0 = N0
 
   ! 1st derivatives
-  X1 = Grad
-  E1 = Inverse(dim,X1,DetG)
+  X1 = transpose(Grad)
+  E1 = transpose(InvG)
   R1 = 0
   do idx = 1,nen
      do i = 1,dim
@@ -186,7 +150,7 @@ pure subroutine Isoparametric(&
      end do
   end do
 
-end subroutine Isoparametric
+end subroutine GeometryMap
 
 pure function Determinant(dim,A) result (detA)
   implicit none
@@ -207,11 +171,11 @@ pure function Determinant(dim,A) result (detA)
   end select
 end function Determinant
 
-pure function Inverse(dim,A,detA) result (invA)
+pure function Inverse(dim,detA,A) result (invA)
   implicit none
   integer(kind=IGA_INT ), intent(in) :: dim
-  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
   real   (kind=IGA_REAL), intent(in) :: detA
+  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
   real   (kind=IGA_REAL)             :: invA(dim,dim)
   select case (dim)
   case (1)

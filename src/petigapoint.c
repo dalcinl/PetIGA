@@ -122,16 +122,18 @@ PetscBool IGAPointNext(IGAPoint point)
   if (PetscUnlikely(index == 0))            goto start;
   if (PetscUnlikely(index >= point->count)) goto stop;
 
-  point->point    += dim;
   point->weight   += 1;
   point->detJac   += 1;
 
+  point->point    += dim;
+  point->scale    += dim;
   point->basis[0] += nen;
   point->basis[1] += nen*dim;
   point->basis[2] += nen*dim*dim;
   point->basis[3] += nen*dim*dim*dim;
 
-  point->gradX    += dim*dim;
+  point->gradX[0] += dim*dim;
+  point->gradX[1] += dim*dim;
   point->shape[0] += nen;
   point->shape[1] += nen*dim;
   point->shape[2] += nen*dim*dim;
@@ -143,17 +145,19 @@ PetscBool IGAPointNext(IGAPoint point)
 
   element = point->parent;
 
-  point->point    = element->point;
   point->weight   = element->weight;
   point->detJac   = element->detJac;
 
+  point->point    = element->point;
+  point->scale    = element->scale;
   point->basis[0] = element->basis[0];
   point->basis[1] = element->basis[1];
   point->basis[2] = element->basis[2];
   point->basis[3] = element->basis[3];
 
-  point->gradX = element->gradX;
   if (element->geometry && dim == nsd) { /* XXX */
+    point->gradX[0] = element->gradX[0];
+    point->gradX[1] = element->gradX[1];
     point->shape[0] = element->shape[0];
     point->shape[1] = element->shape[1];
     point->shape[2] = element->shape[2];
@@ -212,27 +216,16 @@ PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,Petsc
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetQuadrature"
-PetscErrorCode IGAPointGetQuadrature(IGAPoint point,const PetscReal *qpoint[],PetscReal *weight)
+PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
+                                     PetscReal *weight,
+                                     PetscReal *detJac)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  if (qpoint) PetscValidPointer(qpoint,3);
-  if (weight) PetscValidRealPointer(weight,4);
-  if (qpoint) *qpoint = point->point;
+  if (weight) PetscValidRealPointer(weight,3);
+  if (detJac) PetscValidRealPointer(detJac,4);
   if (weight) *weight = point->weight[0];
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetJacobian"
-PetscErrorCode IGAPointGetJacobian(IGAPoint point,PetscReal *detJac,const PetscReal *gradX[])
-{
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  if (detJac) PetscValidRealPointer(detJac,2);
-  if (gradX)  PetscValidRealPointer(gradX,3);
-  if (detJac) *detJac   = point->detJac[0];
-  if (gradX)  *gradX = point->gradX;
+  if (detJac) *detJac = point->detJac[0];
   PetscFunctionReturn(0);
 }
 
@@ -295,6 +288,46 @@ PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
     PetscInt i,dim = p->dim;
     const PetscReal *X = p->point;
     for (i=0; i<dim; i++) x[i] = X[i];
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetGradMap"
+PetscErrorCode IGAPointGetGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
+{
+  PetscReal *F = map;
+  PetscReal *G = inv;
+  PetscFunctionBegin;
+  PetscValidPointer(p,1);
+  if(F) PetscValidRealPointer(F,2);
+  if(G) PetscValidRealPointer(G,3);
+  if (p->parent->geometry) {
+    PetscInt i,a,dim = p->dim;
+    const PetscReal *L = p->scale;
+    const PetscReal *X = p->gradX[0];
+    const PetscReal *Y = p->gradX[1];
+    if (F) {
+      for (i=0; i<dim; i++)
+        for (a=0; a<dim; a++)
+          F[i*dim+a] = X[i*dim+a]*L[a];
+    }
+    if (G) {
+      for (a=0; a<dim; a++)
+        for (i=0; i<dim; i++)
+          G[a*dim+i] = Y[a*dim+i]/L[a];
+    }
+  } else {
+    PetscInt i,dim = p->dim;
+    const PetscReal *L = p->scale;
+    if (F) {
+      (void)PetscMemzero(F,sizeof(PetscReal)*dim*dim);
+      for (i=0; i<dim; i++) F[i*(dim+1)] = L[i];
+    }
+    if (G) {
+      (void)PetscMemzero(G,sizeof(PetscReal)*dim*dim);
+      for (i=0; i<dim; i++) G[i*(dim+1)] = 1/L[i];
+    }
   }
   PetscFunctionReturn(0);
 }
