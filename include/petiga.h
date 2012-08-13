@@ -472,10 +472,8 @@ PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 PETSC_EXTERN PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B);
 
 PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);
-PETSC_EXTERN PetscErrorCode IGAFormFunction(IGA iga,Vec U,Vec F,
-                                            IGAUserFunction Function,void *ctx);
-PETSC_EXTERN PetscErrorCode IGAFormJacobian(IGA iga,Vec U,Mat J,
-                                            IGAUserJacobian Jacobian,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormFunction(IGA iga,Vec U,Vec F);
+PETSC_EXTERN PetscErrorCode IGAFormJacobian(IGA iga,Vec U,Mat J);
 
 PETSC_EXTERN PetscErrorCode IGACreateTS(IGA iga,TS *ts);
 PETSC_EXTERN PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
