@@ -8,7 +8,7 @@ extern PetscLogEvent IGA_FormJacobian;
 PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
                                 PetscReal a,Vec vecV,
                                 PetscReal t,Vec vecU,
-                                Vec vecF,IGAUserIFunction IFunction,void *ctx)
+                                Vec vecF)
 {
   Vec               localV;
   Vec               localU;
@@ -16,6 +16,8 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
   const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
+  IGAUserIFunction  IFunction;
+  void              *IFunCtx;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -23,6 +25,10 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
   PetscValidHeaderSpecific(vecF,VEC_CLASSID,7);
   IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,IFunction);
+
+  IFunction = iga->userops->IFunction;
+  IFunCtx   = iga->userops->IFunCtx;
 
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
@@ -50,7 +56,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
     while (IGAPointNext(point)) {
       PetscScalar *R;
       ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
-      ierr = IFunction(point,dt,a,V,t,U,R,ctx);CHKERRQ(ierr);
+      ierr = IFunction(point,dt,a,V,t,U,R,IFunCtx);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
     }
     /* */
@@ -76,7 +82,7 @@ PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
 PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,
                                 PetscReal a,Vec vecV,
                                 PetscReal t,Vec vecU,
-                                Mat matJ,IGAUserIJacobian IJacobian,void *ctx)
+                                Mat matJ)
 {
   Vec               localV;
   Vec               localU;
@@ -84,6 +90,8 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,
   const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
+  IGAUserIJacobian  IJacobian;
+  void              *IJacCtx;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -91,6 +99,10 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
   PetscValidHeaderSpecific(matJ,MAT_CLASSID,7);
   IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,IJacobian);
+
+  IJacobian = iga->userops->IJacobian;
+  IJacCtx   = iga->userops->IJacCtx;
 
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
@@ -118,7 +130,7 @@ PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,
     while (IGAPointNext(point)) {
       PetscScalar *K;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IJacobian(point,dt,a,V,t,U,K,ctx);CHKERRQ(ierr);
+      ierr = IJacobian(point,dt,a,V,t,U,K,IJacCtx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
     }
     /* */
@@ -145,7 +157,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
                                  PetscReal a,Vec vecV,
                                  PetscReal t,Vec vecU,
                                  PetscReal t0,Vec vecU0,
-                                 Vec vecF,IGAUserIEFunction IEFunction,void *ctx)
+                                 Vec vecF)
 {
   Vec               localV;
   Vec               localU;
@@ -155,6 +167,8 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
   const PetscScalar *arrayU0;
   IGAElement        element;
   IGAPoint          point;
+  IGAUserIEFunction IEFunction;
+  void              *IEFunCtx;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -163,6 +177,10 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
   PetscValidHeaderSpecific(vecU0,VEC_CLASSID,7);
   PetscValidHeaderSpecific(vecF,VEC_CLASSID,8);
   IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,IEFunction);
+
+  IEFunction = iga->userops->IEFunction;
+  IEFunCtx   = iga->userops->IEFunCtx;
 
   /* Clear global vector F */
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
@@ -194,7 +212,7 @@ PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
     while (IGAPointNext(point)) {
       PetscScalar *R;
       ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
-      ierr = IEFunction(point,dt,a,V,t,U,t0,U0,R,ctx);CHKERRQ(ierr);
+      ierr = IEFunction(point,dt,a,V,t,U,t0,U0,R,IEFunCtx);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
     }
     /* */
@@ -222,7 +240,7 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
                                  PetscReal a,Vec vecV,
                                  PetscReal t,Vec vecU,
                                  PetscReal t0,Vec vecU0,
-                                 Mat matJ,IGAUserIEJacobian IEJacobian,void *ctx)
+                                 Mat matJ)
 {
   Vec               localV;
   Vec               localU;
@@ -232,6 +250,8 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
   const PetscScalar *arrayU0;
   IGAElement        element;
   IGAPoint          point;
+  IGAUserIEJacobian IEJacobian;
+  void              *IEJacCtx;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -240,6 +260,10 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
   PetscValidHeaderSpecific(vecU0,VEC_CLASSID,7);
   PetscValidHeaderSpecific(matJ,MAT_CLASSID,0);
   IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,IEJacobian);
+
+  IEJacobian = iga->userops->IEJacobian;
+  IEJacCtx   = iga->userops->IEJacCtx;
 
   /* Clear global matrix J*/
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
@@ -271,7 +295,7 @@ PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
     while (IGAPointNext(point)) {
       PetscScalar *K;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IEJacobian(point,dt,a,V,t,U,t0,U0,K,ctx);CHKERRQ(ierr);
+      ierr = IEJacobian(point,dt,a,V,t,U,t0,U0,K,IEJacCtx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
     }
     /* */
@@ -306,21 +330,15 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
   PetscValidHeaderSpecific(F,VEC_CLASSID,5);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
-  if (!iga->userops->IFunction && !iga->userops->IEFunction)
-    SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIFunction()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   if (iga->userops->IEFunction) {
     PetscReal t0;
     Vec       U0;
     ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
-    ierr = IGAFormIEFunction(iga,dt,a,V,t,U,t0,U0,F,
-                             iga->userops->IEFunction,
-                             iga->userops->IEFunCtx);CHKERRQ(ierr);
+    ierr = IGAFormIEFunction(iga,dt,a,V,t,U,t0,U0,F);CHKERRQ(ierr);
   } else {
-    ierr = IGAFormIFunction(iga,dt,a,V,t,U,F,
-                            iga->userops->IFunction,
-                            iga->userops->IFunCtx);CHKERRQ(ierr);
+    ierr = IGAFormIFunction(iga,dt,a,V,t,U,F);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -342,21 +360,15 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscValidHeaderSpecific(*P,MAT_CLASSID,7);
   PetscValidPointer(m,8);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,9);
-  if (!iga->userops->IJacobian && !iga->userops->IEJacobian)
-    SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call IGASetUserIJacobian()");
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   if (iga->userops->IEJacobian) {
     PetscReal t0;
     Vec       U0;
     ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
-    ierr = IGAFormIEJacobian(iga,dt,a,V,t,U,t0,U0,*P,
-                             iga->userops->IEJacobian,
-                             iga->userops->IEJacCtx);CHKERRQ(ierr);
+    ierr = IGAFormIEJacobian(iga,dt,a,V,t,U,t0,U0,*P);CHKERRQ(ierr);
   } else {
-    ierr = IGAFormIJacobian(iga,dt,a,V,t,U,*P,
-                            iga->userops->IJacobian,
-                            iga->userops->IJacCtx);CHKERRQ(ierr);
+    ierr = IGAFormIJacobian(iga,dt,a,V,t,U,*P);CHKERRQ(ierr);
   }
   if (*J != * P) {
     ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

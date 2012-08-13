@@ -479,21 +479,21 @@ PETSC_EXTERN PetscErrorCode IGACreateTS(IGA iga,TS *ts);
 PETSC_EXTERN PetscErrorCode IGAFormIFunction(IGA iga,PetscReal dt,
                                              PetscReal a,Vec V,
                                              PetscReal t,Vec U,
-                                             Vec F,IGAUserIFunction IFunction,void *ctx);
+                                             Vec F);
 PETSC_EXTERN PetscErrorCode IGAFormIJacobian(IGA iga,PetscReal dt,
                                              PetscReal a,Vec V,
                                              PetscReal t,Vec U,
-                                             Mat J,IGAUserIJacobian IJacobian,void *ctx);
+                                             Mat J);
 PETSC_EXTERN PetscErrorCode IGAFormIEFunction(IGA iga,PetscReal dt,
                                               PetscReal a,Vec V,
                                               PetscReal t,Vec U,
                                               PetscReal t0,Vec U0,
-                                              Vec F,IGAUserIEFunction IEFunction,void *ctx);
+                                              Vec F);
 PETSC_EXTERN PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
                                               PetscReal a,Vec V,
                                               PetscReal t,Vec U,
                                               PetscReal t0,Vec U0,
-                                              Mat J,IGAUserIEJacobian IEJacobian,void *ctx);
+                                              Mat J);
 
 /* ---------------------------------------------------------------- */
 
