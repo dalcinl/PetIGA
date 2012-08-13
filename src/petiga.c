@@ -1235,6 +1235,29 @@ PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUserSystem"
+/*@
+   IGASetUserSystem - Set the user callback to form the matrix and vector
+   which represents the discretized a(w,u) = L(w).
+   
+   Logically collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+.  System - the function which evaluates a(w,u) and L(w)
+-  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+
+   Details of System:
+$  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
+
++  p - point at which to evaluate a(w,u)=L(w)
+.  K - contribution to a(w,u)
+.  F - contribution to L(w)
+-  ctx - user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, setup linear system, matrix assembly, vector assembly
+@*/
 PetscErrorCode IGASetUserSystem(IGA iga,IGAUserSystem System,void *SysCtx)
 {
   PetscFunctionBegin;

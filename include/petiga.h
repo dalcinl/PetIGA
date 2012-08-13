@@ -469,8 +469,7 @@ PETSC_EXTERN PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S
 #define PCEBE "ebe"
 #define PCBBB "bbb"
 PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
-PETSC_EXTERN PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B,
-                                          IGAUserSystem System,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B);
 
 PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);
 PETSC_EXTERN PetscErrorCode IGAFormFunction(IGA iga,Vec U,Vec F,

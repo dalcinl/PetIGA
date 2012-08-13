@@ -6,26 +6,16 @@ extern PetscLogEvent IGA_FormSystem;
 #define __FUNCT__ "IGAFormSystem"
 /*@
    IGAFormSystem - Form the matrix and vector which represents the
-   discretized a(w,u)=L(w).
+   discretized a(w,u) = L(w).
    
-   Collective on Mat/Vec
+   Collective on IGA/Mat/Vec
 
    Input Parameters:
-+  iga - the IGA context
-.  System - the function which evaluates a(w,u) and L(w)
--  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+.  iga - the IGA context
 
    Output Parameters:
 +  matA - the matrix obtained from discretization of a(w,u)
 -  vecB - the vector obtained from discretization of L(w)
-
-   Details of System:
-$  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
-
-+  p - point at which to evaluate a(w,u)=L(w)
-.  K - contribution to a(w,u)
-.  F - contribution to L(w)
--  ctx - [optional] user-defined context for evaluation routine
 
    Notes: 
    This routine is used to solve a steady, linear problem. It performs
@@ -36,16 +26,22 @@ $  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
 
 .keywords: IGA, setup linear system, matrix assembly, vector assembly
 @*/
-PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void *ctx)
+PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB)
 {
   IGAElement     element;
   IGAPoint       point;
+  IGAUserSystem  System;
+  void           *SysCtx;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
+
+  System = iga->userops->System;
+  SysCtx = iga->userops->SysCtx;
+  if (!System) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUserSystem() before");
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
@@ -63,7 +59,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,IGAUserSystem System,void
       PetscScalar *K, *F;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
       ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
-      ierr = System(point,K,F,ctx);CHKERRQ(ierr);
+      ierr = System(point,K,F,SysCtx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
     }

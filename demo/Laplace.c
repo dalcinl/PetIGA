@@ -141,10 +141,11 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (iga->geometry){
-    ierr = IGAFormSystem(iga,A,b,SystemPoisson,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemPoisson,PETSC_NULL);CHKERRQ(ierr);
   }else{
-    ierr = IGAFormSystem(iga,A,b,SystemLaplace,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemLaplace,PETSC_NULL);CHKERRQ(ierr);
   }
+  ierr = IGAFormSystem(iga,A,b);CHKERRQ(ierr);
   ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
 
   // Solve

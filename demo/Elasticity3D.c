@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGAFormSystem(iga,A,b,System,&user);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
+  ierr = IGAFormSystem(iga,A,b);CHKERRQ(ierr);
   
   // Solve
   KSP ksp;
