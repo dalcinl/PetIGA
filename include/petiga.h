@@ -522,6 +522,18 @@ PETSC_EXTERN PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
 #define IGACheckSetUp(iga,arg) do {} while (0)
 #endif
 
+#if defined(PETSC_USE_DEBUG)
+#define IGACheckUserOp(iga,arg,UserOp) do {             \
+    if (!iga->userops->UserOp)                          \
+      SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_USER, \
+               "Must call IGASetUser%s() "              \
+               "on argument %D \"%s\" before %s()",     \
+               #UserOp,(arg),#iga,PETSC_FUNCTION_NAME); \
+    } while (0)
+#else
+#define IGACheckUserOp(iga,arg,UserOp) do {} while (0)
+#endif
+
 /* ---------------------------------------------------------------- */
 
 #if PETSC_VERSION_(3,2,0)

@@ -38,10 +38,10 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB)
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,System);
 
   System = iga->userops->System;
   SysCtx = iga->userops->SysCtx;
-  if (!System) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUserSystem() before");
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
