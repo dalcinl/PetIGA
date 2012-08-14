@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
-  ierr = IGAFormSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   //MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);
   //PetscBool symm=1;
   //ierr = MatIsSymmetric(A,1e-2,&symm);CHKERRQ(ierr);

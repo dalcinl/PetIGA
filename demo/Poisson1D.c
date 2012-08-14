@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
-  ierr = IGAFormSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);

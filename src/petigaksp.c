@@ -3,7 +3,7 @@
 extern PetscLogEvent IGA_FormSystem;
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAFormSystem"
+#define __FUNCT__ "IGAComputeSystem"
 /*@
    IGAFormSystem - Form the matrix and vector which represents the
    discretized a(w,u) = L(w).
@@ -26,10 +26,8 @@ extern PetscLogEvent IGA_FormSystem;
 
 .keywords: IGA, setup linear system, matrix assembly, vector assembly
 @*/
-PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB)
+PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
 {
-  IGAElement     element;
-  IGAPoint       point;
   IGAUserSystem  System;
   void           *SysCtx;
   PetscErrorCode ierr;
@@ -39,9 +37,25 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB)
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
   IGACheckUserOp(iga,1,System);
-
   System = iga->userops->System;
   SysCtx = iga->userops->SysCtx;
+  ierr = IGAFormSystem(iga,matA,vecB,System,SysCtx);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAFormSystem"
+PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,
+                             IGAUserSystem System,void *ctx)
+{
+  IGAElement     element;
+  IGAPoint       point;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
@@ -59,7 +73,7 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB)
       PetscScalar *K, *F;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
       ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
-      ierr = System(point,K,F,SysCtx);CHKERRQ(ierr);
+      ierr = System(point,K,F,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
     }

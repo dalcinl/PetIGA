@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
   }else{
     ierr = IGASetUserSystem(iga,SystemLaplace,PETSC_NULL);CHKERRQ(ierr);
   }
-  ierr = IGAFormSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
 
   // Solve

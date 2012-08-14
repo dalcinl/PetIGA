@@ -2,8 +2,16 @@
 
 ALL: lib
 
-#CFLAGS = -g3 -pedantic -Wall -Wextra -Wno-unused-parameter -Wconversion -Wno-sign-conversion -Wno-long-long
-#FFLAGS = -g3 -pedantic -Wall -Wextra -fcheck=all
+#CFLAGS_STD_C89 = -std=c89 -Dinline=__inline -Wno-long-long
+#CFLAGS_STD_C99 = -std=c99
+#CFLAGS_STD_C11 = -std=c11
+#CFLAGS_STD = ${CFLAGS_STD_C89}
+#CFLAGS = ${CFLAGS_STD} -pedantic -Wall -Wextra -Wno-unused-parameter -Wconversion -Wno-sign-conversion
+
+#FFLAGS_STD_F03 = -std=f2003
+#FFLAGS_STD_F08 = -std=f2008
+#FFLAGS_STD = ${FFLAGS_STD_F03}
+#FFLAGS = ${FFLAGS_STD} -pedantic -Wall -Wextra -fcheck=all
 
 SOURCEH  = ../include/petiga.h petigapc.h petigagrid.h petigapart.h
 SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigaksp.c petigasnes.c petigats.c petigaio.c petigagrid.c petigapart.c
