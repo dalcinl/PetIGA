@@ -452,7 +452,7 @@ PETSC_EXTERN PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],Pe
 PETSC_EXTERN PetscErrorCode IGAPointGetGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetDel2 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointGet3rdMixedPartials(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointGetDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[]);

@@ -87,8 +87,8 @@ subroutine IGA_GetDel2(nen,dof,dim,N,U,V) &
   end do
 end subroutine IGA_GetDel2
 
-subroutine IGA_Get3rdMixed(nen,dof,dim,N,U,V) &
-  bind(C, name="IGA_Get3rdMixed")
+subroutine IGA_GetDer3(nen,dof,dim,N,U,V) &
+     bind(C, name="IGA_GetDer3")
   use PetIGA
   implicit none
   integer(kind=IGA_INT   ), intent(in),value :: nen,dof,dim
@@ -103,7 +103,7 @@ subroutine IGA_Get3rdMixed(nen,dof,dim,N,U,V) &
         V(:,i) = V(:,i) + N(:,a) * U(i,a)
      end do
   end do
-end subroutine IGA_Get3rdMixed
+end subroutine IGA_GetDer3
 
 !subroutine IGA_GetDerivative(nen,dof,dim,der,N,U,V) &
 !  bind(C, name="IGA_GetDerivative")

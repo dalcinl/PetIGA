@@ -270,8 +270,8 @@ extern void IGA_GetHess (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal 
                          const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetDel2 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
                          const PetscScalar U[],PetscScalar u[]);
-extern void IGA_Get3rdMixed (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-			     const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
+                         const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -381,14 +381,14 @@ PetscErrorCode IGAPointGetDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGet3rdMixedPartials"
-PetscErrorCode IGAPointGet3rdMixedPartials(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointGetDer3"
+PetscErrorCode IGAPointGetDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
   PetscValidScalarPointer(U,2);
   PetscValidScalarPointer(u,3);
-  IGA_Get3rdMixed(p->nen,p->dof,p->dim,p->shape[3],U,u);
+  IGA_GetDer3(p->nen,p->dof,p->dim,p->shape[3],U,u);
   PetscFunctionReturn(0);
 }
 
