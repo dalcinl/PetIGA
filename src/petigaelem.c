@@ -208,6 +208,7 @@ PetscBool IGAElementNext(IGAElement element)
   PetscInt *width = element->width;
   PetscInt *ID    = element->ID;
   PetscInt index,coord;
+  PetscErrorCode ierr;
   /* */
   element->nvec = 0;
   element->nmat = 0;
@@ -223,9 +224,12 @@ PetscBool IGAElementNext(IGAElement element)
     index = (index - coord) / width[i];
     ID[i] = coord + start[i];
   }
-  IGAElementBuildMapping(element);
-  IGAElementBuildGeometry(element);
-  IGAElementBuildFix(element);
+#undef  CHKERR_RETURN
+#define CHKERR_RETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
+  ierr = IGAElementBuildMapping(element);  CHKERR_RETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildGeometry(element); CHKERR_RETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildFix(element);      CHKERR_RETURN(ierr,PETSC_FALSE);
+#undef  CHKERR_RETURN_FALSE
   return PETSC_TRUE;
 }
 
@@ -235,7 +239,10 @@ PetscErrorCode IGAElementEnd(IGAElement element)
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  element->index = -1;
+  if (PetscUnlikely(element->index != -1)) {
+    element->index = -1;
+    PetscFunctionReturn(PETSC_ERR_PLIB);
+  }
   PetscFunctionReturn(0);
 }
 
