@@ -8,8 +8,12 @@ TARGETS = InputOutput \
           PatternFormation \
           CahnHilliard2D \
           CahnHilliard3D \
+          NavierStokesKorteweg2D \
           NavierStokesVMS \
-	  Elasticity3D
+          Elasticity3D \
+          HyperElasticity \
+          PhaseFieldCrystal2D
+
 ALL: ${TARGETS}
 clean::
 	-@${RM} ${TARGETS}
@@ -52,10 +56,10 @@ L2Projection: L2Projection.o chkopts
 Laplace: Laplace.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-AdvectionDiffusion: AdvectionDiffusion.o chkopts
+Poisson: Poisson.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-Poisson: Poisson.o chkopts
+AdvectionDiffusion: AdvectionDiffusion.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 PatternFormation: PatternFormation.o chkopts
