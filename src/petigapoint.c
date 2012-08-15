@@ -200,6 +200,17 @@ PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetCount"
+PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidIntPointer(count,2);
+  *count = point->count;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetSizes"
 PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim)
 {
