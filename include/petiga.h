@@ -447,13 +447,14 @@ PETSC_EXTERN PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,con
 
 PETSC_EXTERN PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
 
-PETSC_EXTERN PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetGradMap(IGAPoint p,PetscReal map[],PetscReal inv[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetDel2 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointGetDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormPoint    (IGAPoint p,PetscReal x[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormGradMap  (IGAPoint p,PetscReal map[],PetscReal inv[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormShapeFuns(IGAPoint p,PetscInt der,PetscReal N[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormDel2 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormDer3 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[]);

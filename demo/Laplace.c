@@ -52,7 +52,7 @@ PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscScalar u;
-  IGAPointGetValue(p,U,&u);
+  IGAPointFormValue(p,U,&u);
   PetscReal e = PetscAbsScalar(u - 1.0);
   S[0] = e*e;
   return 0;

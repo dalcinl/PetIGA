@@ -24,10 +24,10 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscScalar u_t[3],u[3];
   PetscScalar grad_u[3][2];
   PetscScalar hess_u[3][2][2];
-  IGAPointGetValue(pnt,V,&u_t[0]);
-  IGAPointGetValue(pnt,U,&u[0]);
-  IGAPointGetGrad (pnt,U,&grad_u[0][0]);
-  IGAPointGetHess (pnt,U,&hess_u[0][0][0]);
+  IGAPointFormValue(pnt,V,&u_t[0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
+  IGAPointFormHess (pnt,U,&hess_u[0][0][0]);
   PetscReal rho_t = u_t[0], rho = u[0];
   PetscReal rho_x = grad_u[0][0],     rho_y  = grad_u[0][1];
   PetscReal rho_xx = hess_u[0][0][0], rho_xy = hess_u[0][0][1] ;

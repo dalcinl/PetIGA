@@ -47,12 +47,12 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
   PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
 
   PetscScalar uv_t[2],uv_0[2],uv_1[2][2];
-  IGAPointGetValue(p,V,&uv_t[0]);
+  IGAPointFormValue(p,V,&uv_t[0]);
   if (IMPLICIT)
-    IGAPointGetValue(p,U1,&uv_0[0]);
+    IGAPointFormValue(p,U1,&uv_0[0]);
   else
-    IGAPointGetValue(p,U0,&uv_0[0]);
-  IGAPointGetGrad(p,U1,&uv_1[0][0]);
+    IGAPointFormValue(p,U0,&uv_0[0]);
+  IGAPointFormGrad(p,U1,&uv_1[0][0]);
   PetscScalar u_t = uv_t[0],    v_t = uv_t[1];
   PetscScalar u   = uv_0[0],    v   = uv_0[1];
   PetscScalar u_x = uv_1[0][0], v_x = uv_1[1][0];
@@ -106,7 +106,7 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
   PetscReal g_u=0,g_v=0;
   if (IMPLICIT) {
     PetscScalar uv_0[2];
-    IGAPointGetValue(p,U1,&uv_0[0]);
+    IGAPointFormValue(p,U1,&uv_0[0]);
     PetscScalar u = uv_0[0];
     PetscScalar v = uv_0[1];
     f_u = alpha*(1-tau1*v*v) - tau2*v;

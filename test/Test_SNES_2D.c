@@ -16,21 +16,24 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
   PetscInt nen=p->nen;
 
   PetscReal xy[2];
-  IGAPointGetPoint(p,xy);
+  IGAPointFormPoint(p,xy);
   PetscReal x = xy[0];
   PetscReal y = xy[1];
 
   PetscScalar u0[4],u1[4][2];
-  IGAPointGetValue(p,Ue,&u0[0]);
-  IGAPointGetGrad (p,Ue,&u1[0][0]);
+  IGAPointFormValue(p,Ue,&u0[0]);
+  IGAPointFormGrad (p,Ue,&u1[0][0]);
   PetscScalar PETSC_UNUSED u = u0[0], u_x = u1[0][0], u_y = u1[0][1];
   PetscScalar PETSC_UNUSED v = u0[1], v_x = u1[1][0], v_y = u1[1][1];
   PetscScalar PETSC_UNUSED w = u0[2], w_x = u1[2][0], w_y = u1[2][1];
   PetscScalar PETSC_UNUSED r = u0[3], r_x = u1[3][0], r_y = u1[3][1];
 
-  const PetscReal *N0, (*N1)[2];
+  /*const PetscReal *N0, (*N1)[2];
   IGAPointGetShapeFuns(p,0,(const PetscReal **)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
+  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);*/
+  PetscReal N0[nen], N1[nen][2];
+  IGAPointFormShapeFuns(p,0,&N0[0]);
+  IGAPointFormShapeFuns(p,1,&N1[0][0]);
 
   PetscInt a;
   for (a=0; a<nen; a++) {
@@ -52,7 +55,7 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
   PetscInt nen=p->nen;
 
   PetscScalar u0[4];
-  IGAPointGetValue(p,Ue,&u0[0]);
+  IGAPointFormValue(p,Ue,&u0[0]);
   PetscScalar PETSC_UNUSED r = u0[3];
 
   const PetscReal *N0, (*N1)[2];

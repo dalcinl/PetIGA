@@ -34,8 +34,8 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   AppCtx *user = (AppCtx *)ctx;
  
   PetscScalar c,c1[3];
-  IGAPointGetValue(p,U,&c); 
-  IGAPointGetGrad(p,U,&c1[0]);
+  IGAPointFormValue(p,U,&c); 
+  IGAPointFormGrad(p,U,&c1[0]);
 
   S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],c1[2],user); 
   
@@ -73,8 +73,8 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   IGAPointGetSizes(p,&nen,0,0);
 
   PetscScalar c,c_t;
-  IGAPointGetValue(p,V,&c_t);
-  IGAPointGetValue(p,U,&c);
+  IGAPointFormValue(p,V,&c_t);
+  IGAPointFormValue(p,U,&c);
 
   PetscReal M,dM;
   Mobility(user,c,&M,&dM,NULL);
@@ -82,8 +82,8 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   ChemicalPotential(user,c,NULL,&dmu,NULL);
 
   PetscScalar c1[3],c2[3][3];
-  IGAPointGetGrad(p,U,&c1[0]);
-  IGAPointGetHess(p,U,&c2[0][0]);
+  IGAPointFormGrad(p,U,&c1[0]);
+  IGAPointFormHess(p,U,&c2[0][0]);
   PetscScalar c_x  = c1[0],    c_y  = c1[1],    c_z  = c1[2];
   PetscScalar c_xx = c2[0][0], c_yy = c2[1][1], c_zz = c2[2][2];
 
@@ -131,8 +131,8 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   IGAPointGetSizes(p,&nen,0,0);
 
   PetscScalar c_t,c;
-  IGAPointGetValue(p,V,&c_t);
-  IGAPointGetValue(p,U,&c);
+  IGAPointFormValue(p,V,&c_t);
+  IGAPointFormValue(p,U,&c);
 
   PetscReal M,dM,d2M;
   Mobility(user,c,&M,&dM,&d2M);
@@ -140,8 +140,8 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   ChemicalPotential(user,c,NULL,&dmu,&d2mu);
 
   PetscScalar c1[3],c2[3][3];
-  IGAPointGetGrad(p,U,&c1[0]);
-  IGAPointGetHess(p,U,&c2[0][0]);
+  IGAPointFormGrad(p,U,&c1[0]);
+  IGAPointFormHess(p,U,&c2[0][0]);
   PetscScalar c_x  = c1[0],    c_y  = c1[1],    c_z  = c1[2];
   PetscScalar c_xx = c2[0][0], c_yy = c2[1][1], c_zz = c2[2][2];
 

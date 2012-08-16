@@ -246,7 +246,7 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  PetscValidPointer(basisfuns,2);
+  PetscValidPointer(basisfuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
             "Requested derivative must be in range [0,%d], got %D",
@@ -261,7 +261,7 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  PetscValidPointer(shapefuns,2);
+  PetscValidPointer(shapefuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
             "Requested derivative must be in range [0,%d], got %D",
@@ -286,8 +286,8 @@ extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal 
 EXTERN_C_END
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetPoint"
-PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
+#define __FUNCT__ "IGAPointFormPoint"
+PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
@@ -304,8 +304,8 @@ PetscErrorCode IGAPointGetPoint(IGAPoint p,PetscReal x[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetGradMap"
-PetscErrorCode IGAPointGetGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
+#define __FUNCT__ "IGAPointFormGradMap"
+PetscErrorCode IGAPointFormGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
 {
   PetscReal *F = map;
   PetscReal *G = inv;
@@ -344,8 +344,26 @@ PetscErrorCode IGAPointGetGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetValue"
-PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointFormShapeFuns"
+PetscErrorCode IGAPointFormShapeFuns(IGAPoint point,PetscInt der,PetscReal N[])
+{
+  PetscInt       i,n;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidRealPointer(N,3);
+  if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
+    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Requested derivative must be in range [0,%d], got %D",
+             (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
+  for (i=0,n=point->nen; i<der; i++) n *= point->dim;
+  ierr = PetscMemcpy(N,point->shape[der],n*sizeof(PetscReal));CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointFormValue"
+PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
@@ -356,8 +374,8 @@ PetscErrorCode IGAPointGetValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetGrad"
-PetscErrorCode IGAPointGetGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointFormGrad"
+PetscErrorCode IGAPointFormGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
@@ -368,8 +386,8 @@ PetscErrorCode IGAPointGetGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetHess"
-PetscErrorCode IGAPointGetHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointFormHess"
+PetscErrorCode IGAPointFormHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
@@ -380,8 +398,8 @@ PetscErrorCode IGAPointGetHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetDel2"
-PetscErrorCode IGAPointGetDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointFormDel2"
+PetscErrorCode IGAPointFormDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);
@@ -392,8 +410,8 @@ PetscErrorCode IGAPointGetDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetDer3"
-PetscErrorCode IGAPointGetDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[])
+#define __FUNCT__ "IGAPointFormDer3"
+PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(p,1);

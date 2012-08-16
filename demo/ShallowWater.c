@@ -47,9 +47,9 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   PetscReal g  = user->gravity;
 
   PetscScalar s_t[3],s[3],grad_s[3][2];
-  IGAPointGetValue(p,V,&s_t[0]);
-  IGAPointGetValue(p,U,&s[0]);
-  IGAPointGetGrad (p,U,&grad_s[0][0]);
+  IGAPointFormValue(p,V,&s_t[0]);
+  IGAPointFormValue(p,U,&s[0]);
+  IGAPointFormGrad (p,U,&grad_s[0][0]);
 
   PetscScalar h_t  = s_t[0], h  = s[0];
   PetscScalar hu_t = s_t[1], hu = s[1], u = hu/h;
