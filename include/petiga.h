@@ -304,12 +304,13 @@ PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJac
 struct _n_IGAElement {
   PetscInt refct;
   /**/
-  PetscInt count;
-  PetscInt index;
   PetscInt start[3];
   PetscInt width[3];
   PetscInt ID[3];
-
+  /**/
+  PetscInt count;
+  PetscInt index;
+  /**/
   PetscInt nqp;
   PetscInt nen;
   PetscInt dof;
@@ -400,7 +401,7 @@ struct _n_IGAPoint {
   /**/
   PetscInt count;
   PetscInt index;
-
+  /**/
   PetscInt nen;
   PetscInt dof;
   PetscInt dim;
