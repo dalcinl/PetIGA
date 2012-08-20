@@ -4,14 +4,23 @@ typedef struct {
   IGA iga;
   PetscReal cbar,D,k,Eps,g;
   PetscReal L0,Sprev[3];
+  PetscReal C1[2],C2[2],C3[2];
+  PetscReal ang[3];
+  PetscReal dist;
+  PetscReal coefC, coefq;
 } AppCtx;
 
+#define SQ(A) ((A)*(A))
+
 #undef __FUNCT__
-#define __FUNCT__ "GinzburgLandauFreeEnergy"
-PetscScalar GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,AppCtx *user)
+#define __FUNCT__ "FreeEnergy"
+PetscScalar FreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,PetscReal cxx,PetscReal cyy,AppCtx *user)
 {
   PetscReal E;
-  E=-user->Eps/2.0*c*c-user->g/3.0*c*c*c+c*c*c/4.0+user->D/2.0*((cx*cx+cy*cy)*(cx*cx+cy*cy)-2.0*user->k*user->k*fabs(cx*cx+cy*cy)+user->k*user->k*user->k*user->k*c*c);
+  E  = -user->Eps/2.0*c*c;
+  E += -user->g/3.0*c*c*c;
+  E +=  0.25*c*c*c*c;
+  E +=  0.5*user->D* ( SQ(cxx*cxx+cyy*cyy) - 2.0*SQ(user->k)*fabs(cx*cx+cy*cy) + SQ(user->k)*SQ(user->k)*c*c );
   return E;
 }
 
@@ -22,26 +31,15 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)ctx;
  
-  PetscScalar c,c1[3];
+  PetscScalar c,c1[2],c2[2][2];
   IGAPointGetValue(p,U,&c); 
   IGAPointGetGrad(p,U,&c1[0]);
-  PetscScalar diff = c - user->cbar;
+  IGAPointGetHess(p,U,&c2[0][0]);
 
-  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],user); // Free energy
-  S[1] = diff*diff;                                    // Second moment
-  S[2] = S[1]*diff;                                    // Third moment
+  S[0] = FreeEnergy(c,c1[0],c1[1],c2[0][0],c2[1][1],user); // Free energy
   
   PetscFunctionReturn(0);
 }
-
-//#undef  __FUNCT__
-//#define __FUNCT__ "Mobility"
-//void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M)
-//{
-//  if (M)   *M   = c*(1-c);
-//  if (dM)  *dM  = 1-2*c;
-//  if (d2M) *d2M = -2;
-//}
 
 #undef __FUNCT__
 #define __FUNCT__ "StatsMonitor"
@@ -51,36 +49,18 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx;
 
-  PetscScalar stats[3] = {0,0,0};
-  ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
+  PetscScalar stats[1] = {0};
+  ierr = IGAFormScalar(user->iga,U,1,&stats[0],Stats,mctx);CHKERRQ(ierr);
 
   PetscScalar dt;
   TSGetTimeStep(ts,&dt);
-  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e %.16e %.16e\n",t,dt,stats[0],stats[1],stats[2]);
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,stats[0]);
 
-  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
+  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: free energy increased!\n");
   user->Sprev[0] = stats[0];
 
   PetscFunctionReturn(0);
 }
-
-//#undef  __FUNCT__
-//#define __FUNCT__ "ChemicalPotential"
-//void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,PetscReal *d2mu)
-//{
-//  if (mu) {
-//   (*mu)  = 0.5/user->theta*log(c/(1-c))+1-2*c;
-//    (*mu) *= user->L0*user->L0/user->lambda;
-//  }
-//  if (dmu) {
-//    (*dmu)  = 0.5/user->theta*1.0/(c*(1-c)) - 2;
-//    (*dmu) *= user->L0*user->L0/user->lambda;
-//  }
-//  if (d2mu) {
-//    (*d2mu)  = -0.5/user->theta*(1-2*c)/(c*c*(1-c)*(1-c));
-//    (*d2mu) *= user->L0*user->L0/user->lambda;
-//  }
-//}
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
@@ -98,11 +78,6 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   IGAPointGetValue(p,V,&c_t);
   IGAPointGetValue(p,U,&c);
 
-  //PetscReal M,dM;
-  //Mobility(user,c,&M,&dM,NULL);
-  //PetscReal dmu;
-  //ChemicalPotential(user,c,NULL,&dmu,NULL);
-
   PetscScalar c1[2],c2[2][2],c3[2][2][2];
   IGAPointGetGrad(p,U,&c1[0]);
   IGAPointGetHess(p,U,&c2[0][0]);
@@ -118,6 +93,8 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
   IGAPointGetShapeFuns(p,3,(const PetscReal**)&N3);
 
+  PetscReal k4,k2 = user->k*user->k; k4 = k2*k2;
+  PetscReal D = user->D, eps = user->Eps, g = user->g;
   PetscInt a;
   for (a=0; a<nen; a++) {
     PetscReal Na     = N0[a];
@@ -134,14 +111,14 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
     PetscScalar Ra  = 0;
     // Na * c_t
     Ra += Na * c_t; 
-    // grad(Na) . ((-\epsilon\phi-g\epsilon^2+\phi^3)) grad(c)
-    PetscScalar t1 = -user->Eps*c - user->g*c*c +c*c*c;
+    // grad(Na) . ((-\epsilon-2g\epsilon+3\phi^2 +Dk^4)) grad(c)
+    PetscScalar t1 = -eps - 2.0*g*c + 3.0*c*c + D*k4;
     Ra += Na_x * t1 * c_x;
     Ra += Na_y * t1 * c_y;
     // -2Dk^2 . del2(Na)  . del2(c)
-    Ra += -2.0*user->D*user->k*user->k * (Na_xx+Na_yy) * (c_xx+c_yy);
+    Ra += -2.0*D*k2 * (Na_xx+Na_yy) * (c_xx+c_yy);
     // D . del3(Na) . del3(c)
-    Ra += user->D * (Na_yyy * (c_yyy + c_xxy) + Na_xxx * (c_xxx + c_xyy) + Na_xyy * (c_xxx + c_xyy) + Na_xxy * (c_yyy + c_xxy));
+    Ra += D * ( (Na_xxx+Na_xyy)*(c_xxx+c_xyy) + (Na_xxy+Na_yyy)*(c_xxy+c_yyy) );
     /* ----- */
     R[a] = Ra;
   }
@@ -164,25 +141,18 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   IGAPointGetValue(p,V,&c_t);
   IGAPointGetValue(p,U,&c);
 
-  //PetscReal M,dM,d2M;
-  //Mobility(user,c,&M,&dM,&d2M);
-  // PetscReal dmu,d2mu;
-  // ChemicalPotential(user,c,NULL,&dmu,&d2mu);
-
-  PetscScalar c1[2],c2[2][2],c3[2][2][2];
+  PetscScalar c1[2];
   IGAPointGetGrad(p,U,&c1[0]);
-  IGAPointGetHess(p,U,&c2[0][0]);
-  IGAPointGet3rdMixedPartials(p,U,&c3[0][0][0]);
   PetscScalar c_x   = c1[0],       c_y   = c1[1];
-  PetscScalar c_xx  = c2[0][0],    c_yy  = c2[1][1];
-  PetscScalar c_xxx = c3[0][0][0], c_yyy = c3[1][1][1];
-  PetscScalar c_xxy = c3[0][0][1], c_xyy = c3[0][1][1];
 
   const PetscReal *N0,(*N1)[2],(*N2)[2][2],(*N3)[2][2][2];
   IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
   IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
   IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
   IGAPointGetShapeFuns(p,3,(const PetscReal**)&N3);
+
+  PetscReal k4,k2 = user->k*user->k; k4 = k2*k2;
+  PetscReal D = user->D, eps = user->Eps, g = user->g;
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {
@@ -212,17 +182,17 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
       // shift*Na*Nb
       Kab += shift*Na*Nb;
       // grad(Na) . (-Eps*c-g*c^2+c^3) grad(Nb)
-      PetscScalar t1 = -user->Eps*c - user->g*c*c +c*c*c;
+      PetscScalar t1 = -eps - 2.0*g*c + 3.0*c*c + D*k4;
       Kab += Na_x * t1 * Nb_x;
       Kab += Na_y * t1 * Nb_y;
       // grad(Na) . (deriv(t1)) grad(c)
-      PetscScalar t2 = (-user->Eps*Nb-user->g*Nb*Nb+Nb*Nb*Nb);
+      PetscScalar t2 = Nb*(-2.0*g + 6.0*c);
       Kab += Na_x * t2 * c_x;
       Kab += Na_y * t2 * c_y;
       // -2Dk^2 * del2(Na) * del2(Nb)
-      Kab += -2.0*user->D*user->k*user->k*(Na_xx+Na_yy) * (Nb_xx+Nb_yy);
+      Kab += -2.0*D*k2*(Na_xx+Na_yy) * (Nb_xx+Nb_yy);
       // D * del3(Na) * del3(Nb)
-      Kab += user->D*(Na_yyy * (Nb_yyy + Nb_xxy) + Na_xxx * (Nb_xxx + Nb_xyy) + Na_xyy * (Nb_xxx + Nb_xyy) + Na_xxy * (Nb_yyy + Nb_xxy));
+      Kab += user->D * ( (Na_xxx+Na_xyy)*(Nb_xxx+Nb_xyy) + (Na_xxy+Na_yyy)*(Nb_xxy+Nb_yyy) );
       /* ----- */
       K[a*nen+b] = Kab;
     }
@@ -230,11 +200,40 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   return 0;
 }
 
+PetscReal FormRhoinit(PetscReal x ,PetscReal y, AppCtx *user){
+  PetscReal rhoinit = user->cbar,xl,yl;
+  PetscInt i;
+  for(i=0;i<3;i++){
+    PetscReal d1 = sqrt(SQ(x-user->C1[0])+SQ(y-user->C1[1]));
+    PetscReal d2 = sqrt(SQ(x-user->C2[0])+SQ(y-user->C2[1]));
+    PetscReal d3 = sqrt(SQ(x-user->C3[0])+SQ(y-user->C3[1]));
+    if (d1 < user->dist){
+      xl = cos(user->ang[i])*x+sin(user->ang[i])*y;
+      yl = -sin(user->ang[i])*x+cos(user->ang[i])*y;
+      return rhoinit + user->coefC*(cos(user->coefq/sqrt(3.)*yl)*cos(user->coefq*xl)-0.5*cos(2.*user->coefq/sqrt(3.)*yl));
+    }
+    if (d2 < user->dist){
+      xl = cos(user->ang[i])*x+sin(user->ang[i])*y;
+      yl = -sin(user->ang[i])*x+cos(user->ang[i])*y;
+      return rhoinit + user->coefC*(cos(user->coefq/sqrt(3.)*yl)*cos(user->coefq*xl)-0.5*cos(2.*user->coefq/sqrt(3.)*yl));
+    }
+    if (d3 < user->dist){
+      xl = cos(user->ang[i])*x+sin(user->ang[i])*y;
+      yl = -sin(user->ang[i])*x+cos(user->ang[i])*y;
+      return rhoinit + user->coefC*(cos(user->coefq/sqrt(3.)*yl)*cos(user->coefq*xl)-0.5*cos(2.*user->coefq/sqrt(3.)*yl));
+    }
+  }
+  return rhoinit;
+}
+
+typedef struct {
+  PetscScalar rho;
+} Field;
+
 #undef __FUNCT__
 #define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],Vec C)
 {
-  
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (datafile[0] != 0) { /* initial condition from datafile */
@@ -244,14 +243,23 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],V
     ierr = PetscViewerBinaryOpen(comm,datafile,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
     ierr = VecLoad(C,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);
-  } else { /* initial condition is random */
-    PetscRandom rctx;    
-    ierr = PetscRandomCreate(PETSC_COMM_WORLD,&rctx);CHKERRQ(ierr);
-    ierr = PetscRandomSetFromOptions(rctx);CHKERRQ(ierr);
-    ierr = PetscRandomSetInterval(rctx,user->cbar-0.000001,user->cbar+0.0000001);CHKERRQ(ierr); 
-    ierr = PetscRandomSeed(rctx);CHKERRQ(ierr);
-    ierr = VecSetRandom(C,rctx);CHKERRQ(ierr); 
-    ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr); 
+  } else { /* initial condition is like Hectors initial test */
+    DM da;
+    ierr = IGACreateNodeDM(iga,1,&da);CHKERRQ(ierr);
+    Field **u;
+    ierr = DMDAVecGetArray(da,C,&u);CHKERRQ(ierr);
+    DMDALocalInfo info;
+    ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
+    PetscInt i,j;
+    for(i=info.xs;i<info.xs+info.xm;i++){
+      for(j=info.ys;j<info.ys+info.ym;j++){
+	PetscReal x = (PetscReal)i/((PetscReal)info.mx-1)*user->L0;
+	PetscReal y = (PetscReal)j/((PetscReal)info.my-1)*user->L0;
+	u[j][i].rho = FormRhoinit(x,y,user); 
+      }
+    }
+    ierr = DMDAVecRestoreArray(da,C,&u);CHKERRQ(ierr); 
+    ierr = DMDestroy(&da);CHKERRQ(ierr); 
   }
   PetscFunctionReturn(0); 
 }
@@ -303,38 +311,41 @@ int main(int argc, char *argv[]) {
   user.L0    = 800.0;   /* length scale */
   user.Sprev[0] = user.Sprev[1] = user.Sprev[2] = 1.0e20; 
 
+  user.C1[0]=200.0;user.C1[1]=200.0;
+  user.C2[0]=600.0;user.C2[1]=200.0;
+  user.C3[0]=400.0;user.C3[1]=700.0;
+  user.ang[0]=-0.25*PETSC_PI; user.ang[0]=0.0; user.ang[2]=0.25*PETSC_PI;
+  user.dist=100.0;
+  user.coefC=0.466;
+  user.coefq=0.1; //0.66;
+
   /* Set discretization options */
-  PetscInt N=64, p=2, C=PETSC_DECIDE;
+  PetscInt N=64, p=3, C=PETSC_DECIDE;
   PetscBool output = PETSC_FALSE; 
   PetscBool monitor = PETSC_FALSE; 
   char initial[PETSC_MAX_PATH_LEN] = {0};
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard2D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","PhaseFieldCrystal2D Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ch_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ch_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-ch_cbar","Initial atomistic density field",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
-  //ierr = PetscOptionsReal("-ch_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,PETSC_NULL);CHKERRQ(ierr);
-ierr = PetscOptionsReal("-ch_g","Physical parameter",__FILE__,user.g,&user.g,PETSC_NULL);CHKERRQ(ierr);
-ierr = PetscOptionsReal("-ch_k","Positive number",__FILE__,user.k,&user.k,PETSC_NULL);CHKERRQ(ierr);
-ierr = PetscOptionsReal("-ch_Eps","Physical parameter",__FILE__,user.Eps,&user.Eps,PETSC_NULL);CHKERRQ(ierr);
-ierr = PetscOptionsReal("-ch_D","Positive number",__FILE__,user.D,&user.D,PETSC_NULL);CHKERRQ(ierr);
-
-
-
+  ierr = PetscOptionsString("-pfc_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-pfc_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-pfc_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_cbar","Initial atomistic density field",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
+  //ierr = PetscOptionsReal("-pfc_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_g","Physical parameter",__FILE__,user.g,&user.g,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_k","Positive number",__FILE__,user.k,&user.k,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_Eps","Physical parameter",__FILE__,user.Eps,&user.Eps,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_D","Positive number",__FILE__,user.D,&user.D,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (C == PETSC_DECIDE) C = p-1;
-
-  // user.lambda = 1.0/N/N; /* mesh size parameter */
   
-  if (p < 2 || C < 1) /* Problem requires a p>=2 C1 basis */
+  if (p < 3 || C < 2) /* Problem requires a p>=2 C1 basis */
     SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Problem requires minimum of p = 2 and C = 1");
+	    "Problem requires minimum of p = 3 and C = 2");
   if (p <= C)         /* Check C < p */
     SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,
-            "Discretization inconsistent: polynomial order must be greater than degree of continuity");
+	    "Discretization inconsistent: polynomial order must be greater than degree of continuity");
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -356,7 +367,6 @@ ierr = PetscOptionsReal("-ch_D","Positive number",__FILE__,user.D,&user.D,PETSC_
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
 
-
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   ierr = TSSetDuration(ts,10000000,2000.0);CHKERRQ(ierr);
@@ -364,11 +374,10 @@ ierr = PetscOptionsReal("-ch_D","Positive number",__FILE__,user.D,&user.D,PETSC_
 
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,1.0);CHKERRQ(ierr);
-  //ierr = TSAlphaSetAdapt(ts,TSAlphaAdaptDefault,PETSC_NULL);CHKERRQ(ierr); 
 
   if (monitor) {
     user.iga = iga;
-    PetscPrintf(PETSC_COMM_WORLD,"#Time        dt           Free Energy            Second moment          Third moment\n");
+    PetscPrintf(PETSC_COMM_WORLD,"#Time        dt           Free Energy\n");
     ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
   }
   if (output) {
