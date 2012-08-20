@@ -29,6 +29,7 @@ typedef struct _n_IGABoundary *IGABoundary;
 
 typedef struct _n_IGAElement  *IGAElement;
 typedef struct _n_IGAPoint    *IGAPoint;
+typedef struct _n_IGAColPoint *IGAColPoint;
 
 /* ---------------------------------------------------------------- */
 
@@ -116,6 +117,7 @@ PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt fi
 
 typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
 typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
+typedef PetscErrorCode (*IGAColUserSystem) (IGAColPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
 typedef PetscErrorCode (*IGAUserIFunction) (IGAPoint point,PetscReal dt,
@@ -141,7 +143,10 @@ typedef struct _IGAUserOps *IGAUserOps;
 struct _IGAUserOps {
   /**/
   IGAUserSystem     System;
-  void              *SysCtx;
+  void              *SysCtx;  
+  /**/
+  IGAColUserSystem  ColSystem;
+  void              *ColSysCtx;
   /**/
   IGAUserFunction   Function;
   void              *FunCtx;
@@ -192,6 +197,7 @@ struct _p_IGA {
   IGABasis basis[3];
   IGABoundary boundary[3][2];
   IGAElement  iterator;
+  IGAColPoint point_iterator;
 
   PetscInt  proc_sizes[3];
   PetscInt  proc_ranks[3];
@@ -290,6 +296,7 @@ PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 
 PETSC_EXTERN PetscErrorCode IGAGetElement(IGA iga,IGAElement *element);
+PETSC_EXTERN PetscErrorCode IGAGetColPoint(IGA iga,IGAColPoint *point);
 
 PETSC_EXTERN PetscErrorCode IGASetUserSystem    (IGA iga,IGAUserSystem     System,    void *SysCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserFunction  (IGA iga,IGAUserFunction   Function,  void *FunCtx);
@@ -409,19 +416,19 @@ struct _n_IGAPoint {
   PetscReal *weight;   /*   [1]   */
   PetscReal *detJac;   /*   [1]   */
 
-  PetscReal *point;    /*   [dim] */
-  PetscReal *scale;    /*   [dim] */
-  PetscReal *basis[4]; /*0: [nen] */
-                       /*1: [nen][dim] */
-                       /*2: [nen][dim][dim] */
-                       /*3: [nen][dim][dim][dim] */
-
-  PetscReal *gradX[2]; /*0: [nsd][dim] */
-                       /*1: [dim][nsd] */
-  PetscReal *shape[4]; /*0: [nen]  */
-                       /*1: [nen][nsd] */
-                       /*2: [nen][nsd][nsd] */
-                       /*3: [nen][nsd][nsd][nsd] */
+  PetscReal *point;    /*   [1][dim] */
+  PetscReal *scale;    /*   [1][dim] */
+  
+  PetscReal *basis[4]; /*0: [1][nen] */
+                       /*1: [1][nen][dim] */
+                       /*2: [1][nen][dim][dim] */
+                       /*3: [1][nen][dim][dim][dim] */
+  PetscReal *gradX[2]; /*0: [1][nsd][dim] */
+                       /*1: [1][dim][nsd] */
+  PetscReal *shape[4]; /*0: [1][nen]  */
+                       /*1: [1][nen][nsd] */
+                       /*2: [1][nen][nsd][nsd] */
+                       /*3: [1][nen][nsd][nsd][nsd] */
 
   IGAElement  parent;
 
@@ -497,6 +504,84 @@ PETSC_EXTERN PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
                                               PetscReal t,Vec U,
                                               PetscReal t0,Vec U0,
                                               Mat J,IGAUserIEJacobian IEJacobian,void *ctx);
+
+/* ---------------------------------------------------------------- */
+
+struct _n_IGAColPoint {
+  PetscInt refct;
+  /**/
+  PetscInt count;
+  PetscInt index;  
+  PetscInt start[3];
+  PetscInt width[3];
+  PetscInt ID[3]; 
+  PetscInt span[3];
+  
+  PetscInt nen;
+  PetscInt dof;
+  PetscInt dim;
+  PetscInt nsd;
+  
+  PetscInt *mapping;    /*  [nen] */
+  
+  PetscBool geometry;
+  PetscBool rational;
+  PetscReal *geometryX; /*   [nen][nsd] */
+  PetscReal *geometryW; /*   [nen]      */
+
+  PetscReal detJac;  
+  PetscReal *point;     /*   [dim]                */
+  PetscReal *scale;     /*   [dim]                */
+  
+  PetscReal *basis1d[3];
+
+  PetscReal *basis[4];  /*0: [nen]                */
+                        /*1: [nen][dim]           */
+                        /*2: [nen][dim][dim]      */
+                        /*3: [nen][dim][dim][dim] */
+
+  PetscReal *gradX[2];  /*0: [nsd][dim]           */
+                        /*1: [dim][nsd]           */
+  PetscReal *shape[4];  /*0: [nen]                */
+                        /*1: [nen][nsd]           */
+                        /*2: [nen][nsd][nsd]      */
+                        /*3: [nen][nsd][nsd][nsd] */
+
+  PetscInt    nvec;
+  PetscScalar *wvec[8];
+  PetscInt    nmat;
+  PetscScalar *wmat[4];
+
+  IGA      parent;
+};
+
+PETSC_EXTERN PetscErrorCode IGAColPointCreate(IGAColPoint *point);
+PETSC_EXTERN PetscErrorCode IGAColPointDestroy(IGAColPoint *point);
+PETSC_EXTERN PetscErrorCode IGAColPointReset(IGAColPoint point);
+PETSC_EXTERN PetscErrorCode IGAColPointInit(IGAColPoint point,IGA iga);
+
+PETSC_EXTERN PetscErrorCode IGAColPointBegin(IGAColPoint point);
+PETSC_EXTERN PetscBool      IGAColPointNext(IGAColPoint point);
+PETSC_EXTERN PetscErrorCode IGAColPointEnd(IGAColPoint point);
+
+PETSC_EXTERN PetscErrorCode IGAColPointBuildMapping(IGAColPoint point);
+PETSC_EXTERN PetscErrorCode IGAColPointBuildGeometry(IGAColPoint point);
+PETSC_EXTERN PetscErrorCode IGAColPointBuildShapeFuns(IGAColPoint point);
+
+PETSC_EXTERN PetscErrorCode IGAColPointGetIndex(IGAColPoint point,PetscInt *index);
+PETSC_EXTERN PetscErrorCode IGAColPointGetSizes(IGAColPoint point,PetscInt *nen,PetscInt *dof,PetscInt *nqp);
+PETSC_EXTERN PetscErrorCode IGAColPointGetSizes(IGAColPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim);
+PETSC_EXTERN PetscErrorCode IGAColPointGetMapping(IGAColPoint point,PetscInt *nen,const PetscInt *mapping[]);
+PETSC_EXTERN PetscErrorCode IGAColPointGetShapeFuns(IGAColPoint point,PetscInt der,const PetscReal *shapefuns[]);
+PETSC_EXTERN PetscErrorCode IGAColPointGetBasisFuns(IGAColPoint point,PetscInt der,const PetscReal *basisfuns[]);
+
+PETSC_EXTERN PetscErrorCode IGAColPointGetWorkVec(IGAColPoint point,PetscScalar *V[]);
+PETSC_EXTERN PetscErrorCode IGAColPointGetWorkMat(IGAColPoint point,PetscScalar *M[]);
+PETSC_EXTERN PetscErrorCode IGAColPointGetValues(IGAColPoint point,const PetscScalar U[],PetscScalar u[]);
+
+PETSC_EXTERN PetscErrorCode IGAColPointAssembleVec(IGAColPoint point,const PetscScalar F[],Vec vec);
+PETSC_EXTERN PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Mat mat);
+PETSC_EXTERN PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem System,void *ctx);
 
 /* ---------------------------------------------------------------- */
 

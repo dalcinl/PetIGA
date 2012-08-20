@@ -6,7 +6,7 @@ ALL: lib
 #FFLAGS = -g3 -pedantic -Wall -Wextra -fcheck=all
 
 SOURCEH  = ../include/petiga.h petigapc.h petigagrid.h petigapart.h
-SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigaksp.c petigasnes.c petigats.c petigaio.c petigagrid.c petigapart.c
+SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigaksp.c petigasnes.c petigats.c petigaio.c petigagrid.c petigapart.c petigacol.c
 SOURCEF1 = petigaftn.F90
 SOURCEF2 = petigabsp.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90 petigaint.f90
 SOURCEF  = ${SOURCEF1} ${SOURCEF2}
