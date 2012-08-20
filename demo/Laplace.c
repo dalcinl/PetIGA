@@ -48,11 +48,32 @@ PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "SystemCollocation"
+PetscErrorCode SystemCollocation(IGAColPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
+  PetscInt nen,dim;
+  IGAColPointGetSizes(p,&nen,0,&dim);
+
+  const PetscReal *N0,(*N1)[dim],(*N2)[dim][dim];
+  IGAColPointGetBasisFuns(p,0,(const PetscReal**)&N0);
+  IGAColPointGetBasisFuns(p,1,(const PetscReal**)&N1);
+  IGAColPointGetBasisFuns(p,2,(const PetscReal**)&N2);
+  
+  PetscInt a,i;
+  for (a=0; a<nen; a++) 
+    for (i=0; i<dim; i++) {
+      K[a] += -N2[a][i][i];
+    }
+      
+  return 0;
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "ErrorLaplace"
 PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscScalar u;
-  IGAPointFormValue(p,U,&u);
+  IGAPointGetValue(p,U,&u);
   PetscReal e = PetscAbsScalar(u - 1.0);
   S[0] = e*e;
   return 0;
@@ -98,10 +119,12 @@ int main(int argc, char *argv[]) {
   PetscInt  dim = 3; 
   PetscBool print_error = PETSC_FALSE; 
   PetscBool draw = PETSC_FALSE; 
+  PetscBool Collocation = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr); 
   ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,PETSC_NULL);CHKERRQ(ierr); 
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr); 
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsBool("-collocation","Enable to use collocation",__FILE__,Collocation,&Collocation,PETSC_NULL);CHKERRQ(ierr); 
   ierr = PetscOptionsEnd();CHKERRQ(ierr); 
 
   // Initialize the discretization
@@ -112,8 +135,6 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-
-  ierr = IGAView(iga,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 
   // Set boundary conditions
 

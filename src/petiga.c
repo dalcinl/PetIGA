@@ -51,6 +51,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
     iga->proc_sizes[i] = -1;
   }
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
+  ierr = IGAColPointCreate(&iga->point_iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -99,6 +100,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
     ierr = IGABoundaryDestroy(&iga->boundary[i][1]);CHKERRQ(ierr);
   }
   ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
+  ierr = IGAColPointDestroy(&iga->point_iterator);CHKERRQ(ierr);
 
   ierr = IGAReset(iga);CHKERRQ(ierr);
   ierr = PetscHeaderDestroy(&iga);CHKERRQ(ierr);
@@ -139,6 +141,7 @@ PetscErrorCode IGAReset(IGA iga)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
 
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
+  ierr = IGAColPointReset(iga->point_iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -1186,6 +1189,7 @@ PetscErrorCode IGASetUp(IGA iga)
     ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
   }
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
+  ierr = IGAColPointInit(iga->point_iterator,iga);CHKERRQ(ierr);
 
 
   ierr = IGASetUp_View(iga);CHKERRQ(ierr);
@@ -1230,6 +1234,17 @@ PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(element,2);
   *element = iga->iterator;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetColPoint"
+PetscErrorCode IGAGetColPoint(IGA iga,IGAColPoint *point)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(point,2);
+  *point = iga->point_iterator;
   PetscFunctionReturn(0);
 }
 
