@@ -142,7 +142,7 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   IGAPointFormValue(p,U,&c);
 
   PetscScalar c1[2];
-  IGAPointGetGrad(p,U,&c1[0]);
+  IGAPointFormGrad(p,U,&c1[0]);
   PetscScalar c_x   = c1[0],       c_y   = c1[1];
 
   const PetscReal *N0,(*N1)[2],(*N2)[2][2],(*N3)[2][2][2];
