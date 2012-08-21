@@ -54,17 +54,43 @@ PetscErrorCode SystemCollocation(IGAColPoint p,PetscScalar *K,PetscScalar *F,voi
   PetscInt nen,dim;
   IGAColPointGetSizes(p,&nen,0,&dim);
 
+  PetscInt Nb[3] = {0,0,0};
+  Nb[0] = p->parent->basis[0]->nnp;
+  Nb[1] = p->parent->basis[1]->nnp;
+  Nb[2] = p->parent->basis[2]->nnp;
+
   const PetscReal *N0,(*N1)[dim],(*N2)[dim][dim];
   IGAColPointGetBasisFuns(p,0,(const PetscReal**)&N0);
   IGAColPointGetBasisFuns(p,1,(const PetscReal**)&N1);
   IGAColPointGetBasisFuns(p,2,(const PetscReal**)&N2);
   
   PetscInt a,i;
-  for (a=0; a<nen; a++) 
+  PetscReal n[3] = {0,0,0};
+  PetscBool Dirichlet=PETSC_FALSE,Neumann=PETSC_FALSE;
+  for (i=0; i<dim; i++) if (p->ID[i] == 0) Dirichlet=PETSC_TRUE;
+  if (!Dirichlet) { 
     for (i=0; i<dim; i++) {
-      K[a] += -N2[a][i][i];
+      if (p->ID[i] == Nb[i]-1) {
+	Neumann=PETSC_TRUE;
+	n[i] = 1;
+	i=dim;
+      }
     }
-      
+  }
+
+  if(Dirichlet){
+    for (a=0; a<nen; a++) K[a] += N0[a];
+    F[0] = 1.0;
+  }else if(Neumann){
+    for (a=0; a<nen; a++) 
+      for (i=0; i<dim; i++) 
+	K[a] += N1[a][i]*n[i];    
+    F[0] = 0.0;
+  }else{
+    for (a=0; a<nen; a++) 
+      for (i=0; i<dim; i++) 
+	K[a] += -N2[a][i][i];
+  }
   return 0;
 }
 
