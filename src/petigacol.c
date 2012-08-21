@@ -598,6 +598,25 @@ PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Ma
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAColComputeSystem"
+PetscErrorCode IGAColComputeSystem(IGA iga,Mat matA,Vec vecB)
+{
+  IGAColUserSystem  System;
+  void           *SysCtx;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,ColSystem);
+  System = iga->userops->ColSystem;
+  SysCtx = iga->userops->ColSysCtx;
+  ierr = IGAColFormSystem(iga,matA,vecB,System,SysCtx);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAColFormSystem"
 PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem System,void *ctx)
 {
@@ -628,5 +647,16 @@ PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem Syste
   ierr = VecAssemblyBegin(vecB);CHKERRQ(ierr);
   ierr = VecAssemblyEnd  (vecB);CHKERRQ(ierr);
 
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColSetUserSystem"
+PetscErrorCode IGAColSetUserSystem(IGA iga,IGAColUserSystem System,void *SysCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (System) iga->userops->ColSystem = System;
+  if (SysCtx) iga->userops->ColSysCtx = SysCtx;
   PetscFunctionReturn(0);
 }

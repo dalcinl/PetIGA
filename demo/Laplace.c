@@ -161,13 +161,18 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  if (iga->geometry){
-    ierr = IGASetUserSystem(iga,SystemPoisson,PETSC_NULL);CHKERRQ(ierr);
+  if (Collocation){
+    ierr = IGAColSetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr); 
+    ierr = IGAColComputeSystem(iga,A,b);CHKERRQ(ierr);
   }else{
-    ierr = IGASetUserSystem(iga,SystemLaplace,PETSC_NULL);CHKERRQ(ierr);
+    if (iga->geometry){ 
+      ierr = IGASetUserSystem(iga,SystemPoisson,PETSC_NULL);CHKERRQ(ierr); 
+    }else{
+      ierr = IGASetUserSystem(iga,SystemLaplace,PETSC_NULL);CHKERRQ(ierr); 
+    }
+    ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
+    ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
   }
-  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
 
   // Solve
 

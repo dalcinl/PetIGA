@@ -306,6 +306,8 @@ PETSC_EXTERN PetscErrorCode IGASetUserIJacobian (IGA iga,IGAUserIJacobian  IJaco
 PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *FunCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *JacCtx);
 
+PETSC_EXTERN PetscErrorCode IGAColSetUserSystem (IGA iga,IGAColUserSystem System,void *SysCtx);
+
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAElement {
@@ -610,6 +612,7 @@ PETSC_EXTERN PetscErrorCode IGAColPointGetValues(IGAColPoint point,const PetscSc
 PETSC_EXTERN PetscErrorCode IGAColPointAssembleVec(IGAColPoint point,const PetscScalar F[],Vec vec);
 PETSC_EXTERN PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Mat mat);
 PETSC_EXTERN PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem System,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAColComputeSystem(IGA iga,Mat A,Vec B);
 
 /* ---------------------------------------------------------------- */
 
