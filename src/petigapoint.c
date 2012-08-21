@@ -271,8 +271,15 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
 }
 
 EXTERN_C_BEGIN
-extern void IGA_GetPoint(PetscInt nen,PetscInt dim,const PetscReal N[],
-                         const PetscReal Xw[],PetscReal x[]);
+extern void IGA_GetGeomMap (PetscInt nen,PetscInt nsd,
+                            const PetscReal N[],const PetscReal C[],PetscReal X[]);
+extern void IGA_GetGradMap (PetscInt nen,PetscInt nsd,PetscInt dim,
+                            const PetscReal N[],const PetscReal C[],PetscReal F[]);
+extern void IGA_GetGradMapI(PetscInt nen,PetscInt nsd,PetscInt dim,
+                            const PetscReal N[],const PetscReal C[],PetscReal G[]);
+EXTERN_C_END
+
+EXTERN_C_BEGIN
 extern void IGA_GetValue(PetscInt nen,PetscInt dof,const PetscReal N[],
                          const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetGrad (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
@@ -294,7 +301,7 @@ PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[])
   PetscValidRealPointer(x,2);
   if (p->parent->geometry) {
     const PetscReal *X = p->parent->geometryX;
-    IGA_GetPoint(p->nen,p->dim,p->shape[0],X,x);
+    IGA_GetGeomMap(p->nen,p->nsd,p->shape[0],X,x);
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *X = p->point;
@@ -314,20 +321,25 @@ PetscErrorCode IGAPointFormGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
   if(F) PetscValidRealPointer(F,2);
   if(G) PetscValidRealPointer(G,3);
   if (p->parent->geometry) {
-    PetscInt i,a,dim = p->dim;
+    PetscInt a,dim = p->dim;
+    PetscInt i,nsd = p->nsd;
     const PetscReal *L = p->scale;
-    const PetscReal *X = p->gradX[0];
-    const PetscReal *Y = p->gradX[1];
-    if (F) {
-      for (i=0; i<dim; i++)
+    if (dim == nsd) {
+      if (F) {(void)PetscMemcpy(F,p->gradX[0],nsd*dim*sizeof(PetscReal));}
+      if (G) {(void)PetscMemcpy(G,p->gradX[1],dim*nsd*sizeof(PetscReal));}
+    } else {
+      const PetscReal *X = p->parent->geometryX;
+      if (F) {IGA_GetGradMap (p->nen,nsd,dim,p->basis[1],X,F);}
+      if (G) {IGA_GetGradMapI(p->nen,nsd,dim,p->basis[1],X,G);}
+    }
+    if (F)
+      for (i=0; i<nsd; i++)
         for (a=0; a<dim; a++)
-          F[i*dim+a] = X[i*dim+a]*L[a];
-    }
-    if (G) {
+          F[i*dim+a] *= L[a];
+    if (G)
       for (a=0; a<dim; a++)
-        for (i=0; i<dim; i++)
-          G[a*dim+i] = Y[a*dim+i]/L[a];
-    }
+        for (i=0; i<nsd; i++)
+          G[a*dim+i] /= L[a];
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *L = p->scale;

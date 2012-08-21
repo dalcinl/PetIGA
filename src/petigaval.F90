@@ -7,21 +7,51 @@
 #define scalar real
 #endif
 
-subroutine IGA_GetPoint(nen,dim,N,C,X) &
-  bind(C, name="IGA_GetPoint")
+subroutine IGA_GetGeomMap(nen,nsd,N,C,X) &
+  bind(C, name="IGA_GetGeomMap")
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), intent(in),value :: nen,dim
+  integer(kind=IGA_INT ), intent(in),value :: nen,nsd
   real   (kind=IGA_REAL), intent(in)       :: N(nen)
-  real   (kind=IGA_REAL), intent(in)       :: C(dim,nen)
-  real   (kind=IGA_REAL), intent(out)      :: X(dim)
-  integer(kind=IGA_INT )  :: a
-  ! X = matmul(C,N)
-  X = 0
-  do a = 1, nen
-     X = X + N(a) * C(:,a)
-  end do
-end subroutine IGA_GetPoint
+  real   (kind=IGA_REAL), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL), intent(out)      :: X(nsd)
+  !integer(kind=IGA_INT )  :: a
+  !X = 0
+  !do a = 1, nen
+  !   X = X + N(a) * C(:,a)
+  !end do
+  X = matmul(C,N)
+end subroutine IGA_GetGeomMap
+
+subroutine IGA_GetGradMap(nen,nsd,dim,N,C,F) &
+  bind(C, name="IGA_GetGradMap")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INT ), intent(in),value :: nen,nsd,dim
+  real   (kind=IGA_REAL), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL), intent(out)      :: F(dim,nsd)
+  F = matmul(N,transpose(C))
+end subroutine IGA_GetGradMap
+
+subroutine IGA_GetGradMapI(nen,nsd,dim,N,C,G) &
+  bind(C, name="IGA_GetGradMapI")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INT ), intent(in),value :: nen,nsd,dim
+  real   (kind=IGA_REAL), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL), intent(out)      :: G(nsd,dim)
+  real   (kind=IGA_REAL)  :: F(dim,nsd)
+  real   (kind=IGA_REAL)  :: M(nsd,nsd), invM(nsd,nsd)
+  F = matmul(N,transpose(C))
+  M = matmul(transpose(F),F)
+  invM = Inverse(nsd,Determinant(nsd,M),M)
+  G = matmul(invM,transpose(F))
+contains
+include 'petigainv.f90.in'
+end subroutine IGA_GetGradMapI
+
 
 subroutine IGA_GetValue(nen,dof,N,U,V) &
   bind(C, name="IGA_GetValue")
