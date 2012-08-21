@@ -301,7 +301,7 @@ PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,Petsc
   PetscScalar      rtol = 1.0e-3;
   PetscScalar      atol = 1.0e-3;
   PetscScalar       rho = 0.9;
-  PetscScalar       dE2 = EstimateSecondDerivative(*th);
+  //PetscScalar       dE2 = EstimateSecondDerivative(*th);
   
   /* If the SNES fails, reject the step and reduce the step by the
      maximum amount */

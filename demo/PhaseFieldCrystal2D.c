@@ -289,7 +289,7 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = WriteSolution(U,"ch%d.dat",step);CHKERRQ(ierr);
+  ierr = WriteSolution(U,"pfc%d.dat",step);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -315,12 +315,12 @@ int main(int argc, char *argv[]) {
   user.C2[0]=600.0;user.C2[1]=200.0;
   user.C3[0]=400.0;user.C3[1]=700.0;
   user.ang[0]=-0.25*PETSC_PI; user.ang[0]=0.0; user.ang[2]=0.25*PETSC_PI;
-  user.dist=100.0;
+  user.dist=20.0;
   user.coefC=0.466;
-  user.coefq=0.1; //0.66;
+  user.coefq=0.66; 
 
   /* Set discretization options */
-  PetscInt N=64, p=3, C=PETSC_DECIDE;
+  PetscInt N=1024, p=3, C=PETSC_DECIDE;
   PetscBool output = PETSC_FALSE; 
   PetscBool monitor = PETSC_FALSE; 
   char initial[PETSC_MAX_PATH_LEN] = {0};
@@ -332,7 +332,6 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBool("-pfc_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-pfc_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-pfc_cbar","Initial atomistic density field",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
-  //ierr = PetscOptionsReal("-pfc_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-pfc_g","Physical parameter",__FILE__,user.g,&user.g,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-pfc_k","Positive number",__FILE__,user.k,&user.k,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-pfc_Eps","Physical parameter",__FILE__,user.Eps,&user.Eps,PETSC_NULL);CHKERRQ(ierr);
@@ -369,8 +368,8 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10000000,2000.0);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(ts,1e-1);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,10000000,10000.0);CHKERRQ(ierr);
+  ierr = TSSetTimeStep(ts,1.);CHKERRQ(ierr);
 
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,1.0);CHKERRQ(ierr);
