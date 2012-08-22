@@ -53,10 +53,10 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
   else
     IGAPointFormValue(p,U0,&uv_0[0]);
   IGAPointFormGrad(p,U1,&uv_1[0][0]);
-  PetscScalar u_t = uv_t[0],    v_t = uv_t[1];
-  PetscScalar u   = uv_0[0],    v   = uv_0[1];
-  PetscScalar u_x = uv_1[0][0], v_x = uv_1[1][0];
-  PetscScalar u_y = uv_1[0][1], v_y = uv_1[1][1];
+  PetscReal u_t = uv_t[0],    v_t = uv_t[1];
+  PetscReal u   = uv_0[0],    v   = uv_0[1];
+  PetscReal u_x = uv_1[0][0], v_x = uv_1[1][0];
+  PetscReal u_y = uv_1[0][1], v_y = uv_1[1][1];
 
   PetscReal f = alpha*u*(1-tau1*v*v) + v*(1-tau2*u);
   PetscReal g = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
@@ -70,8 +70,8 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];
     PetscReal Na_y = N1[a][1];
-    PetscScalar Ru = Na*u_t + delta*D1*(Na_x*u_x + Na_y*u_y) - Na*f;
-    PetscScalar Rv = Na*v_t + delta*D2*(Na_x*v_x + Na_y*v_y) - Na*g;
+    PetscReal Ru = Na*u_t + delta*D1*(Na_x*u_x + Na_y*u_y) - Na*f;
+    PetscReal Rv = Na*v_t + delta*D2*(Na_x*v_x + Na_y*v_y) - Na*g;
     R[a][0] = Ru;
     R[a][1] = Rv;
   }
@@ -107,8 +107,8 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
   if (IMPLICIT) {
     PetscScalar uv_0[2];
     IGAPointFormValue(p,U1,&uv_0[0]);
-    PetscScalar u = uv_0[0];
-    PetscScalar v = uv_0[1];
+    PetscReal u = uv_0[0];
+    PetscReal v = uv_0[1];
     f_u = alpha*(1-tau1*v*v) - tau2*v;
     f_v = -2*alpha*tau1*u*v + (1-tau2*u);
     g_u = alpha*tau1*v*v + (gamma+tau2*v);
@@ -128,7 +128,7 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
       PetscReal Nb   = N0[b];
       PetscReal Nb_x = N1[b][0];
       PetscReal Nb_y = N1[b][1];
-      PetscScalar Kab[2][2] = {{0,0},{0,0}};
+      PetscReal Kab[2][2] = {{0,0},{0,0}};
       Kab[0][0] = shift*Na*Nb + delta*D1*(Na_x*Nb_x + Na_y*Nb_y);
       Kab[1][1] = shift*Na*Nb + delta*D2*(Na_x*Nb_x + Na_y*Nb_y);
       if (IMPLICIT) {

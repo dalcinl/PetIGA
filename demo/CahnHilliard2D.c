@@ -54,11 +54,11 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscScalar stats[3] = {0,0,0};
   ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
 
-  PetscScalar dt;
+  PetscReal dt;
   TSGetTimeStep(ts,&dt);
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e %.16e %.16e\n",t,dt,stats[0],stats[1],stats[2]);
 
-  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
+  if((PetscReal)stats[0] > (PetscReal)user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
   user->Sprev[0] = stats[0];
 
   PetscFunctionReturn(0);
