@@ -20,7 +20,7 @@ all-legacy:
 	@${MKDIR} ${PETSC_ARCH}/conf ${PETSC_ARCH}/include ${PETSC_ARCH}/lib
 	@${OMAKE} all_build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETSC_ARCH}/include
-all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build sharedlibs
+all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build
 .PHONY: all-legacy all_build
 
 #
@@ -63,25 +63,28 @@ chk_petiga_dir:
 # Build the PetIGA library
 #
 build:
-	-@echo "========================================="
+	-@echo "============================================="
 	-@echo "Building PetIGA"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "========================================="
-	-@echo "Beginning to compile PetIGA library"
+	-@echo "============================================="
+	-@echo "Beginning to build PetIGA library"
 	-@${OMAKE} compile PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@${OMAKE} ranlib  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	-@${OMAKE} shlibs  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed building PetIGA library"
-	-@echo "========================================="
+	-@echo "============================================="
 compile:
 	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 ranlib:
+	-@echo "building libpetiga.${AR_LIB_SUFFIX}"
 	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
-sharedlibs:
+shlibs:
 	-@${OMAKE} shared_nomesg PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} \
-	           | (${GREP} -vE "making shared libraries in" || true)
-.PHONY: build compile ranlib sharedlibs
+		   | (${GREP} -vE "making shared libraries in" || true) \
+		   | (${GREP} -vE "==========================" || true)
+.PHONY: build compile ranlib shlibs
 
 # Delete PetIGA library
 deletemods:
@@ -103,17 +106,17 @@ allclean: deletelibs deletemods srcclean
 
 # Run test examples
 testexamples:
-	-@echo "=========================================="
-	-@echo "BEGINNING TO COMPILE AND RUN TEST EXAMPLES"
-	-@echo "=========================================="
+	-@echo "============================================="
+	-@echo "Beginning to compile and run test examples"
+	-@echo "============================================="
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed compiling and running test examples"
-	-@echo "=========================================="
+	-@echo "============================================="
 .PHONY: testexamples
 
 
 # Build test
-test: 
+test:
 	-@${OMAKE} test-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/test.log
 test-build:
 	-@echo "Running test to verify correct installation"
