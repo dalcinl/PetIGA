@@ -1,21 +1,21 @@
-subroutine IGA_Quadrature_2D(&
+pure subroutine IGA_Quadrature_2D(&
      inq,iX,iW,iL,           &
      jnq,jX,jW,jL,           &
      W,J,X,L)                &
   bind(C, name="IGA_Quadrature_2D")
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), parameter        :: dim = 2
-  integer(kind=IGA_INT ), intent(in),value :: inq
-  integer(kind=IGA_INT ), intent(in),value :: jnq
-  real   (kind=IGA_REAL), intent(in)  :: iX(inq), iW(inq), iL
-  real   (kind=IGA_REAL), intent(in)  :: jX(jnq), jW(jnq), jL
-  real   (kind=IGA_REAL), intent(out) :: W(    inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: J(    inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: X(dim,inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: L(dim,inq,jnq)
-  integer(kind=IGA_INT ) :: iq
-  integer(kind=IGA_INT ) :: jq
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iL
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jX(jnq), jW(jnq), jL
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: W(    inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: J(    inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: L(dim,inq,jnq)
+  integer(kind=IGA_INTEGER_KIND)  :: iq
+  integer(kind=IGA_INTEGER_KIND)  :: jq
   forall (iq=1:inq, jq=1:jnq)
      !
      W(iq,jq) = iW(iq) * jW(jq)
@@ -29,7 +29,7 @@ subroutine IGA_Quadrature_2D(&
 end subroutine IGA_Quadrature_2D
 
 
-subroutine IGA_BasisFuns_2D(&
+pure subroutine IGA_BasisFuns_2D(&
      order,                 &
      rational,W,            &
      inq,ina,ind,iN,        &
@@ -38,22 +38,22 @@ subroutine IGA_BasisFuns_2D(&
   bind(C, name="IGA_BasisFuns_2D")
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), parameter        :: dim = 2
-  integer(kind=IGA_INT ), intent(in),value :: order
-  integer(kind=IGA_INT ), intent(in),value :: rational
-  integer(kind=IGA_INT ), intent(in),value :: inq, ina, ind
-  integer(kind=IGA_INT ), intent(in),value :: jnq, jna, jnd
-  real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina,inq)
-  real   (kind=IGA_REAL), intent(in)  :: jN(0:jnd,jna,jnq)
-  real   (kind=IGA_REAL), intent(in)  :: W(dim+1,  ina*jna)
-  real   (kind=IGA_REAL), intent(out) :: N0(       ina*jna,inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: N1(   dim,ina*jna,inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: N2(dim**2,ina*jna,inq,jnq)
-  real   (kind=IGA_REAL), intent(out) :: N3(dim**3,ina*jna,inq,jnq)
-  integer(kind=IGA_INT ) :: ia,iq
-  integer(kind=IGA_INT ) :: ja,jq
-  integer(kind=IGA_INT ) :: ka,kq
-  integer(kind=IGA_INT ) :: nen
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: rational
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina, ind
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna, jnd
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina,inq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(dim+1,  ina*jna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina*jna,inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina*jna,inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina*jna,inq,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,ina*jna,inq,jnq)
+  integer(kind=IGA_INTEGER_KIND)  :: ia, iq
+  integer(kind=IGA_INTEGER_KIND)  :: ja, jq
+  integer(kind=IGA_INTEGER_KIND)  :: ka, kq
+  integer(kind=IGA_INTEGER_KIND)  :: nen
   nen = ina*jna
   do jq=1,jnq
      do iq=1,inq
@@ -79,23 +79,23 @@ subroutine IGA_BasisFuns_2D(&
 
 contains
 
-subroutine TensorBasisFuns(&
+pure subroutine TensorBasisFuns(&
      ord,&
      ina,ind,iN,&
      jna,jnd,jN,&
      N0,N1,N2,N3)
   implicit none
-  integer(kind=IGA_INT ), parameter        :: dim = 2
-  integer(kind=IGA_INT ), intent(in),value :: ord
-  integer(kind=IGA_INT ), intent(in),value :: ina, ind
-  integer(kind=IGA_INT ), intent(in),value :: jna, jnd
-  real   (kind=IGA_REAL), intent(in)  :: iN(0:ind,ina)
-  real   (kind=IGA_REAL), intent(in)  :: jN(0:jnd,jna)
-  real   (kind=IGA_REAL), intent(out) :: N0(            ina,jna)
-  real   (kind=IGA_REAL), intent(out) :: N1(        dim,ina,jna)
-  real   (kind=IGA_REAL), intent(out) :: N2(    dim,dim,ina,jna)
-  real   (kind=IGA_REAL), intent(out) :: N3(dim,dim,dim,ina,jna)
-  integer(kind=IGA_INT ) :: ia, ja
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ord
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina, ind
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna, jnd
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim,dim,dim,ina,jna)
+  integer(kind=IGA_INTEGER_KIND)  :: ia, ja
   !
   forall (ia=1:ina, ja=1:jna)
      N0(ia,ja) = iN(0,ia) * jN(0,ja)
@@ -133,7 +133,7 @@ include 'petigarat.f90.in'
 end subroutine IGA_BasisFuns_2D
 
 
-subroutine IGA_ShapeFuns_2D(&
+pure subroutine IGA_ShapeFuns_2D(&
      order,                 &
      nqp,nen,X,             &
      M0,M1,M2,M3,           &
@@ -142,24 +142,24 @@ subroutine IGA_ShapeFuns_2D(&
   bind(C, name="IGA_ShapeFuns_2D")
   use PetIGA
   implicit none
-  integer(kind=IGA_INT ), parameter        :: dim = 2
-  integer(kind=IGA_INT ), intent(in),value :: order
-  integer(kind=IGA_INT ), intent(in),value :: nqp
-  integer(kind=IGA_INT ), intent(in),value :: nen
-  real   (kind=IGA_REAL), intent(in)    :: X(dim+1,nen)
-  real   (kind=IGA_REAL), intent(in)    :: M0(       nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M1(dim,   nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL), intent(in)    :: M3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N0(       nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N1(dim,   nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL), intent(inout) :: DetJac(nqp)
-  real   (kind=IGA_REAL), intent(out)   :: F(dim,dim,nqp)
-  real   (kind=IGA_REAL), intent(out)   :: G(dim,dim,nqp)
-  integer(kind=IGA_INT )  :: q
-  real   (kind=IGA_REAL)  :: DetF
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: X(dim+1,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: M0(       nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: M1(dim,   nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: M2(dim**2,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: M3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: N0(       nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: N1(dim,   nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: N2(dim**2,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: N3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: DetJac(nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: F(dim,dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: G(dim,dim,nqp)
+  integer(kind=IGA_INTEGER_KIND)  :: q
+  real   (kind=IGA_REAL_KIND)     :: DetF
   do q=1,nqp
      call GeometryMap(&
           order,&

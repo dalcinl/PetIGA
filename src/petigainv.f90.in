@@ -2,9 +2,9 @@
 
 pure function Determinant(dim,A) result (detA)
   use PetIGA; implicit none
-  integer(kind=IGA_INT ), intent(in) :: dim
-  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
-  real   (kind=IGA_REAL)  :: detA
+  integer(kind=IGA_INTEGER_KIND), intent(in) :: dim
+  real   (kind=IGA_REAL_KIND   ), intent(in) :: A(dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: detA
   select case (dim)
   case (1)
      detA = A(1,1)
@@ -21,10 +21,10 @@ end function Determinant
 
 pure function Inverse(dim,detA,A) result (invA)
   use PetIGA; implicit none
-  integer(kind=IGA_INT ), intent(in) :: dim
-  real   (kind=IGA_REAL), intent(in) :: detA
-  real   (kind=IGA_REAL), intent(in) :: A(dim,dim)
-  real   (kind=IGA_REAL)  :: invA(dim,dim)
+  integer(kind=IGA_INTEGER_KIND), intent(in) :: dim
+  real   (kind=IGA_REAL_KIND   ), intent(in) :: detA
+  real   (kind=IGA_REAL_KIND   ), intent(in) :: A(dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: invA(dim,dim)
   select case (dim)
   case (1)
      invA = 1.0/detA

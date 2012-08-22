@@ -2,16 +2,16 @@
 
 pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   implicit none
-  !integer(kind=IGA_INT), parameter     :: dim = 1,2,3
-  integer(kind=IGA_INT ), intent(in)    :: ord, nen
-  real   (kind=IGA_REAL), intent(in)    :: W(nen)
-  real   (kind=IGA_REAL), intent(inout) :: R0(            nen)
-  real   (kind=IGA_REAL), intent(inout) :: R1(        dim,nen)
-  real   (kind=IGA_REAL), intent(inout) :: R2(    dim,dim,nen)
-  real   (kind=IGA_REAL), intent(inout) :: R3(dim,dim,dim,nen)
+  !integer(kind=IGA_INTEGER_KIND),parameter     :: dim = 1,2,3
+  integer(kind=IGA_INTEGER_KIND), intent(in)    :: ord, nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: W(nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R0(            nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R1(        dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R2(    dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R3(dim,dim,dim,nen)
   !
-  integer(kind=IGA_INT ) :: a, i, j, k
-  real   (kind=IGA_REAL) :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
+  integer(kind=IGA_INTEGER_KIND)  :: a, i, j, k
+  real   (kind=IGA_REAL_KIND   )  :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
   !
   forall (a=1:nen)
      R0(a) = W(a) * R0(a)

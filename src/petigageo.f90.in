@@ -8,31 +8,31 @@ pure subroutine GeometryMap(&
      DetG,Grad,InvG)
   use PetIGA
   implicit none
-  !integer(kind=IGA_INT), parameter   :: dim = 1,2,3
-  integer(kind=IGA_INT ), intent(in)  :: order
-  integer(kind=IGA_INT ), intent(in)  :: nen
-  real   (kind=IGA_REAL), intent(in)  :: X(dim,nen)
-  real   (kind=IGA_REAL), intent(in)  :: N0(            nen)
-  real   (kind=IGA_REAL), intent(in)  :: N1(        dim,nen)
-  real   (kind=IGA_REAL), intent(in)  :: N2(    dim,dim,nen)
-  real   (kind=IGA_REAL), intent(in)  :: N3(dim,dim,dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: R0(            nen)
-  real   (kind=IGA_REAL), intent(out) :: R1(        dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: R2(    dim,dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: R3(dim,dim,dim,nen)
-  real   (kind=IGA_REAL), intent(out) :: DetG
-  real   (kind=IGA_REAL), intent(out) :: Grad(dim,dim)
-  real   (kind=IGA_REAL), intent(out) :: InvG(dim,dim)
+  !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N0(            nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N1(        dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N2(    dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N3(dim,dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R0(            nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R1(        dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R2(    dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R3(dim,dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: DetG
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: Grad(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: InvG(dim,dim)
 
-  integer(kind=IGA_INT ) :: idx
-  integer(kind=IGA_INT ) :: i, j, k, l
-  integer(kind=IGA_INT ) :: a, b, c, d
-  real   (kind=IGA_REAL) :: X1(dim,dim)
-  real   (kind=IGA_REAL) :: X2(dim,dim,dim)
-  real   (kind=IGA_REAL) :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL) :: E1(dim,dim)
-  real   (kind=IGA_REAL) :: E2(dim,dim,dim)
-  real   (kind=IGA_REAL) :: E3(dim,dim,dim,dim)
+  integer(kind=IGA_INTEGER_KIND)  :: idx
+  integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
+  integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
+  real   (kind=IGA_REAL_KIND   )  :: X1(dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: X2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: E1(dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: E2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: E3(dim,dim,dim,dim)
 
   ! gradient of the mapping
   Grad = matmul(N1,transpose(X))
