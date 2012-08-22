@@ -1,5 +1,7 @@
 #include "petiga.h"
 
+extern PetscLogEvent IGA_ColFormSystem;
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAColPointCreate"
 PetscErrorCode IGAColPointCreate(IGAColPoint *_point)
@@ -627,9 +629,11 @@ PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem Syste
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
-  
+
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_ColFormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
   ierr = IGAGetColPoint(iga,&point);CHKERRQ(ierr);
   ierr = IGAColPointBegin(point);CHKERRQ(ierr);
   while (IGAColPointNext(point)) {
@@ -641,6 +645,7 @@ PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem Syste
     ierr = IGAColPointAssembleVec(point,F,vecB);CHKERRQ(ierr);
   }
   ierr = IGAColPointEnd(point);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_ColFormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
