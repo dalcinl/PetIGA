@@ -79,6 +79,7 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->basis[2]);CHKERRQ(ierr);
   ierr = PetscFree(element->basis[3]);CHKERRQ(ierr);
 
+  ierr = PetscFree(element->detX);CHKERRQ(ierr);
   ierr = PetscFree(element->gradX[0]);CHKERRQ(ierr);
   ierr = PetscFree(element->gradX[1]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[0]);CHKERRQ(ierr);
@@ -149,6 +150,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->basis[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->basis[3]);CHKERRQ(ierr);
 
+    ierr = PetscMalloc1(nqp,PetscReal,&element->detX);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim*dim,PetscReal,&element->gradX[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*dim*dim,PetscReal,&element->gradX[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen,PetscReal,&element->shape[0]);CHKERRQ(ierr);
@@ -166,6 +168,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMemzero(element->basis[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
 
+    ierr = PetscMemzero(element->detX,    sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->gradX[0],sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->gradX[1],sizeof(PetscReal)*nqp*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
@@ -597,9 +600,10 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   }
   if (element->dim == element->nsd) /* XXX */
   if (element->geometry) {
+    PetscInt q, nqp = element->nqp;
     PetscReal **M = element->basis;
     PetscReal **N = element->shape;
-    PetscReal *dX = element->detJac;
+    PetscReal *dX = element->detX;
     PetscReal **gX = element->gradX;
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(order,
@@ -621,6 +625,8 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
                              N[0],N[1],N[2],N[3],
                              dX,gX[0],gX[1]); break;
     }
+    for (q=0; q<nqp; q++)
+      element->detJac[q] *= dX[q];
   }
   PetscFunctionReturn(0);
 }

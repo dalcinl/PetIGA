@@ -80,6 +80,7 @@ module PetIGA
      type(C_PTR) :: point
      type(C_PTR) :: scale
      type(C_PTR) :: basis(0:3)
+     type(C_PTR) :: detX
      type(C_PTR) :: gradX(0:1)
      type(C_PTR) :: shape(0:3)
   end type IGAPoint

@@ -397,7 +397,7 @@ PetscErrorCode IGAColPointBuildShapeFuns(IGAColPoint point)
   if (point->geometry) {
     PetscReal **M = point->basis;
     PetscReal **N = point->shape;
-    PetscReal dX  = point->detJac;
+    PetscReal *dX = &point->detX;
     PetscReal **gX = point->gradX;
     switch (point->dim) {
     case 3: IGA_ShapeFuns_3D(order,
@@ -405,19 +405,19 @@ PetscErrorCode IGAColPointBuildShapeFuns(IGAColPoint point)
                              point->geometryX,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3],
-                             &dX,gX[0],gX[1]); break;
+                             dX,gX[0],gX[1]); break;
     case 2: IGA_ShapeFuns_2D(order,
                              1,point->nen,
                              point->geometryX,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3],
-                             &dX,gX[0],gX[1]); break;
+                             dX,gX[0],gX[1]); break;
     case 1: IGA_ShapeFuns_1D(order,
                              1,point->nen,
                              point->geometryX,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3],
-                             &dX,gX[0],gX[1]); break;
+                             dX,gX[0],gX[1]); break;
     }
   }
   PetscFunctionReturn(0);

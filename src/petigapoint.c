@@ -132,6 +132,7 @@ PetscBool IGAPointNext(IGAPoint point)
   point->basis[2] += nen*dim*dim;
   point->basis[3] += nen*dim*dim*dim;
 
+  point->detX     += 1;
   point->gradX[0] += dim*dim;
   point->gradX[1] += dim*dim;
   point->shape[0] += nen;
@@ -156,6 +157,7 @@ PetscBool IGAPointNext(IGAPoint point)
   point->basis[3] = element->basis[3];
 
   if (element->geometry && dim == nsd) { /* XXX */
+    point->detX     = element->detX;
     point->gradX[0] = element->gradX[0];
     point->gradX[1] = element->gradX[1];
     point->shape[0] = element->shape[0];
@@ -580,13 +582,13 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
 #define __FUNCT__ "IGAPointAddMat"
 PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K[])
 {
-  PetscInt       n;
+  PetscInt       m,n;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidScalarPointer(k,2);
   PetscValidScalarPointer(K,3);
-  n = point->nen*point->dof;
-  ierr = IGAPointAddArray(point,n*n,k,K);CHKERRQ(ierr);
+  m = n = point->nen*point->dof;
+  ierr = IGAPointAddArray(point,m*n,k,K);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
