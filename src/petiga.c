@@ -46,6 +46,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
     ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);
+    ierr = IGAColBasisCreate(&iga->colbasis[i]);CHKERRQ(ierr); /* collocation */
     ierr = IGABoundaryCreate(&iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][1]);CHKERRQ(ierr);
     iga->proc_sizes[i] = -1;
@@ -96,6 +97,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleDestroy(&iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisDestroy(&iga->basis[i]);CHKERRQ(ierr);
+    ierr = IGAColBasisDestroy(&iga->colbasis[i]);CHKERRQ(ierr); /* collocation */
     ierr = IGABoundaryDestroy(&iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryDestroy(&iga->boundary[i][1]);CHKERRQ(ierr);
   }
@@ -1187,6 +1189,7 @@ PetscErrorCode IGASetUp(IGA iga)
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
     ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+    ierr = IGAColBasisInit(iga->colbasis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
   }
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
   ierr = IGAColPointInit(iga->point_iterator,iga);CHKERRQ(ierr);

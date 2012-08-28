@@ -187,7 +187,7 @@ PetscErrorCode IGAColPointBegin(IGAColPoint point)
 
 #undef  __FUNCT__
 #define __FUNCT__ "_FindSpan"
-PetscInt _FindSpan(PetscInt n,PetscInt p,PetscReal u, PetscReal *U)
+PetscInt _FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal *U)
 {
   /* n is the index of the last basis */
   PetscInt low,high,span;
@@ -208,7 +208,7 @@ PetscInt _FindSpan(PetscInt n,PetscInt p,PetscReal u, PetscReal *U)
 
 #undef  __FUNCT__
 #define __FUNCT__ "_Greville"
-PetscReal _Greville(PetscInt i,PetscInt p,PetscInt m,PetscReal *U)
+PetscReal _Greville(PetscInt i,PetscInt p,PetscInt m,const PetscReal *U)
 {
   PetscInt j;
   PetscReal X = 0.0;
@@ -221,15 +221,13 @@ PetscReal _Greville(PetscInt i,PetscInt p,PetscInt m,PetscReal *U)
 #define __FUNCT__ "IGAColPointNext"
 PetscBool IGAColPointNext(IGAColPoint point)
 {
-  IGA      iga = point->parent;
   PetscInt i,dim  = point->dim;
   PetscInt *start = point->start;
   PetscInt *width = point->width;
   PetscInt *ID    = point->ID;
-  PetscInt *span  = point->span;
-  PetscReal *pnt  = point->point;
   PetscInt index,coord;
- 
+  IGAColBasis *BD = point->parent->colbasis;
+
   point->nvec = 0;
   point->nmat = 0;
 
@@ -243,13 +241,8 @@ PetscBool IGAColPointNext(IGAColPoint point)
     coord   = index % width[i];
     index   = (index - coord) / width[i];
     ID[i]   = coord + start[i]; 
-    pnt[i]  = _Greville(ID[i],iga->axis[i]->p,iga->axis[i]->m,iga->axis[i]->U);
-    span[i] = _FindSpan(iga->axis[i]->m-iga->axis[i]->p-1,iga->axis[i]->p,pnt[i],iga->axis[i]->U);
+    point->point[i] = BD[i]->point[ID[i]];
   }
-  for (i=dim; i<3; i++) {
-    span[i] = 0;
-  }
-  //printf("ID: {%d,%d,%d}  pnt: {%.2f,%.2f,%.2f}  span: {%d,%d,%d}\n",ID[0],ID[1],ID[2],pnt[0],pnt[1],pnt[2],span[0],span[1],span[2]);
   IGAColPointBuildMapping(point);
   IGAColPointBuildGeometry(point);
   IGAColPointBuildShapeFuns(point);
@@ -276,11 +269,12 @@ PetscErrorCode IGAColPointBuildMapping(IGAColPoint point)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during collocation point loop");
   { /* */
     IGA      iga = point->parent;
-    IGABasis *BD = iga->basis;
-    PetscInt *span = point->span;
-    PetscInt ia, inen = BD[0]->nen, ioffset = span[0]-iga->axis[0]->p;
-    PetscInt ja, jnen = BD[1]->nen, joffset = span[1]-iga->axis[1]->p;
-    PetscInt ka, knen = BD[2]->nen, koffset = span[2]-iga->axis[2]->p;
+    IGAColBasis *BD = iga->colbasis;
+    PetscInt *ID = point->ID;
+    
+    PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
+    PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
+    PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
     PetscInt *start = iga->node_gstart, *width = iga->node_gwidth;
     PetscInt istart = start[0]/*istride = 1*/;
     PetscInt jstart = start[1], jstride = width[0];
@@ -365,7 +359,7 @@ EXTERN_C_BEGIN
 extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
 EXTERN_C_END
 
-#define IGA_BasisFuns_ARGS(BD,i) 1,BD[i]->nen,BD[i]->d,point->basis1d[i]
+#define IGA_BasisFuns_ARGS(ID,BD,i) 1,BD[i]->nen,BD[i]->d,BD[i]->value+ID[i]*BD[i]->nen*(BD[i]->d+1)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAColPointBuildShapeFuns"
@@ -378,33 +372,25 @@ PetscErrorCode IGAColPointBuildShapeFuns(IGAColPoint point)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during collocation point loop");
   order = point->parent->order;
   {
-    IGABasis *BD  = point->parent->basis;
+    IGAColBasis *BD  = point->parent->colbasis;
+    PetscInt *ID  = point->ID;
     PetscReal **N = point->basis;
     switch (point->dim) {
-    case 3: 
-      IGA_DersBasisFuns(point->span[0],point->point[0],point->parent->axis[0]->p,point->parent->order,point->parent->axis[0]->U,point->basis1d[0]);
-      IGA_DersBasisFuns(point->span[1],point->point[1],point->parent->axis[1]->p,point->parent->order,point->parent->axis[1]->U,point->basis1d[1]);
-      IGA_DersBasisFuns(point->span[2],point->point[2],point->parent->axis[2]->p,point->parent->order,point->parent->axis[2]->U,point->basis1d[2]);
-      IGA_BasisFuns_3D(order,point->rational,
-		       point->geometryW,
-		       IGA_BasisFuns_ARGS(BD,0),
-		       IGA_BasisFuns_ARGS(BD,1),
-		       IGA_BasisFuns_ARGS(BD,2),
-		       N[0],N[1],N[2],N[3]); break;
-    case 2: 
-      IGA_DersBasisFuns(point->span[0],point->point[0],point->parent->axis[0]->p,point->parent->order,point->parent->axis[0]->U,point->basis1d[0]);
-      IGA_DersBasisFuns(point->span[1],point->point[1],point->parent->axis[1]->p,point->parent->order,point->parent->axis[1]->U,point->basis1d[1]);
-      IGA_BasisFuns_2D(order,point->rational,
-		       point->geometryW,
-		       IGA_BasisFuns_ARGS(BD,0),
-		       IGA_BasisFuns_ARGS(BD,1),
-		       N[0],N[1],N[2],N[3]); break;
-    case 1: 
-      IGA_DersBasisFuns(point->span[0],point->point[0],point->parent->axis[0]->p,point->parent->order,point->parent->axis[0]->U,point->basis1d[0]);
-      IGA_BasisFuns_1D(order,point->rational,
-		       point->geometryW,
-		       IGA_BasisFuns_ARGS(BD,0),
-		       N[0],N[1],N[2],N[3]); break;
+    case 3: IGA_BasisFuns_3D(order,point->rational,
+                             point->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             IGA_BasisFuns_ARGS(ID,BD,1),
+                             IGA_BasisFuns_ARGS(ID,BD,2),
+                             N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_BasisFuns_2D(order,point->rational,
+                             point->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             IGA_BasisFuns_ARGS(ID,BD,1),
+                             N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_BasisFuns_1D(order,point->rational,
+                             point->geometryW,
+                             IGA_BasisFuns_ARGS(ID,BD,0),
+                             N[0],N[1],N[2],N[3]); break;
     }
   }
   if (point->dim == point->nsd) /* XXX */
@@ -599,6 +585,8 @@ PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Ma
   PetscFunctionReturn(0);
 }
 
+/* The following routines are a slight alteration of the petigaksp.c routines */
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAColComputeSystem"
 PetscErrorCode IGAColComputeSystem(IGA iga,Mat matA,Vec vecB)
@@ -663,5 +651,119 @@ PetscErrorCode IGAColSetUserSystem(IGA iga,IGAColUserSystem System,void *SysCtx)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (System) iga->userops->ColSystem = System;
   if (SysCtx) iga->userops->ColSysCtx = SysCtx;
+  PetscFunctionReturn(0);
+}
+
+/* The following routines are a slight alteration of the petigabasis.c routines */
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColBasisCreate"
+PetscErrorCode IGAColBasisCreate(IGAColBasis *basis)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(basis,3);
+  ierr = PetscNew(struct _n_IGAColBasis,basis);CHKERRQ(ierr);
+  (*basis)->refct = 1;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColBasisDestroy"
+PetscErrorCode IGAColBasisDestroy(IGAColBasis *_basis)
+{
+  IGAColBasis       basis;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(_basis,1);
+  basis = *_basis; *_basis = 0;
+  if (!basis) PetscFunctionReturn(0);
+  if (--basis->refct > 0) PetscFunctionReturn(0);
+  ierr = IGAColBasisReset(basis);CHKERRQ(ierr);
+  ierr = PetscFree(basis);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColBasisReset"
+PetscErrorCode IGAColBasisReset(IGAColBasis basis)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  if (!basis) PetscFunctionReturn(0);
+  PetscValidPointer(basis,1);
+  basis->ncp = 0;
+  basis->nen = 0;
+  basis->p   = 0;
+  basis->d   = 0;
+  ierr = PetscFree(basis->offset);CHKERRQ(ierr);
+  ierr = PetscFree(basis->detJ);CHKERRQ(ierr);
+  ierr = PetscFree(basis->point);CHKERRQ(ierr);
+  ierr = PetscFree(basis->value);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColBasisReference"
+PetscErrorCode IGAColBasisReference(IGAColBasis basis)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(basis,1);
+  basis->refct++;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAColBasisInit"
+PetscErrorCode IGAColBasisInit(IGAColBasis basis,IGAAxis axis,PetscInt d)
+{
+  PetscInt       m,p;
+  const PetscReal*U;
+  PetscInt       icp,ncp;
+  PetscInt       nen,ndr;
+  PetscInt       *offset;
+  PetscReal      *detJ;
+  PetscReal      *point;
+  PetscReal      *value;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(basis,1);
+  PetscValidPointer(axis,2);
+  if (d < 0) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                      "Derivative order must be grather than zero, got %D",d);
+
+  m = axis->m;
+  p = axis->p;
+  U = axis->U;
+
+  ncp  = axis->nnp;
+  nen  = p+1;
+  ndr  = d+1;
+
+  ierr = PetscMalloc1(ncp,PetscInt,&offset);CHKERRQ(ierr);
+  ierr = PetscMalloc1(ncp,PetscReal,&detJ);CHKERRQ(ierr);
+  ierr = PetscMalloc1(ncp,PetscReal,&point);CHKERRQ(ierr);
+  ierr = PetscMalloc1(ncp*nen*ndr,PetscReal,&value);CHKERRQ(ierr);
+  
+  for (icp=0; icp<ncp; icp++) {
+    point[icp]   = _Greville(icp,p,m,U); /* XXX Later fix to be a choice */
+    PetscInt k   = _FindSpan(ncp-1,p,point[icp],U);
+    IGA_DersBasisFuns(k,point[icp],p,d,U,&value[icp*nen*ndr]);
+    offset[icp] = k-p;
+    detJ[icp]   = 0.5*(U[k+1]-U[k]);
+  }
+
+  ierr = IGAColBasisReset(basis);CHKERRQ(ierr);
+
+  basis->ncp    = ncp;
+  basis->nen    = nen;
+  basis->p      = p;
+  basis->d      = d;
+  basis->offset = offset;
+
+  basis->detJ   = detJ;
+  basis->point  = point;
+  basis->value  = value;
+
   PetscFunctionReturn(0);
 }

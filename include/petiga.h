@@ -29,7 +29,9 @@ typedef struct _n_IGABoundary *IGABoundary;
 
 typedef struct _n_IGAElement  *IGAElement;
 typedef struct _n_IGAPoint    *IGAPoint;
+
 typedef struct _n_IGAColPoint *IGAColPoint;
+typedef struct _n_IGAColBasis *IGAColBasis;
 
 /* ---------------------------------------------------------------- */
 
@@ -197,7 +199,9 @@ struct _p_IGA {
   IGABasis basis[3];
   IGABoundary boundary[3][2];
   IGAElement  iterator;
-  IGAColPoint point_iterator;
+
+  IGAColPoint point_iterator; /* stuff added for collocation */
+  IGAColBasis colbasis[3];
 
   PetscInt  proc_sizes[3];
   PetscInt  proc_ranks[3];
@@ -613,6 +617,24 @@ PETSC_EXTERN PetscErrorCode IGAColPointAssembleVec(IGAColPoint point,const Petsc
 PETSC_EXTERN PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Mat mat);
 PETSC_EXTERN PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem System,void *ctx);
 PETSC_EXTERN PetscErrorCode IGAColComputeSystem(IGA iga,Mat A,Vec B);
+
+struct _n_IGAColBasis {
+  PetscInt refct;
+  /**/
+  PetscInt  ncp;      /* number of collocation points */
+  PetscInt  nen;      /* number of local basis functions */
+  PetscInt  p,d;      /* polynomial order, last derivative index */
+
+  PetscInt  *offset;  /* [ncp] basis offset   */
+  PetscReal *detJ;    /* [ncp]                */
+  PetscReal *point;   /* [ncp]                */
+  PetscReal *value;   /* [ncp][nen][d+1]      */
+};
+PETSC_EXTERN PetscErrorCode IGAColBasisCreate(IGAColBasis *basis);
+PETSC_EXTERN PetscErrorCode IGAColBasisDestroy(IGAColBasis *basis);
+PETSC_EXTERN PetscErrorCode IGAColBasisReset(IGAColBasis basis);
+PETSC_EXTERN PetscErrorCode IGAColBasisReference(IGAColBasis basis);
+PETSC_EXTERN PetscErrorCode IGAColBasisInit(IGAColBasis basis,IGAAxis axis,PetscInt d);
 
 /* ---------------------------------------------------------------- */
 
