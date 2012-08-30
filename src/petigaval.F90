@@ -29,8 +29,8 @@ subroutine IGA_GetGradGeomMap(nen,nsd,dim,N,C,F) &
   F = matmul(N,transpose(C))
 end subroutine IGA_GetGradGeomMap
 
-subroutine IGA_GetGradGeomMapI(nen,nsd,dim,N,C,G) &
-  bind(C, name="IGA_GetGradGeomMapI")
+subroutine IGA_GetInvGradGeomMap(nen,nsd,dim,N,C,G) &
+  bind(C, name="IGA_GetInvGradGeomMap")
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd,dim
@@ -45,7 +45,7 @@ subroutine IGA_GetGradGeomMapI(nen,nsd,dim,N,C,G) &
   G = matmul(invM,transpose(F))
 contains
 include 'petigainv.f90.in'
-end subroutine IGA_GetGradGeomMapI
+end subroutine IGA_GetInvGradGeomMap
 
 
 subroutine IGA_GetValue(nen,dof,N,U,V) &
