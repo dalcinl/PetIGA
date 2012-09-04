@@ -330,12 +330,12 @@ struct _n_IGAElement {
   PetscInt dim;
   PetscInt nsd;
 
-  PetscInt  *mapping;   /*   [nen]      */
+  PetscInt  *mapping;  /*   [nen]      */
 
   PetscBool geometry;
   PetscBool rational;
-  PetscReal *geometryX; /*   [nen][nsd] */
-  PetscReal *geometryW; /*   [nen]      */
+  PetscReal *geometryX;/*   [nen][nsd] */
+  PetscReal *geometryW;/*   [nen]      */
 
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
@@ -358,11 +358,16 @@ struct _n_IGAElement {
   IGA      parent;
   IGAPoint iterator;
 
+  PetscInt     nrows,*irows;
+  PetscInt     ncols,*icols;
+
   PetscInt     nfix;
   PetscInt    *ifix;
   PetscScalar *vfix;
   PetscScalar *xfix;
 
+  PetscInt    nval;
+  PetscScalar *wval[8];
   PetscInt    nvec;
   PetscScalar *wvec[8];
   PetscInt    nmat;
@@ -374,11 +379,15 @@ PETSC_EXTERN PetscErrorCode IGAElementDestroy(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementReset(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementInit(IGAElement element,IGA iga);
 
-PETSC_EXTERN PetscErrorCode IGAElementBegin(IGAElement element);
-PETSC_EXTERN PetscBool      IGAElementNext(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementEnd(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGABeginElement(IGA iga,IGAElement *element);
+PETSC_EXTERN PetscBool      IGANextElement(IGA iga,IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAEndElement(IGA iga,IGAElement *element);
 
-PETSC_EXTERN PetscErrorCode IGAElementBuildFix(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementInitPoint(IGAElement element,IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point);
+PETSC_EXTERN PetscBool      IGAElementNextPoint(IGAElement element,IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point);
+
 PETSC_EXTERN PetscErrorCode IGAElementBuildMapping(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildGeometry(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
@@ -395,11 +404,13 @@ PETSC_EXTERN PetscErrorCode IGAElementGetShapeFuns(IGAElement element,PetscInt *
 
 PETSC_EXTERN PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point);
 
+PETSC_EXTERN PetscErrorCode IGAElementGetWorkVal(IGAElement element,PetscScalar *U[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[]);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar U[],PetscScalar u[]);
 
+PETSC_EXTERN PetscErrorCode IGAElementBuildFix(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[]);
@@ -426,21 +437,19 @@ struct _n_IGAPoint {
 
   PetscReal *point;    /*   [dim] */
   PetscReal *scale;    /*   [dim] */
-  
   PetscReal *basis[4]; /*0: [nen] */
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
 
-  PetscReal *detX;     /*   [nqp] */
+  PetscReal *geometry; /*   [nen][nsd] */
+  PetscReal *detX;     /*   [1] */
   PetscReal *gradX[2]; /*0: [nsd][dim] */
                        /*1: [dim][nsd] */
   PetscReal *shape[4]; /*0: [nen]  */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
-
-  IGAElement  parent;
 
   PetscInt    nvec;
   PetscScalar *wvec[8];
@@ -450,10 +459,6 @@ struct _n_IGAPoint {
 PETSC_EXTERN PetscErrorCode IGAPointCreate(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointReset(IGAPoint point);
-PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
-
-PETSC_EXTERN PetscErrorCode IGAPointBegin(IGAPoint point);
-PETSC_EXTERN PetscBool      IGAPointNext(IGAPoint point);
 
 PETSC_EXTERN PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count);

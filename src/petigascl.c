@@ -61,22 +61,21 @@ PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
 
   /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
-  ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-  ierr = IGAElementBegin(element);CHKERRQ(ierr);
-  while (IGAElementNext(element)) {
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
     PetscScalar *U;
-    ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
+    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     /* Quadrature loop */
-    ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
-    ierr = IGAPointBegin(point);CHKERRQ(ierr);
-    while (IGAPointNext(point)) {
+    ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+    while (IGAElementNextPoint(element,point)) {
       ierr = PetscMemzero(workS,n*sizeof(PetscScalar));CHKERRQ(ierr);
       ierr = Scalar(point,U,n,workS,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddArray(point,n,workS,localS);CHKERRQ(ierr);
     }
+    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
   }
-  ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
 
   /* Restore local vector U and array */

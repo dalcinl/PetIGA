@@ -149,8 +149,8 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
     ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
 
-    ierr = IGAElementBegin(element);CHKERRQ(ierr);
-    while (IGAElementNext(element)) {
+    ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+    while (IGANextElement(iga,element)) {
       ierr = IGAElementGetMapping(element,&nen,&mapping);CHKERRQ(ierr);
       m = n = ComputeOwnedGlobalIndices(ltogmap,start,end,dof,nen,mapping,indices);
       /* get element matrix from global matrix */
@@ -170,7 +170,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
       ierr = MatSetValues(B,n,indices,n,indices,values,ADD_VALUES);CHKERRQ(ierr);
       ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
     }
-    ierr = IGAElementEnd(element);CHKERRQ(ierr);
+    ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
     ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);

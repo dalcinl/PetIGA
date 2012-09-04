@@ -61,132 +61,9 @@ PetscErrorCode IGAPointReset(IGAPoint point)
   PetscFunctionBegin;
   if (!point) PetscFunctionReturn(0);
   PetscValidPointer(point,1);
+  point->count =  0;
   point->index = -1;
   ierr = IGAPointFreeWork(point);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointInit"
-PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(element,0);
-  ierr = IGAPointReset(point);CHKERRQ(ierr);
-  point->parent = element;
-
-  point->nen = element->nen;
-  point->dof = element->dof;
-  point->dim = element->dim;
-  point->nsd = element->nsd;
-
-  point->count = element->nqp;
-  point->index = -1;
-
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointBegin"
-PetscErrorCode IGAPointBegin(IGAPoint point)
-{
-  IGAElement     element;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  element = point->parent;
-  if (PetscUnlikely(element->index < 0))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  point->index = -1;
-  ierr = IGAElementBuildQuadrature(element);CHKERRQ(ierr);
-  ierr = IGAElementBuildShapeFuns(element);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointNext"
-PetscBool IGAPointNext(IGAPoint point)
-{
-  IGAElement element;
-  PetscInt nen = point->nen;
-  PetscInt dim = point->dim;
-  PetscInt nsd = point->nsd;
-  PetscInt index;
-  /* */
-  point->nvec = 0;
-  point->nmat = 0;
-  /* */
-  index = ++point->index;
-  if (PetscUnlikely(index == 0))            goto start;
-  if (PetscUnlikely(index >= point->count)) goto stop;
-
-  point->weight   += 1;
-  point->detJac   += 1;
-
-  point->point    += dim;
-  point->scale    += dim;
-  point->basis[0] += nen;
-  point->basis[1] += nen*dim;
-  point->basis[2] += nen*dim*dim;
-  point->basis[3] += nen*dim*dim*dim;
-
-  point->detX     += 1;
-  point->gradX[0] += dim*dim;
-  point->gradX[1] += dim*dim;
-  point->shape[0] += nen;
-  point->shape[1] += nen*dim;
-  point->shape[2] += nen*dim*dim;
-  point->shape[3] += nen*dim*dim*dim;
-
-  return PETSC_TRUE;
-
- start:
-
-  element = point->parent;
-
-  point->weight   = element->weight;
-  point->detJac   = element->detJac;
-
-  point->point    = element->point;
-  point->scale    = element->scale;
-  point->basis[0] = element->basis[0];
-  point->basis[1] = element->basis[1];
-  point->basis[2] = element->basis[2];
-  point->basis[3] = element->basis[3];
-
-  if (element->geometry && dim == nsd) { /* XXX */
-    point->detX     = element->detX;
-    point->gradX[0] = element->gradX[0];
-    point->gradX[1] = element->gradX[1];
-    point->shape[0] = element->shape[0];
-    point->shape[1] = element->shape[1];
-    point->shape[2] = element->shape[2];
-    point->shape[3] = element->shape[3];
-  } else {
-    point->shape[0] = element->basis[0];
-    point->shape[1] = element->basis[1];
-    point->shape[2] = element->basis[2];
-    point->shape[3] = element->basis[3];
-  }
-  return PETSC_TRUE;
-
- stop:
-
-  point->index = -1;
-  return PETSC_FALSE;
-
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetParent"
-PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *parent)
-{
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(parent,2);
-  *parent = point->parent;
   PetscFunctionReturn(0);
 }
 
@@ -288,8 +165,8 @@ PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[])
   PetscFunctionBegin;
   PetscValidPointer(p,1);
   PetscValidRealPointer(x,2);
-  if (p->parent->geometry) {
-    const PetscReal *X = p->parent->geometryX;
+  if (p->geometry) {
+    const PetscReal *X = p->geometry;
     IGA_GetGeomMap(p->nen,p->nsd,p->shape[0],X,x);
   } else {
     PetscInt i,dim = p->dim;
@@ -306,14 +183,14 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
   PetscFunctionBegin;
   PetscValidPointer(p,1);
   PetscValidRealPointer(F,2);
-  if (p->parent->geometry) {
+  if (p->geometry) {
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     const PetscReal *L = p->scale;
     if (dim == nsd) {
       (void)PetscMemcpy(F,p->gradX[0],nsd*dim*sizeof(PetscReal));
     } else {
-      const PetscReal *X = p->parent->geometryX;
+      const PetscReal *X = p->geometry;
       IGA_GetGradGeomMap(p->nen,nsd,dim,p->basis[1],X,F);
     }
     for (i=0; i<nsd; i++)
@@ -335,14 +212,14 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
   PetscFunctionBegin;
   PetscValidPointer(p,1);
   PetscValidRealPointer(G,2);
-  if (p->parent->geometry) {
+  if (p->geometry) {
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     const PetscReal *L = p->scale;
     if (dim == nsd) {
       (void)PetscMemcpy(G,p->gradX[1],dim*nsd*sizeof(PetscReal));
     } else {
-      const PetscReal *X = p->parent->geometryX;
+      const PetscReal *X = p->geometry;
       IGA_GetInvGradGeomMap(p->nen,nsd,dim,p->basis[1],X,G);
     }
     for (a=0; a<dim; a++)
@@ -509,14 +386,14 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-    PetscInt n = point->nen * point->dof;
+    PetscInt m = point->nen * point->dof;
     if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     if (PetscUnlikely(!point->wvec[point->nvec])) {
-      ierr = PetscMalloc1(n,PetscScalar,&point->wvec[point->nvec]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m,PetscScalar,&point->wvec[point->nvec]);CHKERRQ(ierr);
     }
     *V = point->wvec[point->nvec++];
-    ierr = PetscMemzero(*V,n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -533,14 +410,15 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
+    PetscInt m = point->nen * point->dof;
     PetscInt n = point->nen * point->dof;
     if (PetscUnlikely(point->nmat >= (PetscInt)MAX_WORK_MAT))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
     if (PetscUnlikely(!point->wmat[point->nmat])) {
-      ierr = PetscMalloc1(n*n,PetscScalar,&point->wmat[point->nmat]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m*n,PetscScalar,&point->wmat[point->nmat]);CHKERRQ(ierr);
     }
     *M = point->wmat[point->nmat++];
-    ierr = PetscMemzero(*M,n*n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -567,14 +445,14 @@ PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],
 #define __FUNCT__ "IGAPointAddVec"
 PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F[])
 {
-  PetscInt       n;
+  PetscInt       m;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   PetscValidScalarPointer(f,2);
   PetscValidScalarPointer(F,3);
-  n = point->nen*point->dof;
-  ierr = IGAPointAddArray(point,n,f,F);CHKERRQ(ierr);
+  m = point->nen * point->dof;
+  ierr = IGAPointAddArray(point,m,f,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -588,7 +466,8 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
   PetscValidPointer(point,1);
   PetscValidScalarPointer(k,2);
   PetscValidScalarPointer(K,3);
-  m = n = point->nen*point->dof;
+  m = point->nen * point->dof;
+  n = point->nen * point->dof;
   ierr = IGAPointAddArray(point,m*n,k,K);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

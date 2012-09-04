@@ -46,29 +46,27 @@ PetscErrorCode IGAFormFunction(IGA iga,Vec vecU,Vec vecF,
 
   /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecU,vecF,0);CHKERRQ(ierr);
-  ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-  ierr = IGAElementBegin(element);CHKERRQ(ierr);
-  while (IGAElementNext(element)) {
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
     PetscScalar *U, *F;
-    ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
-    /* */
+    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
+    ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
     /* Quadrature loop */
-    ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
-    ierr = IGAPointBegin(point);CHKERRQ(ierr);
-    while (IGAPointNext(point)) {
+    ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+    while (IGAElementNextPoint(element,point)) {
       PetscScalar *R;
       ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
       ierr = Function(point,U,R,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
     }
+    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
     /* */
     ierr = IGAElementFixFunction(element,F);CHKERRQ(ierr);
     ierr = IGAElementAssembleVec(element,F,vecF);CHKERRQ(ierr);
   }
-  ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecU,vecF,0);CHKERRQ(ierr);
 
   /* Restore local vector U and array */
@@ -124,29 +122,27 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
 
   /* Element Loop */
   ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecU,matJ,0);CHKERRQ(ierr);
-  ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-  ierr = IGAElementBegin(element);CHKERRQ(ierr);
-  while (IGAElementNext(element)) {
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
     PetscScalar *U, *J;
-    ierr = IGAElementGetWorkVec(element,&U);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
-    /* */
+    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
+    ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
     /* Quadrature loop */
-    ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
-    ierr = IGAPointBegin(point);CHKERRQ(ierr);
-    while (IGAPointNext(point)) {
+    ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+    while (IGAElementNextPoint(element,point)) {
       PetscScalar *K;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
       ierr = Jacobian(point,U,K,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
     }
+    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
     /* */
     ierr = IGAElementFixJacobian(element,J);CHKERRQ(ierr);
     ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
   }
-  ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecU,matJ,0);CHKERRQ(ierr);
 
   /* Restore local vector U and array */

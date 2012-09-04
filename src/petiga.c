@@ -1189,9 +1189,12 @@ PetscErrorCode IGASetUp(IGA iga)
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
     ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
-    ierr = IGAColBasisInit(iga->colbasis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
   }
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
+
+  for (i=0; i<3; i++) {
+    ierr = IGAColBasisInit(iga->colbasis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
+  }
   ierr = IGAColPointInit(iga->point_iterator,iga);CHKERRQ(ierr);
 
 

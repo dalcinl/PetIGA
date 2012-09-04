@@ -77,7 +77,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscReal t  = user->t;
 
   // get geometry
-  PetscScalar *geom = p->parent->geometryX;
+  PetscScalar *geom = p->geometry;
   PetscScalar grad_g[3][2],hess_g[3][2][2];
   IGAShellInterpolate(p,1,3,geom,&grad_g[0][0]);
   IGAShellInterpolate(p,2,3,geom,&hess_g[0][0][0]);

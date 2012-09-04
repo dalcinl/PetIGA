@@ -39,11 +39,16 @@ static
 PetscErrorCode IGAElementFreeWork(IGAElement element)
 {
   size_t i;
+  size_t MAX_WORK_VAL;
   size_t MAX_WORK_VEC;
   size_t MAX_WORK_MAT;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
+  MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
+  for (i=0; i<MAX_WORK_VAL; i++)
+    {ierr = PetscFree(element->wval[i]);CHKERRQ(ierr);}
+  element->nval = 0;
   MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
   for (i=0; i<MAX_WORK_VEC; i++)
     {ierr = PetscFree(element->wvec[i]);CHKERRQ(ierr);}
@@ -56,6 +61,21 @@ PetscErrorCode IGAElementFreeWork(IGAElement element)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAElementFreeFix"
+static
+PetscErrorCode IGAElementFreeFix(IGAElement element)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  element->nfix = 0;
+  ierr = PetscFree(element->ifix);CHKERRQ(ierr);
+  ierr = PetscFree(element->vfix);CHKERRQ(ierr);
+  ierr = PetscFree(element->xfix);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAElementReset"
 PetscErrorCode IGAElementReset(IGAElement element)
 {
@@ -63,6 +83,7 @@ PetscErrorCode IGAElementReset(IGAElement element)
   PetscFunctionBegin;
   if (!element) PetscFunctionReturn(0);
   PetscValidPointer(element,1);
+  element->count =  0;
   element->index = -1;
 
   ierr = PetscFree(element->mapping);CHKERRQ(ierr);
@@ -87,10 +108,10 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->shape[2]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[3]);CHKERRQ(ierr);
 
+  element->nrows = 0; element->irows = PETSC_NULL;
+  element->ncols = 0; element->icols = PETSC_NULL;
+  ierr = IGAElementFreeFix(element);CHKERRQ(ierr);
   ierr = IGAElementFreeWork(element);CHKERRQ(ierr);
-  ierr = PetscFree(element->ifix);CHKERRQ(ierr);
-  ierr = PetscFree(element->vfix);CHKERRQ(ierr);
-  ierr = PetscFree(element->xfix);CHKERRQ(ierr);
   ierr = IGAPointReset(element->iterator);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -102,8 +123,8 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,2);
+  IGACheckSetUp(iga,1);
   ierr = IGAElementReset(element);CHKERRQ(ierr);
   element->parent = iga;
 
@@ -176,7 +197,10 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
   }
-  ierr = IGAPointInit(element->iterator,element);CHKERRQ(ierr);
+  { /* */
+    element->nrows = element->nen; element->irows = element->mapping;
+    element->ncols = element->nen; element->icols = element->mapping;
+  }
   { /* */
     PetscInt nen = element->nen;
     PetscInt dof = element->dof;
@@ -185,26 +209,26 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nen*dof,PetscScalar,&element->vfix);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*dof,PetscScalar,&element->xfix);CHKERRQ(ierr);
   }
+  ierr = IGAElementInitPoint(element,element->iterator);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementBegin"
-PetscErrorCode IGAElementBegin(IGAElement element)
+#define __FUNCT__ "IGABeginElement"
+PetscErrorCode IGABeginElement(IGA iga,IGAElement *element)
 {
-  IGA            iga;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  iga = element->parent;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  if (PetscUnlikely(!iga->setup)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetUp() first");
-  element->index = -1;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(element,2);
+  IGACheckSetUp(iga,1);
+  *element = iga->iterator;
+  (*element)->index = -1;
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementNext"
-PetscBool IGAElementNext(IGAElement element)
+#define __FUNCT__ "IGANextElement"
+PetscBool IGANextElement(IGA iga,IGAElement element)
 {
   PetscInt i,dim  = element->dim;
   PetscInt *start = element->start;
@@ -213,6 +237,7 @@ PetscBool IGAElementNext(IGAElement element)
   PetscInt index,coord;
   PetscErrorCode ierr;
   /* */
+  element->nval = 0;
   element->nvec = 0;
   element->nmat = 0;
   /* */
@@ -227,25 +252,161 @@ PetscBool IGAElementNext(IGAElement element)
     index = (index - coord) / width[i];
     ID[i] = coord + start[i];
   }
-#undef  CHKERR_RETURN
-#define CHKERR_RETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
-  ierr = IGAElementBuildMapping(element);  CHKERR_RETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildGeometry(element); CHKERR_RETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildFix(element);      CHKERR_RETURN(ierr,PETSC_FALSE);
-#undef  CHKERR_RETURN_FALSE
+#undef  CHKERRRETURN
+#define CHKERRRETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
+  ierr = IGAElementBuildMapping(element);  CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildGeometry(element); CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildFix(element);      CHKERRRETURN(ierr,PETSC_FALSE);
+#undef  CHKERRRETURN
   return PETSC_TRUE;
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementEnd"
-PetscErrorCode IGAElementEnd(IGAElement element)
+#define __FUNCT__ "IGAEndElement"
+PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(element,2);
+  PetscValidPointer(*element,2);
+  if (PetscUnlikely((*element)->index != -1)) {
+    (*element)->index = -1;
+    *element = PETSC_NULL;
+    PetscFunctionReturn(PETSC_ERR_PLIB);
+  }
+  *element = PETSC_NULL;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementInitPoint"
+PetscErrorCode IGAElementInitPoint(IGAElement element,IGAPoint point)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  PetscValidPointer(point,2);
+  ierr = IGAPointReset(point);CHKERRQ(ierr);
+
+  point->nen = element->nen;
+  point->dof = element->dof;
+  point->dim = element->dim;
+  point->nsd = element->nsd;
+
+  point->count = element->nqp;
+  point->index = -1;
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementBeginPoint"
+PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  PetscValidPointer(point,2);
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  ierr = IGAElementBuildQuadrature(element);CHKERRQ(ierr);
+  ierr = IGAElementBuildShapeFuns(element);CHKERRQ(ierr);
+  *point = element->iterator;
+  (*point)->index = -1;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementNextPoint"
+PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
+{
+  PetscInt nen = point->nen;
+  PetscInt dim = point->dim;
+  PetscInt nsd = point->nsd;
+  PetscInt index;
+  /*PetscValidPointer(element,1);*/
+  /*PetscValidPointer(point,2);*/
+  /* */
+  point->nvec = 0;
+  point->nmat = 0;
+  /* */
+  index = ++point->index;
+  if (PetscUnlikely(index == 0))            goto start;
+  if (PetscUnlikely(index >= point->count)) goto stop;
+
+  point->weight   += 1;
+  point->detJac   += 1;
+
+  point->point    += dim;
+  point->scale    += dim;
+  point->basis[0] += nen;
+  point->basis[1] += nen*dim;
+  point->basis[2] += nen*dim*dim;
+  point->basis[3] += nen*dim*dim*dim;
+
+  point->detX     += 1;
+  point->gradX[0] += dim*dim;
+  point->gradX[1] += dim*dim;
+  point->shape[0] += nen;
+  point->shape[1] += nen*dim;
+  point->shape[2] += nen*dim*dim;
+  point->shape[3] += nen*dim*dim*dim;
+
+  return PETSC_TRUE;
+
+ start:
+
+  point->weight   = element->weight;
+  point->detJac   = element->detJac;
+
+  point->point    = element->point;
+  point->scale    = element->scale;
+  point->basis[0] = element->basis[0];
+  point->basis[1] = element->basis[1];
+  point->basis[2] = element->basis[2];
+  point->basis[3] = element->basis[3];
+
+  if (element->geometry)
+    point->geometry = element->geometryX;
+  else 
+    point->geometry = PETSC_NULL;
+  if (element->geometry && dim == nsd) { /* XXX */
+    point->detX     = element->detX;
+    point->gradX[0] = element->gradX[0];
+    point->gradX[1] = element->gradX[1];
+    point->shape[0] = element->shape[0];
+    point->shape[1] = element->shape[1];
+    point->shape[2] = element->shape[2];
+    point->shape[3] = element->shape[3];
+  } else {
+    point->shape[0] = element->basis[0];
+    point->shape[1] = element->basis[1];
+    point->shape[2] = element->basis[2];
+    point->shape[3] = element->basis[3];
+  }
+
+  return PETSC_TRUE;
+
+ stop:
+
+  point->index = -1;
+  return PETSC_FALSE;
+
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementEndPoint"
+PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  if (PetscUnlikely(element->index != -1)) {
-    element->index = -1;
+  PetscValidPointer(point,2);
+  PetscValidPointer(*point,2);
+  if (PetscUnlikely((*point)->index != -1)) {
+    (*point)->index = -1;
     PetscFunctionReturn(PETSC_ERR_PLIB);
   }
+  *point = PETSC_NULL;
   PetscFunctionReturn(0);
 }
 
@@ -352,76 +513,6 @@ PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point)
 }
 
 /* -------------------------------------------------------------------------- */
-
-static void AddFix(IGAElement element,PetscInt dir,PetscInt side,PetscInt a)
-{
-  IGABoundary b = element->parent->boundary[dir][side];
-  PetscInt dof = element->dof;
-  PetscInt nfix = element->nfix;
-  PetscInt *ifix = element->ifix;
-  PetscScalar *vfix = element->vfix;
-  PetscInt j,k,n = b->nbc;
-  for (k=0; k<n; k++) {
-    PetscInt idx = a*dof + b->field[k];
-    PetscScalar val = b->value[k];
-    for (j=0; j<nfix; j++)
-      if (ifix[j] == idx) break;
-    if (j==nfix) nfix++;
-    ifix[j] = idx;
-    vfix[j] = val;
-  }
-  element->nfix = nfix;
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementBuildFix"
-PetscErrorCode IGAElementBuildFix(IGAElement element)
-{
-  PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  if (PetscUnlikely(element->index < 0))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  {
-    IGA      iga = element->parent;
-    IGABasis *BD = iga->basis;
-    PetscInt *ID = element->ID;
-    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
-    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
-    PetscBool onboundary = PETSC_FALSE;
-    PetscInt i,dim = element->dim;
-    for (i=0; i<dim; i++) {
-      PetscInt e = BD[i]->nel-1; /* last element */
-      PetscInt n = BD[i]->nnp-1; /* last node */
-      if (iga->axis[i]->periodic) continue; /* XXX */
-      if (ID[i] == 0) { A0[i] = 0; onboundary = PETSC_TRUE; }
-      if (ID[i] == e) { A1[i] = n; onboundary = PETSC_TRUE; }
-    }
-    element->nfix = 0;
-    if (onboundary) {
-      PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
-      PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
-      PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
-      PetscInt a = 0;
-      for (ka=0; ka<knen; ka++) {
-        for (ja=0; ja<jnen; ja++) {
-          for (ia=0; ia<inen; ia++) {
-            PetscInt iA = ioffset + ia;
-            PetscInt jA = joffset + ja;
-            PetscInt kA = koffset + ka;
-            /**/ if (iA == A0[0]) AddFix(element,0,0,a);
-            else if (iA == A1[0]) AddFix(element,0,1,a);
-            /**/ if (jA == A0[1]) AddFix(element,1,0,a);
-            else if (jA == A1[1]) AddFix(element,1,1,a);
-            /**/ if (kA == A0[2]) AddFix(element,2,0,a);
-            else if (kA == A1[2]) AddFix(element,2,1,a);
-            a++;
-          }
-        }
-      }
-    }
-  }
-  PetscFunctionReturn(0);
-}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildMapping"
@@ -634,6 +725,30 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
 /* -------------------------------------------------------------------------- */
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAElementGetWorkVal"
+PetscErrorCode IGAElementGetWorkVal(IGAElement element,PetscScalar *U[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  PetscValidPointer(U,2);
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  {
+    size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
+    PetscInt m = element->nen * element->dof;
+    if (PetscUnlikely(element->nval >= (PetscInt)MAX_WORK_VAL))
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work values requested");
+    if (PetscUnlikely(!element->wval[element->nval])) {
+      ierr = PetscMalloc1(m,PetscScalar,&element->wval[element->nval]);CHKERRQ(ierr);
+    }
+    *U = element->wval[element->nval++];
+    ierr = PetscMemzero(*U,m*sizeof(PetscScalar));CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAElementGetWorkVec"
 PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
 {
@@ -645,14 +760,14 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
     size_t MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
-    PetscInt n = element->nen * element->dof;
+    PetscInt m = element->nrows * element->dof;
     if (PetscUnlikely(element->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     if (PetscUnlikely(!element->wvec[element->nvec])) {
-      ierr = PetscMalloc1(n,PetscScalar,&element->wvec[element->nvec]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m,PetscScalar,&element->wvec[element->nvec]);CHKERRQ(ierr);
     }
     *V = element->wvec[element->nvec++];
-    ierr = PetscMemzero(*V,n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -669,14 +784,15 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
     size_t MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
-    PetscInt n = element->nen * element->dof;
+    PetscInt m = element->nrows * element->dof;
+    PetscInt n = element->ncols * element->dof;
     if (PetscUnlikely(element->nmat >= (PetscInt)MAX_WORK_MAT))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
     if (PetscUnlikely(!element->wmat[element->nmat])) {
-      ierr = PetscMalloc1(n*n,PetscScalar,&element->wmat[element->nmat]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m*n,PetscScalar,&element->wmat[element->nmat]);CHKERRQ(ierr);
     }
     *M = element->wmat[element->nmat++];
-    ierr = PetscMemzero(*M,n*n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -685,7 +801,7 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementGetValues"
-PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[], PetscScalar U[])
+PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar U[])
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -705,6 +821,76 @@ PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[]
   PetscFunctionReturn(0);
 }
 
+static void AddFix(IGAElement element,PetscInt dir,PetscInt side,PetscInt a)
+{
+  IGABoundary b = element->parent->boundary[dir][side];
+  PetscInt dof = element->dof;
+  PetscInt nfix = element->nfix;
+  PetscInt *ifix = element->ifix;
+  PetscScalar *vfix = element->vfix;
+  PetscInt j,k,n = b->nbc;
+  for (k=0; k<n; k++) {
+    PetscInt idx = a*dof + b->field[k];
+    PetscScalar val = b->value[k];
+    for (j=0; j<nfix; j++)
+      if (ifix[j] == idx) break;
+    if (j==nfix) nfix++;
+    ifix[j] = idx;
+    vfix[j] = val;
+  }
+  element->nfix = nfix;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementBuildFix"
+PetscErrorCode IGAElementBuildFix(IGAElement element)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  {
+    IGA      iga = element->parent;
+    IGABasis *BD = iga->basis;
+    PetscInt *ID = element->ID;
+    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
+    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
+    PetscBool onboundary = PETSC_FALSE;
+    PetscInt i,dim = element->dim;
+    for (i=0; i<dim; i++) {
+      PetscInt e = BD[i]->nel-1; /* last element */
+      PetscInt n = BD[i]->nnp-1; /* last node    */
+      if (iga->axis[i]->periodic) continue; /* XXX */
+      if (ID[i] == 0) { A0[i] = 0; onboundary = PETSC_TRUE; }
+      if (ID[i] == e) { A1[i] = n; onboundary = PETSC_TRUE; }
+    }
+    element->nfix = 0;
+    if (onboundary) {
+      PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
+      PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
+      PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
+      PetscInt a = 0;
+      for (ka=0; ka<knen; ka++) {
+        for (ja=0; ja<jnen; ja++) {
+          for (ia=0; ia<inen; ia++) {
+            PetscInt iA = ioffset + ia;
+            PetscInt jA = joffset + ja;
+            PetscInt kA = koffset + ka;
+            /**/ if (iA == A0[0]) AddFix(element,0,0,a);
+            else if (iA == A1[0]) AddFix(element,0,1,a);
+            /**/ if (jA == A0[1]) AddFix(element,1,0,a);
+            else if (jA == A1[1]) AddFix(element,1,1,a);
+            /**/ if (kA == A0[2]) AddFix(element,2,0,a);
+            else if (kA == A1[2]) AddFix(element,2,1,a);
+            a++;
+          }
+        }
+      }
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementFixValues"
 PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
@@ -713,16 +899,44 @@ PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(U,2);
   {
-    PetscInt k,nfix=element->nfix;
-    for (k=0; k<nfix; k++) {
-      PetscInt i = element->ifix[k];
-      element->xfix[k] = U[i];
-      U[i] = element->vfix[k];
+    PetscInt f,nfix=element->nfix;
+    for (f=0; f<nfix; f++) {
+      PetscInt k = element->ifix[f];
+      element->xfix[f] = U[k];
+      U[k] = element->vfix[f];
     }
   }
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementFixSystem"
+PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  PetscValidScalarPointer(K,2);
+  PetscValidScalarPointer(F,3);
+  {
+    PetscInt M = element->nrows*element->dof;
+    PetscInt N = element->ncols*element->dof;
+    PetscInt f,nfix=element->nfix;
+    for (f=0; f<nfix; f++) {
+      PetscInt    k = element->ifix[f];
+      PetscScalar v = element->vfix[f];
+      PetscInt i,j;
+      for (i=0; i<M; i++)
+        F[i] -= K[i*N+k] * v;
+      for (i=0; i<M; i++) 
+        K[i*N+k] = 0.0;
+      for (j=0; j<N; j++) 
+        K[k*N+j] = 0.0;
+      K[k*N+k] = 1.0;
+      F[k] = v;
+    }
+  }
+  PetscFunctionReturn(0);
+}
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementFixFunction"
 PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
@@ -731,12 +945,12 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(F,2);
   {
-    PetscInt k,nfix=element->nfix;
-    for (k=0; k<nfix; k++) {
-      PetscInt i = element->ifix[k];
-      PetscScalar u = element->xfix[k];
-      PetscScalar u0 = element->vfix[k];
-      F[i] = u - u0;
+    PetscInt f,nfix=element->nfix;
+    for (f=0; f<nfix; f++) {
+      PetscInt    k  = element->ifix[f];
+      PetscScalar u  = element->xfix[f];
+      PetscScalar u0 = element->vfix[f];
+      F[k] = u - u0;
     }
   }
   PetscFunctionReturn(0);
@@ -749,38 +963,17 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(J,2);
   {
-    PetscInt N = element->nen*element->dof;
-    PetscInt k,nfix=element->nfix;
-    for (k=0; k<nfix; k++) {
-      PetscInt j,i = element->ifix[k];
-      for (j=0; j<N; j++)
-        J[i*N+j] = J[j*N+i] = 0.0;
-      J[i*N+i] = 1.0;
-    }
-  }
-  PetscFunctionReturn(0);
-}
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFixSystem"
-PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[])
-{
-  PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(K,2);
-  PetscValidScalarPointer(F,3);
-  {
-    PetscInt N = element->nen*element->dof;
-    PetscInt k,nfix=element->nfix;
-    for (k=0; k<nfix; k++) {
-      PetscInt j,i = element->ifix[k];
-      PetscScalar v = element->vfix[k];
-      for (j=0; j<N; j++) {
-        F[j] -= K[j*N+i] * v;
-      }
-      for (j=0; j<N; j++)
-        K[i*N+j] = K[j*N+i] = 0.0;
-      K[i*N+i] = 1.0;
-      F[i] = v;
+    PetscInt M = element->nrows*element->dof;
+    PetscInt N = element->ncols*element->dof;
+    PetscInt f,nfix=element->nfix;
+    for (f=0; f<nfix; f++) {
+      PetscInt k = element->ifix[f];
+      PetscInt i,j;
+      for (i=0; i<M; i++) 
+        J[i*N+k] = 0.0;
+      for (j=0; j<N; j++) 
+        J[k*N+j] = 0.0;
+      J[k*N+k] = 1.0;
     }
   }
   PetscFunctionReturn(0);
@@ -790,18 +983,17 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
 #define __FUNCT__ "IGAElementAssembleVec"
 PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec)
 {
-  PetscInt       nn,*ii;
+  PetscInt       mm,*ii;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   PetscValidScalarPointer(F,2);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,3);
-  nn = element->nen;
-  ii = element->mapping;
+  mm = element->nrows; ii = element->irows;
   if (element->dof == 1) {
-    ierr = VecSetValuesLocal(vec,nn,ii,F,ADD_VALUES);CHKERRQ(ierr);
+    ierr = VecSetValuesLocal(vec,mm,ii,F,ADD_VALUES);CHKERRQ(ierr);
   } else {
-    ierr = VecSetValuesBlockedLocal(vec,nn,ii,F,ADD_VALUES);CHKERRQ(ierr);
+    ierr = VecSetValuesBlockedLocal(vec,mm,ii,F,ADD_VALUES);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -810,18 +1002,19 @@ PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Ve
 #define __FUNCT__ "IGAElementAssembleMat"
 PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat)
 {
-  PetscInt       nn,*ii;
+  PetscInt       mm,*ii;
+  PetscInt       nn,*jj;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   PetscValidScalarPointer(K,2);
   PetscValidHeaderSpecific(mat,MAT_CLASSID,3);
-  nn = element->nen;
-  ii = element->mapping;
+  mm = element->nrows; ii = element->irows;
+  nn = element->ncols; jj = element->icols;
   if (element->dof == 1) {
-    ierr = MatSetValuesLocal(mat,nn,ii,nn,ii,K,ADD_VALUES);CHKERRQ(ierr);
+    ierr = MatSetValuesLocal(mat,mm,ii,nn,jj,K,ADD_VALUES);CHKERRQ(ierr);
   } else {
-    ierr = MatSetValuesBlockedLocal(mat,nn,ii,nn,ii,K,ADD_VALUES);CHKERRQ(ierr);
+    ierr = MatSetValuesBlockedLocal(mat,mm,ii,nn,jj,K,ADD_VALUES);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

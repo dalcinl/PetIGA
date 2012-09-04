@@ -60,16 +60,16 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
 
+  /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
-  ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-  ierr = IGAElementBegin(element);CHKERRQ(ierr);
-  while (IGAElementNext(element)) {
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
     PetscScalar *A, *B;
     ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
-    ierr = IGAElementGetPoint(element,&point);CHKERRQ(ierr);
-    ierr = IGAPointBegin(point);CHKERRQ(ierr);
-    while (IGAPointNext(point)) {
+    /* Quadrature loop */
+    ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+    while (IGAElementNextPoint(element,point)) {
       PetscScalar *K, *F;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
       ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
@@ -77,11 +77,13 @@ PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,
       ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
       ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
     }
+    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    /* */
     ierr = IGAElementFixSystem(element,A,B);CHKERRQ(ierr);
     ierr = IGAElementAssembleMat(element,A,matA);CHKERRQ(ierr);
     ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
   }
-  ierr = IGAElementEnd(element);CHKERRQ(ierr);
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
   ierr = PetscLogEventEnd(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
