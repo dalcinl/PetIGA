@@ -68,6 +68,29 @@ PetscErrorCode IGAPointReset(IGAPoint point)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointInit"
+PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidPointer(element,2);
+  ierr = IGAPointReset(point);CHKERRQ(ierr);
+  point->parent = element;
+
+  point->neq = element->neq;
+  point->nen = element->nen;
+  point->dof = element->dof;
+  point->dim = element->dim;
+  point->nsd = element->nsd;
+
+  point->count = element->nqp;
+  point->index = -1;
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetIndex"
 PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 {
@@ -91,16 +114,29 @@ PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetSizes"
-PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim)
+PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  if (nen) PetscValidIntPointer(nen,2);
-  if (dof) PetscValidIntPointer(dof,3);
-  if (dim) PetscValidIntPointer(dim,4);
+  if (neq) PetscValidIntPointer(neq,2);
+  if (nen) PetscValidIntPointer(nen,3);
+  if (dof) PetscValidIntPointer(dof,4);
+  if (neq) *neq = point->neq;
   if (nen) *nen = point->nen;
   if (dof) *dof = point->dof;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetDims"
+PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  if (dim) PetscValidIntPointer(dim,2);
+  if (nsd) PetscValidIntPointer(nsd,3);
   if (dim) *dim = point->dim;
+  if (dim) *nsd = point->nsd;
   PetscFunctionReturn(0);
 }
 
@@ -386,7 +422,7 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-    PetscInt m = point->nen * point->dof;
+    PetscInt m = point->neq * point->dof;
     if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     if (PetscUnlikely(!point->wvec[point->nvec])) {
@@ -410,7 +446,7 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-    PetscInt m = point->nen * point->dof;
+    PetscInt m = point->neq * point->dof;
     PetscInt n = point->nen * point->dof;
     if (PetscUnlikely(point->nmat >= (PetscInt)MAX_WORK_MAT))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
@@ -451,7 +487,7 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
   PetscValidPointer(point,1);
   PetscValidScalarPointer(f,2);
   PetscValidScalarPointer(F,3);
-  m = point->nen * point->dof;
+  m = point->neq * point->dof;
   ierr = IGAPointAddArray(point,m,f,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -466,7 +502,7 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
   PetscValidPointer(point,1);
   PetscValidScalarPointer(k,2);
   PetscValidScalarPointer(K,3);
-  m = point->nen * point->dof;
+  m = point->neq * point->dof;
   n = point->nen * point->dof;
   ierr = IGAPointAddArray(point,m*n,k,K);CHKERRQ(ierr);
   PetscFunctionReturn(0);

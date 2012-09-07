@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   IGABoundary bnd;
   PetscInt dir,side;
-  for (dir=0; dir<2; dir++) {
+  for (dir=0; dir<3; dir++) {
     for (side=0; side<2; side++) {
       ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
       ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);

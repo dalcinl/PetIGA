@@ -10,7 +10,8 @@ PetscScalar Forcing(const PetscReal x[3],void *ctx)
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt  nen,dim;
-  IGAPointGetSizes(p,&nen,0,&dim);
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
 
   PetscReal x[3] = {0,0,0};
   IGAPointFormPoint(p,x);

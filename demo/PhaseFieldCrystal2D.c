@@ -72,7 +72,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   AppCtx *user = (AppCtx *)ctx;
 
   PetscInt nen;
-  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetSizes(p,0,&nen,0);
 
   PetscScalar c_t,c;
   IGAPointFormValue(p,V,&c_t);
@@ -135,7 +135,7 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
   AppCtx *user = (AppCtx *)ctx;
 
   PetscInt nen;
-  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetSizes(p,0,&nen,0);
 
   PetscScalar c_t,c;
   IGAPointFormValue(p,V,&c_t);

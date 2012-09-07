@@ -45,14 +45,14 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   for (i=0; i<3; i++) {
     ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);
-    ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);
-    ierr = IGAColBasisCreate(&iga->colbasis[i]);CHKERRQ(ierr); /* collocation */
+    ierr = IGABasisCreate(&iga->elem_basis[i]);CHKERRQ(ierr);
+    ierr = IGABasisCreate(&iga->node_basis[i]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryCreate(&iga->boundary[i][1]);CHKERRQ(ierr);
     iga->proc_sizes[i] = -1;
   }
-  ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
-  ierr = IGAColPointCreate(&iga->point_iterator);CHKERRQ(ierr);
+  ierr = IGAElementCreate(&iga->elem_iterator);CHKERRQ(ierr);
+  ierr = IGAElementCreate(&iga->node_iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -96,13 +96,13 @@ PetscErrorCode IGADestroy(IGA *_iga)
   for (i=0; i<3; i++) {
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleDestroy(&iga->rule[i]);CHKERRQ(ierr);
-    ierr = IGABasisDestroy(&iga->basis[i]);CHKERRQ(ierr);
-    ierr = IGAColBasisDestroy(&iga->colbasis[i]);CHKERRQ(ierr); /* collocation */
+    ierr = IGABasisDestroy(&iga->elem_basis[i]);CHKERRQ(ierr);
+    ierr = IGABasisDestroy(&iga->node_basis[i]);CHKERRQ(ierr);
     ierr = IGABoundaryDestroy(&iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryDestroy(&iga->boundary[i][1]);CHKERRQ(ierr);
   }
-  ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
-  ierr = IGAColPointDestroy(&iga->point_iterator);CHKERRQ(ierr);
+  ierr = IGAElementDestroy(&iga->elem_iterator);CHKERRQ(ierr);
+  ierr = IGAElementDestroy(&iga->node_iterator);CHKERRQ(ierr);
 
   ierr = IGAReset(iga);CHKERRQ(ierr);
   ierr = PetscHeaderDestroy(&iga);CHKERRQ(ierr);
@@ -142,8 +142,8 @@ PetscErrorCode IGAReset(IGA iga)
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
 
-  ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
-  ierr = IGAColPointReset(iga->point_iterator);CHKERRQ(ierr);
+  ierr = IGAElementReset(iga->elem_iterator);CHKERRQ(ierr);
+  ierr = IGAElementReset(iga->node_iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -588,7 +588,7 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   IGACheckSetUp(iga,1);
   if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
   if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
-  *basis = iga->basis[i];
+  *basis = iga->elem_basis[i];
   PetscFunctionReturn(0);
 }
 
@@ -706,6 +706,13 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         if (nw == 0) w = PETSC_TRUE;
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
+    
+    /* Collocation */
+    {
+      PetscBool collocation = iga->collocation;
+      ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
+      if (flg) {iga->collocation = collocation;/*ierr = IGASetCollocation(iga,collocation);CHKERRQ(ierr);*/}
+    }
 
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
@@ -954,7 +961,6 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
   for (i=iga->dim; i<3; i++) 
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
-
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
     PetscMPIInt size,rank;
@@ -1021,7 +1027,6 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
       geom_gwidth[i] = 1;
     }
   }
-
   PetscFunctionReturn(0);
 }
 
@@ -1188,15 +1193,16 @@ PetscErrorCode IGASetUp(IGA iga)
       PetscInt q = iga->axis[i]->p + 1;
       ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
     }
-    ierr = IGABasisInit(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+    ierr = IGABasisInitQuadrature(iga->elem_basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
   }
-  ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
+  iga->elem_iterator->collocation = PETSC_FALSE;
+  ierr = IGAElementInit(iga->elem_iterator,iga);CHKERRQ(ierr);
 
   for (i=0; i<3; i++) {
-    ierr = IGAColBasisInit(iga->colbasis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
+    ierr = IGABasisInitCollocation(iga->node_basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
   }
-  ierr = IGAColPointInit(iga->point_iterator,iga);CHKERRQ(ierr);
-
+  iga->node_iterator->collocation = PETSC_TRUE;
+  ierr = IGAElementInit(iga->node_iterator,iga);CHKERRQ(ierr);
 
   ierr = IGASetUp_View(iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1229,28 +1235,6 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
   ierr = PetscStrallocpy(mattype,&mtype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
   iga->mattype = mtype;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetElement"
-PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(element,2);
-  *element = iga->iterator;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetColPoint"
-PetscErrorCode IGAGetColPoint(IGA iga,IGAColPoint *point)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(point,2);
-  *point = iga->point_iterator;
   PetscFunctionReturn(0);
 }
 

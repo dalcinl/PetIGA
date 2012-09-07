@@ -130,7 +130,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ISLocalToGlobalMapping map;
 
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-    ierr = IGAElementGetSizes(element,&nen,&dof,0);CHKERRQ(ierr);
+    ierr = IGAElementGetSizes(element,PETSC_NULL,&nen,&dof);CHKERRQ(ierr);
 
     if (dof == 1) {
       ierr = MatGetLocalToGlobalMapping(A,&map,PETSC_NULL);CHKERRQ(ierr);

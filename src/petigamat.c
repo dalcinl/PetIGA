@@ -31,10 +31,16 @@ void BasisStencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last
   k = i;
   while (U[k]==U[k+1]) k++; /* XXX Using "==" with floating point values ! */
   *first = k - p;
-  /* cmopute index of the rightmost overlapping basis */
+  /* compute index of the rightmost overlapping basis */
   k = i + p + 1;
   while (U[k]==U[k-1]) k--; /* XXX Using "==" with floating point values ! */
   *last = k - 1;
+
+  if (iga->collocation) {
+    PetscInt offset = iga->node_basis[dir]->offset[i];
+    *first = offset;
+    *last  = offset + p;
+  }
 }
 
 PETSC_STATIC_INLINE
@@ -172,7 +178,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   lwidth = iga->node_lwidth;
   for (i=0; i<dim; i++) {
     PetscInt first = lstart[i];
-    PetscInt last  = first + lwidth[i] - 1;
+    PetscInt last  = lstart[i] + lwidth[i] - 1;
     PetscInt gfirst,glast;
     BasisStencil(iga,i,first,&gstart[i],&glast);
     BasisStencil(iga,i,last,&gfirst,&glast);

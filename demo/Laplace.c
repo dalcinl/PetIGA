@@ -5,7 +5,8 @@
 PetscErrorCode SystemLaplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
-  IGAPointGetSizes(p,&nen,0,&dim);
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
 
   const PetscReal *N1;
   IGAPointGetShapeFuns(p,1,&N1);
@@ -27,7 +28,8 @@ PetscErrorCode SystemLaplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
-  IGAPointGetSizes(p,&nen,0,&dim);
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
 
   const PetscReal *N;
   IGAPointGetShapeFuns(p,0,&N);
@@ -49,28 +51,29 @@ PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "SystemCollocation"
-PetscErrorCode SystemCollocation(IGAColPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
-  IGAColPointGetSizes(p,&nen,0,&dim);
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
 
   PetscInt Nb[3] = {0,0,0};
-  Nb[0] = p->parent->basis[0]->nnp;
-  Nb[1] = p->parent->basis[1]->nnp;
-  Nb[2] = p->parent->basis[2]->nnp;
+  Nb[0] = p->parent->BD[0]->nnp;
+  Nb[1] = p->parent->BD[1]->nnp;
+  Nb[2] = p->parent->BD[2]->nnp;
 
   const PetscReal *N0,(*N1)[dim],(*N2)[dim][dim];
-  IGAColPointGetBasisFuns(p,0,(const PetscReal**)&N0);
-  IGAColPointGetBasisFuns(p,1,(const PetscReal**)&N1);
-  IGAColPointGetBasisFuns(p,2,(const PetscReal**)&N2);
+  IGAPointGetBasisFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetBasisFuns(p,1,(const PetscReal**)&N1);
+  IGAPointGetBasisFuns(p,2,(const PetscReal**)&N2);
   
   PetscInt a,i;
   PetscReal n[3] = {0,0,0};
   PetscBool Dirichlet=PETSC_FALSE,Neumann=PETSC_FALSE;
-  for (i=0; i<dim; i++) if (p->ID[i] == 0) Dirichlet=PETSC_TRUE;
+  for (i=0; i<dim; i++) if (p->parent->ID[i] == 0) Dirichlet=PETSC_TRUE;
   if (!Dirichlet) { 
     for (i=0; i<dim; i++) {
-      if (p->ID[i] == Nb[i]-1) {
+      if (p->parent->ID[i] == Nb[i]-1) {
 	Neumann=PETSC_TRUE;
 	n[i] = 1;
 	i=dim;
@@ -188,8 +191,8 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (Collocation){
-    ierr = IGAColSetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr); 
-    ierr = IGAColComputeSystem(iga,A,b);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr); 
+    ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   }else{
     if (iga->geometry){ 
       ierr = IGASetUserSystem(iga,SystemPoisson,PETSC_NULL);CHKERRQ(ierr); 

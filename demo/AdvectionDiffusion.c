@@ -11,7 +11,8 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   AppCtx *user = (AppCtx *)ctx;
 
   PetscInt nen,dim;
-  IGAPointGetSizes(p,&nen,0,&dim);
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
 
   const PetscReal *N;
   const PetscReal *N1;

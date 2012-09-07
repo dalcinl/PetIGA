@@ -70,6 +70,7 @@ module PetIGA
 
      integer(kind=IGA_INTEGER_KIND) :: count
      integer(kind=IGA_INTEGER_KIND) :: index
+     integer(kind=IGA_INTEGER_KIND) :: neq
      integer(kind=IGA_INTEGER_KIND) :: nen
      integer(kind=IGA_INTEGER_KIND) :: dof
      integer(kind=IGA_INTEGER_KIND) :: dim

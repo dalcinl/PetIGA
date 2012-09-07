@@ -146,7 +146,7 @@ runex5b_1:
 runex5b_4:
 	-@${MPIEXEC} -n 4 ./PatternFormation ${OPTS} -ts_max_steps 2 -implicit
 runex6a_1:
-	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 1 -lambda 3.0
+	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 1 -lambda 1.0
 runex6a_2:
 	-@${MPIEXEC} -n 2 ./Bratu ${OPTS} -iga_dim 1 -steady false
 runex6b_1:
@@ -157,6 +157,8 @@ runex6c_1:
 	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2 -steady false -ts_max_steps 2
 runex6c_4:
 	-@${MPIEXEC} -n 4 ./Bratu ${OPTS} -iga_dim 2 -steady false -ts_max_steps 2
+runex6d_1:
+	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2 -steady -iga_collocation
 
 InputOutput := InputOutput.PETSc runex0a_1 runex0a_2 runex0a_3 runex0a_4 runex0a_8 runex0a.rm InputOutput.rm
 L2Proj1D := L2Proj1D.PETSc runex1a_1 runex1a_4 L2Proj1D.rm
@@ -164,7 +166,7 @@ L2Proj2D := L2Proj2D.PETSc runex1b_1 runex1b_4 L2Proj2D.rm
 Poisson1D := Poisson1D.PETSc runex2a_1 runex2a_4 Poisson1D.rm
 Poisson2D := Poisson2D.PETSc runex2b_1 runex2b_4 Poisson2D.rm
 Poisson3D := Poisson3D.PETSc runex2c_1 runex2c_4 Poisson3D.rm
-Bratu := Bratu.PETSc runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 Bratu.rm
+Bratu := Bratu.PETSc runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 runex6d_1 Bratu.rm
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
 PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b_4 PatternFormation.rm
 

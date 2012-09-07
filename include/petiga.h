@@ -23,15 +23,11 @@ typedef ISLocalToGlobalMapping LGMap;
 /* ---------------------------------------------------------------- */
 
 typedef struct _n_IGAAxis     *IGAAxis;
+typedef struct _n_IGABoundary *IGABoundary;
 typedef struct _n_IGARule     *IGARule;
 typedef struct _n_IGABasis    *IGABasis;
-typedef struct _n_IGABoundary *IGABoundary;
-
 typedef struct _n_IGAElement  *IGAElement;
 typedef struct _n_IGAPoint    *IGAPoint;
-
-typedef struct _n_IGAColPoint *IGAColPoint;
-typedef struct _n_IGAColBasis *IGAColBasis;
 
 /* ---------------------------------------------------------------- */
 
@@ -98,7 +94,8 @@ PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisReset(IGABasis basis);
 PETSC_EXTERN PetscErrorCode IGABasisReference(IGABasis basis);
-PETSC_EXTERN PetscErrorCode IGABasisInit(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d);
+PETSC_EXTERN PetscErrorCode IGABasisInitQuadrature (IGABasis basis,IGAAxis axis,IGARule rule,PetscInt order);
+PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt order);
 
 struct _n_IGABoundary {
   PetscInt refct;
@@ -119,7 +116,6 @@ PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt fi
 
 typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
 typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAColUserSystem) (IGAColPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
 typedef PetscErrorCode (*IGAUserIFunction) (IGAPoint point,PetscReal dt,
@@ -146,9 +142,6 @@ struct _IGAUserOps {
   /**/
   IGAUserSystem     System;
   void              *SysCtx;  
-  /**/
-  IGAColUserSystem  ColSystem;
-  void              *ColSysCtx;
   /**/
   IGAUserFunction   Function;
   void              *FunCtx;
@@ -194,14 +187,17 @@ struct _p_IGA {
   PetscInt  dof;   /* number of degrees of freedom per node */
   PetscInt  order; /* maximum derivative order */
 
-  IGAAxis  axis[3];
-  IGARule  rule[3];
-  IGABasis basis[3];
+  IGAAxis     axis[3];
+  IGARule     rule[3];
   IGABoundary boundary[3][2];
-  IGAElement  iterator;
 
-  IGAColPoint point_iterator; /* stuff added for collocation */
-  IGAColBasis colbasis[3];
+  IGABasis    elem_basis[3];
+  IGAElement  elem_iterator;
+
+  /* stuff added for collocation */
+  PetscBool   collocation;
+  IGABasis    node_basis[3];
+  IGAElement  node_iterator;
 
   PetscInt  proc_sizes[3];
   PetscInt  proc_ranks[3];
@@ -299,9 +295,6 @@ PETSC_EXTERN PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMod
 PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 
-PETSC_EXTERN PetscErrorCode IGAGetElement(IGA iga,IGAElement *element);
-PETSC_EXTERN PetscErrorCode IGAGetColPoint(IGA iga,IGAColPoint *point);
-
 PETSC_EXTERN PetscErrorCode IGASetUserSystem    (IGA iga,IGAUserSystem     System,    void *SysCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserFunction  (IGA iga,IGAUserFunction   Function,  void *FunCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserJacobian  (IGA iga,IGAUserJacobian   Jacobian,  void *JacCtx);
@@ -309,8 +302,6 @@ PETSC_EXTERN PetscErrorCode IGASetUserIFunction (IGA iga,IGAUserIFunction  IFunc
 PETSC_EXTERN PetscErrorCode IGASetUserIJacobian (IGA iga,IGAUserIJacobian  IJacobian, void *JacCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *FunCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *JacCtx);
-
-PETSC_EXTERN PetscErrorCode IGAColSetUserSystem (IGA iga,IGAColUserSystem System,void *SysCtx);
 
 /* ---------------------------------------------------------------- */
 
@@ -325,10 +316,12 @@ struct _n_IGAElement {
   PetscInt index;
   /**/
   PetscInt nqp;
+  PetscInt neq;
   PetscInt nen;
   PetscInt dof;
   PetscInt dim;
   PetscInt nsd;
+  IGABasis *BD;
 
   PetscInt  *mapping;  /*   [nen]      */
 
@@ -358,8 +351,10 @@ struct _n_IGAElement {
   IGA      parent;
   IGAPoint iterator;
 
-  PetscInt     nrows,*irows;
-  PetscInt     ncols,*icols;
+  PetscBool   collocation;
+
+  PetscInt    *rowmap;
+  PetscInt    *colmap;
 
   PetscInt     nfix;
   PetscInt    *ifix;
@@ -374,16 +369,18 @@ struct _n_IGAElement {
   PetscScalar *wmat[4];
 
 };
+
 PETSC_EXTERN PetscErrorCode IGAElementCreate(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementDestroy(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementReset(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementInit(IGAElement element,IGA iga);
 
+PETSC_EXTERN PetscErrorCode IGAGetElement(IGA iga,IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGABeginElement(IGA iga,IGAElement *element);
 PETSC_EXTERN PetscBool      IGANextElement(IGA iga,IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAEndElement(IGA iga,IGAElement *element);
 
-PETSC_EXTERN PetscErrorCode IGAElementInitPoint(IGAElement element,IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point);
 PETSC_EXTERN PetscBool      IGAElementNextPoint(IGAElement element,IGAPoint point);
 PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point);
@@ -394,15 +391,16 @@ PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns(IGAElement element);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index);
-PETSC_EXTERN PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *nen,PetscInt *dof,PetscInt *nqp);
+PETSC_EXTERN PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count);
+
+PETSC_EXTERN PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen,PetscInt *dof);
 PETSC_EXTERN PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const PetscInt *mapping[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetQuadrature(IGAElement element,PetscInt *nqp,PetscInt *dim,
                                                     const PetscReal *point[],const PetscReal *weigth[],
                                                     const PetscReal *detJac[]);
-PETSC_EXTERN PetscErrorCode IGAElementGetShapeFuns(IGAElement element,PetscInt *nqp,PetscInt *nen,PetscInt *dim,
-                                                   const PetscReal *jacobian[],const PetscReal **shapefuns[]);
-
-PETSC_EXTERN PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point);
+PETSC_EXTERN PetscErrorCode IGAElementGetShapeFuns(IGAElement element,PetscInt *nqp,
+                                                   PetscInt *nen,PetscInt *dim,
+                                                   const PetscReal **shapefuns[]);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkVal(IGAElement element,PetscScalar *U[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[]);
@@ -412,9 +410,9 @@ PETSC_EXTERN PetscErrorCode IGAElementGetValues(IGAElement element,const PetscSc
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildFix(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[]);
+PETSC_EXTERN PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[]);
-PETSC_EXTERN PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[]);
 
 PETSC_EXTERN PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec);
 PETSC_EXTERN PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat);
@@ -427,6 +425,7 @@ struct _n_IGAPoint {
   PetscInt count;
   PetscInt index;
   /**/
+  PetscInt neq;
   PetscInt nen;
   PetscInt dof;
   PetscInt dim;
@@ -451,6 +450,8 @@ struct _n_IGAPoint {
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
 
+  IGAElement parent;
+
   PetscInt    nvec;
   PetscScalar *wvec[8];
   PetscInt    nmat;
@@ -459,10 +460,12 @@ struct _n_IGAPoint {
 PETSC_EXTERN PetscErrorCode IGAPointCreate(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointReset(IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
 
 PETSC_EXTERN PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count);
-PETSC_EXTERN PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim);
+PETSC_EXTERN PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof);
+PETSC_EXTERN PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd);
 PETSC_EXTERN PetscErrorCode IGAPointGetQuadrature(IGAPoint point,PetscReal *weigth,PetscReal *detJac);
 PETSC_EXTERN PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[]);
@@ -546,104 +549,6 @@ PETSC_EXTERN PetscErrorCode IGAFormIEJacobian(IGA iga,PetscReal dt,
                                               PetscReal t0,Vec U0,
                                               Mat J,
                                               IGAUserIEJacobian,void *);
-
-/* ---------------------------------------------------------------- */
-
-struct _n_IGAColPoint {
-  PetscInt refct;
-  /**/
-  PetscInt count;
-  PetscInt index;  
-  PetscInt start[3];
-  PetscInt width[3];
-  PetscInt ID[3]; 
-  PetscInt span[3];
-  
-  PetscInt nen;
-  PetscInt dof;
-  PetscInt dim;
-  PetscInt nsd;
-  
-  PetscInt *mapping;    /*  [nen] */
-  
-  PetscBool geometry;
-  PetscBool rational;
-  PetscReal *geometryX; /*   [nen][nsd] */
-  PetscReal *geometryW; /*   [nen]      */
-
-  PetscReal detJac;  
-  PetscReal *point;     /*   [dim]                */
-  PetscReal *scale;     /*   [dim]                */
-  
-  PetscReal *basis1d[3];
-
-  PetscReal *basis[4];  /*0: [nen]                */
-                        /*1: [nen][dim]           */
-                        /*2: [nen][dim][dim]      */
-                        /*3: [nen][dim][dim][dim] */
-
-  PetscReal detX;       /*   [1]                  */  
-  PetscReal *gradX[2];  /*0: [nsd][dim]           */
-                        /*1: [dim][nsd]           */
-  PetscReal *shape[4];  /*0: [nen]                */
-                        /*1: [nen][nsd]           */
-                        /*2: [nen][nsd][nsd]      */
-                        /*3: [nen][nsd][nsd][nsd] */
-
-  PetscInt    nvec;
-  PetscScalar *wvec[8];
-  PetscInt    nmat;
-  PetscScalar *wmat[4];
-
-  IGA      parent;
-};
-
-PETSC_EXTERN PetscErrorCode IGAColPointCreate(IGAColPoint *point);
-PETSC_EXTERN PetscErrorCode IGAColPointDestroy(IGAColPoint *point);
-PETSC_EXTERN PetscErrorCode IGAColPointReset(IGAColPoint point);
-PETSC_EXTERN PetscErrorCode IGAColPointInit(IGAColPoint point,IGA iga);
-
-PETSC_EXTERN PetscErrorCode IGAColPointBegin(IGAColPoint point);
-PETSC_EXTERN PetscBool      IGAColPointNext(IGAColPoint point);
-PETSC_EXTERN PetscErrorCode IGAColPointEnd(IGAColPoint point);
-
-PETSC_EXTERN PetscErrorCode IGAColPointBuildMapping(IGAColPoint point);
-PETSC_EXTERN PetscErrorCode IGAColPointBuildGeometry(IGAColPoint point);
-PETSC_EXTERN PetscErrorCode IGAColPointBuildShapeFuns(IGAColPoint point);
-
-PETSC_EXTERN PetscErrorCode IGAColPointGetIndex(IGAColPoint point,PetscInt *index);
-PETSC_EXTERN PetscErrorCode IGAColPointGetSizes(IGAColPoint point,PetscInt *nen,PetscInt *dof,PetscInt *nqp);
-PETSC_EXTERN PetscErrorCode IGAColPointGetSizes(IGAColPoint point,PetscInt *nen,PetscInt *dof,PetscInt *dim);
-PETSC_EXTERN PetscErrorCode IGAColPointGetMapping(IGAColPoint point,PetscInt *nen,const PetscInt *mapping[]);
-PETSC_EXTERN PetscErrorCode IGAColPointGetShapeFuns(IGAColPoint point,PetscInt der,const PetscReal *shapefuns[]);
-PETSC_EXTERN PetscErrorCode IGAColPointGetBasisFuns(IGAColPoint point,PetscInt der,const PetscReal *basisfuns[]);
-
-PETSC_EXTERN PetscErrorCode IGAColPointGetWorkVec(IGAColPoint point,PetscScalar *V[]);
-PETSC_EXTERN PetscErrorCode IGAColPointGetWorkMat(IGAColPoint point,PetscScalar *M[]);
-PETSC_EXTERN PetscErrorCode IGAColPointGetValues(IGAColPoint point,const PetscScalar U[],PetscScalar u[]);
-
-PETSC_EXTERN PetscErrorCode IGAColPointAssembleVec(IGAColPoint point,const PetscScalar F[],Vec vec);
-PETSC_EXTERN PetscErrorCode IGAColPointAssembleMat(IGAColPoint point,const PetscScalar K[],Mat mat);
-PETSC_EXTERN PetscErrorCode IGAColFormSystem(IGA iga,Mat matA,Vec vecB,IGAColUserSystem System,void *ctx);
-PETSC_EXTERN PetscErrorCode IGAColComputeSystem(IGA iga,Mat A,Vec B);
-
-struct _n_IGAColBasis {
-  PetscInt refct;
-  /**/
-  PetscInt  ncp;      /* number of collocation points */
-  PetscInt  nen;      /* number of local basis functions */
-  PetscInt  p,d;      /* polynomial order, last derivative index */
-
-  PetscInt  *offset;  /* [ncp] basis offset   */
-  PetscReal *detJ;    /* [ncp]                */
-  PetscReal *point;   /* [ncp]                */
-  PetscReal *value;   /* [ncp][nen][d+1]      */
-};
-PETSC_EXTERN PetscErrorCode IGAColBasisCreate(IGAColBasis *basis);
-PETSC_EXTERN PetscErrorCode IGAColBasisDestroy(IGAColBasis *basis);
-PETSC_EXTERN PetscErrorCode IGAColBasisReset(IGAColBasis basis);
-PETSC_EXTERN PetscErrorCode IGAColBasisReference(IGAColBasis basis);
-PETSC_EXTERN PetscErrorCode IGAColBasisInit(IGAColBasis basis,IGAAxis axis,PetscInt d);
 
 /* ---------------------------------------------------------------- */
 

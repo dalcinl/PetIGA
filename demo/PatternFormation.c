@@ -43,7 +43,7 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
   PetscReal tau2  = user->tau2;
 
   PetscInt nen;
-  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetSizes(p,0,&nen,0);
   PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
 
   PetscScalar uv_t[2],uv_0[2],uv_1[2][2];
@@ -99,7 +99,7 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
   PetscReal tau2  = user->tau2;
 
   PetscInt nen;
-  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetSizes(p,0,&nen,0);
   PetscScalar (*K)[2][nen][2] = (PetscScalar (*)[2][nen][2])Ke;
 
   PetscReal f_u=0,f_v=0;

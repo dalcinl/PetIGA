@@ -10,7 +10,7 @@ PetscScalar Function(PetscReal x, PetscReal y, PetscReal z)
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen;
-  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetSizes(p,0,&nen,0);
 
   PetscReal x[3] = {0,0,0};
   IGAPointFormPoint(p,x);
