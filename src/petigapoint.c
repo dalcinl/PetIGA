@@ -136,7 +136,7 @@ PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd)
   if (dim) PetscValidIntPointer(dim,2);
   if (nsd) PetscValidIntPointer(nsd,3);
   if (dim) *dim = point->dim;
-  if (dim) *nsd = point->nsd;
+  if (nsd) *nsd = point->nsd;
   PetscFunctionReturn(0);
 }
 
