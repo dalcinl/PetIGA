@@ -6,6 +6,11 @@
 #endif
 #include "petigapc.h"
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#undef MatType
+typedef const char* MatType;
+#endif         
+
 typedef struct {
   Mat mat;
 } PC_EBE;
@@ -39,7 +44,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
         if (done) {
           PetscInt m,n,M,N,bs;
           PetscInt j,cstart,*newja;
-          const MatType mtype;
+          MatType mtype;
           ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
           ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
           ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);

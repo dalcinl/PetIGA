@@ -160,7 +160,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscInt       maxnnz;
   PetscInt       n,N,bs;
   LGMap          ltog,ltogb;
-  const MatType  mtype;
+  MatType        mtype;
   Mat            A;
   PetscErrorCode ierr;
   PetscFunctionBegin;

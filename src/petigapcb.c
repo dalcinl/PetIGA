@@ -7,6 +7,11 @@
 #endif
 #include "petigapc.h"
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#undef MatType
+typedef const char* MatType;
+#endif         
+
 typedef struct {
   PetscInt dim,dof;
   PetscInt overlap[3];
@@ -84,7 +89,7 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
   MPI_Comm       comm = ((PetscObject)A)->comm;
   PetscBool      aij,baij,sbaij;
   PetscInt       m,n,M,N,bs;
-  const MatType  mtype;
+  MatType        mtype;
   Mat            mat;
   PetscErrorCode ierr;
   PetscFunctionBegin;

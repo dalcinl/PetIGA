@@ -1212,7 +1212,7 @@ PetscErrorCode IGASetUp(IGA iga)
 #define __FUNCT__ "IGASetVecType"
 PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
 {
-  VecType        vtype;
+  char           *vtype;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -1227,7 +1227,7 @@ PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
 #define __FUNCT__ "IGASetMatType"
 PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
 {
-  MatType        mtype;
+  char           *mtype;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
