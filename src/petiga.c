@@ -437,7 +437,6 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   PetscFunctionReturn(0);
 }
 
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetProcessors"
 PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
@@ -467,6 +466,29 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
     SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
   iga->proc_sizes[i] = processors;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUseCollocation"
+PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveBool(iga,collocation,2);
+  if (!iga->collocation && collocation) {
+    PetscMPIInt size = 1;
+    PetscInt i, dim = (iga->dim > 0) ? iga->dim : 3;
+    PetscBool periodic = PETSC_FALSE;
+    ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) if(iga->axis[i]->periodic) periodic = PETSC_TRUE;
+    if (size > 1) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
+                          "Collocation not supported in parallel");
+    if (periodic) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
+                          "Collocation not supported with periodicity");
+  }
+  iga->collocation = collocation;
   PetscFunctionReturn(0);
 }
 
@@ -707,13 +729,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
     
-    /* Collocation */
-    {
-      PetscBool collocation = iga->collocation;
-      ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
-      if (flg) {iga->collocation = collocation;/*ierr = IGASetCollocation(iga,collocation);CHKERRQ(ierr);*/}
-    }
-
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
@@ -755,6 +770,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
 
   setupcalled:
+
+    /* Collocation */ {
+      PetscBool collocation = iga->collocation;
+      ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
+      if (flg) {ierr = IGASetUseCollocation(iga,collocation);CHKERRQ(ierr);}
+    }
 
     /* Matrix and Vector type */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}

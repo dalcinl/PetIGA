@@ -268,6 +268,7 @@ PETSC_EXTERN PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char na
 PETSC_EXTERN PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[]);
 PETSC_EXTERN PetscErrorCode IGASetOrder(IGA iga,PetscInt order);
 PETSC_EXTERN PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors);
+PETSC_EXTERN PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation);
 
 PETSC_EXTERN PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis);
 PETSC_EXTERN PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);

@@ -191,6 +191,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (Collocation){
+    ierr = IGASetUseCollocation(iga,PETSC_TRUE);CHKERRQ(ierr); 
     ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr); 
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   }else{
