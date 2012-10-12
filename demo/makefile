@@ -60,6 +60,9 @@ Laplace: Laplace.o chkopts
 Poisson: Poisson.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+LoggChallenge: LoggChallenge.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 Bratu: Bratu.o BratuFJ.o chkopts
 	${CLINKER} -o $@ $< BratuFJ.o ${PETIGA_LIB}
 	${RM} -f $< BratuFJ.o bratufj.mod
