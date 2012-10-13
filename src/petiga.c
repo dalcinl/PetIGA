@@ -132,7 +132,6 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
   /* node */
-  ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
   ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
@@ -141,6 +140,7 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
+  ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
 
   ierr = IGAElementReset(iga->elem_iterator);CHKERRQ(ierr);
   ierr = IGAElementReset(iga->node_iterator);CHKERRQ(ierr);
@@ -963,25 +963,22 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionReturn(0);
 }
 
-
-extern PetscErrorCode IGASetUp_Basic(IGA);
-extern PetscErrorCode IGASetUp_View(IGA);
-
 #undef  __FUNCT__
-#define __FUNCT__ "IGASetUp_Basic"
-PetscErrorCode IGASetUp_Basic(IGA iga)
+#define __FUNCT__ "IGASetUp_Stage1"
+PetscErrorCode IGASetUp_Stage1(IGA iga)
 {
   PetscInt       i;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (iga->setupstage >= 1) PetscFunctionReturn(0);
-  iga->setupstage++;
+  iga->setupstage = 1;
 
   for (i=0; i<iga->dim; i++)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
   for (i=iga->dim; i<3; i++) 
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
+
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
     PetscMPIInt size,rank;
@@ -1052,6 +1049,109 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetUp_Stage2"
+PetscErrorCode IGASetUp_Stage2(IGA iga)
+{
+  PetscInt       i;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (iga->setupstage >= 2) PetscFunctionReturn(0);
+  iga->setupstage = 2;
+
+  { /* node partitioning */
+    PetscInt *node_sizes  = iga->node_sizes;
+    PetscInt *node_lstart = iga->node_lstart;
+    PetscInt *node_lwidth = iga->node_lwidth;
+    PetscInt *node_gstart = iga->node_gstart;
+    PetscInt *node_gwidth = iga->node_gwidth;
+    for (i=0; i<iga->dim; i++) {
+      PetscInt size = iga->proc_sizes[i];
+      PetscInt rank = iga->proc_ranks[i];
+      node_sizes[i]  = iga->axis[i]->nnp; /* XXX */
+      node_lstart[i] = iga->geom_lstart[i];
+      node_lwidth[i] = iga->geom_lwidth[i];
+      node_gstart[i] = iga->geom_gstart[i];
+      node_gwidth[i] = iga->geom_gwidth[i];
+      if (rank == size-1)
+        node_lwidth[i] = node_sizes[i] - node_lstart[i];
+    }
+    for (i=iga->dim; i<3; i++) {
+      node_sizes[i]  = 1;
+      node_lstart[i] = 0;
+      node_lwidth[i] = 1;
+      node_gstart[i] = 0;
+      node_gwidth[i] = 1;
+    }
+  }
+
+  if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
+
+  ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
+  ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
+  while (iga->nwork > 0)
+    {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
+  ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
+  {
+    IGA_Grid grid;
+    /* create the grid context */
+    ierr = IGA_Grid_Create(((PetscObject)iga)->comm,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_Init(grid,
+                         iga->dim,iga->dof,iga->node_sizes,
+                         iga->node_lstart,iga->node_lwidth,
+                         iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
+    /* build the block application ordering */
+    ierr = IGA_Grid_GetAOBlock(grid,&iga->aob);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->aob);CHKERRQ(ierr);
+    /* build the scalar and block local to global mappings */
+    ierr = IGA_Grid_GetLGMap(grid,&iga->lgmap);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMapBlock(grid,&iga->lgmapb);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
+    /* build global to local and local to global vector scatters */
+    ierr = IGA_Grid_GetScatterG2L(grid,&iga->g2l);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->g2l);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterL2G(grid,&iga->l2g);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->l2g);CHKERRQ(ierr);
+    /* destroy the grid context */
+    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
+  }
+  ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
+  if (iga->fieldname)
+    for (i=0; i<iga->dof; i++)
+      {ierr = DMDASetFieldName(iga->node_dm,i,iga->fieldname[i]);CHKERRQ(ierr);}
+
+  if (!iga->vectype) {
+    const MatType vtype = VECSTANDARD;
+    ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);
+  }
+  if (!iga->mattype) {
+    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
+    ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);
+  }
+
+  PetscFunctionReturn(0);
+}
+
+extern PetscErrorCode IGASetUp_Basic(IGA);
+extern PetscErrorCode IGASetUp_View(IGA);
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUp_Basic"
+PetscErrorCode IGASetUp_Basic(IGA iga)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  ierr = IGASetUp_Stage1(iga);;CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_View"
 PetscErrorCode IGASetUp_View(IGA iga)
 {
@@ -1115,90 +1215,22 @@ PetscErrorCode IGASetUp(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (iga->setup) PetscFunctionReturn(0);
 
-  iga->setup = PETSC_TRUE;
-
-  /* --- Stage 1 --- */
-
   if (iga->dim < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetDim() first");
-  ierr = IGASetUp_Basic(iga);CHKERRQ(ierr);
+
+  iga->setup = PETSC_TRUE;
+
+  /* --- Stage 1 --- */
+  ierr = IGASetUp_Stage1(iga);CHKERRQ(ierr);
 
   /* --- Stage 2 --- */
-  iga->setupstage++;
-
-  { /* node partitioning */
-    PetscInt *node_sizes  = iga->node_sizes;
-    PetscInt *node_lstart = iga->node_lstart;
-    PetscInt *node_lwidth = iga->node_lwidth;
-    PetscInt *node_gstart = iga->node_gstart;
-    PetscInt *node_gwidth = iga->node_gwidth;
-    for (i=0; i<iga->dim; i++) {
-      PetscInt size = iga->proc_sizes[i];
-      PetscInt rank = iga->proc_ranks[i];
-      node_sizes[i]  = iga->axis[i]->nnp; /* XXX */
-      node_lstart[i] = iga->geom_lstart[i];
-      node_lwidth[i] = iga->geom_lwidth[i];
-      node_gstart[i] = iga->geom_gstart[i];
-      node_gwidth[i] = iga->geom_gwidth[i];
-      if (rank == size-1)
-        node_lwidth[i] = node_sizes[i] - node_lstart[i];
-    }
-    for (i=iga->dim; i<3; i++) {
-      node_sizes[i]  = 1;
-      node_lstart[i] = 0;
-      node_lwidth[i] = 1;
-      node_gstart[i] = 0;
-      node_gwidth[i] = 1;
-    }
-  }
-
-  if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
-
-  {
-    IGA_Grid grid;
-    /* create the grid context */
-    ierr = IGA_Grid_Create(((PetscObject)iga)->comm,&grid);CHKERRQ(ierr);
-    ierr = IGA_Grid_Init(grid,
-                         iga->dim,iga->dof,iga->node_sizes,
-                         iga->node_lstart,iga->node_lwidth,
-                         iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
-    /* build the block application ordering */
-    ierr = IGA_Grid_GetAOBlock(grid,&iga->aob);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->aob);CHKERRQ(ierr);
-    /* build the scalar and block local to global mappings */
-    ierr = IGA_Grid_GetLGMap(grid,&iga->lgmap);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLGMapBlock(grid,&iga->lgmapb);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
-    /* build global to local and local to global vector scatters */
-    ierr = IGA_Grid_GetScatterG2L(grid,&iga->g2l);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->g2l);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetScatterL2G(grid,&iga->l2g);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->l2g);CHKERRQ(ierr);
-    /* destroy the grid context */
-    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
-  }
-
-  ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
-  if (iga->fieldname)
-    for (i=0; i<iga->dof; i++)
-      {ierr = DMDASetFieldName(iga->node_dm,i,iga->fieldname[i]);CHKERRQ(ierr);}
-
-  if (!iga->vectype) {
-    const MatType vtype = VECSTANDARD;
-    ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);
-  }
-  if (!iga->mattype) {
-    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-    ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);
-  }
+  ierr = IGASetUp_Stage2(iga);CHKERRQ(ierr);
 
   /* --- Stage 3 --- */
-  iga->setupstage++;
+  iga->setupstage = 3;
 
   for (i=iga->dim; i<3; i++) {
-    ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
     ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
   }
@@ -1210,10 +1242,8 @@ PetscErrorCode IGASetUp(IGA iga)
   iga->order = PetscMin(iga->order,3); /* XXX */
 
   for (i=0; i<3; i++) {
-    if (iga->rule[i]->nqp < 1) {
-      PetscInt q = iga->axis[i]->p + 1;
-      ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);
-    }
+    if (i >= iga->dim) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
+    if (iga->rule[i]->nqp < 1) {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
     ierr = IGABasisInitQuadrature(iga->elem_basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
   }
   iga->elem_iterator->collocation = PETSC_FALSE;

@@ -23,7 +23,8 @@ PetscErrorCode IGARuleDestroy(IGARule *_rule)
   rule = *_rule; *_rule = 0;
   if (!rule) PetscFunctionReturn(0);
   if (--rule->refct > 0) PetscFunctionReturn(0);
-  ierr = IGARuleReset(rule);CHKERRQ(ierr);
+  ierr = PetscFree(rule->point);CHKERRQ(ierr);
+  ierr = PetscFree(rule->weight);CHKERRQ(ierr);
   ierr = PetscFree(rule);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
