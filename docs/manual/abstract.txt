@@ -3,14 +3,17 @@
    This software framework implements a NURBS-based Galerkin finite
    element method, geared towards solving the weak form of partial
    differential equations. This method is popularly known as
-   `isogeometric analysis
-   <http://en.wikipedia.org/wiki/Isogeometric_analysis>`_ (the IGA in
-   PetIGA).  We base this framework on PETSc_, the Portable,
-   Extensible Toolkit for Scientific Computation. The framework is
-   intended for researchers in the numeric solution of PDEs who have
-   applications which require extensive computational resources.
+   `isogeometric analysis`_ (the *IGA* in *PetIGA*).  We base this
+   framework on PETSc_, the *Portable, Extensible Toolkit for
+   Scientific Computation*. The framework is intended for researchers
+   in the numeric solution of PDEs who have applications which require
+   extensive computational resources.
 
-.. _PETSc: http://www.mcs.anl.gov/petsc/
+.. _isogeometric analysis:
+    http://en.wikipedia.org/wiki/Isogeometric_analysis
+
+.. _PETSc:
+    http://www.mcs.anl.gov/petsc/
 
 .. Local Variables:
 .. mode: rst
