@@ -464,7 +464,7 @@ PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   JW = point->detJac[0] * point->weight[0];
   for (i=0; i<n; i++) A[i] += a[i] * JW;
-  PetscLogFlopsNoError(2*n);
+  (void)PetscLogFlops(2*n);
   PetscFunctionReturn(0);
 }
 
