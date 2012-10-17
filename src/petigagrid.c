@@ -78,6 +78,7 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   ierr = AODestroy(&g->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
+  ierr = VecDestroy(&g->nvec);CHKERRQ(ierr);
   ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
   ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&g->g2l);CHKERRQ(ierr);
@@ -293,6 +294,24 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
     ierr = ISLocalToGlobalMappingUnBlock(lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
   }
   *lgmap = g->lgmap;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_GetVecNatural"
+PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
+{
+  Vec            gvec;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  if (vtype) PetscValidCharPointer(vtype,2);
+  PetscValidPointer(nvec,3);
+  if (!g->nvec) {
+    ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);
+    ierr = VecDuplicate(gvec,&g->nvec);CHKERRQ(ierr);
+  }
+  *nvec = g->nvec;
   PetscFunctionReturn(0);
 }
 

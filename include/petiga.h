@@ -253,10 +253,17 @@ PETSC_EXTERN PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGASetFromOptions(IGA iga);
 
 PETSC_EXTERN PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
-PETSC_EXTERN PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGARead(IGA iga,const char filename[]);
 PETSC_EXTERN PetscErrorCode IGAWrite(IGA iga,const char filename[]);
+
+PETSC_EXTERN PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer);
+
+PETSC_EXTERN PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[]);
+PETSC_EXTERN PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[]);
 
 PETSC_EXTERN PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 PETSC_EXTERN PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);

@@ -71,6 +71,82 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASave"
+PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
+{
+  PetscBool      isbinary;
+  PetscBool      skipheader;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  IGACheckSetUp(iga,1);
+
+  if (viewer) {
+    PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+    PetscCheckSameComm(iga,1,viewer,2);
+  } else {
+    MPI_Comm comm;
+    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+    viewer = PETSC_VIEWER_BINARY_(comm);
+    if (!viewer) PetscFunctionReturn(PETSC_ERR_PLIB);
+  }
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
+  if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
+  ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
+
+  if (!skipheader) {
+    PetscInt classid = IGA_FILE_CLASSID;
+    ierr = PetscViewerBinaryWrite(viewer,&classid,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+  }
+  { /* */
+    PetscInt descr = iga->geometry ? 1 : 0;
+    ierr = PetscViewerBinaryWrite(viewer,&descr,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+  }
+  { /* */
+    PetscInt i,dim;
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_FALSE);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      IGAAxis   axis;
+      PetscInt  p,m,buf[2];
+      PetscReal *U;
+      ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
+      ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
+      ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
+      buf[0] = p; buf[1] = m+1;
+      ierr = PetscViewerBinaryWrite(viewer,buf,2,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL,PETSC_FALSE);CHKERRQ(ierr);
+    }
+  }
+  if (iga->geometry) {
+    ierr = IGASaveGeometry(iga,viewer);CHKERRQ(ierr);
+  }
+  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_NewGridIO"
+static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(grid,3);
+  {
+    MPI_Comm comm    = ((PetscObject)iga)->comm;
+    PetscInt *sizes  = iga->geom_sizes;
+    PetscInt *lstart = iga->geom_lstart;
+    PetscInt *lwidth = iga->geom_lwidth;
+    PetscInt *gstart = iga->geom_gstart;
+    PetscInt *gwidth = iga->geom_gwidth;
+    ierr = IGA_Grid_Create(comm,grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_Init(*grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGALoadGeometry"
 PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 {
@@ -96,20 +172,14 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
             "Must call IGASetSpatialDim() first");
   {
-    MPI_Comm comm = ((PetscObject)iga)->comm;
-    PetscInt bs      = dim+1;
-    PetscInt *sizes  = iga->geom_sizes;
-    PetscInt *lstart = iga->geom_lstart;
-    PetscInt *lwidth = iga->geom_lwidth;
-    PetscInt *gstart = iga->geom_gstart;
-    PetscInt *gwidth = iga->geom_gwidth;
     IGA_Grid grid;
-    ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
-    ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetVecGlobal(grid,iga->vectype,&gvec);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
+    ierr = IGA_NewGridIO(iga,dim+1,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
     ierr = IGA_Grid_GetScatterG2L(grid,&g2l);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)nvec);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)g2n);CHKERRQ(ierr);
@@ -120,7 +190,6 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
   iga->geom_vec = lvec;
 
-  ierr = VecDuplicate(gvec,&nvec);;CHKERRQ(ierr);
   /* viewer -> natural*/
   if (!skipheader)
     {ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);}
@@ -172,101 +241,64 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGASave"
-PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
+#define __FUNCT__ "IGASaveGeometry"
+PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
   PetscBool      skipheader;
+  PetscInt       dim;
+  Vec            nvec,gvec,lvec;
+  VecScatter     l2g,g2n;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  IGACheckSetUp(iga,1);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+  PetscCheckSameComm(iga,1,viewer,2);
+  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
 
-  if (viewer) {
-    PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
-    PetscCheckSameComm(iga,1,viewer,2);
-  } else {
-    MPI_Comm comm;
-    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-    viewer = PETSC_VIEWER_BINARY_(comm);
-    if (!viewer) PetscFunctionReturn(PETSC_ERR_PLIB);
-  }
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
-  if (!skipheader) {
-    PetscInt classid = IGA_FILE_CLASSID;
-    ierr = PetscViewerBinaryWrite(viewer,&classid,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
+  if (dim < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
+            "Must call IGASetSpatialDim() first");
+  {
+    IGA_Grid   grid;
+    ierr = IGA_NewGridIO(iga,dim+1,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)nvec);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)l2g);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)g2n);CHKERRQ(ierr);
+    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
-  { /* */
-    PetscInt descr = iga->geometry ? 1 : 0;
-    ierr = PetscViewerBinaryWrite(viewer,&descr,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
-  }
-  { /* */
-    PetscInt i,dim;
-    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_FALSE);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) {
-      IGAAxis   axis;
-      PetscInt  p,m,buf[2];
-      PetscReal *U;
-      ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
-      ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
-      buf[0] = p; buf[1] = m+1;
-      ierr = PetscViewerBinaryWrite(viewer,buf,2,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL,PETSC_FALSE);CHKERRQ(ierr);
-    }
-  }
-  if (iga->geometry) {
-    PetscInt   dim;
-    Vec        nvec,gvec,lvec;
-    VecScatter l2g,g2n;
+  ierr = VecCopy(iga->geom_vec,lvec);CHKERRQ(ierr);
 
-    ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
-    {
-      MPI_Comm comm = ((PetscObject)iga)->comm;
-      PetscInt bs      = dim+1;
-      PetscInt *sizes  = iga->geom_sizes;
-      PetscInt *lstart = iga->geom_lstart;
-      PetscInt *lwidth = iga->geom_lwidth;
-      PetscInt *gstart = iga->geom_gstart;
-      PetscInt *gwidth = iga->geom_gwidth;
-      IGA_Grid grid;
-      ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
-      ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-      ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
-      ierr = IGA_Grid_GetVecLocal (grid,iga->vectype,&lvec);CHKERRQ(ierr);
-      ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
-      ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
-      ierr = PetscObjectReference((PetscObject)gvec);CHKERRQ(ierr);
-      ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
-      ierr = PetscObjectReference((PetscObject)l2g);CHKERRQ(ierr);
-      ierr = PetscObjectReference((PetscObject)g2n);CHKERRQ(ierr);
-      ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
-    }
-    ierr = VecDuplicate(gvec,&nvec);;CHKERRQ(ierr);
-    ierr = VecCopy(iga->geom_vec,lvec);CHKERRQ(ierr);
+  /* local -> global */
+  ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  /* global -> naural */
+  ierr = VecScatterBegin(g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  /* natural -> viewer */
+  ierr = VecView(nvec,viewer);CHKERRQ(ierr);
 
-    /* local -> global */
-    ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-    ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-    /* global -> naural */
-    ierr = VecScatterBegin(g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-    ierr = VecScatterEnd  (g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-    /* natural -> viewer */
-    ierr = VecView(nvec,viewer);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&g2n);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&l2g);CHKERRQ(ierr);
+  ierr = VecDestroy(&lvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&gvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&nvec);CHKERRQ(ierr);
 
-    ierr = VecScatterDestroy(&g2n);CHKERRQ(ierr);
-    ierr = VecScatterDestroy(&l2g);CHKERRQ(ierr);
-    ierr = VecDestroy(&lvec);CHKERRQ(ierr);
-    ierr = VecDestroy(&gvec);CHKERRQ(ierr);
-    ierr = VecDestroy(&nvec);CHKERRQ(ierr);
-  }
-  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARead"
@@ -379,5 +411,191 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec, PetscViewer viewer)
     ierr = MPI_Recv(array,n,MPIU_SCALAR,0,tag,comm,&status);CHKERRQ(ierr);
   }
   ierr = VecRestoreArray(vec,&array);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_AnyPeriodic"
+static PetscBool IGA_AnyPeriodic(IGA iga)
+{
+  PetscInt i, dim = iga->dim;
+  for (i=0; i<dim; i++)
+    if (iga->axis[i]->periodic)
+      return PETSC_TRUE;
+  return PETSC_FALSE;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_GridIO_destroy"
+static PetscErrorCode IGA_GridIO_destroy(void *ptr)
+{
+  IGA_Grid       grid = (IGA_Grid)ptr;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(grid,1);
+  ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_GetGridIO_Vec"
+static PetscErrorCode IGA_GetGridIO_Vec(IGA iga,IGA_Grid *gridio)
+{
+  const char     key[] = "_GridIO_Vec";
+  MPI_Comm       comm;
+  IGA_Grid       grid;
+  PetscContainer container,tmp;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(gridio,4);
+  ierr = PetscObjectQuery((PetscObject)iga,key,(PetscObject*)&container);CHKERRQ(ierr);
+  if (!container) {
+    ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+    ierr = PetscContainerCreate(comm,&container);CHKERRQ(ierr);
+    ierr = PetscObjectCompose((PetscObject)iga,key,(PetscObject)container);CHKERRQ(ierr);
+    tmp = container;
+    ierr = PetscContainerDestroy(&tmp);CHKERRQ(ierr);
+  }
+  ierr = PetscContainerGetPointer(container,(void**)&grid);CHKERRQ(ierr);
+  if (!grid) {
+    ierr = IGA_NewGridIO(iga,iga->dof,&grid);CHKERRQ(ierr);
+    ierr = PetscContainerSetPointer(container,(void*)grid);CHKERRQ(ierr);
+    ierr = PetscContainerSetUserDestroy(container,IGA_GridIO_destroy);;CHKERRQ(ierr);
+  }
+  *gridio = grid;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALoadVec"
+PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
+{
+  IGA_Grid       grid;
+  Vec            nvec,gvec,lvec;
+  VecScatter     g2n,g2l;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,3);
+  PetscCheckSameComm(iga,1,vec,2);
+  PetscCheckSameComm(iga,1,viewer,3);
+  IGACheckSetUp(iga,1);
+  if (!IGA_AnyPeriodic(iga)) {
+    ierr = VecLoad(vec,viewer);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
+
+  ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetScatterG2L(grid,&g2l);CHKERRQ(ierr);
+
+  ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+
+  ierr = IGALocalToGlobal(iga,lvec,vec,INSERT_VALUES);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASaveVec"
+PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
+{
+  IGA_Grid       grid;
+  Vec            nvec,gvec,lvec;
+  VecScatter     g2n,l2g;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,3);
+  PetscCheckSameComm(iga,1,vec,2);
+  PetscCheckSameComm(iga,1,viewer,3);
+  IGACheckSetUp(iga,1);
+  if (!IGA_AnyPeriodic(iga)) {
+    ierr = VecView(vec,viewer);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
+
+  ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
+  ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
+
+  ierr = IGAGlobalToLocal(iga,vec,lvec);CHKERRQ(ierr);
+
+  ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+
+  ierr = PetscObjectSetName((PetscObject)nvec,((PetscObject)vec)->name);CHKERRQ(ierr);
+  ierr = VecView(nvec,viewer);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAReadVec"
+PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
+{
+  MPI_Comm       comm;
+  PetscViewer    viewer;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
+  PetscCheckSameComm(iga,1,vec,2);
+  PetscValidCharPointer(filename,2);
+  IGACheckSetUp(iga,1);
+
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
+  ierr = PetscViewerBinarySkipInfo(viewer);CHKERRQ(ierr);
+  /*ierr = PetscViewerBinarySetSkipHeader(viewer,PETSC_TRUE);CHKERRQ(ierr);*/
+  ierr = PetscViewerFileSetMode(viewer,FILE_MODE_READ);CHKERRQ(ierr);
+  ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  ierr = IGALoadVec(iga,vec,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAWriteVec"
+PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
+{
+  MPI_Comm       comm;
+  PetscViewer    viewer;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
+  PetscCheckSameComm(iga,1,vec,2);
+  PetscValidCharPointer(filename,2);
+  IGACheckSetUp(iga,1);
+
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
+  ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
+  ierr = PetscViewerBinarySkipInfo(viewer);CHKERRQ(ierr);
+  /*ierr = PetscViewerBinarySetSkipHeader(viewer,PETSC_TRUE);CHKERRQ(ierr);*/
+  ierr = PetscViewerFileSetMode(viewer,FILE_MODE_WRITE);CHKERRQ(ierr);
+  ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
+  ierr = IGASaveVec(iga,vec,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }

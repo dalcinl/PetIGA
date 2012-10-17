@@ -70,6 +70,29 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga2);CHKERRQ(ierr);
   ierr = IGADestroy(&iga2);CHKERRQ(ierr);
 
+  Vec vec;
+  PetscInt size;
+  PetscScalar value;
+  ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
+  ierr = VecSet(vec,1.0);CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,vec,"igavec.dat");CHKERRQ(ierr);
+  ierr = IGAReadVec (iga,vec,"igavec.dat");CHKERRQ(ierr);
+  ierr = VecGetSize(vec,&size);CHKERRQ(ierr);
+  ierr = VecSum(vec,&value);CHKERRQ(ierr);
+  if ((PetscReal)size != PetscRealPart(value))
+    SETERRQ(comm,PETSC_ERR_PLIB,"Bad data in file");
+  ierr = VecDestroy(&vec);CHKERRQ(ierr);
+
+  ierr = VecCreate(comm,&vec);CHKERRQ(ierr);
+  ierr = PetscViewerBinaryOpen(comm,"igavec.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+  ierr = VecLoad(vec,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = VecGetSize(vec,&size);CHKERRQ(ierr);
+  ierr = VecSum(vec,&value);CHKERRQ(ierr);
+  if ((PetscReal)size != PetscRealPart(value))
+    SETERRQ(comm,PETSC_ERR_PLIB,"Bad data in file");
+  ierr = VecDestroy(&vec);CHKERRQ(ierr);
+
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
