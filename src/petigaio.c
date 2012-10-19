@@ -366,6 +366,7 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   ierr = PetscViewerFileSetMode(viewer,FILE_MODE_WRITE);CHKERRQ(ierr);
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
   ierr = IGASave(iga,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -472,9 +473,7 @@ static PetscErrorCode IGA_GetGridIO_Vec(IGA iga,IGA_Grid *gridio)
 #define __FUNCT__ "IGALoadVec"
 PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
 {
-  IGA_Grid       grid;
-  Vec            nvec,gvec,lvec;
-  VecScatter     g2n,g2l;
+  Vec            nvec;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -483,26 +482,28 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,vec,2);
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUp(iga,1);
+
   if (!IGA_AnyPeriodic(iga)) {
-    ierr = VecLoad(vec,viewer);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
+    ierr = IGAGetNaturalVec(iga,&nvec);
+    ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
+    ierr = IGANaturalToGlobal(iga,nvec,vec);
+  } else {
+    IGA_Grid   grid;
+    Vec        gvec,lvec;
+    VecScatter g2n,g2l;
+    ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterG2L(grid,&g2l);CHKERRQ(ierr);
+    ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
+    ierr = VecScatterBegin(g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+    ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = IGALocalToGlobal(iga,lvec,vec,INSERT_VALUES);CHKERRQ(ierr);
   }
-
-  ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetScatterG2L(grid,&g2l);CHKERRQ(ierr);
-
-  ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
-  ierr = VecScatterBegin(g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
-  ierr = VecScatterEnd  (g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
-  ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-
-  ierr = IGALocalToGlobal(iga,lvec,vec,INSERT_VALUES);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -510,9 +511,7 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
 #define __FUNCT__ "IGASaveVec"
 PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
 {
-  IGA_Grid       grid;
-  Vec            nvec,gvec,lvec;
-  VecScatter     g2n,l2g;
+  Vec            nvec;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -521,25 +520,26 @@ PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,vec,2);
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUp(iga,1);
+
   if (!IGA_AnyPeriodic(iga)) {
-    ierr = VecView(vec,viewer);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
+    ierr = IGAGetNaturalVec(iga,&nvec);
+    ierr = IGAGlobalToNatural(iga,vec,nvec);
+  } else {
+    IGA_Grid   grid;
+    Vec        gvec,lvec;
+    VecScatter g2n,l2g;
+    ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
+    ierr = IGAGlobalToLocal(iga,vec,lvec);CHKERRQ(ierr);
+    ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterBegin(g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   }
-
-  ierr = IGA_GetGridIO_Vec(iga,&grid);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&nvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecGlobal (grid,VECSTANDARD,&gvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetVecLocal  (grid,VECSTANDARD,&lvec);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetScatterG2N(grid,&g2n);CHKERRQ(ierr);
-  ierr = IGA_Grid_GetScatterL2G(grid,&l2g);CHKERRQ(ierr);
-
-  ierr = IGAGlobalToLocal(iga,vec,lvec);CHKERRQ(ierr);
-
-  ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecScatterBegin(g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecScatterEnd  (g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-
   ierr = PetscObjectSetName((PetscObject)nvec,((PetscObject)vec)->name);CHKERRQ(ierr);
   ierr = VecView(nvec,viewer);CHKERRQ(ierr);
 
@@ -595,6 +595,7 @@ PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
   ierr = PetscViewerFileSetMode(viewer,FILE_MODE_WRITE);CHKERRQ(ierr);
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
   ierr = IGASaveVec(iga,vec,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);

@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
   ierr = VecSet(vec,1.0);CHKERRQ(ierr);
   ierr = IGAWriteVec(iga,vec,"igavec.dat");CHKERRQ(ierr);
+  ierr = VecSet(vec,0.0);CHKERRQ(ierr);
   ierr = IGAReadVec (iga,vec,"igavec.dat");CHKERRQ(ierr);
   ierr = VecGetSize(vec,&size);CHKERRQ(ierr);
   ierr = VecSum(vec,&value);CHKERRQ(ierr);

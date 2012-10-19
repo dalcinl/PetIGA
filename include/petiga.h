@@ -232,6 +232,8 @@ struct _p_IGA {
   VecScatter g2l,l2g;
   PetscInt   nwork;
   Vec        vwork[16];
+  VecScatter g2n;
+  Vec        natural;
 
 };
 
@@ -299,6 +301,10 @@ PETSC_EXTERN PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec);
 PETSC_EXTERN PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
+
+PETSC_EXTERN PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec);
+PETSC_EXTERN PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec);
+PETSC_EXTERN PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec);
 
 PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);

@@ -138,6 +138,8 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
+  ierr = VecDestroy(&iga->natural);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&iga->g2n);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
   ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
@@ -1117,6 +1119,11 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
     ierr = PetscObjectReference((PetscObject)iga->g2l);CHKERRQ(ierr);
     ierr = IGA_Grid_GetScatterL2G(grid,&iga->l2g);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->l2g);CHKERRQ(ierr);
+    /* build global to natural vector scatter */
+    ierr = IGA_Grid_GetScatterG2N(grid,&iga->g2n);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->g2n);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(grid,VECSTANDARD,&iga->natural);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->natural);CHKERRQ(ierr);
     /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }

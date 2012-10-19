@@ -119,7 +119,7 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,2);
   IGACheckSetUp(iga,1);
   if (iga->nwork < (PetscInt)(sizeof(iga->vwork)/sizeof(Vec))) {
-    iga->vwork[iga->nwork++] = *lvec;
+    iga->vwork[iga->nwork++] = *lvec; *lvec = 0;
   } else {
     ierr = VecDestroy(lvec);CHKERRQ(ierr);
   }
@@ -192,5 +192,45 @@ PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscSca
   IGACheckSetUp(iga,1);
   ierr = VecRestoreArrayRead(*lvec,array);CHKERRQ(ierr);
   ierr = IGARestoreLocalVec(iga,lvec);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetNaturalVec"
+PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(nvec,2);
+  IGACheckSetUp(iga,1);
+  *nvec = iga->natural;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGANaturalToGlobal"
+PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(nvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  ierr = VecScatterBegin(iga->g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (iga->g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGlobalToNatural"
+PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(nvec,VEC_CLASSID,3);
+  ierr = VecScatterBegin(iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
