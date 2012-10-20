@@ -107,12 +107,18 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
   PetscFunctionBegin;
   PetscValidPointer(base,1);
   PetscValidPointer(axis,2);
+  if(base == axis) PetscFunctionReturn(0);
+
   axis->periodic = base->periodic;
   axis->p = base->p;
   axis->m = base->m;
   ierr = PetscFree(axis->U);CHKERRQ(ierr);
   ierr = PetscMalloc((axis->m+1)*sizeof(PetscReal),&axis->U);CHKERRQ(ierr);
   ierr = PetscMemcpy(axis->U,base->U,(axis->m+1)*sizeof(PetscReal));CHKERRQ(ierr);
+
+  axis->nel = axis->nnp = 0;
+  ierr = PetscFree(axis->span);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
