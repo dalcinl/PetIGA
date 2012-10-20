@@ -45,6 +45,9 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr); /* just for testing */
@@ -85,6 +88,7 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&vec);CHKERRQ(ierr);
 
   ierr = VecCreate(comm,&vec);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(vec,dof);CHKERRQ(ierr);
   ierr = PetscViewerBinaryOpen(comm,"igavec.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = VecLoad(vec,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);

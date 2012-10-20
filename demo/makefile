@@ -105,7 +105,7 @@ OPTS=-nox -malloc_debug -malloc_dump
 runex0a_1:
 	-@${MPIEXEC} -n 1 ./InputOutput ${OPTS} -dim 1 -periodic
 runex0a_2:
-	-@${MPIEXEC} -n 2 ./InputOutput ${OPTS} -dim 2 -periodic
+	-@${MPIEXEC} -n 2 ./InputOutput ${OPTS} -dim 2 -dof 3 -periodic
 runex0a_3:
 	-@${MPIEXEC} -n 3 ./InputOutput ${OPTS} -dim 3 -periodic 1,0,1
 runex0a_4:

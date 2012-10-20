@@ -27,7 +27,7 @@ struct _n_IGA_Grid {
   PetscInt   ghost_width[3];
   AO         ao,aob;
   LGMap      lgmap,lgmapb;
-  Vec        nvec,gvec,lvec;
+  Vec        lvec,gvec,nvec;
   VecScatter g2l,l2g,g2n;
 };
 
@@ -49,12 +49,18 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid,LGMap);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
-PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid,const VecType,Vec*);
-PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecGlobal (IGA_Grid,const VecType,Vec*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecLocal  (IGA_Grid,const VecType,Vec*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecGlobal (IGA_Grid,const VecType,Vec*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid,const VecType,Vec*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid,VecScatter*);
+
+PETSC_EXTERN PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
+                                                   const PetscInt[],
+                                                   const PetscInt[],
+                                                   const PetscInt[],
+                                                   Vec*,VecScatter*,VecScatter*);
 
 #if PETSC_VERSION_(3,2,0)
 PETSC_EXTERN_CXX_BEGIN

@@ -232,8 +232,8 @@ struct _p_IGA {
   VecScatter g2l,l2g;
   PetscInt   nwork;
   Vec        vwork[16];
-  VecScatter g2n;
   Vec        natural;
+  VecScatter n2g,g2n;
 
 };
 

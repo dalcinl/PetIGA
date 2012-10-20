@@ -78,9 +78,9 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   ierr = AODestroy(&g->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
-  ierr = VecDestroy(&g->nvec);CHKERRQ(ierr);
-  ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
   ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
+  ierr = VecDestroy(&g->nvec);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&g->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&g->l2g);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&g->g2n);CHKERRQ(ierr);
@@ -298,20 +298,24 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetVecNatural"
-PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
+#define __FUNCT__ "IGA_Grid_GetVecLocal"
+PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
 {
-  Vec            gvec;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(g,1);
   if (vtype) PetscValidCharPointer(vtype,2);
-  PetscValidPointer(nvec,3);
-  if (!g->nvec) {
-    ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);
-    ierr = VecDuplicate(gvec,&g->nvec);CHKERRQ(ierr);
+  PetscValidPointer(lvec,3);
+  if (!g->lvec) {
+    const PetscInt *width = g->ghost_width;
+    PetscInt n  = width[0]*width[1]*width[2];
+    PetscInt bs = g->dof;
+    ierr = VecCreate(PETSC_COMM_SELF,&g->lvec);CHKERRQ(ierr);
+    ierr = VecSetSizes(g->lvec,n*bs,n*bs);CHKERRQ(ierr);
+    ierr = VecSetBlockSize(g->lvec,bs);CHKERRQ(ierr);
+    ierr = VecSetType(g->lvec,vtype?vtype:VECSTANDARD);CHKERRQ(ierr);
   }
-  *nvec = g->nvec;
+  *lvec = g->lvec;
   PetscFunctionReturn(0);
 }
 
@@ -340,24 +344,20 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetVecLocal"
-PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
+#define __FUNCT__ "IGA_Grid_GetVecNatural"
+PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(g,1);
   if (vtype) PetscValidCharPointer(vtype,2);
-  PetscValidPointer(lvec,3);
-  if (!g->lvec) {
-    const PetscInt *width = g->ghost_width;
-    PetscInt n  = width[0]*width[1]*width[2];
-    PetscInt bs = g->dof;
-    ierr = VecCreate(PETSC_COMM_SELF,&g->lvec);CHKERRQ(ierr);
-    ierr = VecSetSizes(g->lvec,n*bs,n*bs);CHKERRQ(ierr);
-    ierr = VecSetBlockSize(g->lvec,bs);CHKERRQ(ierr);
-    ierr = VecSetType(g->lvec,vtype?vtype:VECSTANDARD);CHKERRQ(ierr);
+  PetscValidPointer(nvec,3);
+  if (!g->nvec) {
+    Vec gvec;
+    ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);
+    ierr = VecDuplicate(gvec,&g->nvec);CHKERRQ(ierr);
   }
-  *lvec = g->lvec;
+  *nvec = g->nvec;
   PetscFunctionReturn(0);
 }
 
@@ -398,22 +398,23 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
   PetscValidPointer(g,1);
   PetscValidPointer(l2g,2);
   if (!g->l2g) {
+    IS isglobal,islocal;
+    Vec gvec,lvec;
+    PetscInt nlocal,*ilocal,start;
+    /* local non-ghosted grid */
     const PetscInt *lstart = g->local_start;
     const PetscInt *lwidth = g->local_width;
-    const PetscInt *gstart = g->ghost_start;
-    const PetscInt *gwidth = g->ghost_width;
-    /* local non-ghosted grid */
     PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
     PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
     PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
     /* local ghosted grid */
+    const PetscInt *gstart = g->ghost_start;
+    const PetscInt *gwidth = g->ghost_width;
     PetscInt igstart = gstart[0], igend = gstart[0]+gwidth[0];
     PetscInt jgstart = gstart[1], jgend = gstart[1]+gwidth[1];
     PetscInt kgstart = gstart[2], kgend = gstart[2]+gwidth[2];
-    IS isglobal,islocal;
-    Vec gvec,lvec;
-    PetscInt start,nlocal,*ilocal;
-    PetscInt c,i,j,k,pos = 0,index = 0, bs = g->dof;
+    /* */
+    PetscInt c,i,j,k,pos = 0,index = 0,bs = g->dof;
     ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
@@ -422,7 +423,9 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++, index++)
-          if (i>=ilstart && i<ilend && j>=jlstart && j<jlend && k>=klstart && k<klend)
+          if (i>=ilstart && i<ilend &&
+              j>=jlstart && j<jlend &&
+              k>=klstart && k<klend)
             for (c=0; c<bs; c++)
               ilocal[pos++] = c + bs*index;
     ierr = ISCreateGeneral(PETSC_COMM_SELF,nlocal,ilocal,PETSC_OWN_POINTER,&islocal);CHKERRQ(ierr);
@@ -445,17 +448,128 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
   PetscValidPointer(g2n,2);
   if (!g->g2n) {
     IS isnatural,isglobal;
-    Vec gvec;
+    Vec gvec,nvec;
     PetscInt start,nlocal,*inatural;
-    ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecGlobal (g,VECSTANDARD,&gvec);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetVecNatural(g,VECSTANDARD,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_LocalIndices(g,g->dof,&nlocal,&inatural);CHKERRQ(ierr);
     ierr = VecGetOwnershipRange(gvec,&start,PETSC_NULL);CHKERRQ(ierr);
     ierr = ISCreateStride(g->comm,nlocal,start,1,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
-    ierr = VecScatterCreate(gvec,isglobal,gvec,isnatural,&g->g2n);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g->g2n);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
   }
   *g2n = g->g2n;
+  PetscFunctionReturn(0);
+}
+
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_NewScatterApp"
+PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
+                                      const PetscInt sizes[],
+                                      const PetscInt start[],
+                                      const PetscInt width[],
+                                      Vec        *avec,
+                                      VecScatter *a2g,
+                                      VecScatter *g2a)
+{
+  const char*    vtype = VECSTANDARD;
+  Vec            gvec;
+  Vec            nvec;
+  VecScatter     n2g;
+  VecScatter     g2n;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidPointer(avec,2);
+  PetscValidPointer(a2g,3);
+  PetscValidPointer(g2a,4);
+  /* global vector */
+  {
+    ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);
+    ierr = VecGetType(gvec,&vtype);CHKERRQ(ierr);
+  }
+  /* natural vector */
+  {
+    PetscInt n  = width[0]*width[1]*width[2];
+    PetscInt N  = sizes[0]*sizes[1]*sizes[2];
+    PetscInt bs = g->dof;
+    ierr = VecCreate(g->comm,&nvec);CHKERRQ(ierr);
+    ierr = VecSetSizes(nvec,n*bs,N*bs);CHKERRQ(ierr);
+    ierr = VecSetBlockSize(nvec,bs);CHKERRQ(ierr);
+    ierr = VecSetType(nvec,vtype);CHKERRQ(ierr);
+  }
+  /* natural -> global scatter */
+  {
+    IS isnatural,isglobal;
+    PetscInt nlocal,*inatural,nstart;
+    /* global grid strides */
+    PetscInt jstride = sizes[0];
+    PetscInt kstride = sizes[0]*sizes[1];
+    /* local non-ghosted grid */
+    const PetscInt *lstart = g->local_start;
+    const PetscInt *lwidth = g->local_width;
+    PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
+    PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
+    PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
+    /* */
+    PetscInt c,i,j,k,pos = 0,bs = g->dof;
+    ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(gvec,&nstart,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
+    for (k=klstart; k<klend; k++)
+      for (j=jlstart; j<jlend; j++)
+        for (i=ilstart; i<ilend; i++)
+          for (c=0; c<bs; c++)
+            inatural[pos++] = c + bs*(i + j * jstride + k * kstride);
+    ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
+    ierr = ISCreateStride(g->comm,nlocal,nstart,1,&isglobal);CHKERRQ(ierr);
+    ierr = VecScatterCreate(nvec,isnatural,gvec,isglobal,&n2g);CHKERRQ(ierr);
+    ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
+    ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
+  }
+  /* global -> natural scatter */
+  {
+    IS isglobal,isnatural;
+    PetscInt nlocal,*iglobal,nstart;
+    /* local non-ghosted grid */
+    const PetscInt *lstart = start;
+    const PetscInt *lwidth = width;
+    PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
+    PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
+    PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
+    /* local ghosted grid */
+    const PetscInt *gstart = g->ghost_start;
+    const PetscInt *gwidth = g->ghost_width;
+    PetscInt igstart = gstart[0], igend = gstart[0]+gwidth[0];
+    PetscInt jgstart = gstart[1], jgend = gstart[1]+gwidth[1];
+    PetscInt kgstart = gstart[2], kgend = gstart[2]+gwidth[2];
+    /* */
+    PetscInt c,i,j,k,pos = 0,index = 0,bs = g->dof;
+    ierr = VecGetLocalSize(nvec,&nlocal);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(nvec,&nstart,PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal);CHKERRQ(ierr);
+    for (k=kgstart; k<kgend; k++)
+      for (j=jgstart; j<jgend; j++)
+        for (i=igstart; i<igend; i++, index++)
+          if (i>=ilstart && i<ilend &&
+              j>=jlstart && j<jlend &&
+              k>=klstart && k<klend)
+            for (c=0; c<bs; c++)
+              iglobal[pos++] = c + bs*index;
+    ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingApply(g->lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
+    ierr = ISCreateGeneral(g->comm,nlocal,iglobal,PETSC_OWN_POINTER,&isglobal);CHKERRQ(ierr);
+    ierr = ISCreateStride(g->comm,nlocal,nstart,1,&isnatural);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);
+    ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
+    ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
+  }
+  *avec = nvec;
+  *a2g  = n2g;
+  *g2a  = g2n;
   PetscFunctionReturn(0);
 }
