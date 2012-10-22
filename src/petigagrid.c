@@ -505,7 +505,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
   /* natural -> global scatter */
   {
     IS isnatural,isglobal;
-    PetscInt nlocal,*inatural,nstart;
+    PetscInt nlocal,*inatural,gstart;
     /* global grid strides */
     PetscInt jstride = sizes[0];
     PetscInt kstride = sizes[0]*sizes[1];
@@ -518,15 +518,15 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* */
     PetscInt c,i,j,k,pos = 0,bs = g->dof;
     ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(gvec,&nstart,PETSC_NULL);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(gvec,&gstart,PETSC_NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=klstart; k<klend; k++)
       for (j=jlstart; j<jlend; j++)
         for (i=ilstart; i<ilend; i++)
           for (c=0; c<bs; c++)
-            inatural[pos++] = c + bs*(i + j * jstride + k * kstride);
+            inatural[pos++] = c + bs * (i + j * jstride + k * kstride);
     ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
-    ierr = ISCreateStride(g->comm,nlocal,nstart,1,&isglobal);CHKERRQ(ierr);
+    ierr = ISCreateStride(g->comm,nlocal,gstart,1,&isglobal);CHKERRQ(ierr);
     ierr = VecScatterCreate(nvec,isnatural,gvec,isglobal,&n2g);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
@@ -534,13 +534,11 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
   /* global -> natural scatter */
   {
     IS isglobal,isnatural;
-    PetscInt nlocal,*iglobal,nstart;
+    PetscInt nlocal,*iglobal,*inatural;
     /* local non-ghosted grid */
-    const PetscInt *lstart = start;
-    const PetscInt *lwidth = width;
-    PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
-    PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
-    PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
+    PetscInt istart = start[0], iend = start[0]+width[0]/*istride = 1*/;
+    PetscInt jstart = start[1], jend = start[1]+width[1], jstride = sizes[0];
+    PetscInt kstart = start[2], kend = start[2]+width[2], kstride = sizes[0]*sizes[1];
     /* local ghosted grid */
     const PetscInt *gstart = g->ghost_start;
     const PetscInt *gwidth = g->ghost_width;
@@ -550,20 +548,22 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* */
     PetscInt c,i,j,k,pos = 0,index = 0,bs = g->dof;
     ierr = VecGetLocalSize(nvec,&nlocal);CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(nvec,&nstart,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal);CHKERRQ(ierr);
+    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal );CHKERRQ(ierr);
+    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++, index++)
-          if (i>=ilstart && i<ilend &&
-              j>=jlstart && j<jlend &&
-              k>=klstart && k<klend)
-            for (c=0; c<bs; c++)
-              iglobal[pos++] = c + bs*index;
+          if (i>=istart && i<iend &&
+              j>=jstart && j<jend &&
+              k>=kstart && k<kend)
+            for (c=0; c<bs; c++, pos++) {
+              iglobal [pos] = c + bs * index;
+              inatural[pos] = c + bs * (i + j * jstride + k * kstride);
+            }
     ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingApply(g->lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
-    ierr = ISCreateGeneral(g->comm,nlocal,iglobal,PETSC_OWN_POINTER,&isglobal);CHKERRQ(ierr);
-    ierr = ISCreateStride(g->comm,nlocal,nstart,1,&isnatural);CHKERRQ(ierr);
+    ierr = ISCreateGeneral(g->comm,nlocal,iglobal, PETSC_OWN_POINTER,&isglobal );CHKERRQ(ierr);
+    ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
     ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
