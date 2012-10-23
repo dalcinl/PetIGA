@@ -37,7 +37,12 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
       ierr = PetscTryMethod(A,"MatGetDiagonalBlock_C",(Mat,Mat*),(A,&Ad));CHKERRQ(ierr);
       if (Ad) {
         PetscBool compressed,done;
-        PetscInt  na,*ia,*ja;
+        PetscInt  na;
+        #if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+        PetscInt *ia,*ja;
+        #else
+        const PetscInt *ia,*ja;
+        #endif
         ierr = MatGetDiagonalBlock(A,&Ad);CHKERRQ(ierr);
         compressed = (baij||sbaij) ? PETSC_TRUE: PETSC_FALSE;
         ierr = MatGetRowIJ(Ad,0,PETSC_FALSE,compressed,&na,&ia,&ja,&done);CHKERRQ(ierr);
