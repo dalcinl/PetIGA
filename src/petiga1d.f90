@@ -1,6 +1,6 @@
 pure subroutine IGA_Quadrature_1D(&
-     inq,iX,iW,iL,           &
-     W,J,X,L)                &
+     inq,iX,iW,iL,                &
+     W,J,X,L)                     &
   bind(C, name="IGA_Quadrature_1D")
   use PetIGA
   implicit none
@@ -24,10 +24,10 @@ end subroutine IGA_Quadrature_1D
 
 
 pure subroutine IGA_BasisFuns_1D(&
-     order,                 &
-     rational,W,            &
-     inq,ina,ind,iN,        &
-     N0,N1,N2,N3)           &
+     order,                      &
+     rational,W,                 &
+     inq,ina,ind,iN,             &
+     N0,N1,N2,N3)                &
   bind(C, name="IGA_BasisFuns_1D")
   use PetIGA
   implicit none
@@ -106,11 +106,11 @@ end subroutine IGA_BasisFuns_1D
 
 
 pure subroutine IGA_ShapeFuns_1D(&
-     order,                 &
-     nqp,nen,X,             &
-     M0,M1,M2,M3,           &
-     N0,N1,N2,N3,           &
-     DetF,F,G)              &
+     order,                      &
+     nqp,nen,X,                  &
+     M0,M1,M2,M3,                &
+     N0,N1,N2,N3,                &
+     DetF,F,G)                   &
   bind(C, name="IGA_ShapeFuns_1D")
   use PetIGA
   implicit none

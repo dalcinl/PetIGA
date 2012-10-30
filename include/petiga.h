@@ -101,16 +101,23 @@ struct _n_IGABoundary {
   PetscInt refct;
   /**/
   PetscInt    dof;
-  PetscInt    nbc;
+  /**/
+  PetscInt    count;
   PetscInt    *field;
   PetscScalar *value;
+  /**/
+  PetscInt    nload;
+  PetscInt    *iload;
+  PetscScalar *vload;
 };
 PETSC_EXTERN PetscErrorCode IGABoundaryCreate(IGABoundary *boundary);
 PETSC_EXTERN PetscErrorCode IGABoundaryDestroy(IGABoundary *boundary);
 PETSC_EXTERN PetscErrorCode IGABoundaryReset(IGABoundary boundary);
 PETSC_EXTERN PetscErrorCode IGABoundaryReference(IGABoundary boundary);
 PETSC_EXTERN PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof);
+PETSC_EXTERN PetscErrorCode IGABoundaryClear(IGABoundary boundary);
 PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGABoundarySetLoad (IGABoundary boundary,PetscInt field,PetscScalar value);
 
 /* ---------------------------------------------------------------- */
 
@@ -373,7 +380,11 @@ struct _n_IGAElement {
   PetscInt     nfix;
   PetscInt    *ifix;
   PetscScalar *vfix;
-  PetscScalar *xfix;
+  PetscScalar *ufix;
+
+  PetscInt     nflux;
+  PetscInt    *iflux;
+  PetscScalar *vflux;
 
   PetscInt    nval;
   PetscScalar *wval[8];

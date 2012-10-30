@@ -1,7 +1,7 @@
 pure subroutine IGA_Quadrature_2D(&
-     inq,iX,iW,iL,           &
-     jnq,jX,jW,jL,           &
-     W,J,X,L)                &
+     inq,iX,iW,iL,                &
+     jnq,jX,jW,jL,                &
+     W,J,X,L)                     &
   bind(C, name="IGA_Quadrature_2D")
   use PetIGA
   implicit none
@@ -30,11 +30,11 @@ end subroutine IGA_Quadrature_2D
 
 
 pure subroutine IGA_BasisFuns_2D(&
-     order,                 &
-     rational,W,            &
-     inq,ina,ind,iN,        &
-     jnq,jna,jnd,jN,        &
-     N0,N1,N2,N3)           &
+     order,                      &
+     rational,W,                 &
+     inq,ina,ind,iN,             &
+     jnq,jna,jnd,jN,             &
+     N0,N1,N2,N3)                &
   bind(C, name="IGA_BasisFuns_2D")
   use PetIGA
   implicit none
@@ -134,11 +134,11 @@ end subroutine IGA_BasisFuns_2D
 
 
 pure subroutine IGA_ShapeFuns_2D(&
-     order,                 &
-     nqp,nen,X,             &
-     M0,M1,M2,M3,           &
-     N0,N1,N2,N3,           &
-     DetF,F,G)              &
+     order,                      &
+     nqp,nen,X,                  &
+     M0,M1,M2,M3,                &
+     N0,N1,N2,N3,                &
+     DetF,F,G)                   &
   bind(C, name="IGA_ShapeFuns_2D")
   use PetIGA
   implicit none
@@ -170,3 +170,82 @@ pure subroutine IGA_ShapeFuns_2D(&
 contains
 include 'petigageo.f90.in'
 end subroutine IGA_ShapeFuns_2D
+
+
+subroutine IGA_BoundaryArea_2D(&
+     m,axis,side,              &
+     geometry,Cx,              &
+     rational,Cw,              &
+     nqp,W,nen,ndr,N,          &
+     dS)                       &
+  bind(C, name="IGA_BoundaryArea_2D")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), parameter         :: nsd = 2
+  integer(kind=IGA_INTEGER_KIND), parameter         :: dim = 1
+  integer(kind=IGA_INTEGER_KIND), intent(in)        :: m(2)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: axis, side
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: geometry, rational
+  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cx(nsd,m(1),m(2))
+  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cw(    m(1),m(2))
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: nqp, nen, ndr
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: W(nqp), N(0:ndr,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)       :: dS
+  integer(kind=IGA_INTEGER_KIND)  :: k, q
+  real   (kind=IGA_REAL_KIND   )  :: N0(nen), N1(dim,nen), detJ
+  real   (kind=IGA_REAL_KIND   ), pointer :: Xx(:,:), Xw(:)
+  select case (axis)
+  case (0)
+     if (side==0) k=1
+     if (side==1) k=m(1)
+     Xx => Cx(:,k,:); Xw => Cw(k,:)
+  case (1)
+     if (side==0) k=1
+     if (side==1) k=m(2)
+     Xx => Cx(:,:,k); Xw => Cw(:,k)
+  end select
+  detJ = 1.0
+  dS = 0.0
+  do q=1,nqp
+     N0(  :) = N(0,:,q)
+     N1(1,:) = N(1,:,q)
+     if (rational /= 0) then
+        call Rationalize(nen,Xw,N0,N1)
+     end if
+     if (geometry /= 0) then
+        call Jacobian(nen,N1,Xx,detJ)
+     end if
+     dS = dS + detJ * W(q)
+  end do
+contains
+pure subroutine Rationalize(nen,W,R0,R1)
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), parameter     :: dim = 1
+  integer(kind=IGA_INTEGER_KIND), intent(in)    :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: W(nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R0(    nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R1(dim,nen)
+  integer(kind=IGA_INTEGER_KIND)  :: i
+  real   (kind=IGA_REAL_KIND   )  :: W0
+  R0 = W * R0
+  W0 = sum(R0)
+  R0 = R0 / W0
+  forall(i=1:dim) &
+  R1(i,:) = W*R1(i,:) - R0 * sum(W*R1(i,:))
+  R1 = R1 / W0
+end subroutine Rationalize
+pure subroutine Jacobian(nen,N,X,J)
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), parameter        :: nsd = 2
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 1
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: X(nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: J
+  real   (kind=IGA_REAL_KIND   )  :: F(dim,nsd), M(dim,dim)
+  F = matmul(N,transpose(X))
+  M = matmul(F,transpose(F))
+  J = sqrt(abs(Determinant(dim,M)))
+end subroutine Jacobian
+include 'petigainv.f90.in'
+end subroutine IGA_BoundaryArea_2D

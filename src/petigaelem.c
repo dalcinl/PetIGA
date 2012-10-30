@@ -71,7 +71,10 @@ PetscErrorCode IGAElementFreeFix(IGAElement element)
   element->nfix = 0;
   ierr = PetscFree(element->ifix);CHKERRQ(ierr);
   ierr = PetscFree(element->vfix);CHKERRQ(ierr);
-  ierr = PetscFree(element->xfix);CHKERRQ(ierr);
+  ierr = PetscFree(element->ufix);CHKERRQ(ierr);
+  element->nflux = 0;
+  ierr = PetscFree(element->iflux);CHKERRQ(ierr);
+  ierr = PetscFree(element->vflux);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -220,7 +223,10 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     element->nfix = 0;
     ierr = PetscMalloc1(nen*dof,PetscInt,   &element->ifix);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*dof,PetscScalar,&element->vfix);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nen*dof,PetscScalar,&element->xfix);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*dof,PetscScalar,&element->ufix);CHKERRQ(ierr);
+    element->nflux = 0;
+    ierr = PetscMalloc1(nen*dof,PetscInt,   &element->iflux);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*dof,PetscScalar,&element->vflux);CHKERRQ(ierr);
   }
   ierr = IGAPointInit(element->iterator,element);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -848,24 +854,134 @@ PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[]
   PetscFunctionReturn(0);
 }
 
-static void AddFix(IGAElement element,PetscInt dir,PetscInt side,PetscInt a)
+/* -------------------------------------------------------------------------- */
+
+static void AddFixa(IGAElement element,IGABoundary b,PetscInt a)
+{
+  if (b->count) {
+    PetscInt dof = element->dof;
+    PetscInt count = element->nfix;
+    PetscInt *index = element->ifix;
+    PetscScalar *value = element->vfix;
+    PetscInt j,k,n = b->count;
+    for (k=0; k<n; k++) {
+      PetscInt idx = a*dof + b->field[k];
+      PetscScalar val = b->value[k];
+      for (j=0; j<count; j++)
+        if (index[j] == idx) break;
+      if (j == count) count++;
+      index[j] = idx;
+      value[j] = val;
+    }
+    element->nfix = count;
+  }
+}
+
+EXTERN_C_BEGIN
+extern void IGA_BoundaryArea_2D(const PetscInt[],PetscInt,PetscInt,
+                                PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
+                                PetscReal*);
+extern void IGA_BoundaryArea_3D(const PetscInt[],PetscInt,PetscInt,
+                                PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
+                                PetscReal*);
+EXTERN_C_END
+
+static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
+{
+  PetscReal A = 1.0;
+  PetscInt *ID = element->ID;
+  IGABasis *BD = element->BD;
+  PetscInt i,dim = element->dim;
+  if (dim == 1) return A;
+  for (i=0; i<dim; i++)
+    if (i != dir) {
+      PetscReal L = BD[i]->detJ[ID[i]];
+      PetscInt  n = BD[i]->nen;
+      A *= L/n;
+    }
+  if (!element->geometry) {
+    A *= (dim==2) ? 2 : 4; /* sum(W) = 2 */
+  } else {
+    PetscInt shape[3] = {1,1,1};
+    PetscInt k,nqp[3],nen[3],ndr[3];
+    PetscReal *W[3],*N[3],dS = 1.0;
+    for (i=0; i<dim; i++)
+      shape[i] = BD[i]->nen;
+    for (k=0,i=0; i<dim; i++) {
+      if (i == dir) continue;
+      nqp[k] = BD[i]->nqp;
+      nen[k] = BD[i]->nen;
+      ndr[k] = BD[i]->d;
+      W[k]   = BD[i]->weight;
+      N[k]   = BD[i]->value+ID[i]*nqp[k]*nen[k]*(ndr[k]+1);
+      k++;
+    }
+    switch (dim) {
+    case 2: IGA_BoundaryArea_2D(shape,dir,side,
+                                element->geometry,element->geometryX,
+                                element->rational,element->geometryW,
+                                nqp[0],W[0],nen[0],ndr[0],N[0],
+                                &dS); break;
+    case 3: IGA_BoundaryArea_3D(shape,dir,side,
+                                element->geometry,element->geometryX,
+                                element->rational,element->geometryW,
+                                nqp[0],W[0],nen[0],ndr[0],N[0],
+                                nqp[1],W[1],nen[1],ndr[1],N[1],
+                                &dS);break;
+    }
+    A *= dS;
+  }
+  return A;
+}
+
+static void AddFlux(IGAElement element,IGABoundary b,PetscInt a,PetscReal A)
+{
+  if (b->nload) {
+    PetscInt dof = element->dof;
+    PetscInt count = element->nflux;
+    PetscInt *index = element->iflux;
+    PetscScalar *value = element->vflux;
+    PetscInt j,k,n = b->nload;
+    for (k=0; k<n; k++) {
+      PetscInt idx = a*dof + b->iload[k];
+      PetscScalar val = b->vload[k];
+      for (j=0; j<count; j++)
+        if (index[j] == idx) break;
+      if (j == count) value[count++] = 0.0;
+      index[j] = idx;
+      value[j]+= val*A;
+    }
+    element->nflux = count;
+  }
+}
+
+static void BuildFix(IGAElement element,PetscInt dir,PetscInt side)
 {
   IGABoundary b = element->parent->boundary[dir][side];
-  PetscInt dof = element->dof;
-  PetscInt nfix = element->nfix;
-  PetscInt *ifix = element->ifix;
-  PetscScalar *vfix = element->vfix;
-  PetscInt j,k,n = b->nbc;
-  for (k=0; k<n; k++) {
-    PetscInt idx = a*dof + b->field[k];
-    PetscScalar val = b->value[k];
-    for (j=0; j<nfix; j++)
-      if (ifix[j] == idx) break;
-    if (j==nfix) nfix++;
-    ifix[j] = idx;
-    vfix[j] = val;
+  if (b->count || b->nload) {
+    PetscReal Area = b->nload ? BoundaryArea(element,dir,side) : 1.0;
+    IGABasis *BD = element->BD;
+    PetscInt S[3]={0,0,0},E[3]={1,1,1};
+    PetscInt ia,ja,ka,jstride,kstride,a;
+    PetscInt i,dim = element->dim;
+    for (i=0; i<dim; i++) E[i] = BD[i]->nen;
+    jstride = E[0]; kstride = E[0]*E[1];
+    if (side) S[dir] = E[dir]-1;
+    else      E[dir] = S[dir]+1;
+    for (ka=S[2]; ka<E[2]; ka++)
+      for (ja=S[1]; ja<E[1]; ja++)
+        for (ia=S[0]; ia<E[0]; ia++)
+          {
+            a = ia + ja*jstride + ka*kstride;
+            AddFixa(element,b,a);
+            AddFlux(element,b,a,Area);
+          }
   }
-  element->nfix = nfix;
 }
 
 #undef  __FUNCT__
@@ -876,43 +992,54 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  {
+  element->nfix  = 0;
+  element->nflux = 0;
+  if (!element->collocation) {
+    IGAAxis  *AX = element->parent->axis;
     IGABasis *BD = element->BD;
     PetscInt *ID = element->ID;
-    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
-    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
-    PetscBool onboundary = PETSC_FALSE;
     PetscInt i,dim = element->dim;
     for (i=0; i<dim; i++) {
+      PetscBool w = AX[i]->periodic;
       PetscInt  e = BD[i]->nel-1; /* last element */
-      PetscInt  n = BD[i]->nnp-1; /* last node    */
-      PetscBool b = element->collocation;
-      if (element->parent->axis[i]->periodic) continue; /* XXX */
-      if (ID[i] == 0 || b) { A0[i] = 0; onboundary = PETSC_TRUE; }
-      if (ID[i] == e || b) { A1[i] = n; onboundary = PETSC_TRUE; }
+      if (ID[i] == 0 && !w) BuildFix(element,i,0);
+      if (ID[i] == e && !w) BuildFix(element,i,1);
     }
-    element->nfix = 0;
-    if (onboundary) {
+  } else {
+    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
+    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
+    {
+      IGAAxis  *AX = element->parent->axis;
+      PetscInt i,dim = element->dim;
+      for (i=0; i<dim; i++) {
+        PetscBool w = AX[i]->periodic;
+        PetscInt  n = AX[i]->nnp-1; /* last node */
+        A0[i] = 0; if (!w) A1[i] = n;
+      }
+    }
+    {
+      IGABoundary (*b)[2] = element->parent->boundary;
+      IGABasis *BD = element->BD;
+      PetscInt *ID = element->ID;
       PetscInt ia, inen = BD[0]->nen, ioffset = BD[0]->offset[ID[0]];
       PetscInt ja, jnen = BD[1]->nen, joffset = BD[1]->offset[ID[1]];
       PetscInt ka, knen = BD[2]->nen, koffset = BD[2]->offset[ID[2]];
       PetscInt a = 0;
-      for (ka=0; ka<knen; ka++) {
-        for (ja=0; ja<jnen; ja++) {
-          for (ia=0; ia<inen; ia++) {
-            PetscInt iA = ioffset + ia;
-            PetscInt jA = joffset + ja;
-            PetscInt kA = koffset + ka;
-            /**/ if (iA == A0[0]) AddFix(element,0,0,a);
-            else if (iA == A1[0]) AddFix(element,0,1,a);
-            /**/ if (jA == A0[1]) AddFix(element,1,0,a);
-            else if (jA == A1[1]) AddFix(element,1,1,a);
-            /**/ if (kA == A0[2]) AddFix(element,2,0,a);
-            else if (kA == A1[2]) AddFix(element,2,1,a);
-            a++;
-          }
-        }
-      }
+      for (ka=0; ka<knen; ka++)
+        for (ja=0; ja<jnen; ja++)
+          for (ia=0; ia<inen; ia++)
+            {
+              PetscInt iA = ioffset + ia;
+              PetscInt jA = joffset + ja;
+              PetscInt kA = koffset + ka;
+              /**/ if (iA == A0[0]) AddFixa(element,b[0][0],a);
+              else if (iA == A1[0]) AddFixa(element,b[0][1],a);
+              /**/ if (jA == A0[1]) AddFixa(element,b[1][0],a);
+              else if (jA == A1[1]) AddFixa(element,b[1][1],a);
+              /**/ if (kA == A0[2]) AddFixa(element,b[2][0],a);
+              else if (kA == A1[2]) AddFixa(element,b[2][1],a);
+              a++;
+            }
     }
   }
   PetscFunctionReturn(0);
@@ -926,10 +1053,11 @@ PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(U,2);
   {
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
-      element->xfix[f] = U[k];
+      element->ufix[f] = U[k];
       U[k] = element->vfix[f];
     }
   }
@@ -947,13 +1075,19 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   if (!element->collocation) {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nflux;
+    for (f=0; f<n; f++) {
+      PetscInt    k = element->iflux[f];
+      PetscScalar v = element->vflux[f];
+      F[k] += v;
+    }
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt    k = element->ifix[f];
       PetscScalar v = element->vfix[f];
       PetscInt i,j;
-      for (i=0; i<M; i++)
-        F[i] -= K[i*N+k] * v;
+      for (i=0; i<M; i++) F[i] -= K[i*N+k] * v;
       for (i=0; i<M; i++) K[i*N+k] = 0.0;
       for (j=0; j<N; j++) K[k*N+j] = 0.0;
       K[k*N+k] = 1.0;
@@ -962,8 +1096,9 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   } else {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt a = k / element->dof;
       if (element->index == element->colmap[a]) {
@@ -987,22 +1122,30 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(F,2);
   if (!element->collocation) {
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nflux;
+    for (f=0; f<n; f++) {
+      PetscInt    k = element->iflux[f];
+      PetscScalar v = element->vflux[f];
+      F[k] -= v;
+    }
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt    k = element->ifix[f];
-      PetscScalar u = element->xfix[f];
       PetscScalar v = element->vfix[f];
+      PetscScalar u = element->ufix[f];
       F[k] = u - v;
     }
   } else {
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt a = k / element->dof;
       if (element->index == element->colmap[a]) {
         PetscInt    c = k % element->dof;
-        PetscScalar u = element->xfix[f];
         PetscScalar v = element->vfix[f];
+        PetscScalar u = element->ufix[f];
         F[c] = u - v;
       }
     }
@@ -1019,8 +1162,9 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
   if (!element->collocation) {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt i,j;
       for (i=0; i<M; i++) J[i*N+k] = 0.0;
@@ -1030,8 +1174,9 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
   } else {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
-    PetscInt f,nfix=element->nfix;
-    for (f=0; f<nfix; f++) {
+    PetscInt f,n;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt a = k / element->dof;
       if (element->index == element->colmap[a]) {
