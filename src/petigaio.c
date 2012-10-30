@@ -127,7 +127,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_NewGridGeom"
-static PetscErrorCode IGA_NewGridGeom(IGA iga,IGA_Grid *grid)
+static PetscErrorCode IGA_NewGridGeom(IGA iga,PetscInt bs,IGA_Grid *grid)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -142,7 +142,7 @@ static PetscErrorCode IGA_NewGridGeom(IGA iga,IGA_Grid *grid)
     PetscInt *gstart = iga->geom_gstart;
     PetscInt *gwidth = iga->geom_gwidth;
     ierr = IGA_Grid_Create(comm,grid);CHKERRQ(ierr);
-    ierr = IGA_Grid_Init(*grid,dim,dim+1,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+    ierr = IGA_Grid_Init(*grid,dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -181,7 +181,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 
   {
     IGA_Grid grid;
-    ierr = IGA_NewGridGeom(iga,&grid);CHKERRQ(ierr);
+    ierr = IGA_NewGridGeom(iga,dim+1,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
@@ -271,7 +271,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
             "Must call IGASetSpatialDim() first");
   {
     IGA_Grid grid;
-    ierr = IGA_NewGridGeom(iga,&grid);CHKERRQ(ierr);
+    ierr = IGA_NewGridGeom(iga,dim+1,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
