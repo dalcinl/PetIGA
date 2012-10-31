@@ -1179,7 +1179,7 @@ PetscErrorCode IGASetUp_View(IGA iga)
   PetscBool      flg1,flg2,info=PETSC_FALSE;
   char           filename1[PETSC_MAX_PATH_LEN] = "";
   char           filename2[PETSC_MAX_PATH_LEN] = "";
-  PetscViewer    viewer, newviewer=PETSC_NULL;
+  PetscViewer    viewer;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -1200,14 +1200,11 @@ PetscErrorCode IGASetUp_View(IGA iga)
   }
   if (flg2 && !PetscPreLoadingOn) {
     if (filename2[0]) {
-      ierr = PetscViewerBinaryOpen(((PetscObject)iga)->comm,filename2,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-      newviewer = viewer;
+      ierr = IGAWrite(iga,filename2);CHKERRQ(ierr);
     } else {
       viewer = PETSC_VIEWER_BINARY_(((PetscObject)iga)->comm);
-      PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+      ierr = IGAView(iga,viewer);CHKERRQ(ierr);
     }
-    ierr = IGAView(iga,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&newviewer);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
