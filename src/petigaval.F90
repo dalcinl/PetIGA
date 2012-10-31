@@ -37,12 +37,13 @@ subroutine IGA_GetInvGradGeomMap(nen,nsd,dim,N,C,G) &
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
   real   (kind=IGA_REAL_KIND   ), intent(out)      :: G(nsd,dim)
-  real   (kind=IGA_REAL_KIND   )  :: F(dim,nsd)
-  real   (kind=IGA_REAL_KIND   )  :: M(nsd,nsd), invM(nsd,nsd)
-  F = matmul(N,transpose(C))
+  real   (kind=IGA_REAL_KIND   )  :: F(nsd,dim)
+  real   (kind=IGA_REAL_KIND   )  :: M(dim,dim), detM, invM(dim,dim)
+  F = matmul(C,transpose(N))
   M = matmul(transpose(F),F)
-  invM = Inverse(nsd,Determinant(nsd,M),M)
-  G = matmul(invM,transpose(F))
+  detM = Determinant(dim,M)
+  invM = Inverse(dim,detM,M)
+  G = transpose(matmul(invM,transpose(F)))
 contains
 include 'petigainv.f90.in'
 end subroutine IGA_GetInvGradGeomMap
@@ -52,7 +53,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   bind(C, name="IGA_GetValue")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof9*
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)

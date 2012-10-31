@@ -250,7 +250,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
     }
     for (a=0; a<dim; a++)
       for (i=0; i<nsd; i++)
-        G[a*dim+i] /= L[a];
+        G[a*nsd+i] /= L[a];
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *L = p->scale;

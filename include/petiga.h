@@ -500,6 +500,11 @@ PETSC_EXTERN PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,con
 PETSC_EXTERN PetscErrorCode IGAPointFormPoint    (IGAPoint p,PetscReal x[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGradMap  (IGAPoint p,PetscReal map[],PetscReal inv[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormShapeFuns(IGAPoint p,PetscInt der,PetscReal N[]);
+
+PETSC_EXTERN PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[]);
+
 PETSC_EXTERN PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
