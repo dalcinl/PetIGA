@@ -53,7 +53,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   bind(C, name="IGA_GetValue")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof9*
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)
