@@ -119,6 +119,9 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
     }
   }
   if (iga->geometry) {
+    PetscInt nsd;
+    ierr = IGAGetSpatialDim(iga,&nsd);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&nsd,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
     ierr = IGASaveGeometry(iga,viewer);CHKERRQ(ierr);
   }
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
