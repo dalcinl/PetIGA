@@ -129,8 +129,8 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_NewGridGeom"
-static PetscErrorCode IGA_NewGridGeom(IGA iga,PetscInt bs,IGA_Grid *grid)
+#define __FUNCT__ "IGA_NewGridIO"
+static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -156,8 +156,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
   PetscBool      skipheader;
-  PetscInt       dim;
-  PetscReal      min_w,max_w;
+  PetscInt       nsd;
+  PetscReal      min_w,max_w,tol_w = 100*PETSC_MACHINE_EPSILON;
   Vec            nvec,gvec,lvec;
   VecScatter     g2n,g2l;
   PetscErrorCode ierr;
@@ -171,20 +171,12 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
-  ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
-  if (dim < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetSpatialDim() first");
-
-  iga->geometry = PETSC_FALSE;
-  iga->rational = PETSC_FALSE;
-  ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
-  ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
-  ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
-
+  ierr = IGAGetSpatialDim(iga,&nsd);CHKERRQ(ierr);
+  if (nsd < 1) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+                       "Must call IGASetSpatialDim() first");
   {
     IGA_Grid grid;
-    ierr = IGA_NewGridGeom(iga,dim+1,&grid);CHKERRQ(ierr);
+    ierr = IGA_NewGridIO(iga,nsd+1,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
@@ -197,9 +189,6 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     ierr = PetscObjectReference((PetscObject)g2l);CHKERRQ(ierr);
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
-  ierr = PetscObjectReference((PetscObject)lvec);CHKERRQ(ierr);
-  iga->geom_vec = lvec;
-
   /* viewer -> natural*/
   if (!skipheader)
     {ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);}
@@ -211,8 +200,33 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   /* global -> local */
   ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecStrideMin(gvec,dim,PETSC_NULL,&min_w);CHKERRQ(ierr);
-  ierr = VecStrideMax(gvec,dim,PETSC_NULL,&max_w);CHKERRQ(ierr);
+  ierr = VecStrideMin(gvec,nsd,PETSC_NULL,&min_w);CHKERRQ(ierr);
+  ierr = VecStrideMax(gvec,nsd,PETSC_NULL,&max_w);CHKERRQ(ierr);
+
+  iga->geometry = PETSC_TRUE;
+  iga->rational = ((max_w-min_w)>tol_w) ? PETSC_TRUE : PETSC_FALSE;
+  ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
+  {
+    PetscInt n,a,i,pos;
+    PetscReal *X,*W;
+    const PetscScalar *Xw;
+    ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
+    n /= (nsd+1);
+    ierr = PetscMalloc1(n*nsd,PetscReal,&iga->geometryX);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,    PetscReal,&iga->geometryW);CHKERRQ(ierr);
+    X = iga->geometryX; W = iga->geometryW;
+    ierr = VecGetArrayRead(lvec,&Xw);CHKERRQ(ierr);
+    for (pos=0,a=0; a<n; a++) {
+      for (i=0; i<nsd; i++)
+        X[i+a*nsd] = PetscRealPart(Xw[pos++]);
+      W[a] = PetscRealPart(Xw[pos++]);
+      if (W[a] != 0.0)
+        for (i=0; i<nsd; i++)
+          X[i+a*nsd] /= W[a];
+    }
+    ierr = VecRestoreArrayRead(lvec,&Xw);CHKERRQ(ierr);
+  }
 
   ierr = VecScatterDestroy(&g2n);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&g2l);CHKERRQ(ierr);
@@ -220,31 +234,6 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   ierr = VecDestroy(&gvec);CHKERRQ(ierr);
   ierr = VecDestroy(&nvec);CHKERRQ(ierr);
 
-  iga->geometry = PETSC_TRUE;
-  iga->rational = (PetscAbs(max_w-min_w) > 100*PETSC_MACHINE_EPSILON) ? PETSC_TRUE : PETSC_FALSE;
-  {
-    PetscInt n,bs;
-    PetscInt nnp,dim;
-    PetscInt a,i,pos;
-    const PetscScalar *Xw;
-    PetscReal *X,*W;
-    ierr = VecGetSize(iga->geom_vec,&n);CHKERRQ(ierr);
-    ierr = VecGetBlockSize(iga->geom_vec,&bs);CHKERRQ(ierr);
-    nnp = n / bs; dim = bs - 1;
-    ierr = PetscMalloc1(nnp*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nnp,    PetscReal,&iga->geometryW);CHKERRQ(ierr);
-    X = iga->geometryX; W = iga->geometryW;
-    ierr = VecGetArrayRead(iga->geom_vec,&Xw);CHKERRQ(ierr);
-    for (pos=0,a=0; a<nnp; a++) {
-      for (i=0; i<dim; i++)
-        X[i+a*dim] = PetscRealPart(Xw[pos++]);
-      W[a] = PetscRealPart(Xw[pos++]);
-      if (W[a] != 0.0)
-        for (i=0; i<dim; i++)
-          X[i+a*dim] /= W[a];
-    }
-    ierr = VecRestoreArrayRead(iga->geom_vec,&Xw);CHKERRQ(ierr);
-  }
   PetscFunctionReturn(0);
 }
 
@@ -254,7 +243,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
   PetscBool      skipheader;
-  PetscInt       dim;
+  PetscInt       nsd;
   Vec            nvec,gvec,lvec;
   VecScatter     l2g,g2n;
   PetscErrorCode ierr;
@@ -263,18 +252,16 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
   if (iga->setupstage < 1) IGACheckSetUp(iga,1);
+  if (!iga->geometry) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
   ierr = PetscViewerBinaryGetSkipHeader(viewer,&skipheader);CHKERRQ(ierr);
 
-  ierr = IGAGetSpatialDim(iga,&dim);CHKERRQ(ierr);
-  if (dim < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetSpatialDim() first");
+  ierr = IGAGetSpatialDim(iga,&nsd);CHKERRQ(ierr);
   {
     IGA_Grid grid;
-    ierr = IGA_NewGridGeom(iga,dim+1,&grid);CHKERRQ(ierr);
+    ierr = IGA_NewGridIO(iga,nsd+1,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecNatural(grid,iga->vectype,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecGlobal (grid,iga->vectype,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal  (grid,iga->vectype,&lvec);CHKERRQ(ierr);
@@ -287,8 +274,22 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
     ierr = PetscObjectReference((PetscObject)g2n);CHKERRQ(ierr);
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
-  ierr = VecCopy(iga->geom_vec,lvec);CHKERRQ(ierr);
-
+  {
+    PetscInt n,a,i,pos;
+    PetscScalar *Xw;
+    const PetscReal *X = iga->geometryX;
+    const PetscReal *W = iga->geometryW;
+    ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
+    n /= (nsd+1);
+    ierr = VecGetArray(lvec,&Xw);CHKERRQ(ierr);
+    for (pos=0,a=0; a<n; a++) {
+      PetscReal w = (W[a] != 0.0) ? W[a] : 1.0;
+      for (i=0; i<nsd; i++)
+        Xw[pos++] = X[i+a*nsd] * w;
+      Xw[pos++] = W[a];
+    }
+    ierr = VecRestoreArray(lvec,&Xw);CHKERRQ(ierr);
+  }
   /* local -> global */
   ierr = VecScatterBegin(l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
