@@ -175,12 +175,12 @@ module PetIGA
 
   contains
 
-    pure function IGA_GeomMap(p) result (X)
+    function IGA_GeomMap(p) result (X)
       implicit none
       type(IGAPoint), intent(in) :: p
       real(kind=IGA_REAL_KIND)   :: X(p%nsd)
       interface
-         pure subroutine IGAPoint_GeomMap(p,X) bind(C)
+         subroutine IGAPoint_GeomMap(p,X) bind(C)
            import; implicit none;
            type(IGAPoint), intent(in) :: p
            real(kind=IGA_REAL_KIND), intent(out) :: X(p%nsd)
@@ -189,12 +189,12 @@ module PetIGA
       call IGAPoint_GeomMap(p,X)
     end function IGA_GeomMap
 
-    pure function IGA_GradGeomMap(p) result (F)
+    function IGA_GradGeomMap(p) result (F)
       implicit none
       type(IGAPoint), intent(in) :: p
       real(kind=IGA_REAL_KIND)   :: F(p%dim,p%nsd)
       interface
-         pure subroutine IGAPoint_GradGeomMap(p,F) bind(C)
+         subroutine IGAPoint_GradGeomMap(p,F) bind(C)
            import; implicit none;
            type(IGAPoint), intent(in) :: p
            real(kind=IGA_REAL_KIND), intent(out) :: F(p%dim,p%nsd)
@@ -203,12 +203,12 @@ module PetIGA
       call IGAPoint_GradGeomMap(p,F)
     end function IGA_GradGeomMap
 
-    pure function IGA_InvGradGeomMap(p) result (G)
+    function IGA_InvGradGeomMap(p) result (G)
       implicit none
       type(IGAPoint), intent(in) :: p
       real(kind=IGA_REAL_KIND)   :: G(p%nsd,p%dim)
       interface
-         pure subroutine IGAPoint_InvGradGeomMap(p,G) bind(C)
+         subroutine IGAPoint_InvGradGeomMap(p,G) bind(C)
            import; implicit none;
            type(IGAPoint), intent(in) :: p
            real(kind=IGA_REAL_KIND), intent(out) :: G(p%nsd,p%dim)
@@ -217,7 +217,7 @@ module PetIGA
       call IGAPoint_InvGradGeomMap(p,G)
     end function IGA_InvGradGeomMap
 
-    pure function IGA_Shape0(p) result(N)
+    function IGA_Shape0(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
@@ -225,7 +225,7 @@ module PetIGA
       call c2f(p%shape(0),N,(/p%nen/))
     end function IGA_Shape0
 
-    pure function IGA_Shape1(p) result(N)
+    function IGA_Shape1(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
@@ -233,7 +233,7 @@ module PetIGA
       call c2f(p%shape(1),N,(/p%dim,p%nen/))
     end function IGA_Shape1
 
-    pure function IGA_Shape2(p) result(N)
+    function IGA_Shape2(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
@@ -241,7 +241,7 @@ module PetIGA
       call c2f(p%shape(2),N,(/p%dim,p%dim,p%nen/))
     end function IGA_Shape2
 
-    pure function IGA_Shape3(p) result(N)
+    function IGA_Shape3(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
@@ -252,7 +252,7 @@ module PetIGA
 #define DIM size(N,1)
 #define DOF size(U,1)
 
-    pure function IGA_Shape_Der0_S(N,U) result (V)
+    function IGA_Shape_Der0_S(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:) ! nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -265,7 +265,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der0_S
 
-    pure function IGA_Shape_Der0_V(N,U) result (V)
+    function IGA_Shape_Der0_V(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:)   ! nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
@@ -278,7 +278,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der0_V
 
-    pure function IGA_Shape_Der1_S(N,U) result (V)
+    function IGA_Shape_Der1_S(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)   ! nen
@@ -291,7 +291,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der1_S
 
-    pure function IGA_Shape_Der1_V(N,U) result (V)
+    function IGA_Shape_Der1_V(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
@@ -306,7 +306,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der1_V
 
-    pure function IGA_Shape_Der2_S(N,U) result (V)
+    function IGA_Shape_Der2_S(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:) ! dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)     ! nen
@@ -318,7 +318,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der2_S
 
-    pure function IGA_Shape_Der2_V(N,U) result (V)
+    function IGA_Shape_Der2_V(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:) ! dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)   ! dof,nen
@@ -332,7 +332,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der2_V
 
-    pure function IGA_Shape_Der3_S(N,U) result (V)
+    function IGA_Shape_Der3_S(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:,:) ! dim,dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)       ! nen
@@ -344,7 +344,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der3_S
 
-    pure function IGA_Shape_Der3_V(N,U) result (V)
+    function IGA_Shape_Der3_V(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:,:) ! dim,dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)     ! dof,nen
@@ -358,7 +358,7 @@ module PetIGA
       end do
     end function IGA_Shape_Der3_V
 
-    pure function IGA_Shape_Div(N,U) result (V)
+    function IGA_Shape_Div(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dim,nen
@@ -372,7 +372,7 @@ module PetIGA
       end do
     end function IGA_Shape_Div
 
-    pure function IGA_Shape_Del2_S(N,U) result (V)
+    function IGA_Shape_Del2_S(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:) ! dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)     ! nen
@@ -386,7 +386,7 @@ module PetIGA
       end do
     end function IGA_Shape_Del2_S
 
-    pure function IGA_Shape_Del2_V(N,U) result (V)
+    function IGA_Shape_Del2_V(N,U) result (V)
       implicit none
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:) ! dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)   ! dof,nen
@@ -408,7 +408,7 @@ module PetIGA
 #define DIM p%dim
 #define DOF size(U,1)
 
-    pure function IGA_Point_Der0_S(p,U) result(V)
+    function IGA_Point_Der0_S(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -416,7 +416,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape0(p),U)
     end function IGA_Point_Der0_S
 
-    pure function IGA_Point_Der0_V(p,U) result(V)
+    function IGA_Point_Der0_V(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
@@ -424,7 +424,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape0(p),U)
     end function IGA_Point_Der0_V
 
-    pure function IGA_Point_Der1_S(p,U) result(V)
+    function IGA_Point_Der1_S(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -432,7 +432,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape1(p),U)
     end function IGA_Point_Der1_S
 
-    pure function IGA_Point_Der1_V(p,U) result(V)
+    function IGA_Point_Der1_V(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
@@ -440,7 +440,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape1(p),U)
     end function IGA_Point_Der1_V
 
-    pure function IGA_Point_Der2_S(p,U) result(V)
+    function IGA_Point_Der2_S(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -448,7 +448,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape2(p),U)
     end function IGA_Point_Der2_S
 
-    pure function IGA_Point_Der2_V(p,U) result(V)
+    function IGA_Point_Der2_V(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
@@ -456,7 +456,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape2(p),U)
     end function IGA_Point_Der2_V
 
-    pure function IGA_Point_Der3_S(p,U) result(V)
+    function IGA_Point_Der3_S(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -464,7 +464,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape3(p),U)
     end function IGA_Point_Der3_S
 
-    pure function IGA_Point_Der3_V(p,U) result(V)
+    function IGA_Point_Der3_V(p,U) result(V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)  ! dof,nen
@@ -472,7 +472,7 @@ module PetIGA
       V = IGA_Eval(IGA_Shape3(p),U)
     end function IGA_Point_Der3_V
 
-    pure function IGA_Point_Div(p,U) result (V)
+    function IGA_Point_Div(p,U) result (V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dim,nen
@@ -480,7 +480,7 @@ module PetIGA
       V = IGA_Shape_Div(IGA_Shape1(p),U)
     end function IGA_Point_Div
 
-    pure function IGA_Point_Del2_S(p,U) result (V)
+    function IGA_Point_Del2_S(p,U) result (V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:) ! nen
@@ -488,7 +488,7 @@ module PetIGA
       V = IGA_Shape_Del2_S(IGA_Shape2(p),U)
     end function IGA_Point_Del2_S
 
-    pure function IGA_Point_Del2_V(p,U) result (V)
+    function IGA_Point_Del2_V(p,U) result (V)
       implicit none
       type(IGAPoint), intent(in) :: p
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
