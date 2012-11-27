@@ -29,3 +29,6 @@ MANSEC   = IGA
 include ${PETIGA_DIR}/conf/petigavariables
 include ${PETIGA_DIR}/conf/petigarules
 include ${PETIGA_DIR}/conf/petigatest
+
+OBJSC    = ${SOURCEC:.c=.o}
+OBJSF    = ${SOURCEF1:.F90=.o} ${SOURCEF2:.f90=.o}

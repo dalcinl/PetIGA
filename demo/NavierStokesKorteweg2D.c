@@ -288,7 +288,11 @@ int main(int argc, char *argv[]) {
   PetscReal t=0; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(iga,t,U,&user);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+    ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+#else
+    ierr = TSSolve(ts,U);CHKERRQ(ierr);
+#endif
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);

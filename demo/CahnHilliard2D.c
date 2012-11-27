@@ -340,10 +340,14 @@ int main(int argc, char *argv[]) {
   }
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
-  PetscReal t; Vec U;
+  Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,initial,U);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+    ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+#else
+    ierr = TSSolve(ts,U);CHKERRQ(ierr);
+#endif
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);

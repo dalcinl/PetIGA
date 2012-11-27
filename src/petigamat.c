@@ -317,7 +317,11 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   *mat = A;
 
   { /* XXX */
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
     ierr = PetscObjectCompose((PetscObject)*mat,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
+#else
+    ierr = MatSetDM(*mat,iga->node_dm);CHKERRQ(ierr);
+#endif
     ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
     if (size > 1) { /* change viewer to display matrix in natural ordering */
       ierr = MatShellSetOperation(*mat,MATOP_VIEW,(void (*)(void))MatView_MPI_DA);CHKERRQ(ierr);

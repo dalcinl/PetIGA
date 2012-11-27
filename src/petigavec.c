@@ -62,7 +62,11 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
   { /* XXX */
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
     ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
+#else
+    ierr = VecSetDM(*vec,iga->node_dm);CHKERRQ(ierr);
+#endif
     ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_MPI_DA);CHKERRQ(ierr);
     ierr = VecSetOperation(*vec,VECOP_LOAD,(void(*)(void))VecLoad_Default_DA);CHKERRQ(ierr);
   } /* XXX */
