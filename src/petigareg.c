@@ -15,6 +15,8 @@ extern PetscErrorCode PCCreate_EBE(PC);
 extern PetscErrorCode PCCreate_BBB(PC);
 EXTERN_C_END
 
+extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGARegisterAll"
 PetscErrorCode IGARegisterAll(const char path[])
@@ -55,6 +57,8 @@ PetscErrorCode IGAInitializePackage(const char path[])
   ierr = PetscLogEventRegister("IGAColFormSystem",IGA_CLASSID,&IGA_ColFormSystem);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormFunction",IGA_CLASSID,&IGA_FormFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);
+  /* Additional option handlers */
+  ierr = SNESAddOptionsChecker(SNESSetFromOptions_FDColoring);CHKERRQ(ierr);
   /* Register finalization routine */
   ierr = PetscRegisterFinalize(IGAFinalizePackage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
