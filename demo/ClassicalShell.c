@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
   user.t  = 1.;
   user.k  = 5./6.;
 
-  char filename[PETSC_MAX_PATH_LEN] = "shell.dat";
+  char filename[PETSC_MAX_PATH_LEN] = "ClassicalShell.dat";
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,2);CHKERRQ(ierr);

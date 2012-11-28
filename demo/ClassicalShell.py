@@ -48,13 +48,13 @@ C[1,2,:] = [100,   0,100,1]
 C[:,1,:] *= val
 
 geom = NURBS([U,V],C)
-geom.elevate(max(p-1,0),max(p-2,0))
+geom.elevate(0,max(p-1,0)).elevate(1,max(p-2,0))
 
 h = 1./N
 insert = np.linspace(h,1.-h,N-1)
-geom = geom.refine(insert,insert)
+geom.refine(0,insert).refine(1,insert)
 
-WritePetIGAGeometry(geom,"shell.dat")
+WritePetIGAGeometry(geom,"ClassicalShell.dat")
 
 if False:
     from igakit.plot import plt
