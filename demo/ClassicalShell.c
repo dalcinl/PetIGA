@@ -237,9 +237,10 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(PETSC_COMM_WORLD,&size);
   if(rank == size-1){ 
     PetscScalar sol;
-    VecGetValues(x,1,&fdof,&sol);
+    ierr = VecGetValues(x,1,&fdof,&sol);CHKERRQ(ierr);
     PetscPrintf(PETSC_COMM_SELF,"x[%d]=%g\n",fdof,sol);
   }
+  ierr = IGAWriteVec(iga,x,"ClassicalShell.out");CHKERRQ(ierr);
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);

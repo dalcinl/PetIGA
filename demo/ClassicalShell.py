@@ -1,38 +1,11 @@
+import sys, numpy as np
 from igakit.nurbs import NURBS
-import numpy as np
-import sys
-
-def WritePetIGAGeometry(geom,fname):
-    iga_id = 1211299
-    vec_id = 1211214
-    def write_integer(fh, data):
-        np.array(data, dtype='>i4').tofile(fh)
-    def write_scalar(fh, data):
-        np.array(data, dtype='>f8').tofile(fh)
-    fh = open(fname,'wb')
-    descr = +1
-    dim = geom.dim
-    write_integer(fh,[iga_id,descr,dim])
-    for i in range(geom.dim):
-        p = geom.degree[i]
-        U = geom.knots[i]
-        m = len(U)
-        write_integer(fh,[p,m])
-        write_scalar(fh,U)
-    if descr:
-        nsd = 3
-        Cw = geom.control#[...,range(dim)+[3]]
-        Cw = np.rollaxis(Cw, -1).transpose().copy()
-        write_integer(fh,[nsd,vec_id,Cw.size])
-        write_scalar(fh,Cw)
-        fh.flush()
-        fh.close()
-
 
 N = 10
 p = 2
-if len(sys.argv) == 3:
+if len(sys.argv) >= 2:
     N = int(sys.argv[1])
+if len(sys.argv) >= 3:
     p = int(sys.argv[2])
 
 U = [0,0,     1,1]
@@ -54,7 +27,9 @@ h = 1./N
 insert = np.linspace(h,1.-h,N-1)
 geom.refine(0,insert).refine(1,insert)
 
-WritePetIGAGeometry(geom,"ClassicalShell.dat")
+if True:
+    from igakit.io import PetIGA
+    PetIGA().write("ClassicalShell.dat", geom, nsd=3)
 
 if False:
     from igakit.plot import plt
@@ -65,3 +40,15 @@ if False:
     plt.surface(geom)
     plt.show()
 
+if False:
+    from igakit.io import PetIGA, VTK
+    nrb = PetIGA().read("ClassicalShell.dat")
+    sol = PetIGA().read_vec("ClassicalShell.out",nrb)
+    U = sol[...,:3]
+    X = nrb.points
+    W = nrb.weights
+    nrb = NURBS(nrb.knots, (X,W), U)
+    VTK().write("ClassicalShell.vtk", nrb,
+                scalars=dict(),
+                vectors=dict(displacement=[0,1,2]),
+                )
