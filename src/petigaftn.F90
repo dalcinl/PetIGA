@@ -75,13 +75,16 @@ module PetIGA
      integer(kind=IGA_INTEGER_KIND) :: dof
      integer(kind=IGA_INTEGER_KIND) :: dim
      integer(kind=IGA_INTEGER_KIND) :: nsd
+     integer(kind=IGA_INTEGER_KIND) :: npd
+
+     type(C_PTR) :: geometry
+     type(C_PTR) :: property
 
      type(C_PTR) :: weight
      type(C_PTR) :: detJac
      type(C_PTR) :: point
      type(C_PTR) :: scale
      type(C_PTR) :: basis(0:3)
-     type(C_PTR) :: geometry
      type(C_PTR) :: detX
      type(C_PTR) :: gradX(0:1)
      type(C_PTR) :: shape(0:3)
@@ -174,6 +177,22 @@ module PetIGA
   end interface IGA_Del2
 
   contains
+
+    pure function IGA_Geometry(p) result(X)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: X(:)
+      call c2f(p%geometry,X,(/p%nsd,p%nen/))
+    end function IGA_Geometry
+
+    pure function IGA_Property(p) result(A)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: A(:)
+      call c2f(p%property,A,(/p%npd,p%nen/))
+    end function IGA_Property
 
     function IGA_GeomMap(p) result (X)
       implicit none

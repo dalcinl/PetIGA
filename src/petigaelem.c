@@ -91,7 +91,8 @@ PetscErrorCode IGAElementReset(IGAElement element)
 
   ierr = PetscFree(element->mapping);CHKERRQ(ierr);
   ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
-  ierr = PetscFree(element->geometryW);CHKERRQ(ierr);
+  ierr = PetscFree(element->rationalW);CHKERRQ(ierr);
+  ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
 
   ierr = PetscFree(element->weight);CHKERRQ(ierr);
   ierr = PetscFree(element->detJac);CHKERRQ(ierr);
@@ -133,7 +134,8 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 
   element->dof = iga->dof;
   element->dim = iga->dim;
-  element->nsd = iga->nsd ? iga->nsd : iga->dim;
+  element->nsd = iga->geometry ? iga->geometry : iga->dim;
+  element->npd = iga->property ? iga->property : 0;
   if (!element->collocation) {
     start = iga->elem_start;
     width = iga->elem_width;
@@ -165,12 +167,14 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   { /* */
     PetscInt dim = element->dim;
     PetscInt nsd = element->nsd;
+    PetscInt npd = element->npd;
     PetscInt nen = element->nen;
     PetscInt nqp = element->nqp;
 
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*nsd,PetscReal,&element->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nen    ,PetscReal,&element->geometryW);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen,PetscReal,&element->rationalW);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*npd,PetscScalar,&element->propertyA);CHKERRQ(ierr);
 
     ierr = PetscMalloc1(nqp,PetscReal,&element->weight);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,PetscReal,&element->detJac);CHKERRQ(ierr);
@@ -290,6 +294,7 @@ PetscBool IGANextElement(IGA iga,IGAElement element)
 #define CHKERRRETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
   ierr = IGAElementBuildMapping(element);  CHKERRRETURN(ierr,PETSC_FALSE);
   ierr = IGAElementBuildGeometry(element); CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildProperty(element); CHKERRRETURN(ierr,PETSC_FALSE);
   ierr = IGAElementBuildFix(element);      CHKERRRETURN(ierr,PETSC_FALSE);
 #undef  CHKERRRETURN
   return PETSC_TRUE;
@@ -345,6 +350,7 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point)
   (*point)->dof = element->dof;
   (*point)->dim = element->dim;
   (*point)->nsd = element->nsd;
+  (*point)->npd = element->npd;
 
   PetscFunctionReturn(0);
 }
@@ -389,6 +395,13 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
 
  start:
 
+  point->geometry = element->geometryX;
+  point->property = element->propertyA;
+  if (!element->geometry)
+    point->geometry = PETSC_NULL;
+  if (!element->property)
+    point->property = PETSC_NULL;
+  
   point->weight   = element->weight;
   point->detJac   = element->detJac;
 
@@ -399,10 +412,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->basis[2] = element->basis[2];
   point->basis[3] = element->basis[3];
 
-  if (element->geometry)
-    point->geometry = element->geometryX;
-  else
-    point->geometry = PETSC_NULL;
   if (element->geometry && dim == nsd) { /* XXX */
     point->detX     = element->detX;
     point->gradX[0] = element->gradX[0];
@@ -590,14 +599,14 @@ PetscErrorCode IGAElementBuildGeometry(IGAElement element)
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   iga = element->parent;
-  element->geometry = iga->geometry;
-  element->rational = iga->rational;
+  element->geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
+  element->rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
   if (element->geometry || element->rational) {
     const PetscInt  *map = element->mapping;
     const PetscReal *arrayX = iga->geometryX;
-    const PetscReal *arrayW = iga->geometryW;
+    const PetscReal *arrayW = iga->rationalW;
     PetscReal *X = element->geometryX;
-    PetscReal *W = element->geometryW;
+    PetscReal *W = element->rationalW;
     PetscInt a,nen = element->nen;
     PetscInt i,nsd = element->nsd;
     if (element->geometry)
@@ -607,6 +616,30 @@ PetscErrorCode IGAElementBuildGeometry(IGAElement element)
     if (element->rational)
       for (a=0; a<nen; a++)
         W[a] = arrayW[map[a]];
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementBuildProperty"
+PetscErrorCode IGAElementBuildProperty(IGAElement element)
+{
+  IGA iga;
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  iga = element->parent;
+  element->property = iga->property ? PETSC_TRUE: PETSC_FALSE;
+  if (element->property) {
+    const PetscInt *map = element->mapping;
+    const PetscScalar *arrayA = iga->propertyA;
+    PetscScalar *A = element->propertyA;
+    PetscInt a,nen = element->nen;
+    PetscInt i,npd = element->npd;
+    for (a=0; a<nen; a++)
+      for (i=0; i<npd; i++)
+        A[i + a*npd] = arrayA[i + map[a]*npd];
   }
   PetscFunctionReturn(0);
 }
@@ -705,18 +738,18 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     PetscReal **N = element->basis;
     switch (element->dim) {
     case 3: IGA_BasisFuns_3D(order,element->rational,
-                             element->geometryW,
+                             element->rationalW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              IGA_BasisFuns_ARGS(ID,BD,2),
                              N[0],N[1],N[2],N[3]); break;
     case 2: IGA_BasisFuns_2D(order,element->rational,
-                             element->geometryW,
+                             element->rationalW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              N[0],N[1],N[2],N[3]); break;
     case 1: IGA_BasisFuns_1D(order,element->rational,
-                             element->geometryW,
+                             element->rationalW,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              N[0],N[1],N[2],N[3]); break;
     }
@@ -924,12 +957,12 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
     switch (dim) {
     case 2: IGA_BoundaryArea_2D(shape,dir,side,
                                 element->geometry,element->geometryX,
-                                element->rational,element->geometryW,
+                                element->rational,element->rationalW,
                                 nqp[0],W[0],nen[0],ndr[0],N[0],
                                 &dS); break;
     case 3: IGA_BoundaryArea_3D(shape,dir,side,
                                 element->geometry,element->geometryX,
-                                element->rational,element->geometryW,
+                                element->rational,element->rationalW,
                                 nqp[0],W[0],nen[0],ndr[0],N[0],
                                 nqp[1],W[1],nen[1],ndr[1],N[1],
                                 &dS);break;

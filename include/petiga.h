@@ -190,7 +190,6 @@ struct _p_IGA {
   char       **fieldname;
 
   PetscInt  dim;   /* parametric dimension of the function space*/
-  PetscInt  nsd;   /* spatial dimension of the geometry */
   PetscInt  dof;   /* number of degrees of freedom per node */
   PetscInt  order; /* maximum derivative order */
 
@@ -206,6 +205,14 @@ struct _p_IGA {
   IGABasis    node_basis[3];
   IGAElement  node_iterator;
 
+
+  PetscInt    geometry;
+  PetscBool   rational;
+  PetscInt    property;
+  PetscReal   *geometryX;
+  PetscReal   *rationalW;
+  PetscScalar *propertyA;
+
   PetscInt  proc_sizes[3];
   PetscInt  proc_ranks[3];
 
@@ -215,16 +222,11 @@ struct _p_IGA {
   Vec       elem_vec;
   DM        elem_dm;
 
-  PetscBool geometry;
-  PetscBool rational;
-  PetscReal *geometryX;
-  PetscReal *geometryW;
   PetscInt  geom_sizes[3];
   PetscInt  geom_lstart[3];
   PetscInt  geom_lwidth[3];
   PetscInt  geom_gstart[3];
   PetscInt  geom_gwidth[3];
-  Vec       geom_vec;
   DM        geom_dm;
 
   PetscInt  node_sizes[3];
@@ -266,8 +268,15 @@ PETSC_EXTERN PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGARead(IGA iga,const char filename[]);
 PETSC_EXTERN PetscErrorCode IGAWrite(IGA iga,const char filename[]);
 
+PETSC_EXTERN PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim);
+PETSC_EXTERN PetscErrorCode IGAGetGeometryDim(IGA iga,PetscInt *dim);
 PETSC_EXTERN PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer);
+
+PETSC_EXTERN PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim);
+PETSC_EXTERN PetscErrorCode IGAGetPropertyDim(IGA iga,PetscInt *dim);
+PETSC_EXTERN PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer);
 
 PETSC_EXTERN PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer);
@@ -276,8 +285,6 @@ PETSC_EXTERN PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[]);
 
 PETSC_EXTERN PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 PETSC_EXTERN PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);
-PETSC_EXTERN PetscErrorCode IGASetSpatialDim(IGA iga,PetscInt nsd);
-PETSC_EXTERN PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd);
 PETSC_EXTERN PetscErrorCode IGASetDof(IGA iga,PetscInt dof);
 PETSC_EXTERN PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof);
 PETSC_EXTERN PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[]);
@@ -342,14 +349,17 @@ struct _n_IGAElement {
   PetscInt dof;
   PetscInt dim;
   PetscInt nsd;
+  PetscInt npd;
+
   IGABasis *BD;
 
-  PetscInt  *mapping;  /*   [nen]      */
-
-  PetscBool geometry;
-  PetscBool rational;
-  PetscReal *geometryX;/*   [nen][nsd] */
-  PetscReal *geometryW;/*   [nen]      */
+  PetscInt    *mapping;   /*[nen]      */
+  PetscBool   geometry;
+  PetscReal   *geometryX; /*[nen][nsd] */
+  PetscBool   rational;
+  PetscReal   *rationalW; /*[nen]      */
+  PetscBool   property;
+  PetscScalar *propertyA; /*[nen][npd] */
 
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
@@ -412,6 +422,7 @@ PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *poin
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildMapping(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildGeometry(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementBuildProperty(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns(IGAElement element);
 
@@ -455,10 +466,13 @@ struct _n_IGAPoint {
   PetscInt dof;
   PetscInt dim;
   PetscInt nsd;
+  PetscInt npd;
 
-  PetscReal *weight;   /*      */
-  PetscReal *detJac;   /*      */
+  PetscReal   *geometry;/*  [nen][nsd] */
+  PetscScalar *property;/*  [nen][npd] */
 
+  PetscReal *weight;   /*   [1]   */
+  PetscReal *detJac;   /*   [1]   */
   PetscReal *point;    /*   [dim] */
   PetscReal *scale;    /*   [dim] */
   PetscReal *basis[4]; /*0: [nen] */
@@ -466,7 +480,6 @@ struct _n_IGAPoint {
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
 
-  PetscReal *geometry; /*   [nen][nsd] */
   PetscReal *detX;     /*   [1] */
   PetscReal *gradX[2]; /*0: [nsd][dim] */
                        /*1: [dim][nsd] */

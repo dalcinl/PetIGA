@@ -125,11 +125,12 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecDestroy(&iga->elem_vec);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
-  iga->geometry = PETSC_FALSE;
+  iga->geometry = 0;
   iga->rational = PETSC_FALSE;
+  iga->property = 0;
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
-  ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
-  ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
+  ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
+  ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
   /* node */
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
@@ -277,47 +278,6 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dim,2);
   *dim = iga->dim;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetSpatialDim"
-/*@
-   IGASetSpatialDim - Sets the dimension of the geometry
-
-   Logically Collective on IGA
-
-   Input Parameters:
-+  iga - the IGA context
--  dim - the dimension of the geometry
-
-   Level: normal
-
-.keywords: IGA, dimension
-@*/
-PetscErrorCode IGASetSpatialDim(IGA iga,PetscInt nsd)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidLogicalCollectiveInt(iga,nsd,2);
-  if (nsd < 1 || nsd > 3)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Number of space dimensions must be in range [1,3], got %D",nsd);
-  if (iga->nsd > 0 && iga->nsd != nsd)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA dim from %D after it was set to %D",iga->nsd,nsd);
-  iga->nsd = nsd;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetSpatialDim"
-PetscErrorCode IGAGetSpatialDim(IGA iga,PetscInt *nsd)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(nsd,2);
-  *nsd = iga->nsd;
   PetscFunctionReturn(0);
 }
 
@@ -1052,11 +1012,12 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
   ierr = VecDestroy(&iga->elem_vec);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
-  iga->geometry = PETSC_FALSE;
+  iga->geometry = 0;
   iga->rational = PETSC_FALSE;
+  iga->property = 0;
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
-  ierr = PetscFree(iga->geometryW);CHKERRQ(ierr);
-  ierr = VecDestroy(&iga->geom_vec);CHKERRQ(ierr);
+  ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
+  ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
