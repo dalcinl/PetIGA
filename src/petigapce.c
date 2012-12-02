@@ -282,7 +282,7 @@ PetscErrorCode PCCreate_EBE(PC pc)
   pc->ops->setup               = PCSetUp_EBE;
   pc->ops->reset               = PCReset_EBE;
   pc->ops->destroy             = PCDestroy_EBE;
-  pc->ops->setfromoptions      = 0;/*PCSetFromOptions_EBE;*/
+  pc->ops->setfromoptions      = 0;/* PCSetFromOptions_EBE; */
   pc->ops->view                = PCView_EBE;
   pc->ops->apply               = PCApply_EBE;
   pc->ops->applytranspose      = PCApplyTranspose_EBE;

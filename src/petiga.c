@@ -794,7 +794,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
     }
     ierr = MPI_Comm_free(&cartcomm);CHKERRQ(ierr);
   }
-#endif /*PETSC_HAVE_MPIUNI*/
+#endif /* PETSC_HAVE_MPIUNI */
   PetscFunctionReturn(0);
 }
 

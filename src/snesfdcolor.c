@@ -60,7 +60,7 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
 #define __FUNCT__ "SNESSetFromOptions_FDColoring"
 PetscErrorCode SNESSetFromOptions_FDColoring(SNES snes)
 {
-  /*SNESAddOptionsChecker SNESSetFromOptions*/
+  /* SNESAddOptionsChecker SNESSetFromOptions */
   PetscBool      fdc = PETSC_FALSE;
   PetscErrorCode ierr;
   PetscFunctionBegin;
