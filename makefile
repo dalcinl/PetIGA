@@ -131,14 +131,12 @@ test-build:
 
 doc:
 	@if [ ! -d docs/html ]; then \
-	  mkdir docs/html; \
+	  ${MKDIR} docs/html; \
 	fi
 	-@${RM} docs/html/*.html
-
 	@${PETSC_DIR}/${PETSC_ARCH}/bin/doctext -mpath docs/html -html src/*.c
-
 	@#! /bin/sh
-	@echo '<TITLE>PetIGA Documentation</TITLE>' > docs/html/index.html 
+	@echo '<TITLE>PetIGA Documentation</TITLE>' > docs/html/index.html
 	@echo '<H1>PetIGA Documentation</H1>' >> docs/html/index.html
 	@echo '<MENU>' >> docs/html/index.html
 	@ls -1 docs/html | grep .html | grep -v index.html | sed -e 's%^\(.*\).html$$%<LI><A HREF="\1.html">\1</A>%g' >> docs/html/index.html

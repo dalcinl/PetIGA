@@ -363,8 +363,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   PetscInt dim = point->dim;
   PetscInt nsd = point->nsd;
   PetscInt index;
-  /* PetscValidPointer(element,1); */
-  /* PetscValidPointer(point,2); */
   /* */
   point->nvec = 0;
   point->nmat = 0;

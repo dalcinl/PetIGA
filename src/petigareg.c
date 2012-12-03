@@ -40,7 +40,6 @@ PetscErrorCode IGARegisterAll(const char path[])
 #define __FUNCT__ "IGAFinalizePackage"
 PetscErrorCode IGAFinalizePackage(void)
 {
-  /* PetscErrorCode ierr; */
   PetscFunctionBegin;
   PetscFunctionReturn(0);
 }
