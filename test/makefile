@@ -16,6 +16,7 @@ include ${PETIGA_DIR}/conf/petigarules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
+
 IGACreate: IGACreate.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -68,8 +69,22 @@ Test_SNES_2D = Test_SNES_2D.PETSc  \
 	       runex0c_1 runex0c_4 \
 	       Test_SNES_2D.rm
 
-TESTEXAMPLES_C =$(IGACreate) \
-                $(Test_SNES_2D)
+Oscillator: Oscillator.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex2a:
+	-@./Oscillator ${OPTS} -ts_max_steps 10
+runex2b:
+	-@./Oscillator ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
+runex2c:
+	-@./Oscillator ${OPTS} -damping 0.1
+Oscillator = Oscillator.PETSc \
+	     runex2a runex2b runex2c \
+	     Oscillator.rm
+
+TESTEXAMPLES_C = $(IGACreate)  \
+	         $(Test_SNES_2D) \
+	         $(Oscillator)
 TESTEXAMPLES_FORTRAN =
 test-all:
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}

@@ -94,6 +94,9 @@ ShallowWater: ShallowWater.o chkopts
 ClassicalShell: ClassicalShell.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+ElasticRod: ElasticRod.o ElasticRodFJ.o chkopts
+	${CLINKER} -o $@ $< ElasticRodFJ.o ${PETIGA_LIB}
+	${RM} -f $< ElasticRodFJ.o elasticrodfj.mod
 Elasticity3D: Elasticity3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -176,6 +179,10 @@ runex7b_4:
 	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -dim 2
 runex7c_4:
 	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -dim 3
+runex8_1:
+	-@${MPIEXEC} -n 1 ./ElasticRod ${OPTS} -ts_max_steps 10
+runex8_4:
+	-@${MPIEXEC} -n 4 ./ElasticRod ${OPTS} -ts_max_steps 10
 
 
 InputOutput := InputOutput.PETSc runex0a_1 runex0a_2 runex0a_3 runex0a_4 runex0a_8 runex0a.rm InputOutput.rm
@@ -188,12 +195,13 @@ Neumann := Neumann.PETSc runex7a_1 runex7a_4 runex7b_1 runex7b_4 runex7c_4 Neuma
 Bratu := Bratu.PETSc runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 runex6d_1 Bratu.rm
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
 PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b_4 PatternFormation.rm
+ElasticRod := ElasticRod.PETSc runex8_1 runex8_4 ElasticRod.rm
 
 L2Proj       := $(L2Proj1D) $(L2Proj2D) $(L2Proj3D)
 Poisson      := $(Poisson1D) $(Poisson2D) $(Poisson3D)
 CahnHilliard := $(CahnHilliard2D) $(CahnHilliard3D)
 
-TESTEXAMPLES_C := $(InputOutput) $(L2Proj) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation)
+TESTEXAMPLES_C := $(InputOutput) $(L2Proj) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
 TESTEXAMPLES_F :=
 TESTEXAMPLES_FORTRAN:=$(TESTEXAMPLES_F)
 testexamples:

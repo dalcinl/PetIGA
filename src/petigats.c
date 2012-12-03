@@ -1,5 +1,8 @@
 #include "petiga.h"
 
+extern PetscErrorCode IGATSFormIFunction(TS,PetscReal,Vec,Vec,Vec,void*);
+extern PetscErrorCode IGATSFormIJacobian(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+
 extern PetscLogEvent IGA_FormFunction;
 extern PetscLogEvent IGA_FormJacobian;
 
@@ -450,7 +453,7 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
 /*@
    IGACreateTS - Creates a TS (time stepper) which uses the same
    communicators as the IGA.
-   
+
    Logically collective on IGA
 
    Input Parameter:

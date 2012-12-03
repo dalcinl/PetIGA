@@ -691,7 +691,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         if (nw == 0) w = PETSC_TRUE;
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
-    
+
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
@@ -939,7 +939,7 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
 
   for (i=0; i<iga->dim; i++)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
-  for (i=iga->dim; i<3; i++) 
+  for (i=iga->dim; i<3; i++)
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
 
   { /* processor grid and coordinates */
@@ -1273,7 +1273,7 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
 /*@
    IGASetUserSystem - Set the user callback to form the matrix and vector
    which represents the discretized a(w,u) = L(w).
-   
+
    Logically collective on IGA
 
    Input Parameters:
@@ -1404,6 +1404,95 @@ PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJac
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (IJacobian) iga->userops->IJacobian = IJacobian;
   if (IJacCtx)   iga->userops->IJacCtx   = IJacCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUserIFunction2"
+/*@
+   IGASetUserIFunction - Set the function which computes the residual
+       F(t,U_tt,U_t,U)=0 for use with implicit time stepping routines.
+
+   Logically Collective on TS
+
+   Input Parameter:
++  iga - the IGA context
+.  IFunction - the function evaluation routine
+-  IFunCtx - user-defined context for private data for the function evaluation routine (may be PETSC_NULL)
+
+   Details of IFunction:
+$  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
+                            PetscReal a,const PetscScalar *A,
+                            PetscReal v,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *F,void *ctx);
+
++  p - point at which to compute the residual
+.  dt - time step size
+.  a - positive parameter which depends on the time integration method
+.  A - second time derivative of the state vector
+.  v - positive parameter which depends on the time integration method
+.  V - time derivative of the state vector
+.  t - time at step/stage being solved
+.  U - state vector
+.  F - function vector
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
+PetscErrorCode IGASetUserIFunction2(IGA iga,IGAUserIFunction2 IFunction,void *IFunCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (IFunction) iga->userops->IFunction2 = IFunction;
+  if (IFunCtx)   iga->userops->IFunCtx    = IFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUserIJacobian2"
+/*@
+   IGASetUserIJacobian2 - Set the function to compute the matrix
+       J = a*dF/dU_tt + v*dF/dU_t + dF/dU  where F(t,U_tt,U_t,U) is
+       the function you provided with IGASetUserIFunction2().
+
+   Logically Collective on TS
+
+   Input Parameter:
++  iga       - the IGA context
+.  IJacobian - the Jacobian evaluation routine
+-  IJacCtx   - user-defined context for private data for the Jacobian evaluation routine (may be PETSC_NULL)
+
+   Details of IJacobian:
+$  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
+                            PetscReal a,const PetscScalar *A,
+                            PetscReal v,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *J,void *ctx);
+
++  p   - point at which to compute the Jacobian
+.  dt  - time step size
+.  a   - positive parameter which depends on the time integration method
+.  A   - second time derivative of the state vector
+.  v   - positive parameter which depends on the time integration method
+.  V   - time derivative of the state vector
+.  t   - time at step/stage being solved
+.  U   - state vector
+.  J   - Jacobian matrix
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
+PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJacobian,void *IJacCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (IJacobian) iga->userops->IJacobian2 = IJacobian;
+  if (IJacCtx)   iga->userops->IJacCtx    = IJacCtx;
   PetscFunctionReturn(0);
 }
 
