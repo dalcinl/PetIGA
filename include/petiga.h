@@ -518,6 +518,7 @@ PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointReset(IGAPoint point);
 PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
 
+PETSC_EXTERN PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count);
 PETSC_EXTERN PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof);

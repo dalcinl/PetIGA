@@ -81,6 +81,17 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointGetParent"
+PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  PetscValidPointer(element,2);
+  *element = point->parent;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetIndex"
 PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 {
