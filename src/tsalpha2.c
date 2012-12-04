@@ -362,7 +362,7 @@ PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Ve
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  if (!th->Function) SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call TSSetIFunction()");
+  if (!th->Function) SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call TSSetIFunction2()");
   ierr = PetscLogEventBegin(TS_FunctionEval,ts,X,V,F);CHKERRQ(ierr);
   PetscStackPush("TS user implicit function");
   ierr = (*th->Function)(ts,t,X,V,A,F,th->FunCtx);CHKERRQ(ierr);
