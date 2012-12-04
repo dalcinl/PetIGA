@@ -2,8 +2,8 @@
 
 #undef __FUNCT__
 #define __FUNCT__ "MatFDColoringSetOptionsPrefix"
-static PetscErrorCode
-MatFDColoringSetOptionsPrefix(MatFDColoring fdc, const char prefix[]) {
+static PetscErrorCode MatFDColoringSetOptionsPrefix(MatFDColoring fdc, const char prefix[])
+{
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(fdc,MAT_FDCOLORING_CLASSID,1);
@@ -55,6 +55,8 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
 
   PetscFunctionReturn(0);
 }
+
+extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESSetFromOptions_FDColoring"

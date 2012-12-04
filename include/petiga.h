@@ -263,6 +263,8 @@ PETSC_EXTERN PetscClassId IGA_CLASSID;
 #define IGA_FILE_CLASSID 1211299
 
 PETSC_EXTERN PetscErrorCode IGAInitializePackage(const char path[]);
+PETSC_EXTERN PetscErrorCode IGAFinalizePackage(void);
+PETSC_EXTERN PetscErrorCode IGARegisterAll(const char path[]);
 
 PETSC_EXTERN PetscErrorCode IGACreate(MPI_Comm comm,IGA *iga);
 PETSC_EXTERN PetscErrorCode IGADestroy(IGA *iga);
@@ -441,6 +443,7 @@ PETSC_EXTERN PetscErrorCode IGAElementBuildProperty(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns(IGAElement element);
 
+PETSC_EXTERN PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent);
 PETSC_EXTERN PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count);
 

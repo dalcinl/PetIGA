@@ -155,6 +155,9 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   PetscFunctionReturn(0);
 }
 
+extern PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
+extern PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGASNESFormFunction"
 PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
