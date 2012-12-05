@@ -259,6 +259,32 @@ PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAAxisGetLimits"
+PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(axis,1);
+  if (Ui) PetscValidRealPointer(Ui,2);
+  if (Uf) PetscValidRealPointer(Uf,3);
+  if (Ui) *Ui = axis->U[axis->p];
+  if (Uf) *Uf = axis->U[axis->m-axis->p];
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAAxisGetSizes"
+PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(axis,1);
+  if (nel) PetscValidIntPointer(nel,2);
+  if (nnp) PetscValidIntPointer(nnp,3);
+  if (nel) *nel = axis->nel;
+  if (nnp) *nnp = axis->nnp;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitBreaks"
 PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt C)
 {
