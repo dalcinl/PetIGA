@@ -286,7 +286,7 @@ PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisInitBreaks"
-PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,PetscReal u[],PetscInt C)
+PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],PetscInt C)
 {
   PetscInt       i,j,k;
   PetscInt       p,s,n,m,r;
