@@ -32,6 +32,16 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointReference"
+PetscErrorCode IGAPointReference(IGAPoint point)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  point->refct++;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointFreeWork"
 static
 PetscErrorCode IGAPointFreeWork(IGAPoint point)

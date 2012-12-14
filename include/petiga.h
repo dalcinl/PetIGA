@@ -517,6 +517,7 @@ struct _n_IGAPoint {
 };
 PETSC_EXTERN PetscErrorCode IGAPointCreate(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
+PETSC_EXTERN PetscErrorCode IGAPointReference(IGAPoint point);
 PETSC_EXTERN PetscErrorCode IGAPointReset(IGAPoint point);
 PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
 
