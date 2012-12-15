@@ -14,7 +14,8 @@ TARGETS = InputOutput \
 	  NavierStokesVMS \
 	  Elasticity3D \
 	  HyperElasticity \
-	  PhaseFieldCrystal2D
+	  PhaseFieldCrystal2D \
+          BoundaryIntegral
 
 ALL: ${TARGETS}
 clean::
@@ -104,6 +105,9 @@ HyperElasticity: HyperElasticity.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 PhaseFieldCrystal2D: PhaseFieldCrystal2D.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+BoundaryIntegral: BoundaryIntegral.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 

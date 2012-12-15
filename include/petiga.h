@@ -100,28 +100,6 @@ PETSC_EXTERN PetscErrorCode IGABasisReference(IGABasis basis);
 PETSC_EXTERN PetscErrorCode IGABasisInitQuadrature (IGABasis basis,IGAAxis axis,IGARule rule,PetscInt order);
 PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt order);
 
-struct _n_IGABoundary {
-  PetscInt refct;
-  /**/
-  PetscInt    dof;
-  /**/
-  PetscInt    count;
-  PetscInt    *field;
-  PetscScalar *value;
-  /**/
-  PetscInt    nload;
-  PetscInt    *iload;
-  PetscScalar *vload;
-};
-PETSC_EXTERN PetscErrorCode IGABoundaryCreate(IGABoundary *boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryDestroy(IGABoundary *boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryReset(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryReference(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof);
-PETSC_EXTERN PetscErrorCode IGABoundaryClear(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
-PETSC_EXTERN PetscErrorCode IGABoundarySetLoad (IGABoundary boundary,PetscInt field,PetscScalar value);
-
 /* ---------------------------------------------------------------- */
 
 typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
@@ -182,6 +160,31 @@ struct _IGAUserOps {
 };
 
 /* ---------------------------------------------------------------- */
+
+struct _n_IGABoundary {
+  PetscInt refct;
+  /**/
+  PetscInt    dof;
+  /**/
+  PetscInt    count;
+  PetscInt    *field;
+  PetscScalar *value;
+  /**/
+  PetscInt    nload;
+  PetscInt    *iload;
+  PetscScalar *vload;
+  /**/
+  IGAUserOps userops;
+};
+PETSC_EXTERN PetscErrorCode IGABoundaryCreate(IGABoundary *boundary);
+PETSC_EXTERN PetscErrorCode IGABoundaryDestroy(IGABoundary *boundary);
+PETSC_EXTERN PetscErrorCode IGABoundaryReset(IGABoundary boundary);
+PETSC_EXTERN PetscErrorCode IGABoundaryReference(IGABoundary boundary);
+PETSC_EXTERN PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof);
+PETSC_EXTERN PetscErrorCode IGABoundaryClear(IGABoundary boundary);
+PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGABoundarySetLoad (IGABoundary boundary,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGABoundarySetUserSystem(IGABoundary boundary,IGAUserSystem System,void *SysCtx);
 
 typedef struct _p_IGA *IGA;
 
@@ -473,6 +476,12 @@ PETSC_EXTERN PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar
 PETSC_EXTERN PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec);
 PETSC_EXTERN PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat);
 
+PETSC_EXTERN PetscBool      IGANextBoundaryElement(IGA iga,IGAElement element,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscErrorCode IGABoundaryElementBeginPoint(IGAElement element,IGAPoint *point,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryQuadrature(IGAElement element,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscBool IGABoundaryElementNextPoint(IGAElement element,IGAPoint point,PetscInt dir,PetscInt side);
+
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAPoint {
@@ -564,6 +573,9 @@ PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 PETSC_EXTERN PetscErrorCode IGAComputeSystem(IGA iga,Mat A,Vec B);
 PETSC_EXTERN PetscErrorCode IGAFormSystem(IGA iga,Mat A,Vec B,
                                           IGAUserSystem,void *);
+PETSC_EXTERN PetscErrorCode IGABoundaryFormSystem(IGA iga,PetscInt dir,PetscInt side,
+						  Mat matA,Vec vecB,
+						  IGAUserSystem System,void *ctx);
 
 PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);
 PETSC_EXTERN PetscErrorCode IGAFormFunction(IGA iga,Vec U,Vec F,IGAUserFunction,void *);
