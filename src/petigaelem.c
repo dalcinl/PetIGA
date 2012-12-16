@@ -421,7 +421,7 @@ PetscErrorCode IGABoundaryElementBeginPoint(IGAElement element,IGAPoint *point,P
   ierr = IGAElementBuildBoundaryShapeFuns(element,dir,side);CHKERRQ(ierr);
   *point = element->iterator;
 
-  (*point)->count = element->nqp;
+  (*point)->count = element->nqp / element->parent->rule[dir]->nqp;
   (*point)->index = -1;
 
   (*point)->neq = element->neq;
@@ -467,89 +467,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->shape[1] += nen*dim;
   point->shape[2] += nen*dim*dim;
   point->shape[3] += nen*dim*dim*dim;
-
-  return PETSC_TRUE;
-
- start:
-
-  point->geometry = element->geometryX;
-  point->property = element->propertyA;
-  if (!element->geometry)
-    point->geometry = PETSC_NULL;
-  if (!element->property)
-    point->property = PETSC_NULL;
-
-  point->weight   = element->weight;
-  point->detJac   = element->detJac;
-
-  point->point    = element->point;
-  point->scale    = element->scale;
-  point->basis[0] = element->basis[0];
-  point->basis[1] = element->basis[1];
-  point->basis[2] = element->basis[2];
-  point->basis[3] = element->basis[3];
-
-  if (element->geometry && dim == nsd) { /* XXX */
-    point->detX     = element->detX;
-    point->gradX[0] = element->gradX[0];
-    point->gradX[1] = element->gradX[1];
-    point->shape[0] = element->shape[0];
-    point->shape[1] = element->shape[1];
-    point->shape[2] = element->shape[2];
-    point->shape[3] = element->shape[3];
-  } else {
-    point->shape[0] = element->basis[0];
-    point->shape[1] = element->basis[1];
-    point->shape[2] = element->basis[2];
-    point->shape[3] = element->basis[3];
-  }
-
-  return PETSC_TRUE;
-
- stop:
-
-  point->index = -1;
-  return PETSC_FALSE;
-
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGABoundaryElementNextPoint"
-PetscBool IGABoundaryElementNextPoint(IGAElement element,IGAPoint point,PetscInt dir,PetscInt side)
-{
-  PetscInt nen = point->nen;
-  PetscInt dim = point->dim;
-  PetscInt nsd = point->nsd;
-  PetscInt index,skip=1,i;
-  /* */
-  point->nvec = 0;
-  point->nmat = 0;
-  /* */
-  for(i=0;i<dim;i++) if(i != dir) skip *= element->parent->rule[i]->nqp;
-
-  do {
-    index = ++point->index;
-    if (PetscUnlikely(index == 0))            goto start;
-    if (PetscUnlikely(index >= point->count)) goto stop;
-
-    point->weight   += 1;
-    point->detJac   += 1;
-
-    point->point    += dim;
-    point->scale    += dim;
-    point->basis[0] += nen;
-    point->basis[1] += nen*dim;
-    point->basis[2] += nen*dim*dim;
-    point->basis[3] += nen*dim*dim*dim;
-
-    point->detX     += 1;
-    point->gradX[0] += dim*dim;
-    point->gradX[1] += dim*dim;
-    point->shape[0] += nen;
-    point->shape[1] += nen*dim;
-    point->shape[2] += nen*dim*dim;
-    point->shape[3] += nen*dim*dim*dim;
-  } while( index % skip != 0 );
 
   return PETSC_TRUE;
 
@@ -857,49 +774,44 @@ PetscErrorCode IGAElementBuildBoundaryQuadrature(IGAElement element,PetscInt dir
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
-    IGABasis   *BD = element->BD;
-    PetscInt i,*ID = element->ID;
+    IGABasis *BD = element->BD;
+    PetscInt *ID = element->ID;
 
-    /* Sad hack */
-    PetscScalar pts[BD[dir]->nqp],wts[BD[dir]->nqp];
-    PetscReal U[2] = {0,0}, one=1;
+    PetscInt ione=1;
+    PetscReal U[2],one=1;
     IGAAxisGetLimits(element->parent->axis[dir],&U[0],&U[1]);
-    for(i=0;i<BD[dir]->nqp;i++){
-      pts[i] = U[side];
-      wts[i] = 1.0;
-    }
 
     switch (element->dim) {
     case 3:
       if(dir==0){
-	IGA_Quadrature_3D(BD[0]->nqp,&pts[0],&wts[0],&one,
+	IGA_Quadrature_3D(ione,&U[side],&one,&one,
 			  IGA_Quadrature_ARGS(ID,BD,1),
 			  IGA_Quadrature_ARGS(ID,BD,2),
 			  element->weight,element->detJac,
 			  element->point,element->scale);
       }else if(dir==1){
 	IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
-			  BD[1]->nqp,&pts[0],&wts[0],&one,
+			  ione,&U[side],&one,&one,
 			  IGA_Quadrature_ARGS(ID,BD,2),
 			  element->weight,element->detJac,
 			  element->point,element->scale);
       }else{
 	IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
 			  IGA_Quadrature_ARGS(ID,BD,1),
-			  BD[2]->nqp,&pts[0],&wts[0],&one,
+			  ione,&U[side],&one,&one,
 			  element->weight,element->detJac,
 			  element->point,element->scale);
       }
       break;
     case 2:
       if(dir==0){
-	IGA_Quadrature_2D(BD[0]->nqp,&pts[0],&wts[0],&one,
+	IGA_Quadrature_2D(ione,&U[side],&one,&one,
 			  IGA_Quadrature_ARGS(ID,BD,1),
 			  element->weight,element->detJac,
 			  element->point,element->scale);
       }else{
 	IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
-			  BD[1]->nqp,&pts[0],&wts[0],&one,
+			  ione,&U[side],&one,&one,
 			  element->weight,element->detJac,
 			  element->point,element->scale);
       }
@@ -1032,10 +944,10 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
     PetscReal u = element->point[dir];
     PetscInt p = element->parent->axis[dir]->p;
     PetscInt d = element->parent->order;
+    PetscInt ione = 1;
     PetscReal *U = element->parent->axis[dir]->U;
-    PetscInt nqp = BD[dir]->nqp;
     PetscInt nen = BD[dir]->nen;
-    PetscReal value[nqp*nen*(d+1)];
+    PetscReal value[nen*(d+1)];
     IGA_DersBasisFuns(k,u,p,d,U,&value[0]);
 
     switch (element->dim) {
@@ -1043,7 +955,7 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
       if(dir == 0){
 	IGA_BasisFuns_3D(order,element->rational,
 			 element->rationalW,
-			 BD[0]->nqp,BD[0]->nen,BD[0]->d,&value[0],
+			 ione,BD[0]->nen,BD[0]->d,&value[0],
 			 IGA_BasisFuns_ARGS(ID,BD,1),
 			 IGA_BasisFuns_ARGS(ID,BD,2),
 			 N[0],N[1],N[2],N[3]);
@@ -1051,7 +963,7 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
 	IGA_BasisFuns_3D(order,element->rational,
 			 element->rationalW,
 			 IGA_BasisFuns_ARGS(ID,BD,0),
-			 BD[1]->nqp,BD[1]->nen,BD[1]->d,&value[0],
+			 ione,BD[1]->nen,BD[1]->d,&value[0],
 			 IGA_BasisFuns_ARGS(ID,BD,2),
 			 N[0],N[1],N[2],N[3]);
       }else{
@@ -1059,7 +971,7 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
 			 element->rationalW,
 			 IGA_BasisFuns_ARGS(ID,BD,0),
 			 IGA_BasisFuns_ARGS(ID,BD,1),
-			 BD[2]->nqp,BD[2]->nen,BD[2]->d,&value[0],
+			 ione,BD[2]->nen,BD[2]->d,&value[0],
 			 N[0],N[1],N[2],N[3]);
       }
       break;
@@ -1067,14 +979,14 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
       if(dir == 0){
 	IGA_BasisFuns_2D(order,element->rational,
 			 element->rationalW,
-			 BD[0]->nqp,BD[0]->nen,BD[0]->d,&value[0],
+			 ione,BD[0]->nen,BD[0]->d,&value[0],
 			 IGA_BasisFuns_ARGS(ID,BD,1),
 			 N[0],N[1],N[2],N[3]);
       }else{
 	IGA_BasisFuns_2D(order,element->rational,
 			 element->rationalW,
 			 IGA_BasisFuns_ARGS(ID,BD,0),
-			 BD[1]->nqp,BD[1]->nen,BD[1]->d,&value[0],
+			 ione,BD[1]->nen,BD[1]->d,&value[0],
 			 N[0],N[1],N[2],N[3]);
       }
       break;

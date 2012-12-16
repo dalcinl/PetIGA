@@ -481,7 +481,6 @@ PETSC_EXTERN PetscBool      IGANextBoundaryElement(IGA iga,IGAElement element,Pe
 PETSC_EXTERN PetscErrorCode IGABoundaryElementBeginPoint(IGAElement element,IGAPoint *point,PetscInt dir,PetscInt side);
 PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryQuadrature(IGAElement element,PetscInt dir,PetscInt side);
 PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,PetscInt side);
-PETSC_EXTERN PetscBool IGABoundaryElementNextPoint(IGAElement element,IGAPoint point,PetscInt dir,PetscInt side);
 
 /* ---------------------------------------------------------------- */
 

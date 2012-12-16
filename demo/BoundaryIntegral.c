@@ -52,7 +52,11 @@ int main(int argc, char *argv[]) {
   IGABoundary bnd;
   ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr); // u = 0 on [0,:]
   ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+  ierr = IGAGetBoundary(iga,1,0,&bnd);CHKERRQ(ierr); // u = 0 on [:,0]
+  ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
   ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr); // grad u . n = h on [1,:]
+  ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAGetBoundary(iga,1,1,&bnd);CHKERRQ(ierr); // grad u . n = h on [:,1]
   ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);

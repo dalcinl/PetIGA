@@ -127,7 +127,7 @@ PetscErrorCode IGABoundaryFormSystem(IGA iga,PetscInt dir,PetscInt side,
     ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
     /* Quadrature loop */
     ierr = IGABoundaryElementBeginPoint(element,&point,dir,side);CHKERRQ(ierr);
-    while (IGABoundaryElementNextPoint(element,point,dir,side)) {
+    while (IGAElementNextPoint(element,point)) {
       PetscScalar *K, *F;
       ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
       ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
