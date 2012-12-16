@@ -429,6 +429,7 @@ struct _n_IGAElement {
 
 PETSC_EXTERN PetscErrorCode IGAElementCreate(IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAElementDestroy(IGAElement *element);
+PETSC_EXTERN PetscErrorCode IGAElementReference(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementReset(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementInit(IGAElement element,IGA iga);
 

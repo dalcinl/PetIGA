@@ -34,6 +34,16 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAElementReference"
+PetscErrorCode IGAElementReference(IGAElement element)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  element->refct++;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAElementFreeWork"
 static
 PetscErrorCode IGAElementFreeWork(IGAElement element)
