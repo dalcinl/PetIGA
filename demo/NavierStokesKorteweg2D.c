@@ -1,4 +1,5 @@
-/* This code solve the dimensionless form of the isothermal
+/* 
+   This code solve the dimensionless form of the isothermal
    Navier-Stokes-Korteweg equations as presented in:
    
    Gomez, Hughes, Nogueira, Calo
@@ -8,6 +9,7 @@
    Equation/section numbers reflect this publication.
 */
 #include "petiga.h"
+#define SQ(x) ((x)*(x))
 
 typedef struct {
   IGA       iga;
@@ -33,29 +35,34 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscReal rRe = 1.0/user->Re;
   PetscReal theta = user->theta;
 
-  PetscScalar u_t[3],u[3];
-  PetscScalar grad_u[3][2];
-  PetscScalar hess_u[3][2][2];
-  IGAPointFormValue(pnt,V,&u_t[0]);
-  IGAPointFormValue(pnt,U,&u[0]);
-  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
-  IGAPointFormHess (pnt,U,&hess_u[0][0][0]);
-  PetscReal rho_t  = u_t[0], rho = u[0];
-  PetscReal rho_x  = grad_u[0][0],    rho_y  = grad_u[0][1];
-  PetscReal rho_xx = hess_u[0][0][0], rho_xy = hess_u[0][0][1];
-  PetscReal rho_yx = hess_u[0][1][0], rho_yy = hess_u[0][1][1];
-  PetscReal ux_t  = u_t[1], ux = u[1];
-  PetscReal uy_t  = u_t[2], uy = u[2];
-  PetscReal ux_x = grad_u[1][0], ux_y = grad_u[1][1];
-  PetscReal uy_x = grad_u[2][0], uy_y = grad_u[2][1];
+  // interpolate solution vector at current pnt
+  PetscScalar sol_t[3],sol[3];
+  PetscScalar grad_sol[3][2];
+  PetscScalar hess_sol[3][2][2];
+  IGAPointFormValue(pnt,V,&sol_t[0]);
+  IGAPointFormValue(pnt,U,&sol[0]);
+  IGAPointFormGrad (pnt,U,&grad_sol[0][0]);
+  IGAPointFormHess (pnt,U,&hess_sol[0][0][0]);
 
-  // compute pressure (Eq. 34.3)
+  // now load these into more readable variables
+  PetscScalar rho, rho_t, grad_rho[2], div_rho;
+  rho          = sol[0]; 
+  rho_t        = sol_t[0]; 
+  grad_rho[0]  = grad_sol[0][0]; 
+  grad_rho[1]  = grad_sol[0][1]; 
+  div_rho      = hess_sol[0][0][0]+hess_sol[0][1][1];
+
+  PetscScalar u[2], u_t[2], grad_u[2][2];
+  u[0]         = sol[1]; 
+  u[1]         = sol[2]; 
+  u_t[0]       = sol_t[1]; 
+  u_t[1]       = sol_t[2]; 
+  grad_u[0][0] = grad_sol[1][0]; 
+  grad_u[0][1] = grad_sol[1][1]; 
+  grad_u[1][0] = grad_sol[2][0]; 
+  grad_u[1][1] = grad_sol[2][1]; 
+
   PetscReal p = 8.0/27.0*theta*rho/(1.0-rho)-rho*rho; 
-  // compute viscous stress tensor (Eq. 34.4)
-  PetscReal tau_xx = 2.0*ux_x - 2.0/3.0*(ux_x+uy_y);
-  PetscReal tau_xy = ux_y + uy_x ;
-  PetscReal tau_yy = 2.0*uy_y - 2.0/3.0*(ux_x+uy_y);
-  PetscReal tau_yx = tau_xy;
 
   const PetscReal *N0,(*N1)[2],(*N2)[2][2];
   IGAPointGetShapeFuns(pnt,0,(const PetscReal**)&N0);
@@ -63,48 +70,113 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   IGAPointGetShapeFuns(pnt,2,(const PetscReal**)&N2);
   
   PetscScalar (*R)[3] = (PetscScalar (*)[3])Re;
-  PetscInt a,nen=pnt->nen;
+  PetscInt a,i,nen=pnt->nen;
   for(a=0; a<nen; a++) {
-    PetscReal Na    = N0[a];
-    PetscReal Na_x  = N1[a][0];
-    PetscReal Na_y  = N1[a][1];
-    PetscReal Na_xx = N2[a][0][0];
-    PetscReal Na_yy = N2[a][1][1];
-    PetscReal Na_xy = N2[a][1][2];
     
-    PetscReal R_rho, R_ux, R_uy;
-    // (Eq. 19, modified to be dimensionless)
-    R_rho  = Na*rho_t; 
-    R_rho += -rho*(Na_x*ux + Na_y*uy);
-    
-    R_ux  = Na*ux*rho_t; 
-    R_ux += Na*rho*ux_t; 
-    R_ux += -rho*(Na_x*ux*ux + Na_y*ux*uy);
-    R_ux += -Na_x*p;
-    R_ux += rRe*(Na_x*tau_xx + Na_y*tau_xy);
-    R_ux += -Ca2*rho*(Na_xx*rho_x + Na_xy*rho_y); 
-    R_ux += -Ca2*Na_x*(rho_x*rho_x + rho_y*rho_y);
-    R_ux += -Ca2*Na*(rho_xx*rho_x + rho_xy*rho_y);
-    R_ux += -Ca2*rho_x*(Na_x*rho_x + Na_y*rho_y);
-            
-    R_uy  = Na*uy*rho_t; 
-    R_uy += Na*rho*uy_t; 
-    R_uy += -rho*(Na_x*uy*ux + Na_y*uy*uy);
-    R_uy += -Na_y*p;
-    R_uy += rRe*(Na_x*tau_yx + Na_y*tau_yy);
-    R_uy += -Ca2*rho*(Na_xy*rho_x + Na_yy*rho_y);
-    R_uy += -Ca2*Na_y*(rho_x*rho_x + rho_y*rho_y);
-    R_uy += -Ca2*Na*(rho_yx*rho_x + rho_yy*rho_y);
-    R_uy += -Ca2*rho_y*(Na_x*rho_x + Na_y*rho_y);
+    PetscReal R_c;    
+    R_c = N0[a]*rho_t-rho*(N1[a][0]*u[0]+N1[a][1]*u[1]);
+   
+    PetscReal R_m[2];
+    for(i=0;i<2;i++){
+      R_m[i]  =  N0[a]*(rho_t*u[i]+rho*u_t[i]);
+      R_m[i] += -rho*u[i]*(N1[a][0]*u[0]+N1[a][1]*u[1]);
+      R_m[i] += -N1[a][i]*p;
+      R_m[i] +=  rRe*(N1[a][0]*grad_u[i][0]+N1[a][1]*grad_u[i][1]);
+      R_m[i] +=  rRe*(N1[a][0]*grad_u[0][i]+N1[a][1]*grad_u[1][i]);
+      R_m[i] += -(2./3.)*rRe*N1[a][i]*(grad_u[0][0]+grad_u[1][1]);
+      R_m[i] +=  Ca2*N1[a][i]*rho*div_rho;
+      R_m[i] +=  0.5*Ca2*N1[a][i]*(grad_rho[0]*grad_rho[0]+grad_rho[1]*grad_rho[1]);
+      R_m[i] += -Ca2*grad_rho[i]*(N1[a][0]*grad_rho[0]+N1[a][1]*grad_rho[1]);
+    }
 
-    R[a][0] = R_rho;
-    R[a][1] = R_ux;
-    R[a][2] = R_uy;
+    R[a][0] = R_c;
+    R[a][1] = R_m[0];
+    R[a][2] = R_m[1];
   }
   return 0;
 }
 
-#define SQ(x) ((x)*(x))
+#undef  __FUNCT__
+#define __FUNCT__ "Jacobian"
+PetscErrorCode Jacobian(IGAPoint pnt,PetscReal dt,
+                        PetscReal shift,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *U,
+                        PetscScalar *Je,void *ctx)
+{
+  AppCtx *user = (AppCtx*) ctx;
+  PetscReal Ca2 = user->Ca*user->Ca;
+  PetscReal rRe = 1.0/user->Re;
+  PetscReal theta = user->theta;
+
+  // interpolate solution vector at current pnt
+  PetscScalar sol_t[3],sol[3];
+  PetscScalar grad_sol[3][2];
+  PetscScalar hess_sol[3][2][2];
+  IGAPointFormValue(pnt,V,&sol_t[0]);
+  IGAPointFormValue(pnt,U,&sol[0]);
+  IGAPointFormGrad (pnt,U,&grad_sol[0][0]);
+  IGAPointFormHess (pnt,U,&hess_sol[0][0][0]);
+
+  // density variables
+  PetscScalar rho, rho_t, grad_rho[2];
+  rho         = sol[0]; 
+  rho_t       = sol_t[0]; 
+  grad_rho[0] = grad_sol[0][0]; 
+  grad_rho[1] = grad_sol[0][1]; 
+  PetscScalar div_rho = hess_sol[0][0][0] + hess_sol[0][1][1];
+
+  // velocity variables
+  PetscScalar u[2], u_t[2];
+  u[0]   = sol[1];   u[1]   = sol[2]; 
+  u_t[0] = sol_t[1]; u_t[1] = sol_t[2]; 
+
+  // pressure
+  PetscReal dp = 8./27.*theta/(1.-rho)*(rho/(1.-rho)+1.)-2.*rho;
+
+  const PetscReal *N0,(*N1)[2],(*N2)[2][2];
+  IGAPointGetShapeFuns(pnt,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(pnt,1,(const PetscReal**)&N1);
+  IGAPointGetShapeFuns(pnt,2,(const PetscReal**)&N2);
+  
+  PetscInt a,b,i,j,nen=pnt->nen;
+  PetscScalar (*J)[3][nen][3] = (PetscScalar (*)[3][nen][3])Je;
+  for(a=0; a<nen; a++) {
+    for(b=0; b<nen; b++) {
+
+      // continuity jacobian
+      J[a][0][b][0] += shift*N0[a]*N0[b];
+      for(i=0; i<2; i++) {
+	J[a][0][b][0] += -N1[a][i]*N0[b]*u[i];
+	J[a][0][b][1+i] += -N1[a][i]*rho*N0[b];
+      }
+      
+      // momentum jacobian
+      PetscScalar divN = N2[b][0][0]+N2[b][1][1];
+      for(i=0; i<2; i++) {
+	J[a][1+i][b][0] +=  shift*N0[a]*N0[b]*u[i];
+	J[a][1+i][b][0] +=  N0[a]*N0[b]*u_t[i];
+	J[a][1+i][b][0] += -N0[b]*u[i]*(N1[a][0]*u[0]+N1[a][1]*u[1]);
+	J[a][1+i][b][0] += -N1[a][i]*dp*N0[b];
+	J[a][1+i][b][0] +=  Ca2*N1[a][i]*(N0[b]*div_rho+rho*divN);
+	J[a][1+i][b][0] +=  Ca2*N1[a][i]*(grad_rho[0]*N1[b][0]+grad_rho[1]*N1[b][1]);
+	J[a][1+i][b][0] += -Ca2*N1[b][i]*(grad_rho[0]*N1[a][0]+grad_rho[1]*N1[a][1]);
+	J[a][1+i][b][0] += -Ca2*grad_rho[i]*(N1[a][0]*N1[b][0]+N1[a][1]*N1[b][1]);
+	for(j=0; j<2; j++) {
+	  if(i==j) {
+	    J[a][1+i][b][1+j] +=  shift*N0[a]*rho*N0[b];
+	    J[a][1+i][b][1+j] +=  N0[a]*rho_t*N0[b];
+	    J[a][1+i][b][1+j] += -rho*N0[b]*(N1[a][0]*u[0]+N1[a][1]*u[1]);
+	    J[a][1+i][b][1+j] +=  rRe*(N1[a][0]*N1[b][0]+N1[a][1]*N1[b][1]);
+	  }
+	  J[a][1+i][b][1+j] += -N1[a][j]*rho*u[i]*N0[b];
+	  J[a][1+i][b][1+j] +=  rRe*N1[a][j]*N1[b][i];
+	  J[a][1+i][b][1+j] += -2./3.*rRe*N1[a][i]*N1[b][j];
+	}
+      }
+    }
+  }
+  return 0;
+}
 
 typedef struct {
   PetscScalar rho,ux,uy;
@@ -133,8 +205,8 @@ PetscErrorCode FormInitialCondition(IGA iga,PetscReal t,Vec U,AppCtx *user)
       PetscReal d3 = sqrt(SQ(x-user->C3[0])+SQ(y-user->C3[1]));
       
       u[j][i].rho = -0.15 + 0.25*( tanh(0.5*(d1-user->R1)/user->Ca) +
-                                   tanh(0.5*(d2-user->R2)/user->Ca) +
-                                   tanh(0.5*(d3-user->R3)/user->Ca) );
+				   tanh(0.5*(d2-user->R2)/user->Ca) +
+				   tanh(0.5*(d3-user->R3)/user->Ca));
       u[j][i].ux = 0.0;
       u[j][i].uy = 0.0;
     }
@@ -152,7 +224,7 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,voi
   PetscErrorCode ierr;
   AppCtx *user = (AppCtx *)mctx;
   char           filename[256];
-  sprintf(filename,"./nsk%d.dat",it_number);
+  sprintf(filename,"./nsk2d%d.dat",it_number);
   ierr = IGAWriteVec(user->iga,U,filename);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -198,9 +270,12 @@ PetscErrorCode NSKMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 
   PetscReal dt;
   TSGetTimeStep(ts,&dt);
-  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,energy);
 
-  if(step > 0 && energy > user->energy) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Free energy increased!\n");
+  if(step > 0 && energy > user->energy) {
+    PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e  WARNING: Free energy increased!\n",t,dt,energy);
+  }else{
+    PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,energy);
+  }
   user->energy = energy; 
 
   PetscFunctionReturn(0);
@@ -217,17 +292,17 @@ int main(int argc, char *argv[]) {
   // Define simulation specific parameters
   AppCtx user;
   user.L0 = 1.0; // length scale
-  user.C1[0] = 0.75; user.C1[1] = 0.50; // bubble centers
-  user.C2[0] = 0.25; user.C2[1] = 0.50;
-  user.C3[0] = 0.40; user.C3[1] = 0.75;
-  user.R1 = 0.10;  user.R2 = 0.15;  user.R3 = 0.08; // bubble radii
+  user.C1[0] = 0.75; user.C1[1] = 0.50; 
+  user.C2[0] = 0.25; user.C2[1] = 0.50; 
+  user.C3[0] = 0.40; user.C3[1] = 0.75; 
+  user.R1 = 0.10; user.R2 = 0.15; user.R3 = 0.08;
 
   user.alpha = 2.0; // (Eq. 41)
   user.theta = 0.85; // temperature parameter (just before section 5.1)
 
   // Set discretization options
-  PetscInt  N=64,p=2,C=1;
-  PetscBool output=PETSC_FALSE,monitor=PETSC_FALSE;
+  PetscInt  N=256,p=2,C=1;
+  PetscBool output=PETSC_FALSE,monitor=PETSC_TRUE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD, "", "NSK Options", "IGA");CHKERRQ(ierr);
   ierr = PetscOptionsInt("-N", "number of elements along one dimension", __FILE__, N, &N, PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p", "polynomial order", __FILE__, p, &p, PETSC_NULL);CHKERRQ(ierr);
@@ -237,7 +312,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   // Compute simulation parameters
-  user.h = user.L0/N; // characteristic length scale of mesh (Eq. 43, simplified for uniform elements)
+  user.h  = user.L0/N; // characteristic length scale of mesh (Eq. 43, simplified for uniform elements)
   user.Ca = user.h/user.L0; // capillarity number (Eq. 38)
   user.Re = user.alpha/user.Ca; // Reynolds number (Eq. 39)
 
@@ -263,15 +338,16 @@ int main(int argc, char *argv[]) {
   ierr = IGAAxisSetPeriodic(axis0,PETSC_TRUE);CHKERRQ(ierr);
   ierr = IGAAxisSetDegree(axis0,p);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis0,N,0.0,1.0,C);CHKERRQ(ierr);
-  IGAAxis axis1;
-  ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis0,axis1);CHKERRQ(ierr);
+  IGAAxis axis;
+  ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisCopy(axis0,axis);CHKERRQ(ierr);
   
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   user.iga = iga;
 
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
@@ -279,20 +355,14 @@ int main(int argc, char *argv[]) {
   ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-
   if (monitor) {ierr = TSMonitorSet(ts,NSKMonitor,&user,PETSC_NULL);CHKERRQ(ierr);}
   if (output)  {ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);}
-  ierr = PetscOptionsSetValue("-snes_mf","true");CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t=0; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(iga,t,U,&user);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
-    ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
-#else
-    ierr = TSSolve(ts,U);CHKERRQ(ierr);
-#endif
+  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
