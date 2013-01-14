@@ -178,7 +178,7 @@ module PetIGA
 
   contains
 
-    pure function IGA_Geometry(p) result(X)
+    function IGA_Geometry(p) result(X)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
@@ -186,7 +186,7 @@ module PetIGA
       call c2f(p%geometry,X,(/p%nsd,p%nen/))
     end function IGA_Geometry
 
-    pure function IGA_Property(p) result(A)
+    function IGA_Property(p) result(A)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none
       type(IGAPoint), intent(in) :: p
