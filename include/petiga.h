@@ -647,6 +647,11 @@ PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
+
+/* ---------------------------------------------------------------- */
+
 #ifndef PetscMalloc1
 #define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
 #endif

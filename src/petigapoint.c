@@ -154,8 +154,8 @@ PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd)
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetQuadrature"
 PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
-                                     PetscReal *weight,
-                                     PetscReal *detJac)
+				     PetscReal *weight,
+				     PetscReal *detJac)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
@@ -175,8 +175,8 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(basisfuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-            "Requested derivative must be in range [0,%d], got %D",
-            (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
+	    "Requested derivative must be in range [0,%d], got %D",
+	    (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
   *basisfuns = point->basis[der];
   PetscFunctionReturn(0);
 }
@@ -190,19 +190,19 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(shapefuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-            "Requested derivative must be in range [0,%d], got %D",
-            (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
+	    "Requested derivative must be in range [0,%d], got %D",
+	    (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
   *shapefuns = point->shape[der];
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
 extern void IGA_GetGeomMap        (PetscInt nen,PetscInt nsd,
-                                   const PetscReal N[],const PetscReal C[],PetscReal X[]);
+				   const PetscReal N[],const PetscReal C[],PetscReal X[]);
 extern void IGA_GetGradGeomMap    (PetscInt nen,PetscInt nsd,PetscInt dim,
-                                   const PetscReal N[],const PetscReal C[],PetscReal F[]);
+				   const PetscReal N[],const PetscReal C[],PetscReal F[]);
 extern void IGA_GetInvGradGeomMap (PetscInt nen,PetscInt nsd,PetscInt dim,
-                                   const PetscReal N[],const PetscReal C[],PetscReal G[]);
+				   const PetscReal N[],const PetscReal C[],PetscReal G[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -242,7 +242,7 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
     }
     for (i=0; i<nsd; i++)
       for (a=0; a<dim; a++)
-        F[i*dim+a] *= L[a];
+	F[i*dim+a] *= L[a];
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *L = p->scale;
@@ -271,7 +271,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
     }
     for (a=0; a<dim; a++)
       for (i=0; i<nsd; i++)
-        G[a*nsd+i] /= L[a];
+	G[a*nsd+i] /= L[a];
   } else {
     PetscInt i,dim = p->dim;
     const PetscReal *L = p->scale;
@@ -290,15 +290,15 @@ EXTERN_C_END
 
 EXTERN_C_BEGIN
 extern void IGA_GetValue(PetscInt nen,PetscInt dof,const PetscReal N[],
-                         const PetscScalar U[],PetscScalar u[]);
+			 const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetGrad (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-                         const PetscScalar U[],PetscScalar u[]);
+			 const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetHess (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-                         const PetscScalar U[],PetscScalar u[]);
+			 const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetDel2 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-                         const PetscScalar U[],PetscScalar u[]);
+			 const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-                         const PetscScalar U[],PetscScalar u[]);
+			 const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -329,8 +329,8 @@ PetscErrorCode IGAPointFormShapeFuns(IGAPoint point,PetscInt der,PetscReal N[])
   PetscValidRealPointer(N,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Requested derivative must be in range [0,%d], got %D",
-             (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
+	     "Requested derivative must be in range [0,%d], got %D",
+	     (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
   for (i=0,n=point->nen; i<der; i++) n *= point->dim;
   ierr = PetscMemcpy(N,point->shape[der],n*sizeof(PetscReal));CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -398,7 +398,7 @@ PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 
 EXTERN_C_BEGIN
 extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
-                            const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+			    const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -517,5 +517,225 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
   m = point->neq * point->dof;
   n = point->nen * point->dof;
   ierr = IGAPointAddArray(point,m*n,k,K);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocateElement"
+/*@
+   IGALocateElement - Determines if and which element a point is
+   located in on this partition of the IGA. Returns false if the point
+   is not on this partition.
+
+   Input Parameters:
++  iga - the IGA context
+.  pnt - the parametric location in the IGA (same dim as the IGA)
+-  element - the IGAElement context
+
+   Notes:
+   IGAElementCreate and IGAElementInit should already be called on the
+   element. The element returns having its mapping, geometry,
+   properties, and fixes computed. This function is intended to be
+   used when integrating on a manifold embedded in the IGA domain.
+
+   Level: devel
+
+.keywords: IGA, locate, point, element
+@*/
+PetscBool IGALocateElement(IGA iga,PetscScalar *pnt,IGAElement element)
+{
+  PetscErrorCode ierr;
+  PetscInt i,j,e,m,dim=iga->dim,*ID = element->ID;
+  PetscScalar *U;
+  element->nen = 1;
+  for(i=0;i<dim;i++){
+    element->nen *= (iga->axis[i]->p+1);
+    m = iga->axis[i]->m;
+    U = iga->axis[i]->U;
+    e = -1;
+    ID[i] = 0;
+    /* find which nonzero span this point is located in */
+    for(j=0;j<m;j++){
+      if(U[j+1]-U[j]>1.0e-13) e += 1;
+      if(pnt[i] > U[j] && pnt[i] <= U[j+1]) ID[i] = e;
+    }
+    /* reject if the element is not in this partition */
+    if(ID[i] < iga->elem_start[i] || ID[i] >= iga->elem_start[i]+iga->elem_width[i]) return PETSC_FALSE;
+  }
+  element->index = 0;
+#undef  CHKERRRETURN
+#define CHKERRRETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
+  ierr = IGAElementBuildMapping(element);  CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildGeometry(element); CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildProperty(element); CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildFix(element);      CHKERRRETURN(ierr,PETSC_FALSE);
+#undef  CHKERRRETURN
+  return PETSC_TRUE;
+}
+
+EXTERN_C_BEGIN
+extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
+			     PetscReal[],PetscReal[],PetscReal[]);
+EXTERN_C_END
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPointEval"
+/*@
+   IGAPointEval - Evaluate the basis functions at a given point.
+
+   Input Parameters:
++  iga - the IGA context
+-  point - the IGAPoint context
+
+   Notes:
+   The point assumes you have already called IGALocateElement and it
+   returned true. This function is intended to be used when
+   integrating on a manifold embedded in the IGA domain.
+
+   Level: devel
+
+.keywords: IGA, locate, point
+@*/
+PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
+{
+  PetscErrorCode ierr;
+  IGAElement element;
+  PetscFunctionBegin;
+  PetscValidPointer(iga,1);
+  PetscValidPointer(point,2);
+  element = point->parent;
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call after IGALocateElement");
+
+  /* Compute the 1D functions */
+  PetscInt order = element->parent->order;
+  PetscInt i,nen[3] = {0,0,0};
+  PetscReal *basis[3];
+  for(i=0;i<element->dim;i++){
+    nen[i] = element->parent->axis[i]->p + 1;
+    ierr = PetscMalloc1(nen[i]*(order+1),PetscReal,&basis[i]);CHKERRQ(ierr);
+    IGA_DersBasisFuns(element->parent->axis[i]->span[element->ID[i]],
+		      point->point[i],
+		      element->parent->axis[i]->p,
+		      order,
+		      element->parent->axis[i]->U,
+		      basis[i]);
+  }
+  {
+    /* Compute the tensor product (IGAElementBuildShapeFuns) */
+    PetscReal **N = element->basis;
+    switch (element->dim) {
+    case 3: IGA_BasisFuns_3D(order,element->rational,
+			     element->rationalW,
+			     1,nen[0],order,basis[0],
+			     1,nen[1],order,basis[1],
+			     1,nen[2],order,basis[2],
+			     N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_BasisFuns_2D(order,element->rational,
+			     element->rationalW,
+			     1,nen[0],order,basis[0],
+			     1,nen[1],order,basis[1],
+			     N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_BasisFuns_1D(order,element->rational,
+			     element->rationalW,
+			     1,nen[0],order,basis[0],
+			     N[0],N[1],N[2],N[3]); break;
+    }
+  }
+  /* Pushforward if geometry is used */
+  if (element->dim == element->nsd)
+    if (element->geometry) {
+      PetscReal **M = element->basis;
+      PetscReal **N = element->shape;
+      PetscReal *dX = element->detX;
+      PetscReal **gX = element->gradX;
+      switch (element->dim) {
+      case 3: IGA_ShapeFuns_3D(order,
+			       1,element->nen,
+			       element->geometryX,
+			       M[0],M[1],M[2],M[3],
+			       N[0],N[1],N[2],N[3],
+			       dX,gX[0],gX[1]); break;
+      case 2: IGA_ShapeFuns_2D(order,
+			       1,element->nen,
+			       element->geometryX,
+			       M[0],M[1],M[2],M[3],
+			       N[0],N[1],N[2],N[3],
+			       dX,gX[0],gX[1]); break;
+      case 1: IGA_ShapeFuns_1D(order,
+			       1,element->nen,
+			       element->geometryX,
+			       M[0],M[1],M[2],M[3],
+			       N[0],N[1],N[2],N[3],
+			       dX,gX[0],gX[1]); break;
+      }
+    }
+
+  /* The 'start' part of IGAElementNextPoint */
+  point->count =  1;
+  point->index =  0;
+  point->neq = element->neq;
+  point->nen = element->nen;
+  point->dof = element->dof;
+  point->dim = element->dim;
+  point->nsd = element->nsd;
+  point->npd = element->npd;
+
+  point->geometry = element->geometryX;
+  point->property = element->propertyA;
+  if (!element->geometry)
+    point->geometry = PETSC_NULL;
+  if (!element->property)
+    point->property = PETSC_NULL;
+
+  point->weight   = element->weight;
+  point->detJac   = element->detJac;
+
+  point->point    = element->point;
+  point->scale    = element->scale;
+  point->basis[0] = element->basis[0];
+  point->basis[1] = element->basis[1];
+  point->basis[2] = element->basis[2];
+  point->basis[3] = element->basis[3];
+
+  if (element->geometry && point->dim == point->nsd) {
+    point->detX     = element->detX;
+    point->gradX[0] = element->gradX[0];
+    point->gradX[1] = element->gradX[1];
+    point->shape[0] = element->shape[0];
+    point->shape[1] = element->shape[1];
+    point->shape[2] = element->shape[2];
+    point->shape[3] = element->shape[3];
+  } else {
+    point->shape[0] = element->basis[0];
+    point->shape[1] = element->basis[1];
+    point->shape[2] = element->basis[2];
+    point->shape[3] = element->basis[3];
+  }
+
+  for(i=0;i<element->dim;i++){ ierr = PetscFree(basis[i]);CHKERRQ(ierr); }
   PetscFunctionReturn(0);
 }
