@@ -2,6 +2,7 @@ TARGETS = InputOutput \
 	  L2Proj1D L2Proj2D \
 	  Poisson1D Poisson2D Poisson3D \
 	  L2Projection \
+	  AdaptiveL2Projection \
 	  AdvectionDiffusion \
 	  Laplace \
 	  Poisson \
@@ -54,6 +55,9 @@ Poisson3D: Poisson3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 L2Projection: L2Projection.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+AdaptiveL2Projection: AdaptiveL2Projection.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Laplace: Laplace.o chkopts
