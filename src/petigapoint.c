@@ -714,7 +714,6 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
   point->weight   = element->weight;
   point->detJac   = element->detJac;
 
-  point->point    = element->point;
   point->scale    = element->scale;
   point->basis[0] = element->basis[0];
   point->basis[1] = element->basis[1];
