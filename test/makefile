@@ -16,7 +16,6 @@ include ${PETIGA_DIR}/conf/petigarules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
-
 IGACreate: IGACreate.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -81,6 +80,10 @@ runex2c:
 Oscillator = Oscillator.PETSc \
 	     runex2a runex2b runex2c \
 	     Oscillator.rm
+
+ConvTest: ConvTest.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 
 TESTEXAMPLES_C = $(IGACreate)  \
 	         $(Test_SNES_2D) \
