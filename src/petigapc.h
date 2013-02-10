@@ -40,3 +40,18 @@ extern void LAPACKgetri_(PetscBLASInt*,PetscScalar*,PetscBLASInt*,
                          PetscBLASInt*,PetscScalar*,PetscBLASInt*,
                          PetscBLASInt*);
 EXTERN_C_END
+
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#undef PetscBLASIntCast
+#undef __FUNCT__
+#define __FUNCT__ "PetscBLASIntCast"
+PETSC_STATIC_INLINE PetscErrorCode PetscBLASIntCast(PetscInt a,PetscBLASInt *b)
+{
+  PetscFunctionBegin;
+#if defined(PETSC_USE_64BIT_INDICES) && !defined(PETSC_HAVE_64BIT_BLAS_INDICES)
+  if ((a) > PETSC_BLAS_INT_MAX) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Array too long for BLAS/LAPACK");
+#endif
+  *b =  (PetscBLASInt)(a);
+  PetscFunctionReturn(0);
+}
+#endif

@@ -227,9 +227,10 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
     for (n=dof, i=0; i<dim; n *= (2*overlap[i++] + 1));
 
+    ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
     ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
-    m = PetscBLASIntCast(n); lwork = -1; work = &lwkopt;
     ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
+    lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
     ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
@@ -243,7 +244,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
             ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
             /* compute inverse of element matrix */
             if (PetscLikely(n > 1)) {
-              m = PetscBLASIntCast(n);
+              ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
               LAPACKgetrf_(&m,&m,values,&m,ipiv,&info);
               if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetrf_");
               if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");

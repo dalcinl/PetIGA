@@ -152,9 +152,10 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     start /= dof; end /= dof;
 
     n = nen*dof;
+    ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
     ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
-    m = PetscBLASIntCast(n); lwork = -1; work = &lwkopt;
     ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
+    lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
     ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
