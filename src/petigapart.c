@@ -124,6 +124,8 @@ void IGA_Part3D(PetscInt size,
   *_m = m; *_n = n; *_p = p;
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "IGA_Partition"
 PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
                              PetscInt dim,const PetscInt N[],
                              PetscInt n[],PetscInt i[])
