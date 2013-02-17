@@ -8,6 +8,7 @@
 */
 
 #include <petsc.h>
+#include <petsc-private/petscimpl.h>
 #include <petscts2.h>
 
 #if PETSC_VERSION_(3,2,0)

@@ -1,4 +1,5 @@
 #include "petigapart.h"
+#include <petsc-private/petscimpl.h>
 
 PETSC_STATIC_INLINE
 PetscInt IGA_CUT2D(PetscInt M,PetscInt N,

@@ -1,4 +1,5 @@
 #include <petscsnes.h>
+#include <petsc-private/petscimpl.h>
 
 #undef __FUNCT__
 #define __FUNCT__ "MatFDColoringSetOptionsPrefix"

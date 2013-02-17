@@ -30,8 +30,14 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 #ifndef PETSC_USE_DYNAMIC_LIBRARIES
   ierr = IGAInitializePackage(PETSC_NULL);CHKERRQ(ierr);
 #endif
+#if !defined(PETSC_VERSION_LE) || PETSC_VERSION_LE(3,3,0)
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,
                            "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+#else
+  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,
+                           "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+#endif
+
   *_iga = iga;
 
   ierr = PetscNew(struct _IGAUserOps,&iga->userops);CHKERRQ(ierr);

@@ -1,4 +1,5 @@
 #include "petiga.h"
+#include <petsc-private/vecimpl.h>
 
 EXTERN_C_BEGIN
 extern PetscErrorCode  VecView_MPI_DA(Vec,PetscViewer);
