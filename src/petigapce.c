@@ -1,12 +1,12 @@
 #include "petiga.h"
-#if PETSC_VERSION_(3,2,0)
-#include "private/pcimpl.h"
+#if PETSC_VERSION_LE(3,2,0)
+#include <private/pcimpl.h>
 #else
-#include "petsc-private/pcimpl.h"
+#include <petsc-private/pcimpl.h>
 #endif
 #include "petigapc.h"
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #undef MatType
 typedef const char* MatType;
 #endif         
@@ -38,7 +38,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
       if (Ad) {
         PetscBool compressed,done;
         PetscInt  na;
-        #if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+        #if PETSC_VERSION_LE(3,3,0)
         PetscInt *ia,*ja;
         #else
         const PetscInt *ia,*ja;
@@ -60,7 +60,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
           ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
           ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
-          #if !PETSC_VERSION_(3,2,0)
+          #if PETSC_VERSION_GT(3,2,0)
           ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
           #endif
 

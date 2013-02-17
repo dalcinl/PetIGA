@@ -2,13 +2,17 @@
 #define PETIGA_H
 
 /*
-#include "petscconf.h"
+#include <petscconf.h>
 #undef  PETSC_STATIC_INLINE
 #define PETSC_STATIC_INLINE static __inline
 */
 
 #include <petsc.h>
+#if PETSC_VERSION_(3,2,0)
+#include <private/petscimpl.h>
+#else
 #include <petsc-private/petscimpl.h>
+#endif
 #include <petscts2.h>
 
 #if PETSC_VERSION_(3,2,0)
@@ -653,18 +657,6 @@ PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
 
 /* ---------------------------------------------------------------- */
 
-#ifndef PetscMalloc1
-#define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
-#endif
-
-#ifndef PetscValidRealPointer
-#define PetscValidRealPointer PetscValidDoublePointer
-#endif
-
-#if PETSC_VERSION_(3,2,0)
-#define PetscObjectTypeCompare PetscTypeCompare
-#endif
-
 #if defined(PETSC_USE_DEBUG)
 #define IGACheckSetUp(iga,arg) do {                                      \
     if (PetscUnlikely(!(iga)->setup))                                    \
@@ -686,6 +678,42 @@ PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
     } while (0)
 #else
 #define IGACheckUserOp(iga,arg,UserOp) do {} while (0)
+#endif
+
+/* ---------------------------------------------------------------- */
+
+#ifndef PETSC_VERSION_EQ
+#define PETSC_VERSION_EQ(MAJOR,MINOR,SUBMINOR) \
+  (PETSC_VERSION_(MAJOR,MINOR,SUBMINOR))
+#endif
+#ifndef PETSC_VERSION_LT
+#define PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) \
+  (PETSC_VERSION_MAJOR < (MAJOR) ||            \
+   (PETSC_VERSION_MAJOR == (MAJOR) &&          \
+    (PETSC_VERSION_MINOR < (MINOR) ||          \
+     (PETSC_VERSION_MINOR == (MINOR) &&        \
+      (PETSC_VERSION_SUBMINOR < (SUBMINOR))))))
+#define PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR) \
+  (PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) ||   \
+   PETSC_VERSION_EQ(MAJOR,MINOR,SUBMINOR))
+#endif
+#ifndef PETSC_VERSION_GT
+#define PETSC_VERSION_GT(MAJOR,MINOR,SUBMINOR) \
+  (!PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR))
+#define PETSC_VERSION_GE(MAJOR,MINOR,SUBMINOR) \
+  (!PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
+#endif
+
+#ifndef PetscMalloc1
+#define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
+#endif
+
+#ifndef PetscValidRealPointer
+#define PetscValidRealPointer PetscValidDoublePointer
+#endif
+
+#if PETSC_VERSION_LE(3,2,0)
+#define PetscObjectTypeCompare PetscTypeCompare
 #endif
 
 /* ---------------------------------------------------------------- */

@@ -1,7 +1,6 @@
 #include <petscts2.h>
-
 #if PETSC_VERSION_(3,2,0)
-#include "private/tsimpl.h"                      /*I   "petscts.h"   I*/
+#include <private/tsimpl.h>                      /*I   "petscts.h"   I*/
 #else
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
 #endif

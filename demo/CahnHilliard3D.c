@@ -418,10 +418,10 @@ int main(int argc, char *argv[]) {
   ierr = FormInitialCondition(&user,iga,initial,U);CHKERRQ(ierr);
   ierr = VecDuplicate(U,&user.X0);CHKERRQ(ierr);
   ierr = VecCopy(U,user.X0);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
-    ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+#if PETSC_VERSION_LE(3,3,0)
+  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
 #else
-    ierr = TSSolve(ts,U);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);

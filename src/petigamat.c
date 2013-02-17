@@ -1,7 +1,6 @@
 #include "petiga.h"
 #include "petigagrid.h"
-
-#if PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,2,0)
 #include "private/matimpl.h"
 #endif
 
@@ -203,7 +202,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
 
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,2,0)
   ierr = MatSetType(A,mtype);CHKERRQ(ierr);
   ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
 #else
@@ -262,7 +261,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   } else {
     ierr = MatSetUp(A);CHKERRQ(ierr);
   }
-#if PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,2,0)
   /* XXX This is a vile hack. Perhaps we should just check for      */
   /* SeqDense and MPIDense that are the only I care about right now */
   if (A->ops->setblocksize) {
@@ -317,7 +316,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   *mat = A;
 
   { /* XXX */
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
     ierr = PetscObjectCompose((PetscObject)*mat,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
 #else
     ierr = MatSetDM(*mat,iga->node_dm);CHKERRQ(ierr);

@@ -1,13 +1,13 @@
 #include "petiga.h"
 #include "petigagrid.h"
 #if PETSC_VERSION_(3,2,0)
-#include "private/pcimpl.h"
+#include <private/pcimpl.h>
 #else
-#include "petsc-private/pcimpl.h"
+#include <petsc-private/pcimpl.h>
 #endif
 #include "petigapc.h"
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #undef MatType
 typedef const char* MatType;
 #endif         

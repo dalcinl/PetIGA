@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     ierr = TSSetDuration(ts,10000,0.1);CHKERRQ(ierr);
     ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
     ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
     ierr = TSSolve(ts,x,PETSC_NULL);CHKERRQ(ierr);
 #else
     ierr = TSSolve(ts,x);CHKERRQ(ierr);

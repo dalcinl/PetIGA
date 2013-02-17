@@ -1,4 +1,4 @@
-#include "petscblaslapack.h"
+#include <petscblaslapack.h>
 #if defined(PETSC_BLASLAPACK_UNDERSCORE)
    #define sgetri_ sgetri_
    #define dgetri_ dgetri_

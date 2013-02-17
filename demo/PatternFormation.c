@@ -218,10 +218,10 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = VecSetRandom(U,PETSC_NULL);CHKERRQ(ierr);
   ierr = VecScale(U,1.);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
-    ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+#if PETSC_VERSION_LE(3,3,0)
+  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
 #else
-    ierr = TSSolve(ts,U);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);

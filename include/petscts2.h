@@ -1,6 +1,6 @@
 #if !defined(__PETSCTS2_H)
 #define __PETSCTS2_H
-#include "petscts.h"
+#include <petscts.h>
 
 #if PETSC_VERSION_(3,2,0)
 PETSC_EXTERN_CXX_BEGIN

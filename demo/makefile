@@ -166,7 +166,7 @@ runex5b_4:
 runex6a_1:
 	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 1 -lambda 1.0
 runex6a_2:
-	-@${MPIEXEC} -n 2 ./Bratu ${OPTS} -iga_dim 1 -steady false
+	-@${MPIEXEC} -n 2 ./Bratu ${OPTS} -iga_dim 1 -lambda 1.0 -steady false
 runex6b_1:
 	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2
 runex6b_4:
