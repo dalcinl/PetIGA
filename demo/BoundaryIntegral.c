@@ -34,6 +34,22 @@ PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
+typedef struct { 
+  PetscInt dir;
+} AppCtx;
+
+#undef  __FUNCT__
+#define __FUNCT__ "Error"
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+{
+  AppCtx *user = (AppCtx *)ctx;
+  PetscScalar u;
+  IGAPointFormValue(p,U,&u);
+  PetscReal e = u - p->point[user->dir];
+  S[0] = e*e;
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
@@ -41,23 +57,23 @@ int main(int argc, char *argv[]) {
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Poisson2D Options","IGA");CHKERRQ(ierr);
+  AppCtx user;
+  user.dir = 0;
+
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-dir","direction",__FILE__,user.dir,&user.dir,PETSC_NULL);CHKERRQ(ierr); 
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
-  ierr = IGASetDim(iga,2);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
 
   IGABoundary bnd;
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr); // u = 0 on [0,:]
+  ierr = IGAGetBoundary(iga,user.dir,0,&bnd);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,1,0,&bnd);CHKERRQ(ierr); // u = 0 on [:,0]
-  ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr); // grad u . n = h on [1,:]
+  ierr = IGAGetBoundary(iga,user.dir,1,&bnd);CHKERRQ(ierr); 
   ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,1,1,&bnd);CHKERRQ(ierr); // grad u . n = h on [:,1]
-  ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
+
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
@@ -75,7 +91,10 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
+  PetscScalar error = 0;
+  ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
+  error = PetscSqrtReal(PetscRealPart(error));
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);
   
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
