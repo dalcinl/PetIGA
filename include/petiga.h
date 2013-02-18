@@ -358,6 +358,8 @@ PETSC_EXTERN PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJaco
 PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *FunCtx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *JacCtx);
 
+PETSC_EXTERN PetscErrorCode IGAGetMeshInformation(IGA iga,PetscReal *hmin,PetscReal *hmax,PetscReal *havg,PetscReal *hstd);
+
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAElement {
@@ -486,6 +488,8 @@ PETSC_EXTERN PetscBool      IGANextBoundaryElement(IGA iga,IGAElement element,Pe
 PETSC_EXTERN PetscErrorCode IGABoundaryElementBeginPoint(IGAElement element,IGAPoint *point,PetscInt dir,PetscInt side);
 PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryQuadrature(IGAElement element,PetscInt dir,PetscInt side);
 PETSC_EXTERN PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,PetscInt side);
+
+PETSC_EXTERN PetscErrorCode IGAElementCharacteristicSize(IGAElement element,PetscReal *h);
 
 /* ---------------------------------------------------------------- */
 
