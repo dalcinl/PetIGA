@@ -48,6 +48,60 @@ contains
 include 'petigainv.f90.in'
 end subroutine IGA_GetInvGradGeomMap
 
+subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
+  bind(C, name="IGA_GetNormal")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: dim
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: axis,side
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: F(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: dS
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: N(dim)
+  select case (dim)
+  case (3)
+     select case (axis)
+     case (0)
+        N = normal3(F(2,:),F(3,:))
+     case (1)
+        N = normal3(F(3,:),F(1,:))
+     case (2)
+        N = normal3(F(1,:),F(2,:))
+     end select
+  case (2)
+     select case (axis)
+     case (0); N = normal2(F(2,:)) 
+     case (1); N = normal2(F(1,:)) 
+     end select
+  case (1)
+     N = (/ 1.0 /)
+  end select
+  dS = sqrt(sum(N*N))
+  if (side == 0) then
+     N = -N/dS
+  else
+     N = +N/dS
+  endif
+contains
+function normal2(t) result(n)
+  implicit none
+  real(kind=IGA_REAL_KIND)             :: n(2)
+  real(kind=IGA_REAL_KIND), intent(in) :: t(2)
+  ! n_i = eps_ij n_j
+  n(1) = + t(2)
+  n(2) = - t(1)
+end function normal2
+function normal3(s,t) result(n)
+  implicit none
+  real(kind=IGA_REAL_KIND)             :: n(3)
+  real(kind=IGA_REAL_KIND), intent(in) :: s(3)
+  real(kind=IGA_REAL_KIND), intent(in) :: t(3)
+  ! c_i = eps_ijk s_j tj
+  n(1) = s(2) * t(3) - s(3) * t(2)
+  n(2) = s(3) * t(1) - s(1) * t(3)
+  n(3) = s(1) * t(2) - s(2) * t(1)
+end function normal3
+end subroutine IGA_GetNormal
+
 
 subroutine IGA_GetValue(nen,dof,N,U,V) &
   bind(C, name="IGA_GetValue")

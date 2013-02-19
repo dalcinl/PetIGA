@@ -4,22 +4,26 @@
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
-  PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
-  PetscInt a,b,nen=p->nen;
+  PetscInt nen,dim;
+  IGAPointGetSizes(p,0,&nen,0);
+  IGAPointGetDims(p,&dim,0);
+
+  const PetscReal *N1;
+  IGAPointGetShapeFuns(p,1,&N1);
+
+  PetscInt a,b,i;
   for (a=0; a<nen; a++) {
-    PetscReal Na   = N0[a];
-    PetscReal Na_x = N1[a][0];
-    PetscReal Na_y = N1[a][1];
     for (b=0; b<nen; b++) {
-      PetscReal Nb_x = N1[b][0];
-      PetscReal Nb_y = N1[b][1];
-      K[a*nen+b] = Na_x*Nb_x + Na_y*Nb_y;
+      PetscScalar Kab = 0.0;
+      for (i=0; i<dim; i++)
+        Kab += N1[a*dim+i]*N1[b*dim+i];
+      K[a*nen+b] = Kab;
     }
-    F[a] = Na * 0.0;
   }
   return 0;
 }
+
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "Neumann"
@@ -36,6 +40,7 @@ PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
 typedef struct { 
   PetscInt dir;
+  PetscInt side;
 } AppCtx;
 
 #undef  __FUNCT__
@@ -45,7 +50,12 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   AppCtx *user = (AppCtx *)ctx;
   PetscScalar u;
   IGAPointFormValue(p,U,&u);
-  PetscReal e = u - p->point[user->dir];
+  PetscReal x;
+  if (user->side == 0)
+    x = 1 - p->point[user->dir];
+  else
+    x = p->point[user->dir];
+  PetscReal e = u - x;
   S[0] = e*e;
   return 0;
 }
@@ -58,10 +68,12 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   AppCtx user;
-  user.dir = 0;
+  user.dir  = 0;
+  user.side = 1;
 
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-dir","direction",__FILE__,user.dir,&user.dir,PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsInt("-dir", "direction",__FILE__,user.dir, &user.dir, PETSC_NULL);CHKERRQ(ierr); 
+  ierr = PetscOptionsInt("-side","side",     __FILE__,user.side,&user.side,PETSC_NULL);CHKERRQ(ierr); 
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -69,9 +81,11 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
 
   IGABoundary bnd;
-  ierr = IGAGetBoundary(iga,user.dir,0,&bnd);CHKERRQ(ierr);
+  PetscInt d = !user.side; 
+  PetscInt n = !!user.side;
+  ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
   ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,user.dir,1,&bnd);CHKERRQ(ierr); 
+  ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr); 
   ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
@@ -90,6 +104,10 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
+
+  PetscInt dim;
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  if (dim <= 2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   PetscScalar error = 0;
   ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);

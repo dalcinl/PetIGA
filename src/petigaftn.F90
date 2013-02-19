@@ -88,6 +88,7 @@ module PetIGA
      type(C_PTR) :: detX
      type(C_PTR) :: gradX(0:1)
      type(C_PTR) :: shape(0:3)
+     type(C_PTR) :: normal
   end type IGAPoint
 
 
@@ -235,6 +236,14 @@ module PetIGA
       end interface
       call IGAPoint_InvGradGeomMap(p,G)
     end function IGA_InvGradGeomMap
+
+    function IGA_Normal(p) result (N)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: N(:)
+      call c2f(p%normal,N,(/p%dim/))
+    end function IGA_Normal
 
     function IGA_Shape0(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER

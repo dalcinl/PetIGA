@@ -407,6 +407,9 @@ struct _n_IGAElement {
                        /*1: [nqp][nen][nsd]           */
                        /*2: [nqp][nen][nsd][nsd]      */
                        /*3: [nqp][nen][nsd][nsd][nsd] */
+  
+  PetscReal *normal;   /*   [nqp][dim]                */
+  
 
   IGA      parent;
   IGAPoint iterator;
@@ -525,6 +528,8 @@ struct _n_IGAPoint {
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
+
+  PetscReal *normal;   /*   [dim] */
 
   IGAElement parent;
 

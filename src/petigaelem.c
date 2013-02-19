@@ -122,6 +122,8 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->shape[2]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[3]);CHKERRQ(ierr);
 
+  ierr = PetscFree(element->normal);CHKERRQ(ierr);
+
   ierr = IGAElementFreeFix(element);CHKERRQ(ierr);
   ierr = IGAElementFreeWork(element);CHKERRQ(ierr);
   ierr = IGAPointReset(element->iterator);CHKERRQ(ierr);
@@ -204,6 +206,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->shape[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,PetscReal,&element->shape[3]);CHKERRQ(ierr);
 
+
     ierr = PetscMemzero(element->weight,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
 
@@ -221,6 +224,9 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMemzero(element->shape[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nqp*dim,PetscReal,&element->normal);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->normal,sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
   }
   if (!element->collocation) {
     element->neq    = element->nen;
@@ -468,6 +474,8 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->shape[2] += nen*dim*dim;
   point->shape[3] += nen*dim*dim*dim;
 
+  point->normal   += dim;
+
   return PETSC_TRUE;
 
  start:
@@ -503,6 +511,8 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
     point->shape[2] = element->basis[2];
     point->shape[3] = element->basis[3];
   }
+
+  point->normal = element->normal;
 
   return PETSC_TRUE;
 
@@ -777,48 +787,48 @@ PetscErrorCode IGAElementBuildBoundaryQuadrature(IGAElement element,PetscInt dir
     IGABasis *BD = element->BD;
     PetscInt *ID = element->ID;
 
-    PetscInt ione=1;
     PetscReal U[2],one=1;
     IGAAxisGetLimits(element->parent->axis[dir],&U[0],&U[1]);
 
     switch (element->dim) {
     case 3:
-      if(dir==0){
-	IGA_Quadrature_3D(ione,&U[side],&one,&one,
-			  IGA_Quadrature_ARGS(ID,BD,1),
-			  IGA_Quadrature_ARGS(ID,BD,2),
-			  element->weight,element->detJac,
-			  element->point,element->scale);
-      }else if(dir==1){
-	IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
-			  ione,&U[side],&one,&one,
-			  IGA_Quadrature_ARGS(ID,BD,2),
-			  element->weight,element->detJac,
-			  element->point,element->scale);
-      }else{
-	IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
-			  IGA_Quadrature_ARGS(ID,BD,1),
-			  ione,&U[side],&one,&one,
-			  element->weight,element->detJac,
-			  element->point,element->scale);
+      switch (dir) {
+      case 0: IGA_Quadrature_3D(1,&U[side],&one,&one,
+                                IGA_Quadrature_ARGS(ID,BD,1),
+                                IGA_Quadrature_ARGS(ID,BD,2),
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
+      case 1: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
+                                1,&U[side],&one,&one,
+                                IGA_Quadrature_ARGS(ID,BD,2),
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
+      case 2: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
+                                IGA_Quadrature_ARGS(ID,BD,1),
+                                1,&U[side],&one,&one,
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
       }
       break;
     case 2:
-      if(dir==0){
-	IGA_Quadrature_2D(ione,&U[side],&one,&one,
-			  IGA_Quadrature_ARGS(ID,BD,1),
-			  element->weight,element->detJac,
-			  element->point,element->scale);
-      }else{
-	IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
-			  ione,&U[side],&one,&one,
-			  element->weight,element->detJac,
-			  element->point,element->scale);
+      switch (dir) {
+      case 0: IGA_Quadrature_2D(1,&U[side],&one,&one,
+                                IGA_Quadrature_ARGS(ID,BD,1),
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
+      case 1: IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
+                                1,&U[side],&one,&one,
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
       }
       break;
-    case 1: IGA_Quadrature_1D(IGA_Quadrature_ARGS(ID,BD,0),
-			      element->weight,element->detJac,
-			      element->point,element->scale); break;
+    case 1:
+      switch (dir) {
+      case 0: IGA_Quadrature_1D(1,&U[side],&one,&one,
+                                element->weight,element->detJac,
+                                element->point,element->scale); break;
+      }
+      break;
     }
   }
   PetscFunctionReturn(0);
@@ -923,7 +933,13 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   PetscFunctionReturn(0);
 }
 
+EXTERN_C_BEGIN
 extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+EXTERN_C_END
+
+EXTERN_C_BEGIN
+extern void IGA_GetNormal(PetscInt dim,PetscInt dir,PetscInt side,const PetscReal F[],PetscReal *dS,PetscReal N[]);
+EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildBoundaryShapeFuns"
@@ -941,59 +957,61 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
     PetscReal **N = element->basis;
 
     PetscInt k = element->parent->axis[dir]->span[element->ID[dir]];
-    PetscReal u = element->point[dir];
     PetscInt p = element->parent->axis[dir]->p;
     PetscInt d = element->parent->order;
-    PetscInt ione = 1;
     PetscReal *U = element->parent->axis[dir]->U;
     PetscInt nen = BD[dir]->nen;
     PetscReal value[nen*(d+1)];
-    IGA_DersBasisFuns(k,u,p,d,U,&value[0]);
+
+    PetscReal u[2];
+    IGAAxisGetLimits(element->parent->axis[dir],&u[0],&u[1]);
+    IGA_DersBasisFuns(k,u[side],p,d,U,value);
 
     switch (element->dim) {
     case 3:
-      if(dir == 0){
-	IGA_BasisFuns_3D(order,element->rational,
-			 element->rationalW,
-			 ione,BD[0]->nen,BD[0]->d,&value[0],
-			 IGA_BasisFuns_ARGS(ID,BD,1),
-			 IGA_BasisFuns_ARGS(ID,BD,2),
-			 N[0],N[1],N[2],N[3]);
-      }else if(dir == 1){
-	IGA_BasisFuns_3D(order,element->rational,
-			 element->rationalW,
-			 IGA_BasisFuns_ARGS(ID,BD,0),
-			 ione,BD[1]->nen,BD[1]->d,&value[0],
-			 IGA_BasisFuns_ARGS(ID,BD,2),
-			 N[0],N[1],N[2],N[3]);
-      }else{
-	IGA_BasisFuns_3D(order,element->rational,
-			 element->rationalW,
-			 IGA_BasisFuns_ARGS(ID,BD,0),
-			 IGA_BasisFuns_ARGS(ID,BD,1),
-			 ione,BD[2]->nen,BD[2]->d,&value[0],
-			 N[0],N[1],N[2],N[3]);
+      switch (dir) {
+      case 0: IGA_BasisFuns_3D(order,
+                               element->rational, element->rationalW,
+                               1,BD[0]->nen,BD[0]->d,value,
+                               IGA_BasisFuns_ARGS(ID,BD,1),
+                               IGA_BasisFuns_ARGS(ID,BD,2),
+                               N[0],N[1],N[2],N[3]); break;
+      case 1: IGA_BasisFuns_3D(order,
+                               element->rational,element->rationalW,
+                               IGA_BasisFuns_ARGS(ID,BD,0),
+                               1,BD[1]->nen,BD[1]->d,value,
+                               IGA_BasisFuns_ARGS(ID,BD,2),
+                               N[0],N[1],N[2],N[3]); break;
+      case 2: IGA_BasisFuns_3D(order,
+                               element->rational,element->rationalW,
+                               IGA_BasisFuns_ARGS(ID,BD,0),
+                               IGA_BasisFuns_ARGS(ID,BD,1),
+                               1,BD[2]->nen,BD[2]->d,value,
+                               N[0],N[1],N[2],N[3]); break;
       }
       break;
     case 2:
-      if(dir == 0){
-	IGA_BasisFuns_2D(order,element->rational,
-			 element->rationalW,
-			 ione,BD[0]->nen,BD[0]->d,&value[0],
-			 IGA_BasisFuns_ARGS(ID,BD,1),
-			 N[0],N[1],N[2],N[3]);
-      }else{
-	IGA_BasisFuns_2D(order,element->rational,
-			 element->rationalW,
-			 IGA_BasisFuns_ARGS(ID,BD,0),
-			 ione,BD[1]->nen,BD[1]->d,&value[0],
-			 N[0],N[1],N[2],N[3]);
+      switch (dir) {
+      case 0: IGA_BasisFuns_2D(order,
+                               element->rational,element->rationalW,
+                               1,BD[0]->nen,BD[0]->d,value,
+                               IGA_BasisFuns_ARGS(ID,BD,1),
+                               N[0],N[1],N[2],N[3]); break;
+      case 1: IGA_BasisFuns_2D(order,
+                               element->rational,element->rationalW,
+                               IGA_BasisFuns_ARGS(ID,BD,0),
+                               1,BD[1]->nen,BD[1]->d,value,
+                               N[0],N[1],N[2],N[3]); break;
       }
       break;
-    case 1: IGA_BasisFuns_1D(order,element->rational,
-			     element->rationalW,
-			     IGA_BasisFuns_ARGS(ID,BD,0),
-			     N[0],N[1],N[2],N[3]); break;
+    case 1: 
+      switch (dir) {
+      case 0: IGA_BasisFuns_1D(order,
+                               element->rational,element->rationalW,
+                               1,BD[0]->nen,BD[0]->d,value,
+                               N[0],N[1],N[2],N[3]); break;
+      }
+      break;
     }
   }
   if (element->dim == element->nsd) /* XXX */
@@ -1023,8 +1041,23 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
 			     N[0],N[1],N[2],N[3],
 			     dX,gX[0],gX[1]); break;
     }
+    {
+      PetscInt  dim = element->dim;
+      PetscReal *F  = element->gradX[0];
+      PetscReal dS, *n = element->normal;
+      for (q=0; q<nqp; q++) {
+        IGA_GetNormal(dim,dir,side,F,&dS,&n[q*dim]);
+        element->detJac[q] *= dS;
+      }
+    }
+  }
+  if (!element->geometry) {
+    PetscInt q, nqp = element->nqp;
+    PetscInt i, dim = element->dim;
+    PetscReal *n  = element->normal;
     for (q=0; q<nqp; q++)
-      element->detJac[q] *= dX[q];
+      for (i=0; i<dim; i++)
+        n[q*dim+i] = (dir==i) ? ((side==0)?-1.0:1.0) : 0.0;
   }
   PetscFunctionReturn(0);
 }
