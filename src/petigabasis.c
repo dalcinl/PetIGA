@@ -47,6 +47,8 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
   ierr = PetscFree(basis->point);CHKERRQ(ierr);
   ierr = PetscFree(basis->value);CHKERRQ(ierr);
+  ierr = PetscFree(basis->bnd_value[0]);CHKERRQ(ierr);
+  ierr = PetscFree(basis->bnd_value[1]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -137,6 +139,18 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   basis->weight = weight;
   basis->point  = point;
   basis->value  = value;
+
+  {
+    PetscInt  k0 = span[0], k1 = span[nel-1];
+    PetscReal u0 = U[k0],   u1 = U[k1+1];
+    ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[0]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[1]);CHKERRQ(ierr);
+    basis->bnd_detJ  [0] = 1.0; basis->bnd_detJ  [1] = 1.0;
+    basis->bnd_weight[0] = 1.0; basis->bnd_weight[1] = 1.0;
+    basis->bnd_point [0] =  u0; basis->bnd_point [1] = u1;
+    IGA_DersBasisFuns(k0,u0,p,d,U,basis->bnd_value[0]);
+    IGA_DersBasisFuns(k1,u1,p,d,U,basis->bnd_value[1]);
+  }
 
   PetscFunctionReturn(0);
 }

@@ -97,6 +97,11 @@ struct _n_IGABasis {
   PetscReal *weight;  /* [nqp]                */
   PetscReal *point;   /* [nel][nqp]           */
   PetscReal *value;   /* [nel][nqp][nen][d+1] */
+
+  PetscReal  bnd_detJ[2];
+  PetscReal  bnd_weight[2];
+  PetscReal  bnd_point[2];
+  PetscReal *bnd_value[2]; /* [nen][d+1] */
 };
 PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);
