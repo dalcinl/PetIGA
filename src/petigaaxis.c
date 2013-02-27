@@ -337,7 +337,7 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   }
   if (axis->periodic) {
     for(k=0; k<=C; k++) { /* periodic part */
-      U[k]     = U[p] - U[m-p] + U[n-C+k];
+      U[C-k]   = U[p] - U[m-p] + U[n-k];
       U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
     }
   }
@@ -418,7 +418,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   }
   if (axis->periodic) {
     for(k=0; k<=C; k++) { /* periodic part */
-      U[k]     = U[p] - U[m-p] + U[n-C+k];
+      U[C-k]   = U[p] - U[m-p] + U[n-k];
       U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
     }
   }
