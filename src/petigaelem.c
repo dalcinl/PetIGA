@@ -136,6 +136,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 {
   PetscInt *start;
   PetscInt *width;
+  PetscInt *sizes;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -151,30 +152,34 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   if (!element->collocation) {
     start = iga->elem_start;
     width = iga->elem_width;
+    sizes = iga->elem_sizes;
     element->BD = iga->elem_basis;
   } else {
     start = iga->node_lstart;
     width = iga->node_lwidth;
+    sizes = iga->node_sizes;
     element->BD = iga->node_basis;
   }
   { /* */
     PetscInt i,dim = element->dim;
-    PetscInt nel=1,nqp=1,nen=1;
+    PetscInt nel=1,nen=1,nqp=1;
     for (i=0; i<dim; i++) {
       element->start[i] = start[i];
       element->width[i] = width[i];
+      element->sizes[i] = sizes[i];
       nel *= element->width[i];
-      nqp *= element->BD[i]->nqp;
       nen *= element->BD[i]->nen;
+      nqp *= element->BD[i]->nqp;
     }
     for (i=dim; i<3; i++) {
       element->start[i] = 0;
       element->width[i] = 1;
+      element->sizes[i] = 1;
     }
     element->index = -1;
     element->count = nel;
-    element->nqp   = nqp;
     element->nen   = nen;
+    element->nqp   = nqp;
   }
   { /* */
     PetscInt dim = element->dim;
@@ -182,6 +187,8 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     PetscInt npd = element->npd;
     PetscInt nen = element->nen;
     PetscInt nqp = element->nqp;
+
+    /* */
 
     ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*nsd,PetscReal,&element->geometryX);CHKERRQ(ierr);
@@ -1290,12 +1297,11 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   element->nflux = 0;
   if (!element->collocation) {
     IGAAxis  *AX = element->parent->axis;
-    IGABasis *BD = element->BD;
     PetscInt *ID = element->ID;
     PetscInt i,dim = element->dim;
     for (i=0; i<dim; i++) {
       PetscBool w = AX[i]->periodic;
-      PetscInt  e = BD[i]->nel-1; /* last element */
+      PetscInt  e = element->sizes[i]-1; /* last element */
       if (ID[i] == 0 && !w) BuildFix(element,i,0);
       if (ID[i] == e && !w) BuildFix(element,i,1);
     }
@@ -1306,9 +1312,9 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
       IGAAxis  *AX = element->parent->axis;
       PetscInt i,dim = element->dim;
       for (i=0; i<dim; i++) {
-	PetscBool w = AX[i]->periodic;
-	PetscInt  n = AX[i]->nnp-1; /* last node */
-	A0[i] = 0; if (!w) A1[i] = n;
+        PetscBool w = AX[i]->periodic;
+        PetscInt  n = element->sizes[i]-1; /* last node */
+        A0[i] = 0; if (!w) A1[i] = n;
       }
     }
     {

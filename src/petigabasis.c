@@ -37,7 +37,6 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   if (!basis) PetscFunctionReturn(0);
   PetscValidPointer(basis,1);
   basis->nel = 0;
-  basis->nnp = 0;
   basis->nqp = 0;
   basis->nen = 0;
   basis->p   = 0;
@@ -70,7 +69,7 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInitQuadrature"
 PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p,nnp;
+  PetscInt       p;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
@@ -97,7 +96,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   W   = rule->weight;
 
   nel  = axis->nel;
-  nnp  = axis->nnp;
   span = axis->span;
   nen  = p+1;
   ndr  = d+1;
@@ -128,7 +126,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
 
   basis->nel    = nel;
-  basis->nnp    = nnp;
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->p      = p;
@@ -164,7 +161,7 @@ EXTERN_C_END
 #define __FUNCT__ "IGABasisInitCollocation"
 PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
 {
-  PetscInt       p,n,nnp;
+  PetscInt       p,n;
   const PetscReal*U;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
@@ -186,7 +183,6 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   U = axis->U;
 
   nel  = axis->nnp;
-  nnp  = axis->nnp;
   nqp  = 1;
   nen  = p+1;
   ndr  = d+1;
@@ -213,7 +209,6 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
 
   basis->nel    = nel;
-  basis->nnp    = nnp;
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->p      = p;

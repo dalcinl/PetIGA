@@ -87,7 +87,6 @@ struct _n_IGABasis {
   PetscInt refct;
   /**/
   PetscInt  nel;      /* number of elements */
-  PetscInt  nnp;      /* number of basis functions */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
   PetscInt  p,d;      /* polynomial order, last derivative index */
@@ -370,9 +369,10 @@ PETSC_EXTERN PetscErrorCode IGAGetMeshInformation(IGA iga,PetscReal *hmin,PetscR
 struct _n_IGAElement {
   PetscInt refct;
   /**/
-  PetscInt start[3];
-  PetscInt width[3];
-  PetscInt ID[3];
+  PetscInt  start[3];
+  PetscInt  width[3];
+  PetscInt  sizes[3];
+  PetscInt  ID[3];
   /**/
   PetscInt count;
   PetscInt index;
