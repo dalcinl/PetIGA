@@ -9,7 +9,7 @@ LICENSE: PetIGA
 .. _CONICET:  http://www.conicet.gov.ar/
 .. _KAUST:    http://www.kaust.edu.sa/
 
-Copyright (c) 2012, Lisandro Dalcin and Nathaniel Collier.
+Copyright (c) 2013, Lisandro Dalcin and Nathaniel Collier.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
