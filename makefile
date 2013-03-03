@@ -31,6 +31,7 @@ cmake_fc=-DCMAKE_Fortran_COMPILER:FILEPATH=${FC} -DCMAKE_Fortran_FLAGS:STRING='$
 ${PETIGA_DIR}/${PETSC_ARCH}/conf:
 	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
 ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: ${PETIGA_DIR}/${PETSC_ARCH}/conf
+	@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc} 2>&1 > ${PETIGA_DIR}/${PETSC_ARCH}/conf/cmake.log
 cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 cmake-build: cmake-boot
