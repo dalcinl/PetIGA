@@ -215,11 +215,13 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (aij || baij || sbaij) {
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
-    PetscInt *dnz = 0, *onz = 0;
+    PetscInt Nbs = (baij||sbaij) ? N : N*bs;
+    PetscInt *dnz = 0, dmax = nbs;
+    PetscInt *onz = 0, omax = Nbs - nbs;
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
       PetscInt i,j,k;
-      PetscInt n = maxnnz,*indices=0,*ubrows,*ubcols=0;
+      PetscInt n = maxnnz,*indices=0,*ubrows=0,*ubcols=0;
       ierr = PetscMalloc1(n,PetscInt,&indices);CHKERRQ(ierr);
       ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
       for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
@@ -243,6 +245,10 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
             }
+      for (i=0; i<nbs; i++) {
+        dnz[i] = PetscMin(dnz[i],dmax);
+        onz[i] = PetscMin(onz[i],omax);
+      }
       if (aij) {
         ierr = MatSeqAIJSetPreallocation(A,0,dnz);CHKERRQ(ierr);
         ierr = MatMPIAIJSetPreallocation(A,0,dnz,0,onz);CHKERRQ(ierr);
@@ -271,9 +277,10 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = PetscLayoutSetBlockSize(A->cmap,bs);CHKERRQ(ierr);
   }
 #endif
+
   if (aij || baij || sbaij) {
     PetscInt i,j,k;
-    PetscInt n = maxnnz,*indices=0,*ubrows,*ubcols=0;PetscScalar *values=0;
+    PetscInt n = maxnnz,*indices=0,*ubrows=0,*ubcols=0;PetscScalar *values=0;
     ierr = PetscMalloc2(n,PetscInt,&indices,n*bs*n*bs,PetscScalar,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
     ierr = PetscMemzero(values,n*bs*n*bs*sizeof(PetscScalar));CHKERRQ(ierr);
