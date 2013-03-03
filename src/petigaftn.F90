@@ -181,17 +181,23 @@ module PetIGA
 
     function IGA_Geometry(p) result(X)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
+      use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
       implicit none
       type(IGAPoint), intent(in) :: p
       real(kind=IGA_REAL_KIND), pointer :: X(:)
+      nullify(X)
+      if (nonnull(p%geometry)) &
       call c2f(p%geometry,X,(/p%nsd,p%nen/))
     end function IGA_Geometry
 
     function IGA_Property(p) result(A)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
+      use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
       implicit none
       type(IGAPoint), intent(in) :: p
       real(kind=IGA_REAL_KIND), pointer :: A(:)
+      nullify(A)
+      if (nonnull(p%property)) &
       call c2f(p%property,A,(/p%npd,p%nen/))
     end function IGA_Property
 
