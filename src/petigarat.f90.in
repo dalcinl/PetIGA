@@ -1,9 +1,14 @@
 ! -*- f90 -*-
 
-pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
+pure subroutine Rationalize(&
+     order,&
+     nen,W,&
+     R0,R1,R2,R3)
+  use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter     :: dim = 1,2,3
-  integer(kind=IGA_INTEGER_KIND), intent(in)    :: ord, nen
+  integer(kind=IGA_INTEGER_KIND), intent(in)    :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in)    :: nen
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: W(nen)
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: R0(            nen)
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: R1(        dim,nen)
@@ -11,7 +16,10 @@ pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: R3(dim,dim,dim,nen)
   !
   integer(kind=IGA_INTEGER_KIND)  :: a, i, j, k
-  real   (kind=IGA_REAL_KIND   )  :: W0, W1(dim), W2(dim,dim), W3(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: W0
+  real   (kind=IGA_REAL_KIND   )  :: W1(dim)
+  real   (kind=IGA_REAL_KIND   )  :: W2(dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: W3(dim,dim,dim)
   !
   forall (a=1:nen)
      R0(a) = W(a) * R0(a)
@@ -25,7 +33,7 @@ pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   end forall
   R1 = R1 / W0
   !
-  if (ord < 2) return
+  if (order < 2) return
   forall (i=1:dim, j=1:dim)
      W2(i,j) = sum(W*R2(i,j,:))
      R2(i,j,:) = W*R2(i,j,:)   - R0(:)*W2(i,j) &
@@ -33,7 +41,7 @@ pure subroutine Rationalize(ord,nen,W,R0,R1,R2,R3)
   end forall
   R2 = R2 / W0
   !
-  if (ord < 3) return
+  if (order < 3) return
   forall (i=1:dim, j=1:dim, k=1:dim)
      W3(i,j,k) = sum(W*R3(i,j,k,:))
      R3(i,j,k,:) = W*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &

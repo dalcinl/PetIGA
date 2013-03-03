@@ -1,7 +1,8 @@
 ! -*- f90 -*-
 
 pure function Determinant(dim,A) result (detA)
-  use PetIGA; implicit none
+  use PetIGA
+  implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in) :: dim
   real   (kind=IGA_REAL_KIND   ), intent(in) :: A(dim,dim)
   real   (kind=IGA_REAL_KIND   )  :: detA
@@ -20,7 +21,8 @@ pure function Determinant(dim,A) result (detA)
 end function Determinant
 
 pure function Inverse(dim,detA,A) result (invA)
-  use PetIGA; implicit none
+  use PetIGA
+  implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in) :: dim
   real   (kind=IGA_REAL_KIND   ), intent(in) :: detA
   real   (kind=IGA_REAL_KIND   ), intent(in) :: A(dim,dim)
