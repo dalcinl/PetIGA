@@ -6,7 +6,7 @@ PetscErrorCode SystemLaplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
 
   const PetscReal *N1;
   IGAPointGetShapeFuns(p,1,&N1);
@@ -29,7 +29,7 @@ PetscErrorCode SystemPoisson(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
 
   const PetscReal *N;
   IGAPointGetShapeFuns(p,0,&N);
@@ -55,7 +55,7 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
 
   PetscInt Nb[3] = {0,0,0};
   Nb[0] = p->parent->BD[0]->nnp;

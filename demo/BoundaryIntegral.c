@@ -6,7 +6,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
 
   const PetscReal *N1;
   IGAPointGetShapeFuns(p,1,&N1);

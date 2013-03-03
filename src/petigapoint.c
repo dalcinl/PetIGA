@@ -140,14 +140,16 @@ PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,Petsc
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetDims"
-PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd)
+PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscInt *npd)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
   if (dim) PetscValidIntPointer(dim,2);
   if (nsd) PetscValidIntPointer(nsd,3);
+  if (npd) PetscValidIntPointer(npd,4);
   if (dim) *dim = point->dim;
   if (nsd) *nsd = point->nsd;
+  if (npd) *nsd = point->npd;
   PetscFunctionReturn(0);
 }
 
