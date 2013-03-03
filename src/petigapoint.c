@@ -576,7 +576,7 @@ PetscBool IGALocateElement(IGA iga,PetscScalar *pnt,IGAElement element)
 }
 
 EXTERN_C_BEGIN
-extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern void IGA_Basis_BSpline(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]);
 extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
 			     PetscInt,PetscInt,PetscInt,const PetscReal[],
 			     PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
@@ -639,7 +639,7 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
   for(i=0;i<element->dim;i++){
     nen[i] = element->parent->axis[i]->p + 1;
     ierr = PetscMalloc1(nen[i]*(order+1),PetscReal,&basis[i]);CHKERRQ(ierr);
-    IGA_DersBasisFuns(element->parent->axis[i]->span[element->ID[i]],
+    IGA_Basis_BSpline(element->parent->axis[i]->span[element->ID[i]],
 		      point->point[i],
 		      element->parent->axis[i]->p,
 		      order,

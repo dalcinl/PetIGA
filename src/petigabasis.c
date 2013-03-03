@@ -62,7 +62,7 @@ PetscErrorCode IGABasisReference(IGABasis basis)
 }
 
 EXTERN_C_BEGIN
-extern void IGA_DersBasisFuns(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern void IGA_Basis_BSpline(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -118,7 +118,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     detJ[iel] = J;
     for (iqp=0; iqp<nqp; iqp++) {
       u[iqp] = (X[iqp] + 1) * J + u0;
-      IGA_DersBasisFuns(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
+      IGA_Basis_BSpline(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
     }
     offset[iel] = k-p;
   }
@@ -145,8 +145,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     basis->bnd_detJ  [0] = 1.0; basis->bnd_detJ  [1] = 1.0;
     basis->bnd_weight[0] = 1.0; basis->bnd_weight[1] = 1.0;
     basis->bnd_point [0] =  u0; basis->bnd_point [1] = u1;
-    IGA_DersBasisFuns(k0,u0,p,d,U,basis->bnd_value[0]);
-    IGA_DersBasisFuns(k1,u1,p,d,U,basis->bnd_value[1]);
+    IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
+    IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
   }
 
   PetscFunctionReturn(0);
@@ -203,7 +203,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
     offset[iel] = k-p;
     point[iel]  = u;
     detJ[iel]   = U[k+1]-U[k];
-    IGA_DersBasisFuns(k,u,p,d,U,N);
+    IGA_Basis_BSpline(k,u,p,d,U,N);
   }
 
   ierr = IGABasisReset(basis);CHKERRQ(ierr);

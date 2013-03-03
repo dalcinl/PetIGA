@@ -1,27 +1,18 @@
 ! -*- f90 -*-
 
-subroutine IGA_DersBasisFuns(i,uu,p,d,U,N) &
-  bind(C, name="IGA_DersBasisFuns")
+subroutine IGA_Basis_BSpline(i,uu,p,d,U,N) &
+  bind(C, name="IGA_Basis_BSpline")
   use PetIGA
   implicit none
-  interface
-     pure subroutine DersBasisFuns(i,uu,p,d,U,ders)
-       use PetIGA
-       integer(kind=IGA_INTEGER_KIND), intent(in)  :: i, p, d
-       real   (kind=IGA_REAL_KIND   ), intent(in)  :: uu, U(0:i+p)
-       real   (kind=IGA_REAL_KIND   ), intent(out) :: ders(0:p,0:d)
-     end subroutine DersBasisFuns
-  end interface
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: i, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:i+p)
   real   (kind=IGA_REAL_KIND   ), intent(out)      :: N(0:d,0:p)
   real   (kind=IGA_REAL_KIND   )  :: ders(0:p,0:d)
-  call DersBasisFuns(i,uu,p,d,U,ders)
+  call BasisFunsDers(i,uu,p,d,U,ders)
   N = transpose(ders)
-end subroutine IGA_DersBasisFuns
-
-pure subroutine DersBasisFuns(i,uu,p,n,U,ders)
+contains
+pure subroutine BasisFunsDers(i,uu,p,n,U,ders)
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: i, p, n
@@ -62,7 +53,7 @@ pure subroutine DersBasisFuns(i,uu,p,n,U,ders)
         end if
         if (r-1 <= pk) then
            j2 = k-1
-        else 
+        else
            j2 = p-r
         end if
         do j = j1, j2
@@ -82,4 +73,5 @@ pure subroutine DersBasisFuns(i,uu,p,n,U,ders)
      ders(:,k) = ders(:,k) * r
      r = r * (p-k)
   end do
-end subroutine DersBasisFuns
+end subroutine BasisFunsDers
+end subroutine IGA_Basis_BSpline
