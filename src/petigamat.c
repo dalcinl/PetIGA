@@ -133,7 +133,7 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
    IGACreateMat - Creates a matrix with the correct parallel layout
    required for computing a matrix using the discretization
    information provided in the IGA.
-   
+
    Collective on IGA
 
    Input Parameter:
@@ -216,8 +216,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   if (aij || baij || sbaij) {
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
     PetscInt Nbs = (baij||sbaij) ? N : N*bs;
-    PetscInt *dnz = 0, dmax = nbs;
-    PetscInt *onz = 0, omax = Nbs - nbs;
+    PetscInt *dnz = 0, *onz = 0;
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
       PetscInt i,j,k;
@@ -245,9 +244,13 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
             }
-      for (i=0; i<nbs; i++) {
-        dnz[i] = PetscMin(dnz[i],dmax);
-        onz[i] = PetscMin(onz[i],omax);
+      if (N < maxnnz) {
+        PetscInt dmaxnz = nbs;
+        PetscInt omaxnz = Nbs - nbs;
+        for (i=0; i<nbs; i++) {
+          dnz[i] = PetscMin(dnz[i],dmaxnz);
+          onz[i] = PetscMin(onz[i],omaxnz);
+        }
       }
       if (aij) {
         ierr = MatSeqAIJSetPreallocation(A,0,dnz);CHKERRQ(ierr);
