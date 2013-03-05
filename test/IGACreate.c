@@ -1,12 +1,46 @@
 #include "petiga.h"
 
+#undef  __FUNCT__
+#define __FUNCT__ "Scalar"
+PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx)
+{
+  PetscInt i;
+  for (i=0; i<n; i++) S[i] = (PetscScalar)1.0;
+  return 0;
+}
+
+
+#undef  __FUNCT__
+#define __FUNCT__ "System"
+PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
+  PetscInt dof = p->dof;
+  PetscInt nen = p->nen;
+  PetscReal *N = p->shape[0];
+  PetscInt a,b,i,j;
+  for (a=0; a<nen; a++) {
+    PetscReal Na = N[a];
+    for (b=0; b<nen; b++) {
+      PetscReal Nb = N[b];
+      for (i=0; i<dof; i++)
+        for (j=0; j<dof; j++)
+          if (i==j)
+            K[a*dof*nen*dof+i*nen*dof+b*dof+j] = Na*Nb;
+    }
+    for (i=0; i<dof; i++)
+      F[a*dof+i] = Na * 1;
+  }
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscInt       dim,dof;
   IGA            iga;
-  Vec            v;
+  PetscScalar    s;
+  Vec            b,x;
   Mat            A;
   KSP            ksp;
   SNES           snes;
@@ -24,6 +58,30 @@ int main(int argc, char *argv[]) {
   if (dof < 1) {ierr = IGASetDof(iga,dof=1);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
+  ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
+  ierr = IGAFormScalar(iga,x,1,&s,Scalar,0);CHKERRQ(ierr);
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
+
+  ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
+  ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
+  ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
+  ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,0);CHKERRQ(ierr);
+  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
+  ierr = KSPSolve(ksp,b,x);;CHKERRQ(ierr);
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
+  ierr = VecDestroy(&b);CHKERRQ(ierr);
+  ierr = MatDestroy(&A);CHKERRQ(ierr);
+  ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
+
+  ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
+  ierr = SNESDestroy(&snes);CHKERRQ(ierr);
+
+  ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+
   ierr = IGACreateElemDM(iga,dof,&dm);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
   ierr = IGACreateGeomDM(iga,dim,&dm);CHKERRQ(ierr);
@@ -31,17 +89,6 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateNodeDM(iga,1,&dm);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
-  ierr = IGACreateVec(iga,&v);CHKERRQ(ierr);
-  ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
-  ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
-  ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
-  ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-
-  ierr = VecDestroy(&v);CHKERRQ(ierr);
-  ierr = MatDestroy(&A);CHKERRQ(ierr);
-  ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
-  ierr = SNESDestroy(&snes);CHKERRQ(ierr);
-  ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
   ierr = PetscFinalize();CHKERRQ(ierr);
