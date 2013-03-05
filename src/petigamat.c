@@ -21,19 +21,35 @@ PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
 }
 
 PETSC_STATIC_INLINE
-void BasisStencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
+void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 {
-  PetscInt p  = iga->axis[dir]->p;
-  const PetscReal *U = iga->axis[dir]->U;
+  PetscBool periodic = iga->axis[dir]->periodic;
+  PetscInt  p  = iga->axis[dir]->p;
+  PetscInt  m  = iga->axis[dir]->m;
+  PetscInt  n  = m - p - 1;
+  PetscReal *U = iga->axis[dir]->U;
   PetscInt k;
+
   /* compute index of the leftmost overlapping basis */
   k = i;
   while (U[k]==U[k+1]) k++; /* XXX Using "==" with floating point values ! */
   *first = k - p;
+
   /* compute index of the rightmost overlapping basis */
   k = i + p + 1;
   while (U[k]==U[k-1]) k--; /* XXX Using "==" with floating point values ! */
   *last = k - 1;
+
+  if (!periodic) {
+    if (i <= p  ) *first = 0;
+    if (i >= n-p) *last  = n;
+  } else if (i==0) {
+    PetscInt s = 1;
+    while (s < p && U[m-p]==U[m-p+s]) s++;
+    k = n - p + s;
+    while (U[k]==U[k+1]) k++;
+    *first = k - s - n;
+  }
 
   if (iga->collocation) {
     PetscInt offset = iga->node_basis[dir]->offset[i];
@@ -52,7 +68,7 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
   { /* compute range of overlapping basis in each direction */
     PetscInt i,A[3]; A[0] = iA; A[1] = jA; A[2] = kA;
     for (i=0; i<iga->dim; i++)
-      BasisStencil(iga,i,A[i],&first[i],&last[i]);
+      Stencil(iga,i,A[i],&first[i],&last[i]);
   }
   { /* tensor-product the ranges of overlapping basis */
     PetscInt i,j,k;
@@ -176,11 +192,10 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   lstart = iga->node_lstart;
   lwidth = iga->node_lwidth;
   for (i=0; i<dim; i++) {
-    PetscInt first = lstart[i];
-    PetscInt last  = lstart[i] + lwidth[i] - 1;
-    PetscInt gfirst,glast;
-    BasisStencil(iga,i,first,&gstart[i],&glast);
-    BasisStencil(iga,i,last,&gfirst,&glast);
+    PetscInt gfirst, first = lstart[i];
+    PetscInt glast,  last  = lstart[i] + lwidth[i] - 1;
+    Stencil(iga,i,first,&gstart[i],&glast);
+    Stencil(iga,i,last,&gfirst,&glast);
     gwidth[i] = glast + 1 - gstart[i];
   }
   {

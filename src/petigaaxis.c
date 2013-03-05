@@ -12,13 +12,14 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   (*_axis)->refct = 1; axis = *_axis;
 
   /* */
+  axis->periodic = PETSC_FALSE;
+  /* */
   axis->p = 0;
   axis->m = 1;
   ierr = PetscMalloc1(axis->m+1,PetscReal,&axis->U);CHKERRQ(ierr);
   axis->U[0] = -0.5;
   axis->U[1] = +0.5;
   /* */
-  axis->periodic = PETSC_FALSE;
   axis->nnp = 1;
   axis->nel = 1;
   ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
@@ -53,6 +54,8 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   if (!axis) PetscFunctionReturn(0);
   PetscValidPointer(axis,1);
 
+  axis->periodic = PETSC_FALSE;
+
   if (axis->m != 1) {
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     ierr = PetscMalloc1(2,PetscReal,&axis->U);CHKERRQ(ierr);
@@ -66,7 +69,6 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
     ierr = PetscFree(axis->span);CHKERRQ(ierr);
     ierr = PetscMalloc1(1,PetscInt,&axis->span);CHKERRQ(ierr);
   }
-  axis->periodic = PETSC_FALSE;
   axis->nnp = 1;
   axis->nel = 1;
   axis->span[0] = 0;
@@ -430,8 +432,8 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
 }
 
 EXTERN_C_BEGIN
-extern PetscInt IGA_SpanCount(PetscInt n, PetscInt p, const PetscReal U[]);
-extern PetscInt IGA_SpanIndex(PetscInt n, PetscInt p, const PetscReal U[],PetscInt index[]);
+extern PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[]);
+extern PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -482,7 +484,7 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 
   axis->nel = IGA_SpanCount(n,p,U);
   ierr = PetscMalloc1(axis->nel,PetscInt,&axis->span);CHKERRQ(ierr);
-  IGA_SpanIndex(n,p,U,axis->span);
+  (void)IGA_SpanIndex(n,p,U,axis->span);
 
   if (axis->periodic) {
     PetscInt s = 1;
@@ -495,7 +497,7 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   PetscFunctionReturn(0);
 }
 
-PetscInt IGA_SpanCount(PetscInt n, PetscInt p, const PetscReal U[])
+PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[])
 {
   PetscInt i, span = 0;
   for (i=p; i<=n; i++)
@@ -504,7 +506,7 @@ PetscInt IGA_SpanCount(PetscInt n, PetscInt p, const PetscReal U[])
   return span;
 }
 
-PetscInt IGA_SpanIndex(PetscInt n, PetscInt p, const PetscReal U[],PetscInt index[])
+PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[])
 {
   PetscInt i, span = 0;
   for (i=p; i<=n; i++)
@@ -512,3 +514,31 @@ PetscInt IGA_SpanIndex(PetscInt n, PetscInt p, const PetscReal U[],PetscInt inde
       index[span++] = i;
   return span;
 }
+
+/*
+void IGA_Stencil(PetscInt n,PetscInt p,const PetscReal U[],
+                 PetscBool periodic,PetscInt first[],PetscInt last[])
+{
+  PetscInt i,k;
+  for (i=0; i<=n; i++) {
+    k = i;
+    while (U[k]==U[k+1]) k++;
+    first[i] = k - p;
+    k = i + p + 1;
+    while (U[k]==U[k-1]) k--;
+    last[i] = k-1;
+  }
+  if (!periodic)
+    for (i=0; i<=p; i++) {
+      first[i]  = 0;
+      last[n-i] = n;
+    }
+  else {
+    PetscInt s = 1;
+    while (s < p && U[m-p]==U[m-p+s]) s++;
+    k = n - p + s;
+    while (U[k]==U[k+1]) k++;
+    first[0] = k - s - n;
+  }
+}
+*/
