@@ -38,8 +38,8 @@ typedef struct {
 
 } TS_Alpha2;
 
-extern PetscLogEvent TS_FunctionEval;
-extern PetscLogEvent TS_JacobianEval;
+PETSC_EXTERN PetscLogEvent TS_FunctionEval;
+PETSC_EXTERN PetscLogEvent TS_JacobianEval;
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormFunction_Alpha2"

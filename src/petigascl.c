@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-extern PetscLogEvent IGA_FormScalar;
+PETSC_EXTERN PetscLogEvent IGA_FormScalar;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormScalar"

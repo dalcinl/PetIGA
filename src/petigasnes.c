@@ -1,7 +1,7 @@
 #include "petiga.h"
 
-extern PetscLogEvent IGA_FormFunction;
-extern PetscLogEvent IGA_FormJacobian;
+PETSC_EXTERN PetscLogEvent IGA_FormFunction;
+PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAComputeFunction"
@@ -155,8 +155,8 @@ PetscErrorCode IGAFormJacobian(IGA iga,Vec vecU,Mat matJ,
   PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
-extern PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+PETSC_EXTERN PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASNESFormFunction"

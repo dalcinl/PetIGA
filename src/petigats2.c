@@ -1,8 +1,8 @@
 #include "petiga.h"
 #include "petscts2.h"
 
-extern PetscLogEvent IGA_FormFunction;
-extern PetscLogEvent IGA_FormJacobian;
+PETSC_EXTERN PetscLogEvent IGA_FormFunction;
+PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIFunction2"
@@ -204,10 +204,10 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
   PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode IGATSFormIFunction (TS,PetscReal,Vec,Vec,Vec,void*);
-extern PetscErrorCode IGATSFormIJacobian (TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
-extern PetscErrorCode IGATSFormIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
-extern PetscErrorCode IGATSFormIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIFunction (TS,PetscReal,Vec,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian (TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,void*);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGATSFormIFunction2"

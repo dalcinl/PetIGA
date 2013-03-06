@@ -17,9 +17,6 @@
 
 #if PETSC_VERSION_(3,2,0)
 PETSC_EXTERN_CXX_BEGIN
-#endif
-
-#ifndef PETSC_EXTERN
 #define PETSC_EXTERN extern
 #endif
 

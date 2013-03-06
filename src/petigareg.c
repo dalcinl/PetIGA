@@ -1,13 +1,9 @@
 #include "petiga.h"
 
-PetscClassId IGA_CLASSID = 0;
-
-static PetscBool IGAPackageInitialized = PETSC_FALSE;
-PetscBool IGARegisterAllCalled = PETSC_FALSE;
-PetscLogEvent IGA_FormScalar = 0;
-PetscLogEvent IGA_FormSystem = 0;
-PetscLogEvent IGA_FormFunction = 0;
-PetscLogEvent IGA_FormJacobian = 0;
+PETSC_EXTERN PetscLogEvent IGA_FormScalar;
+PETSC_EXTERN PetscLogEvent IGA_FormSystem;
+PETSC_EXTERN PetscLogEvent IGA_FormFunction;
+PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_EBE(PC);
@@ -18,7 +14,18 @@ EXTERN_C_BEGIN
 extern PetscErrorCode TSCreate_Alpha2(TS);
 EXTERN_C_END
 
+EXTERN_C_BEGIN
 extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
+EXTERN_C_END
+
+PetscClassId IGA_CLASSID = 0;
+
+static PetscBool IGAPackageInitialized = PETSC_FALSE;
+PetscBool IGARegisterAllCalled = PETSC_FALSE;
+PetscLogEvent IGA_FormScalar = 0;
+PetscLogEvent IGA_FormSystem = 0;
+PetscLogEvent IGA_FormFunction = 0;
+PetscLogEvent IGA_FormJacobian = 0;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARegisterAll"

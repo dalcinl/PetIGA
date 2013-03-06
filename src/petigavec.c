@@ -6,8 +6,8 @@
 #endif
 
 EXTERN_C_BEGIN
-extern PetscErrorCode  VecView_MPI_DA(Vec,PetscViewer);
-extern PetscErrorCode  VecLoad_Default_DA(Vec,PetscViewer);
+extern PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
+extern PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
 EXTERN_C_END
 
 #undef  __FUNCT__  

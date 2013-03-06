@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-extern PetscLogEvent IGA_FormSystem;
+PETSC_EXTERN PetscLogEvent IGA_FormSystem;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAComputeSystem"

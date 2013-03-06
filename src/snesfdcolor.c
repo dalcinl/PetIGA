@@ -5,6 +5,8 @@
 #include <petsc-private/petscimpl.h>
 #endif
 
+PETSC_EXTERN PetscErrorCode SNESSetUpFDColoring(SNES);
+
 #undef __FUNCT__
 #define __FUNCT__ "MatFDColoringSetOptionsPrefix"
 static PetscErrorCode MatFDColoringSetOptionsPrefix(MatFDColoring fdc, const char prefix[])
@@ -61,8 +63,7 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
   PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
-
+EXTERN_C_BEGIN
 #undef __FUNCT__
 #define __FUNCT__ "SNESSetFromOptions_FDColoring"
 PetscErrorCode SNESSetFromOptions_FDColoring(SNES snes)
@@ -75,3 +76,4 @@ PetscErrorCode SNESSetFromOptions_FDColoring(SNES snes)
   if (fdc) {ierr = SNESSetUpFDColoring(snes);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
+EXTERN_C_END
