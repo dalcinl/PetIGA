@@ -1035,11 +1035,12 @@ PetscErrorCode IGAElementBuildBoundaryShapeFuns(IGAElement element,PetscInt dir,
 			     dX,gX[0],gX[1]); break;
     }
     {
-      PetscInt  dim = element->dim;
-      PetscReal *F  = element->gradX[0];
-      PetscReal dS, *n = element->normal;
+      PetscInt dim = element->dim;
+      PetscReal *F = element->gradX[0];
+      PetscReal *n = element->normal;
       for (q=0; q<nqp; q++) {
-        IGA_GetNormal(dim,dir,side,F,&dS,&n[q*dim]);
+        PetscReal dS;
+        IGA_GetNormal(dim,dir,side,&F[q*dim*dim],&dS,&n[q*dim]);
         element->detJac[q] *= dS;
       }
     }
