@@ -60,22 +60,21 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
   select case (dim)
   case (3)
      select case (axis)
-     case (0)
-        N = normal3(F(2,:),F(3,:))
-     case (1)
-        N = normal3(F(3,:),F(1,:))
-     case (2)
-        N = normal3(F(1,:),F(2,:))
+     case (0); N = normal3(F(2,:),F(3,:))
+     case (1); N = normal3(F(3,:),F(1,:))
+     case (2); N = normal3(F(1,:),F(2,:))
      end select
   case (2)
      select case (axis)
-     case (0); N = normal2(F(2,:)) 
-     case (1); N = normal2(F(1,:)) 
+     case (0); N = normal2(F(2,:))
+     case (1); N = normal2(F(1,:))
      end select
   case (1)
-     N = (/ 1.0 /)
+     select case (axis)
+     case (0); N = (/ 1.0 /)
+     end select
   end select
-  dS = sqrt(sum(N*N))
+  dS = norm2(N)
   if (side == 0) then
      N = -N/dS
   else
