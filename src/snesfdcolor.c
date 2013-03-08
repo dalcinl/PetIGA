@@ -5,6 +5,10 @@
 #include <petsc-private/petscimpl.h>
 #endif
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#define SNESComputeJacobianDefaultColor SNESDefaultComputeJacobianColor
+#endif
+
 PETSC_EXTERN PetscErrorCode SNESSetUpFDColoring(SNES);
 
 #undef __FUNCT__
@@ -57,7 +61,7 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
   ierr = MatFDColoringSetOptionsPrefix(fdcoloring,prefix);CHKERRQ(ierr);
   ierr = MatFDColoringSetFromOptions(fdcoloring);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)snes,"fdcoloring",(PetscObject)fdcoloring);CHKERRQ(ierr);
-  ierr = SNESSetJacobian(snes,A,B,SNESDefaultComputeJacobianColor,fdcoloring);CHKERRQ(ierr);
+  ierr = SNESSetJacobian(snes,A,B,SNESComputeJacobianDefaultColor,fdcoloring);CHKERRQ(ierr);
   ierr = MatFDColoringDestroy(&fdcoloring);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
