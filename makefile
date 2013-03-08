@@ -8,20 +8,19 @@ include ${PETIGA_DIR}/conf/petigarules
 include ${PETIGA_DIR}/conf/petigatest
 
 all:
-	@${OMAKE} chkpetsc_dir  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	@${OMAKE} chkpetiga_dir PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	@${OMAKE} chk_petigadir PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	@${OMAKE} all-legacy    PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 .PHONY: all
 
 #
 # Legacy build
 #
-all-legacy:
-	@${MKDIR} ${PETSC_ARCH}/conf ${PETSC_ARCH}/include ${PETSC_ARCH}/lib
-	@${OMAKE} all_build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+all-legacy: chk_petsc_dir chk_petiga_dir 
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf ${PETIGA_DIR}/${PETSC_ARCH}/include ${PETIGA_DIR}/${PETSC_ARCH}/lib
+	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETSC_ARCH}/include
-all_build: chk_petsc_dir chk_petiga_dir chklib_dir deletelibs deletemods build
-.PHONY: all-legacy all_build
+legacy-build: chklib_dir deletelibs deletemods build
+.PHONY: legacy-build all-legacy
 
 #
 # CMake build
@@ -36,7 +35,7 @@ ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: ${PETIGA_DIR}/${PETSC_ARCH}/conf
 cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 cmake-build: cmake-boot
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
-all-cmake: ${PETIGA_DIR}/${PETSC_ARCH}/conf
+all-cmake: chk_petsc_dir chk_petiga_dir ${PETIGA_DIR}/${PETSC_ARCH}/conf
 	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 .PHONY: cmake-boot cmake-build all-cmake
 

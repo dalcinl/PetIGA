@@ -1,7 +1,7 @@
 # -*- makefile -*-
 include ${PETSC_DIR}/conf/rules
 
-chkpetiga_dir:
+chk_petigadir:
 	@mypwd=`pwd`; cd ${PETIGA_DIR} 2>&1 > /dev/null; true_PETIGA_DIR=`pwd`; cd $${mypwd} 2>&1 >/dev/null; \
         newpwd=`echo $${mypwd} | sed "s+$${true_PETIGA_DIR}+DUMMY+g"`;\
         haspetiga=`echo $${mypwd} | sed "s+petiga-+DUMMY+g"`;\
