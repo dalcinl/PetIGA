@@ -2,10 +2,21 @@
 
 PETSC_EXTERN PetscLogEvent IGA_FormSystem;
 
+PETSC_STATIC_INLINE
+PetscBool IGAElementNextUserSystem(IGAElement element,IGAUserSystem *sys,void **ctx)
+{
+  IGAUserOps ops;
+  while (IGAElementNextUserOps(element,&ops) && !ops->System);
+  if (!ops) return PETSC_FALSE;
+  *sys = ops->System;
+  *ctx = ops->SysCtx;
+  return PETSC_TRUE;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAComputeSystem"
 /*@
-   IGAFormSystem - Form the matrix and vector which represents the
+   IGAComputeSystem - Form the matrix and vector which represents the
    discretized a(w,u) = L(w).
 
    Collective on IGA/Mat/Vec
@@ -20,7 +31,7 @@ PETSC_EXTERN PetscLogEvent IGA_FormSystem;
    Notes:
    This routine is used to solve a steady, linear problem. It performs
    matrix/vector assembly standard in FEM. The user provides a routine
-   which evaluates the bilinear form at a point.
+   which evaluates the bilinear and linear forms at a point.
 
    Level: normal
 
@@ -28,9 +39,12 @@ PETSC_EXTERN PetscLogEvent IGA_FormSystem;
 @*/
 PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
 {
+  IGAElement     element;
+  IGAPoint       point;
   IGAUserSystem  System;
-  void           *SysCtx;
-  PetscInt       dir,side;
+  void           *ctx;
+  PetscScalar    *A,*B;
+  PetscScalar    *K,*F;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -38,113 +52,40 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
   IGACheckUserOp(iga,1,System);
+
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
-  for(dir=0; dir < iga->dim; dir++){
-    for(side=0; side < 2; side++){
-      System = iga->boundary[dir][side]->userops->System;
-      if(System){
-	SysCtx = iga->boundary[dir][side]->userops->SysCtx;
-	ierr = IGABoundaryFormSystem(iga,dir,side,matA,vecB,System,SysCtx);CHKERRQ(ierr);
-      }
-    }
-  }
-  System = iga->userops->System;
-  SysCtx = iga->userops->SysCtx;
-  ierr = IGAFormSystem(iga,matA,vecB,System,SysCtx);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSystem"
-PetscErrorCode IGAFormSystem(IGA iga,Mat matA,Vec vecB,
-			     IGAUserSystem System,void *ctx)
-{
-  IGAElement     element;
-  IGAPoint       point;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
-  PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  ierr = PetscLogEventBegin(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   /* Element loop */
-  ierr = PetscLogEventBegin(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    PetscScalar *A, *B;
     ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
-    /* Quadrature loop */
-    ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
-    while (IGAElementNextPoint(element,point)) {
-      PetscScalar *K, *F;
-      ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
-      ierr = System(point,K,F,ctx);CHKERRQ(ierr);
-      ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
-      ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
+    /* UserSystem loop */
+    while (IGAElementNextUserSystem(element,&System,&ctx)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
+        ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
+        ierr = System(point,K,F,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
+        ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
     }
-    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
-    /* */
     ierr = IGAElementFixSystem(element,A,B);CHKERRQ(ierr);
     ierr = IGAElementAssembleMat(element,A,matA);CHKERRQ(ierr);
     ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
   }
   ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+  
   ierr = PetscLogEventEnd(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = VecAssemblyBegin(vecB);CHKERRQ(ierr);
-  ierr = VecAssemblyEnd  (vecB);CHKERRQ(ierr);
-
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGABoundaryFormSystem"
-PetscErrorCode IGABoundaryFormSystem(IGA iga,PetscInt dir,PetscInt side,
-				     Mat matA,Vec vecB,
-				     IGAUserSystem System,void *ctx)
-{
-  IGAElement     element;
-  IGAPoint       point;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
-  PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
-
-  /* Element loop */
-  ierr = PetscLogEventBegin(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
-  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
-  while (IGANextBoundaryElement(iga,element,dir,side)) {
-    PetscScalar *A, *B;
-    ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
-    /* Quadrature loop */
-    ierr = IGABoundaryElementBeginPoint(element,&point,dir,side);CHKERRQ(ierr);
-    while (IGAElementNextPoint(element,point)) {
-      PetscScalar *K, *F;
-      ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
-      ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
-      ierr = System(point,K,F,ctx);CHKERRQ(ierr);
-      ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
-      ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
-    }
-    ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
-    /* */
-    ierr = IGAElementAssembleMat(element,A,matA);CHKERRQ(ierr);
-    ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
-  }
-  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
-  ierr = PetscLogEventEnd(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
-
-  ierr = MatAssemblyBegin(matA,MAT_FLUSH_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd  (matA,MAT_FLUSH_ASSEMBLY);CHKERRQ(ierr);
   ierr = VecAssemblyBegin(vecB);CHKERRQ(ierr);
   ierr = VecAssemblyEnd  (vecB);CHKERRQ(ierr);
 

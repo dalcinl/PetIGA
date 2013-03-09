@@ -138,13 +138,15 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   basis->value  = value;
 
   {
-    PetscInt  k0 = span[0], k1 = span[nel-1];
-    PetscReal u0 = U[k0],   u1 = U[k1+1];
+    PetscInt  o0 = offset[0], o1 = offset[nel-1];
+    PetscInt  k0 = span[0],   k1 = span[nel-1];
+    PetscReal u0 = U[k0],     u1 = U[k1+1];
     ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[1]);CHKERRQ(ierr);
+    basis->bnd_offset[0] =  o0; basis->bnd_offset[1] =  o1;
     basis->bnd_detJ  [0] = 1.0; basis->bnd_detJ  [1] = 1.0;
     basis->bnd_weight[0] = 1.0; basis->bnd_weight[1] = 1.0;
-    basis->bnd_point [0] =  u0; basis->bnd_point [1] = u1;
+    basis->bnd_point [0] =  u0; basis->bnd_point [1] =  u1;
     IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
     IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
   }

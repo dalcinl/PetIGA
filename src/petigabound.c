@@ -80,10 +80,12 @@ PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof)
 #define __FUNCT__ "IGABoundaryClear"
 PetscErrorCode IGABoundaryClear(IGABoundary boundary)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(boundary,1);
-  boundary->count   = 0;
+  boundary->count = 0;
   boundary->nload = 0;
+  ierr = PetscMemzero(boundary->userops,sizeof(struct _IGAUserOps));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -190,5 +192,85 @@ PetscErrorCode IGABoundarySetUserSystem(IGABoundary boundary,IGAUserSystem Syste
   PetscFunctionBegin;
   if (System) boundary->userops->System = System;
   if (SysCtx) boundary->userops->SysCtx = SysCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserFunction"
+PetscErrorCode IGABoundarySetUserFunction(IGABoundary boundary,IGAUserFunction Function,void *FunCtx)
+{
+  PetscFunctionBegin;
+  if (Function) boundary->userops->Function = Function;
+  if (FunCtx)   boundary->userops->FunCtx   = FunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserJacobian"
+PetscErrorCode IGABoundarySetUserJacobian(IGABoundary boundary,IGAUserJacobian Jacobian,void *JacCtx)
+{
+  PetscFunctionBegin;
+  if (Jacobian) boundary->userops->Jacobian = Jacobian;
+  if (JacCtx)   boundary->userops->JacCtx   = JacCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIFunction"
+PetscErrorCode IGABoundarySetUserIFunction(IGABoundary boundary,IGAUserIFunction IFunction,void *IFunCtx)
+{
+  PetscFunctionBegin;
+  if (IFunction) boundary->userops->IFunction = IFunction;
+  if (IFunCtx)   boundary->userops->IFunCtx   = IFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIJacobian"
+PetscErrorCode IGABoundarySetUserIJacobian(IGABoundary boundary,IGAUserIJacobian IJacobian,void *IJacCtx)
+{
+  PetscFunctionBegin;
+  if (IJacobian) boundary->userops->IJacobian = IJacobian;
+  if (IJacCtx)   boundary->userops->IJacCtx   = IJacCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIFunction2"
+PetscErrorCode IGABoundarySetUserIFunction2(IGABoundary boundary,IGAUserIFunction2 IFunction,void *IFunCtx)
+{
+  PetscFunctionBegin;
+  if (IFunction) boundary->userops->IFunction2 = IFunction;
+  if (IFunCtx)   boundary->userops->IFunCtx    = IFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIJacobian2"
+PetscErrorCode IGABoundarySetUserIJacobian2(IGABoundary boundary,IGAUserIJacobian2 IJacobian,void *IJacCtx)
+{
+  PetscFunctionBegin;
+  if (IJacobian) boundary->userops->IJacobian2 = IJacobian;
+  if (IJacCtx)   boundary->userops->IJacCtx    = IJacCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIEFunction"
+PetscErrorCode IGABoundarySetUserIEFunction(IGABoundary boundary,IGAUserIEFunction IEFunction,void *IEFunCtx)
+{
+  PetscFunctionBegin;
+  if (IEFunction) boundary->userops->IEFunction = IEFunction;
+  if (IEFunCtx)   boundary->userops->IEFunCtx   = IEFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserIEJacobian"
+PetscErrorCode IGABoundarySetUserIEJacobian(IGABoundary boundary,IGAUserIEJacobian IEJacobian,void *IEJacCtx)
+{
+  PetscFunctionBegin;
+  if (IEJacobian) boundary->userops->IEJacobian = IEJacobian;
+  if (IEJacCtx)   boundary->userops->IEJacCtx   = IEJacCtx;
   PetscFunctionReturn(0);
 }
