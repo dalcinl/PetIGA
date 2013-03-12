@@ -16,6 +16,7 @@ include ${PETIGA_DIR}/conf/petigarules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
+
 IGACreate: IGACreate.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -39,6 +40,26 @@ IGACreate = IGACreate.PETSc \
 	    runex1a_seq runex1a_mpi \
 	    runex1b_seq runex1b_mpi \
 	    IGACreate.rm
+
+
+IGAInputOutput: IGAInputOutput.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex2a_1:
+	-@${MPIEXEC} -n 1 ./IGAInputOutput ${OPTS} -dim 1 -periodic
+runex2a_2:
+	-@${MPIEXEC} -n 2 ./IGAInputOutput ${OPTS} -dim 2 -dof 3 -periodic
+runex2a_3:
+	-@${MPIEXEC} -n 3 ./IGAInputOutput ${OPTS} -dim 3 -periodic 1,0,1
+runex2a_4:
+	-@${MPIEXEC} -n 4 ./IGAInputOutput ${OPTS} -dim 2 -N 17,19   -p 3,2
+runex2a_8:
+	-@${MPIEXEC} -n 8 ./IGAInputOutput ${OPTS} -dim 3 -N 13,11,7 -p 3,2,1
+runex2a.rm:
+	-@${RM} -f iga*.dat iga*.dat.info
+IGAInputOutput = IGAInputOutput.PETSc \
+		 runex2a_1 runex2a_2 runex2a_3 runex2a_4 runex2a_8 \
+		 runex2a.rm IGAInputOutput.rm
 
 
 Test_SNES_2D: Test_SNES_2D.o chkopts
@@ -68,26 +89,29 @@ Test_SNES_2D = Test_SNES_2D.PETSc  \
 	       runex0c_1 runex0c_4 \
 	       Test_SNES_2D.rm
 
+
 Oscillator: Oscillator.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-runex2a:
+runex20a:
 	-@./Oscillator ${OPTS} -ts_max_steps 10
-runex2b:
+runex20b:
 	-@./Oscillator ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
-runex2c:
+runex20c:
 	-@./Oscillator ${OPTS} -damping 0.1
 Oscillator = Oscillator.PETSc \
-	     runex2a runex2b runex2c \
+	     runex20a runex20b runex20c \
 	     Oscillator.rm
+
 
 ConvTest: ConvTest.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 
-TESTEXAMPLES_C = $(IGACreate)  \
-	         $(Test_SNES_2D) \
-	         $(Oscillator)
+TESTEXAMPLES_C = $(IGACreate) \
+		 $(IGAInputOutput) \
+		 $(Test_SNES_2D) \
+		 $(Oscillator)
 TESTEXAMPLES_FORTRAN =
 test-all:
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}

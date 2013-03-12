@@ -1,5 +1,4 @@
-TARGETS = InputOutput \
-	  L2Proj1D L2Proj2D \
+TARGETS = L2Proj1D L2Proj2D \
 	  Poisson1D Poisson2D Poisson3D \
 	  L2Projection \
 	  AdaptiveL2Projection \
@@ -36,9 +35,6 @@ PETIGA_DIR ?= $(topdir)
 include ${PETIGA_DIR}/conf/petigavariables
 include ${PETIGA_DIR}/conf/petigarules
 
-InputOutput: InputOutput.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
 L2Proj1D: L2Proj1D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -117,19 +113,6 @@ BoundaryIntegral: BoundaryIntegral.o chkopts
 
 OPTS=-nox -malloc_debug -malloc_dump
 
-runex0a_1:
-	-@${MPIEXEC} -n 1 ./InputOutput ${OPTS} -dim 1 -periodic
-runex0a_2:
-	-@${MPIEXEC} -n 2 ./InputOutput ${OPTS} -dim 2 -dof 3 -periodic
-runex0a_3:
-	-@${MPIEXEC} -n 3 ./InputOutput ${OPTS} -dim 3 -periodic 1,0,1
-runex0a_4:
-	-@${MPIEXEC} -n 4 ./InputOutput ${OPTS} -dim 2 -N 17,19   -p 3,2
-runex0a_8:
-	-@${MPIEXEC} -n 8 ./InputOutput ${OPTS} -dim 3 -N 13,11,7 -p 3,2,1
-runex0a.rm:
-	-@${RM} -f iga*.dat iga*.dat.info
-
 runex1a_1:
 	-@${MPIEXEC} -n 1 ./L2Proj1D ${OPTS}
 runex1a_4:
@@ -193,7 +176,6 @@ runex8_4:
 	-@${MPIEXEC} -n 4 ./ElasticRod ${OPTS} -ts_max_steps 10
 
 
-InputOutput := InputOutput.PETSc runex0a_1 runex0a_2 runex0a_3 runex0a_4 runex0a_8 runex0a.rm InputOutput.rm
 L2Proj1D := L2Proj1D.PETSc runex1a_1 runex1a_4 L2Proj1D.rm
 L2Proj2D := L2Proj2D.PETSc runex1b_1 runex1b_4 L2Proj2D.rm
 Poisson1D := Poisson1D.PETSc runex2a_1 runex2a_4 Poisson1D.rm
@@ -209,7 +191,7 @@ L2Proj       := $(L2Proj1D) $(L2Proj2D) $(L2Proj3D)
 Poisson      := $(Poisson1D) $(Poisson2D) $(Poisson3D)
 CahnHilliard := $(CahnHilliard2D) $(CahnHilliard3D)
 
-TESTEXAMPLES_C := $(InputOutput) $(L2Proj) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
+TESTEXAMPLES_C := $(L2Proj) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
 TESTEXAMPLES_F :=
 TESTEXAMPLES_FORTRAN:=$(TESTEXAMPLES_F)
 testexamples:
