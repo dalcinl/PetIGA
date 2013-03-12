@@ -1158,10 +1158,6 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
     /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
-  ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
-  if (iga->fieldname)
-    for (i=0; i<iga->dof; i++)
-      {ierr = DMDASetFieldName(iga->node_dm,i,iga->fieldname[i]);CHKERRQ(ierr);}
 
   if (!iga->vectype) {
     const MatType vtype = VECSTANDARD;

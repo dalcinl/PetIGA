@@ -5,21 +5,66 @@
 #include <petsc-private/vecimpl.h>
 #endif
 
+#if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_BEGIN
-extern PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
-extern PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
+extern       PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
+extern       PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
 EXTERN_C_END
+#undef  __FUNCT__
+#define __FUNCT__ "VecSetDM"
+static PetscErrorCode VecSetDM(Vec v,DM dm)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
+  PetscValidHeaderSpecific(dm,DM_CLASSID,2);
+  ierr = PetscObjectCompose((PetscObject)v,"DM",(PetscObject)dm);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#else
+PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
+PETSC_EXTERN PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
+#endif
 
-#undef  __FUNCT__  
+#undef  __FUNCT__
 #define __FUNCT__ "VecDuplicate_IGA"
-PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
+static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 {
   IGA            iga;
   PetscErrorCode ierr;
-  PetscFunctionBegin; 
+  PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject)g,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,gg);CHKERRQ(ierr);
   ierr = PetscLayoutReference(g->map,&(*gg)->map);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "VecView_IGA"
+static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
+{
+  IGA            iga;
+  DM             dm;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
+  ierr = VecSetDM(v,dm);CHKERRQ(ierr);
+  ierr = VecView_MPI_DA(v,viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#undef  __FUNCT__
+#define __FUNCT__ "VecLoad_IGA"
+static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
+{
+  IGA            iga;
+  DM             dm;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
+  ierr = VecSetDM(v,dm);CHKERRQ(ierr);
+  ierr = VecLoad_Default_DA(v,viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -32,7 +77,7 @@ PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
    IGACreateVec - Creates a vector with the correct parallel layout
    required for computing a vector using the discretization
    information provided in the IGA.
-   
+
    Collective on IGA
 
    Input Parameter:
@@ -66,15 +111,8 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   ierr = VecSetLocalToGlobalMappingBlock(*vec,iga->lgmapb);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
-  { /* XXX */
-#if PETSC_VERSION_LE(3,3,0)
-    ierr = PetscObjectCompose((PetscObject)*vec,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
-#else
-    ierr = VecSetDM(*vec,iga->node_dm);CHKERRQ(ierr);
-#endif
-    ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_MPI_DA);CHKERRQ(ierr);
-    ierr = VecSetOperation(*vec,VECOP_LOAD,(void(*)(void))VecLoad_Default_DA);CHKERRQ(ierr);
-  } /* XXX */
+  ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_IGA);CHKERRQ(ierr);
+  ierr = VecSetOperation(*vec,VECOP_LOAD,(void(*)(void))VecLoad_IGA);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

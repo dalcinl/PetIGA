@@ -436,14 +436,5 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   }
 
   *mat = A;
-
-  { /* XXX */
-#if PETSC_VERSION_LE(3,3,0)
-    ierr = PetscObjectCompose((PetscObject)*mat,"DM",(PetscObject)iga->node_dm);CHKERRQ(ierr);
-#else
-    ierr = MatSetDM(*mat,iga->node_dm);CHKERRQ(ierr);
-#endif
-  } /* XXX */
-
   PetscFunctionReturn(0);
 }
