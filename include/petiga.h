@@ -341,6 +341,10 @@ PETSC_EXTERN PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm);
 
+PETSC_EXTERN PetscErrorCode IGAGetElemDM(IGA iga,DM *dm);
+PETSC_EXTERN PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm);
+PETSC_EXTERN PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm);
+
 PETSC_EXTERN PetscErrorCode IGASetVecType(IGA iga,const VecType vectype);
 PETSC_EXTERN PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
 
