@@ -97,6 +97,18 @@ int main(int argc, char *argv[]) {
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
   }
 
+#if PETSC_VERSION_LE(3,2,0)
+  {
+    PetscMPIInt size;
+    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+    if (size > 1) {
+      ierr = IGADestroy(&iga);CHKERRQ(ierr);
+      ierr = PetscFinalize();CHKERRQ(ierr);
+      return 0;
+    }
+  }
+#endif
+
   {
     Mat         mat;
     Vec         diag,diag2;
