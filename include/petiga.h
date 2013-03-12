@@ -254,7 +254,6 @@ struct _p_IGA {
   PetscInt  elem_sizes[3];
   PetscInt  elem_start[3];
   PetscInt  elem_width[3];
-  Vec       elem_vec;
   DM        elem_dm;
 
   PetscInt  geom_sizes[3];

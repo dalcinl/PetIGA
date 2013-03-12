@@ -128,7 +128,6 @@ PetscErrorCode IGAReset(IGA iga)
   iga->setupstage = 0;
 
   /* element */
-  ierr = VecDestroy(&iga->elem_vec);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
   iga->geometry = 0;
@@ -1063,7 +1062,6 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
     }
   }
   /* element */
-  ierr = VecDestroy(&iga->elem_vec);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
   iga->geometry = 0;
