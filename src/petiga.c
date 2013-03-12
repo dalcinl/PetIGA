@@ -1088,7 +1088,9 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
 			 iga->dim,iga->dof,iga->node_sizes,
 			 iga->node_lstart,iga->node_lwidth,
 			 iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
-    /* build the block application ordering */
+    /* build the scalar and block application orderings */
+    ierr = IGA_Grid_GetAO(grid,&iga->ao);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)iga->ao);CHKERRQ(ierr);
     ierr = IGA_Grid_GetAOBlock(grid,&iga->aob);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->aob);CHKERRQ(ierr);
     /* build the scalar and block local to global mappings */

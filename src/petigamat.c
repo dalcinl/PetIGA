@@ -4,13 +4,103 @@
 #include "private/matimpl.h"
 #endif
 
-EXTERN_C_BEGIN
-extern PetscErrorCode MatView_MPI_DA(Mat,PetscViewer);
-extern PetscErrorCode MatLoad_MPI_DA(Mat,PetscViewer);
-EXTERN_C_END
+#if PETSC_VERSION_LE(3,3,0)
+#undef MatType
+typedef const char* MatType;
+#endif         
 
-PETSC_STATIC_INLINE
-PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
+PETSC_EXTERN PetscErrorCode MatHeaderReplace(Mat,Mat);
+static       PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
+static       PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
+
+#undef  __FUNCT__
+#define __FUNCT__ "MatView_MPI_IGA"
+static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
+{
+  PetscViewerFormat format;
+  MPI_Comm          comm;
+  IGA               iga;
+  Mat               Anatural;
+  PetscInt          rstart,rend;
+  IS                is;
+  const char        *prefix;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(A,MAT_CLASSID,1);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,1);
+  ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
+  if (format == PETSC_VIEWER_ASCII_INFO       ) PetscFunctionReturn(0);
+  if (format == PETSC_VIEWER_ASCII_INFO_DETAIL) PetscFunctionReturn(0);
+
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+
+  /* Map natural ordering to PETSc ordering and create IS */
+  ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
+  ierr = ISCreateStride(comm,rend-rstart,rstart,1,&is);CHKERRQ(ierr);
+  ierr = AOApplicationToPetscIS(iga->ao,is);CHKERRQ(ierr);
+
+  /* Do permutation and view matrix */
+  ierr = MatGetSubMatrix(A,is,is,MAT_INITIAL_MATRIX,&Anatural);CHKERRQ(ierr);
+  ierr = PetscObjectGetOptionsPrefix((PetscObject)A,&prefix);CHKERRQ(ierr);
+  ierr = PetscObjectSetOptionsPrefix((PetscObject)Anatural,prefix);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject)Anatural,((PetscObject)A)->name);CHKERRQ(ierr);
+  ierr = MatView(Anatural,viewer);CHKERRQ(ierr);
+
+  ierr = ISDestroy(&is);CHKERRQ(ierr);
+  ierr = MatDestroy(&Anatural);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "MatLoad_MPI_IGA"
+static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
+{
+  MPI_Comm       comm;
+  IGA            iga;
+  MatType        mtype;
+  PetscInt       m,n,M,N;
+  Mat            Anatural,Apetsc;
+  PetscInt       rstart,rend;
+  IS             is;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(A,MAT_CLASSID,1);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,1);
+
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+
+  /* Create and load the matrix in natural ordering */
+  ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
+  ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
+  ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
+  ierr = MatCreate(comm,&Anatural);CHKERRQ(ierr);
+  ierr = MatSetType(Anatural,mtype);CHKERRQ(ierr);
+  ierr = MatSetSizes(Anatural,m,n,M,N);CHKERRQ(ierr);
+  ierr = MatLoad(Anatural,viewer);CHKERRQ(ierr);
+
+  /* Map PETSc ordering to natural ordering and create IS */
+  ierr = MatGetOwnershipRange(Anatural,&rstart,&rend);CHKERRQ(ierr);
+  ierr = ISCreateStride(comm,rend-rstart,rstart,1,&is);CHKERRQ(ierr);
+  ierr = AOPetscToApplicationIS(iga->ao,is);CHKERRQ(ierr);
+
+  /* Do permutation and replace header */
+  ierr = MatGetSubMatrix(Anatural,is,is,MAT_INITIAL_MATRIX,&Apetsc);CHKERRQ(ierr);
+  ierr = MatHeaderReplace(A,Apetsc);CHKERRQ(ierr);
+
+  ierr = ISDestroy(&is);CHKERRQ(ierr);
+  ierr = MatDestroy(&Anatural);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
 
 PETSC_STATIC_INLINE
 PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
@@ -60,7 +150,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 
 PETSC_STATIC_INLINE
 PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
-                       PetscInt iA,PetscInt jA,PetscInt kA,PetscInt *stencil)
+                       PetscInt iA,PetscInt jA,PetscInt kA,PetscInt stencil[])
 {
   PetscInt first[3] = {0,0,0};
   PetscInt last [3] = {0,0,0};
@@ -134,7 +224,7 @@ PETSC_STATIC_INLINE
 #define __FUNCT__ "FilterLowerTriangular"
 PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 {
-  PetscInt       i,n;
+  PetscInt i,n;
   PetscFunctionBegin;
   for (i=0,n=0; i<*cnt; i++)
     if (col[i] >= row)
@@ -188,9 +278,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
   mtype = iga->mattype;
 
-  sizes  = iga->node_sizes;
   lstart = iga->node_lstart;
   lwidth = iga->node_lwidth;
+  sizes  = iga->node_sizes;
   for (i=0; i<dim; i++) {
     PetscInt gfirst, first = lstart[i];
     PetscInt glast,  last  = lstart[i] + lwidth[i] - 1;
@@ -210,11 +300,12 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
 
-  n = Product(lwidth);
-  N = Product(sizes);
-  maxnnz = 1;
-  for(i=0; i<dim; i++)
+  maxnnz = n = N = 1;
+  for(i=0; i<dim; i++) {
     maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
+    n *= lwidth[i];
+    N *= sizes[i];
+  }
 
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,2,0)
@@ -338,6 +429,12 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
 
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+  if (size > 1) { /* change viewer to display matrix in natural ordering */
+    ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
+  }
+
   *mat = A;
 
   { /* XXX */
@@ -346,11 +443,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 #else
     ierr = MatSetDM(*mat,iga->node_dm);CHKERRQ(ierr);
 #endif
-    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
-    if (size > 1) { /* change viewer to display matrix in natural ordering */
-      ierr = MatShellSetOperation(*mat,MATOP_VIEW,(void (*)(void))MatView_MPI_DA);CHKERRQ(ierr);
-      ierr = MatShellSetOperation(*mat,MATOP_LOAD,(void (*)(void))MatLoad_MPI_DA);CHKERRQ(ierr);
-    }
   } /* XXX */
+
   PetscFunctionReturn(0);
 }
