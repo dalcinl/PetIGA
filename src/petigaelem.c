@@ -149,12 +149,12 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   element->dim = iga->dim;
   element->nsd = iga->geometry ? iga->geometry : iga->dim;
   element->npd = iga->property ? iga->property : 0;
-  if (!element->collocation) {
-    start = iga->elem_start;
-    width = iga->elem_width;
-    sizes = iga->elem_sizes;
-    element->BD = iga->elem_basis;
-  } else {
+
+  start = iga->elem_start;
+  width = iga->elem_width;
+  sizes = iga->elem_sizes;
+  element->BD = iga->basis;
+  if (PetscUnlikely(element->collocation)) { /* collocation */
     start = iga->node_lstart;
     width = iga->node_lwidth;
     sizes = iga->node_sizes;
@@ -237,11 +237,10 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 
     ierr = PetscMemzero(element->normal,sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
   }
-  if (!element->collocation) {
-    element->neq    = element->nen;
-    element->rowmap = element->mapping;
-    element->colmap = element->mapping;
-  } else {
+  element->neq    = element->nen;
+  element->rowmap = element->mapping;
+  element->colmap = element->mapping;
+  if (PetscUnlikely(element->collocation)) { /* collocation */
     element->neq    = 1;
     element->rowmap = &element->index;
     element->colmap = element->mapping;
@@ -268,9 +267,8 @@ PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(element,2);
-  if (!iga->collocation)
-    *element = iga->elem_iterator;
-  else
+  *element = iga->iterator;
+  if (PetscUnlikely(iga->collocation)) /* collocation */
     *element = iga->node_iterator;
   PetscFunctionReturn(0);
 }
@@ -1212,9 +1210,10 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  if (PetscUnlikely(element->collocation)) goto collocation;
   element->nfix  = 0;
   element->nflux = 0;
-  if (!element->collocation) {
+  {
     IGAAxis  *AX = element->parent->axis;
     PetscInt *ID = element->ID;
     PetscInt i,dim = element->dim;
@@ -1224,7 +1223,12 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
       if (ID[i] == 0 && !w) BuildFix(element,i,0);
       if (ID[i] == e && !w) BuildFix(element,i,1);
     }
-  } else {
+  } 
+  PetscFunctionReturn(0);
+ collocation: 
+  element->nfix  = 0;
+  element->nflux = 0;
+  {
     PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
     PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
     {
@@ -1291,7 +1295,8 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   PetscValidPointer(element,1);
   PetscValidScalarPointer(K,2);
   PetscValidScalarPointer(F,3);
-  if (!element->collocation) {
+  if (PetscUnlikely(element->collocation)) goto collocation;
+  {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
     PetscInt f,n;
@@ -1312,7 +1317,10 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
       K[k*N+k] = 1.0;
       F[k]     = v;
     }
-  } else {
+  }
+  PetscFunctionReturn(0);
+ collocation:
+  {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
     PetscInt f,n;
@@ -1341,7 +1349,8 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   PetscValidScalarPointer(F,2);
-  if (!element->collocation) {
+  if (PetscUnlikely(element->collocation)) goto collocation;
+  {
     PetscInt f,n;
     n = element->nflux;
     for (f=0; f<n; f++) {
@@ -1356,7 +1365,10 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
       PetscScalar u = element->ufix[f];
       F[k] = u - v;
     }
-  } else {
+  }
+  PetscFunctionReturn(0);
+ collocation: 
+  {
     PetscInt f,n;
     n = element->nfix;
     for (f=0; f<n; f++) {
@@ -1380,7 +1392,8 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   PetscValidScalarPointer(J,2);
-  if (!element->collocation) {
+  if (PetscUnlikely(element->collocation)) goto collocation;
+  {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
     PetscInt f,n;
@@ -1392,7 +1405,10 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
       for (j=0; j<N; j++) J[k*N+j] = 0.0;
       J[k*N+k] = 1.0;
     }
-  } else {
+  }
+  PetscFunctionReturn(0);
+ collocation:
+  {
     PetscInt M = element->neq * element->dof;
     PetscInt N = element->nen * element->dof;
     PetscInt f,n;

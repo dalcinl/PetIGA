@@ -141,7 +141,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
     *first = k - s - n;
   }
 
-  if (iga->collocation) {
+  if (PetscUnlikely(iga->collocation)) { /* collocation */
     PetscInt offset = iga->node_basis[dir]->offset[i];
     *first = offset;
     *last  = offset + p;

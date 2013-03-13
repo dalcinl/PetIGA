@@ -232,14 +232,8 @@ struct _p_IGA {
   IGARule     rule[3];
   IGABoundary boundary[3][2];
 
-  IGABasis    elem_basis[3];
-  IGAElement  elem_iterator;
-
-  /* stuff added for collocation */
-  PetscBool   collocation;
-  IGABasis    node_basis[3];
-  IGAElement  node_iterator;
-
+  IGABasis    basis[3];
+  IGAElement  iterator;
 
   PetscInt    geometry;
   PetscBool   rational;
@@ -278,6 +272,10 @@ struct _p_IGA {
   Vec        natural;
   VecScatter n2g,g2n;
 
+  /* stuff added for collocation */
+  PetscBool   collocation;
+  IGABasis    node_basis[3];
+  IGAElement  node_iterator;
 };
 
 PETSC_EXTERN PetscClassId IGA_CLASSID;
