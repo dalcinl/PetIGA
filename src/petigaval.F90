@@ -74,7 +74,7 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
      case (0); N = (/ 1.0 /)
      end select
   end select
-  dS = norm2(N)
+  dS = sqrt(sum(N*N))
   if (side == 0) then
      N = -N/dS
   else
