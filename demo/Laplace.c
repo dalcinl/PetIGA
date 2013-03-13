@@ -58,9 +58,9 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
   IGAPointGetDims(p,&dim,0,0);
 
   PetscInt Nb[3] = {0,0,0};
-  Nb[0] = p->parent->BD[0]->nnp;
-  Nb[1] = p->parent->BD[1]->nnp;
-  Nb[2] = p->parent->BD[2]->nnp;
+  Nb[0] = p->parent->parent->axis[0]->nnp;
+  Nb[1] = p->parent->parent->axis[1]->nnp;
+  Nb[2] = p->parent->parent->axis[2]->nnp;
 
   const PetscReal *N0,(*N1)[dim],(*N2)[dim][dim];
   IGAPointGetBasisFuns(p,0,(const PetscReal**)&N0);
