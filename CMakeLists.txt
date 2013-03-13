@@ -19,8 +19,9 @@ else ()
   include (${PETSC_DIR}/${PETSC_ARCH}/conf/PETScConfig.cmake)
 endif()
 
-#set (BUILD_SHARED_LIBS NO)
-
+if (PETSC_CLANGUAGE_Cxx)
+  enable_language (CXX)
+endif ()
 enable_language (Fortran)
 
 include_directories (${PETSC_INCLUDES} ${PETSC_PACKAGE_INCLUDES}
@@ -41,6 +42,14 @@ set  (PetIGA_SOURCES_ALL ${PetIGA_SOURCES_C} ${PetIGA_SOURCES_F})
 
 add_library (petiga ${PetIGA_SOURCES_ALL})
 target_link_libraries (petiga ${PETSC_LIBRARIES} ${PETSC_PACKAGE_LIBS})
+
+if (PETSC_CLANGUAGE_Cxx)
+  foreach (file ${PetIGA_SOURCES_C})
+    set_source_files_properties(${file} PROPERTIES LANGUAGE CXX)
+  endforeach ()
+endif ()
+
+#set (BUILD_SHARED_LIBS NO)
 
 #if (BUILD_SHARED_LIBS)
 #  add_library (petiga-static STATIC ${PetIGA_SOURCES_ALL})
