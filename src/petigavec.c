@@ -263,6 +263,7 @@ PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
   ierr = VecScatterBegin(iga->n2g,nvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (iga->n2g,nvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -277,6 +278,7 @@ PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
   ierr = VecScatterBegin(iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
