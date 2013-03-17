@@ -200,9 +200,9 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
     { /* */
       PetscInt isum[2],imin[2],imax[2],iloc[2] = {1, 1};
       for (i=0; i<dim; i++) {iloc[0] *= iga->node_lwidth[i]; iloc[1] *= iga->elem_width[i];}
-      ierr = MPI_Allreduce(&iloc,&isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
-      ierr = MPI_Allreduce(&iloc,&imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
-      ierr = MPI_Allreduce(&iloc,&imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(iloc,isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(iloc,imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
+      ierr = MPI_Allreduce(iloc,imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - nodes:    sum=%D  min=%D  max=%D  max/min=%g\n",
 				    isum[0],imin[0],imax[0],(double)imax[0]/(double)imin[0]);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
