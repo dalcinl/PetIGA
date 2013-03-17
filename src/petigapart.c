@@ -190,14 +190,14 @@ PetscErrorCode IGA_Distribute(PetscInt dim,
   PetscValidIntPointer(N,4);
   PetscValidIntPointer(n,5);
   PetscValidIntPointer(s,6);
-  if (dim < 1 || dim>3)
+  if (dim < 1 || dim > 3)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of dimensions %D must be in range [1,3]",dim);
   for (k=0; k<dim; k++) {
     if (size[k] < 1)
       SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                "Number of partitions %D must be positive",size[k]);
-    if (rank[k] < 0 || rank[k]>=size[k])
+    if (rank[k] < 0 || rank[k] >= size[k])
       SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                "Partition index %D must be in range [0,%D]",rank[k],size[k]-1);
     if (N[k] < 0)
