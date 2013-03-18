@@ -60,7 +60,7 @@ PetscInt IGA_PART3D_INNER(PetscInt size,
   /**/
   for (mm=m; mm>=1; mm--) {
     if (size % mm) continue;
-    IGA_PART2D(size/mm,M,P,&nn,&pp);
+    IGA_PART2D(size/mm,N,P,&nn,&pp);
     CC = IGA_CUT3D(M,N,P,mm,nn,pp);
     if (CC < C) {m = mm; n = nn; p = pp; C = CC;}
   }
@@ -143,7 +143,7 @@ PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
   if (size < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of partitions %D must be positive",size);
-  if (i && (rank < 0 || rank>=size))
+  if (i && (rank < 0 || rank >= size))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Partition index %D must be in range [0,%D]",rank,size-1);
 
