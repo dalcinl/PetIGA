@@ -51,8 +51,8 @@ PetscErrorCode IGA_Grid_Init(IGA_Grid g,
   PetscValidIntPointer(ghost_width,8);
 
   ierr = IGA_Grid_Reset(g);CHKERRQ(ierr);
-  g->dim  = dim;
-  g->dof  = dof;
+  g->dim = dim;
+  g->dof = dof;
   for (i=0; i<dim; i++) {
     g->sizes[i]       = sizes[i];
     g->local_start[i] = local_start[i];
@@ -171,8 +171,8 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
     PetscInt c,i,j,k,pos = 0;
     nght = bs*gwidth[0]*gwidth[1]*gwidth[2];
     ierr = PetscMalloc(nght*sizeof(PetscInt),&ight);CHKERRQ(ierr);
-    for (k=kgstart; k<kgend; k++) {
-      for (j=jgstart; j<jgend; j++) {
+    for (k=kgstart; k<kgend; k++)
+      for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++) {
           PetscInt ig = i, jg = j, kg = k; /* account for periodicicty */
           if (ig<0) ig = isize + ig; else if (ig>=isize) ig = ig % isize;
@@ -181,8 +181,6 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
           for (c=0; c<bs; c++)
             ight[pos++] = c + bs*(ig + jg * jstride + kg * kstride);
         }
-      }
-    }
   }
   *nghost  = nght;
   *indices = ight;
