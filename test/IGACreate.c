@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
   PetscInt       dim,dof;
   IGA            iga;
   PetscScalar    s;
+  PetscReal      xmin,xmax;
   Vec            b,x;
   Mat            A;
   KSP            ksp;
@@ -66,11 +67,15 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
+  ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,0);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
-  ierr = KSPSolve(ksp,b,x);;CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
+  ierr = VecMin(x,0,&xmin);CHKERRQ(ierr);
+  ierr = VecMax(x,0,&xmax);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
@@ -90,6 +95,11 @@ int main(int argc, char *argv[]) {
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
+
+  if ((xmax-xmin) > 1e-2) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Unexpected result: x_min=%G x_max=%G\n",
+                       (PetscScalar)xmin,(PetscScalar)xmax);CHKERRQ(ierr);
+  }
 
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
