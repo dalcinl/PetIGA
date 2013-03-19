@@ -7,7 +7,7 @@
 #if PETSC_VERSION_LE(3,3,0)
 #undef MatType
 typedef const char* MatType;
-#endif         
+#endif
 
 PETSC_EXTERN PetscErrorCode MatHeaderReplace(Mat,Mat);
 static       PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
@@ -103,14 +103,6 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 
 
 PETSC_STATIC_INLINE
-PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
-                 PetscInt i,PetscInt j,PetscInt k)
-{
-  if (start) { i -= start[0]; j -= start[1]; k -= start[2]; }
-  return i + j * shape[0] + k * shape[0] * shape[1];
-}
-
-PETSC_STATIC_INLINE
 void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 {
   PetscBool periodic = iga->axis[dir]->periodic;
@@ -149,6 +141,14 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 }
 
 PETSC_STATIC_INLINE
+PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
+                 PetscInt i,PetscInt j,PetscInt k)
+{
+  if (start) { i -= start[0]; j -= start[1]; k -= start[2]; }
+  return i + j * shape[0] + k * shape[0] * shape[1];
+}
+
+PETSC_STATIC_INLINE
 PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
                        PetscInt iA,PetscInt jA,PetscInt kA,PetscInt stencil[])
 {
@@ -157,8 +157,11 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
   PetscInt count    = 0;
   { /* compute range of overlapping basis in each direction */
     PetscInt i,A[3]; A[0] = iA; A[1] = jA; A[2] = kA;
-    for (i=0; i<iga->dim; i++)
+    for (i=0; i<iga->dim; i++) {
       Stencil(iga,i,A[i],&first[i],&last[i]);
+      first[i] = PetscMax(first[i],start[i]);
+      last [i] = PetscMin(last [i],start[i]+shape[i]-1);
+    }
   }
   { /* tensor-product the ranges of overlapping basis */
     PetscInt i,j,k;
@@ -256,16 +259,14 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
   PetscMPIInt    size;
-  PetscBool      aij,baij,sbaij;
+  PetscBool      aij,baij,sbaij,is;
   PetscInt       i,dim;
-  PetscInt       *sizes;
   PetscInt       *lstart,*lwidth;
   PetscInt       gstart[3] = {0,0,0};
   PetscInt       gwidth[3] = {1,1,1};
   PetscInt       maxnnz;
   PetscInt       n,N,bs;
-  LGMap          ltog,ltogb;
-  MatType        mtype;
+  LGMap          ltogb = 0;
   Mat            A;
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -276,48 +277,85 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = PetscObjectGetComm((PetscObject)iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
-  mtype = iga->mattype;
 
-  lstart = iga->node_lstart;
-  lwidth = iga->node_lwidth;
-  sizes  = iga->node_sizes;
-  for (i=0; i<dim; i++) {
-    PetscInt gfirst, first = lstart[i];
-    PetscInt glast,  last  = lstart[i] + lwidth[i] - 1;
-    Stencil(iga,i,first,&gstart[i],&glast);
-    Stencil(iga,i,last,&gfirst,&glast);
-    gwidth[i] = glast + 1 - gstart[i];
-  }
-  {
-    IGA_Grid grid;
-    ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
-    ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-    ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLGMapBlock(grid,&ltogb);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLGMap(grid,&ltog);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)ltogb);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)ltog);CHKERRQ(ierr);
-    ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
-  }
-
-  maxnnz = n = N = 1;
+  n = N = 1;
   for(i=0; i<dim; i++) {
-    maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
-    n *= lwidth[i];
-    N *= sizes[i];
+    n *= iga->node_lwidth[i];
+    N *= iga->node_sizes[i];
   }
-
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,2,0)
-  ierr = MatSetType(A,mtype);CHKERRQ(ierr);
+  ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
   ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
 #else
   ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
   ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
-  ierr = MatSetType(A,mtype);CHKERRQ(ierr);
+  ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
 #endif
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
+  ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  *mat = A;
+
+  { /* Check for MATIS matrix subtype */
+    void (*f)(void) = 0;
+    ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
+    is = f ? PETSC_TRUE: PETSC_FALSE;
+  }
+  if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
+  ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
+  ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
+  if (is) {
+    const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
+    ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
+    ierr = MatSetType(A,mtype);CHKERRQ(ierr);
+    ierr = MatSetFromOptions(A);CHKERRQ(ierr);
+  }
+
+  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+  if (!is && size > 1) { /* change viewer to display matrix in natural ordering */
+    ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
+  }
+
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
+
+  if (!is) {
+    lstart = iga->node_lstart;
+    lwidth = iga->node_lwidth;
+    for (i=0; i<dim; i++) {
+      PetscInt gfirst, first = lstart[i];
+      PetscInt glast,  last  = lstart[i] + lwidth[i] - 1;
+      Stencil(iga,i,first,&gstart[i],&glast);
+      Stencil(iga,i,last,&gfirst,&glast);
+      gwidth[i] = glast + 1 - gstart[i];
+    }
+    if (aij || baij || sbaij) {
+      IGA_Grid  grid;
+      PetscInt *sizes = iga->node_sizes;
+      ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
+      ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+      ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
+      ierr = IGA_Grid_GetLGMapBlock(grid,&ltogb);CHKERRQ(ierr);
+      ierr = PetscObjectReference((PetscObject)ltogb);CHKERRQ(ierr);
+      ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
+    }
+  } else {
+    lstart = iga->node_gstart;
+    lwidth = iga->node_gwidth;
+    for (i=0; i<dim; i++) {
+      gstart[i] = lstart[i];
+      gwidth[i] = lwidth[i];
+    }
+  }
+
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = MatGetLocalSize(A,&n,PETSC_NULL);CHKERRQ(ierr);
+  ierr = MatGetSize(A,PETSC_NULL,&N);CHKERRQ(ierr);
+  n /= bs; N /= bs;
+
+  maxnnz = 1;
+  for(i=0; i<dim; i++)
+    maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
 
   if (aij || baij || sbaij) {
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
@@ -326,30 +364,32 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
       PetscInt i,j,k;
-      PetscInt n = maxnnz,*indices=0,*ubrows=0,*ubcols=0;
-      ierr = PetscMalloc1(n,PetscInt,&indices);CHKERRQ(ierr);
-      ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+      PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;
+      ierr = PetscMalloc1(nnz,PetscInt,&indices);CHKERRQ(ierr);
+      ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
       for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
         for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
           for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
             { /* */
-              PetscInt row   = Index3D(gstart,gwidth,i,j,k);
+              PetscInt r,row = Index3D(gstart,gwidth,i,j,k);
               PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
+              if (ltogb) {ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);}
               if (aij) {
                 if (bs == 1) {
-                  ierr = MatPreallocateSetLocal(ltog,1,&row,ltog,count,indices,dnz,onz);CHKERRQ(ierr);
+                  ierr = MatPreallocateSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
                 } else {
                   ierr = UnblockIndices(bs,row,count,indices,ubrows,ubcols);CHKERRQ(ierr);
-                  ierr = MatPreallocateSetLocal(ltog,bs,ubrows,ltog,count*bs,ubcols,dnz,onz);CHKERRQ(ierr);
+                  for (r=0; r<bs; r++) {
+                    ierr = MatPreallocateSet(ubrows[r],count*bs,ubcols,dnz,onz);CHKERRQ(ierr);
+                  }
                 }
               } else if (baij) {
-                ierr = MatPreallocateSetLocal(ltogb,1,&row,ltogb,count,indices,dnz,onz);CHKERRQ(ierr);
+                ierr = MatPreallocateSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               } else if (sbaij) {
-                ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
                 ierr = FilterLowerTriangular(row,&count,indices);CHKERRQ(ierr);
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
-            }
+            } /* */
       if (N < maxnnz) {
         PetscInt dmaxnz = nbs;
         PetscInt omaxnz = Nbs - nbs;
@@ -376,6 +416,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   } else {
     ierr = MatSetUp(A);CHKERRQ(ierr);
   }
+
 #if PETSC_VERSION_LE(3,2,0)
   /* XXX This is a vile hack. Perhaps we should just check for      */
   /* SeqDense and MPIDense that are the only I care about right now */
@@ -389,17 +430,17 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (aij || baij || sbaij) {
     PetscInt i,j,k;
-    PetscInt n = maxnnz,*indices=0,*ubrows=0,*ubcols=0;PetscScalar *values=0;
-    ierr = PetscMalloc2(n,PetscInt,&indices,n*bs*n*bs,PetscScalar,&values);CHKERRQ(ierr);
-    ierr = PetscMalloc2(bs,PetscInt,&ubrows,n*bs,PetscInt,&ubcols);CHKERRQ(ierr);
-    ierr = PetscMemzero(values,n*bs*n*bs*sizeof(PetscScalar));CHKERRQ(ierr);
+    PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;PetscScalar *values=0;
+    ierr = PetscMalloc2(nnz,PetscInt,&indices,nnz*bs*nnz*bs,PetscScalar,&values);CHKERRQ(ierr);
+    ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+    ierr = PetscMemzero(values,nnz*bs*nnz*bs*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
       for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
         for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
           { /* */
             PetscInt row   = Index3D(gstart,gwidth,i,j,k);
             PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
-            ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);
+            if (ltogb) {ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);}
             if (aij) {
               if (bs == 1) {
                 ierr = MatSetValues(A,1,&row,count,indices,values,INSERT_VALUES);CHKERRQ(ierr);
@@ -422,19 +463,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
     /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   }
-  ierr = ISLocalToGlobalMappingDestroy(&ltog);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&ltogb);CHKERRQ(ierr);
 
-  ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
-  ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
 
-  ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
-  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
-  if (size > 1) { /* change viewer to display matrix in natural ordering */
-    ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
-    ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
-  }
-
-  *mat = A;
   PetscFunctionReturn(0);
 }

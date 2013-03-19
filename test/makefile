@@ -83,10 +83,22 @@ runex0c_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 3
 runex0c_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -p 3
+runex0d_1:
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N  8 -p 2 -ksp_type cg -iga_mat_type is -is_mat_type aij
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N  8 -p 2 -ksp_type cg -iga_mat_type is -is_mat_type baij
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N  8 -p 2 -ksp_type cg -iga_mat_type is -is_mat_type sbaij
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -N  4 -p 2 -ksp_type cg -iga_mat_type is -is_mat_type dense
+runex0d_4:
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 16 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type aij
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 16 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type baij
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 16 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type sbaij
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N  8 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type dense
+
 Test_SNES_2D = Test_SNES_2D.PETSc  \
 	       runex0a_1 runex0a_4 \
 	       runex0b_1 runex0b_4 \
 	       runex0c_1 runex0c_4 \
+	       runex0d_1 runex0d_4 \
 	       Test_SNES_2D.rm
 
 
