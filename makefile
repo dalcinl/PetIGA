@@ -12,14 +12,31 @@ all:
 	@${OMAKE} all-legacy    PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 .PHONY: all
 
+
+${PETIGA_DIR}/${PETSC_ARCH}/conf:
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
+${PETIGA_DIR}/${PETSC_ARCH}/include:
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/include
+${PETIGA_DIR}/${PETSC_ARCH}/lib:
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/lib
+arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/conf ${PETIGA_DIR}/${PETSC_ARCH}/include ${PETIGA_DIR}/${PETSC_ARCH}/lib
+.PHONY: arch-tree
+
 #
 # Legacy build
 #
-all-legacy: chk_petsc_dir chk_petiga_dir 
-	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf ${PETIGA_DIR}/${PETSC_ARCH}/include ${PETIGA_DIR}/${PETSC_ARCH}/lib
+legacy-build: arch-tree deletelibs deletemods build
+all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
+	-@echo "============================================="
+	-@echo "Building PetIGA"
+	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
+	-@echo "Using PETSC_DIR=${PETSC_DIR}"
+	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
+	-@echo "============================================="
+	-@echo "Beginning to build PetIGA library"
 	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
-	@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETSC_ARCH}/include
-legacy-build: chklib_dir deletelibs deletemods build
+	-@echo "Completed building PetIGA library"
+	-@echo "============================================="
 .PHONY: legacy-build all-legacy
 
 #
@@ -38,16 +55,24 @@ cmake_fc_path =-DCMAKE_Fortran_COMPILER:FILEPATH=${FC}
 cmake_fc_flags=-DCMAKE_Fortran_FLAGS:STRING='${FC_FLAGS} ${FFLAGS} ${PETSCFLAGS} ${FPP_FLAGS} ${FPPFLAGS}'
 cmake_cc=${cmake_cc_path} ${cmake_cc_flags} ${cmake_cc_clang}
 cmake_fc=${cmake_fc_path} ${cmake_fc_flags}
-${PETIGA_DIR}/${PETSC_ARCH}/conf:
-	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
-${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: ${PETIGA_DIR}/${PETSC_ARCH}/conf
-	@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
+${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: CMakeLists.txt ${PETIGA_DIR}/${PETSC_ARCH}/conf
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/Makefile
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/cmake_install.cmake
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc} 2>&1 > ${PETIGA_DIR}/${PETSC_ARCH}/conf/cmake.log
 cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 cmake-build: cmake-boot
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
-all-cmake: chk_petsc_dir chk_petiga_dir ${PETIGA_DIR}/${PETSC_ARCH}/conf
+all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
+	-@echo "============================================="
+	-@echo "Building PetIGA (CMake build)"
+	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
+	-@echo "Using PETSC_DIR=${PETSC_DIR}"
+	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
+	-@echo "============================================="
 	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+	-@echo "============================================="
 .PHONY: cmake-boot cmake-build all-cmake
 
 #
@@ -73,21 +98,10 @@ chk_petiga_dir:
 #
 # Build the PetIGA library
 #
-build:
-	-@echo "============================================="
-	-@echo "Building PetIGA"
-	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
-	-@echo "Using PETSC_DIR=${PETSC_DIR}"
-	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "============================================="
-	-@echo "Beginning to build PetIGA library"
-	-@${OMAKE} compile PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	-@${OMAKE} ranlib  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	-@${OMAKE} shlibs  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	-@echo "Completed building PetIGA library"
-	-@echo "============================================="
+build: compile ranlib shlibs
 compile:
 	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	-@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETSC_ARCH}/include
 ranlib:
 	-@echo "building libpetiga.${AR_LIB_SUFFIX}"
 	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
