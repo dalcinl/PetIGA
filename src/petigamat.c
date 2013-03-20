@@ -390,6 +390,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               }
             } /* */
+      ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
+      ierr = PetscFree(indices);CHKERRQ(ierr);
       if (N < maxnnz) {
         PetscInt dmaxnz = nbs;
         PetscInt omaxnz = Nbs - nbs;
@@ -408,8 +410,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
         ierr = MatSeqSBAIJSetPreallocation(A,bs,0,dnz);CHKERRQ(ierr);
         ierr = MatMPISBAIJSetPreallocation(A,bs,0,dnz,0,onz);CHKERRQ(ierr);
       }
-      ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
-      ierr = PetscFree(indices);CHKERRQ(ierr);
     }
     ierr = MatPreallocateFinalize(dnz,onz);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
