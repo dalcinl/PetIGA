@@ -37,5 +37,6 @@ for dim in [1,2,3]:
         r = int(round(r))
         assert p+1==r
 dt = time.time()-t0
-assert abs(dt-143.299206018)/143.299206018 < 0.1
 print "time %.3f (%.3f)" % (dt,143.299206018)
+assert abs(dt-143.299206018)/143.299206018 < 0.1
+

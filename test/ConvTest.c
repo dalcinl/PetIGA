@@ -8,7 +8,7 @@ PetscErrorCode Galerkin1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
 
   const PetscReal *N0;
   IGAPointGetBasisFuns(p,0,&N0);
@@ -38,12 +38,12 @@ PetscErrorCode Collocation1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen,dim,i;
   IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
   
   PetscInt Nb[3] = {0,0,0};
-  Nb[0] = p->parent->BD[0]->nnp;
-  Nb[1] = p->parent->BD[1]->nnp;
-  Nb[2] = p->parent->BD[2]->nnp;
+  Nb[0] = p->parent->parent->axis[0]->nnp;
+  Nb[1] = p->parent->parent->axis[1]->nnp;
+  Nb[2] = p->parent->parent->axis[2]->nnp;
   
   const PetscReal *N0,(*N2)[dim][dim];
   IGAPointGetBasisFuns(p,0,(const PetscReal**)&N0);
@@ -77,7 +77,7 @@ PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScal
   IGAPointFormValue(p,U,&ua);
 
   PetscInt i,dim;
-  IGAPointGetDims(p,&dim,0);
+  IGAPointGetDims(p,&dim,0,0);
   for (i=0; i<dim; i++) ue *= sin(2*CONST*PETSC_PI*p->point[i]);
 
   PetscReal error = PetscAbsScalar(ua-ue);
