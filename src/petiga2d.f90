@@ -1,31 +1,26 @@
 pure subroutine IGA_Quadrature_2D(&
-     inq,iX,iW,iL,                &
-     jnq,jX,jW,jL,                &
-     W,J,X,L)                     &
+     inq,iX,iW,iJ,                &
+     jnq,jX,jW,jJ,                &
+     X,W,J)                       &
   bind(C, name="IGA_Quadrature_2D")
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iL
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jX(jnq), jW(jnq), jL
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iJ
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jX(jnq), jW(jnq), jJ
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq,jnq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: W(    inq,jnq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: J(    inq,jnq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq,jnq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: L(dim,inq,jnq)
   integer(kind=IGA_INTEGER_KIND)  :: iq
   integer(kind=IGA_INTEGER_KIND)  :: jq
-  forall (iq=1:inq, jq=1:jnq)
-     !
-     W(iq,jq) = iW(iq) * jW(jq)
-     J(iq,jq) = iL * jL
-     !
+  forall (jq=1:jnq, iq=1:inq)
      X(1,iq,jq) = iX(iq)
      X(2,iq,jq) = jX(jq)
-     L(1,iq,jq) = iL
-     L(2,iq,jq) = jL
+     W(  iq,jq) = iW(iq) * jW(jq)
   end forall
+  J = iJ * jJ
 end subroutine IGA_Quadrature_2D
 
 

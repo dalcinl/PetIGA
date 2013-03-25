@@ -1,8 +1,8 @@
 pure subroutine IGA_Quadrature_3D(&
-     inq,iX,iW,iL,                &
-     jnq,jX,jW,jL,                &
-     knq,kX,kW,kL,                &
-     W,J,X,L)                     &
+     inq,iX,iW,iJ,                &
+     jnq,jX,jW,jJ,                &
+     knq,kX,kW,kJ,                &
+     X,W,J)                       &
   bind(C, name="IGA_Quadrature_3D")
   use PetIGA
   implicit none
@@ -10,28 +10,22 @@ pure subroutine IGA_Quadrature_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iL
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jX(jnq), jW(jnq), jL
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kX(knq), kW(knq), kL
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iJ
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jX(jnq), jW(jnq), jJ
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kX(knq), kW(knq), kJ
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: W(    inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: J(    inq,jnq,knq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq,jnq,knq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: L(dim,inq,jnq,knq)
   integer(kind=IGA_INTEGER_KIND) :: iq
   integer(kind=IGA_INTEGER_KIND) :: jq
   integer(kind=IGA_INTEGER_KIND) :: kq
-  forall (iq=1:inq, jq=1:jnq, kq=1:knq)
-     !
-     W(iq,jq,kq) = iW(iq) * jW(jq) * kW(kq)
-     J(iq,jq,kq) = iL * jL * kL
-     !
+  forall (kq=1:knq, jq=1:jnq, iq=1:inq)
      X(1,iq,jq,kq) = iX(iq)
      X(2,iq,jq,kq) = jX(jq)
      X(3,iq,jq,kq) = kX(kq)
-     L(1,iq,jq,kq) = iL
-     L(2,iq,jq,kq) = jL
-     L(3,iq,jq,kq) = kL
+     W(  iq,jq,kq) = iW(iq) * jW(jq) * kW(kq)
   end forall
+  J = iJ * jJ * kJ
 end subroutine IGA_Quadrature_3D
 
 

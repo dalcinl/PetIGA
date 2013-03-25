@@ -410,7 +410,6 @@ struct _n_IGAElement {
   PetscReal *detJac;   /*   [nqp]                     */
 
   PetscReal *point;    /*   [nqp][dim]                */
-  PetscReal *scale;    /*   [nqp][dim]                */
   PetscReal *basis[4]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
@@ -523,7 +522,6 @@ struct _n_IGAPoint {
   PetscReal *detJac;   /*   [1]   */
 
   PetscReal *point;    /*   [dim] */
-  PetscReal *scale;    /*   [dim] */
   PetscReal *basis[4]; /*0: [nen] */
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */

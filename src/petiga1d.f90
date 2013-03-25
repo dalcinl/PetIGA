@@ -1,25 +1,21 @@
 pure subroutine IGA_Quadrature_1D(&
-     inq,iX,iW,iL,                &
-     W,J,X,L)                     &
+     inq,iX,iW,iJ,                &
+     X,W,J)                       &
   bind(C, name="IGA_Quadrature_1D")
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 1
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iL
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: W(inq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: J(inq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iX(inq), iW(inq), iJ
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X(dim,inq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: L(dim,inq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: W(    inq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: J(    inq)
   integer(kind=IGA_INTEGER_KIND)  :: iq
   forall (iq=1:inq)
-     !
-     W(iq) = iW(iq)
-     J(iq) = iL
-     !
      X(1,iq) = iX(iq)
-     L(1,iq) = iL
+     W(  iq) = iW(iq)
   end forall
+  J = iJ
 end subroutine IGA_Quadrature_1D
 
 

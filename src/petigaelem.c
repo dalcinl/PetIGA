@@ -108,7 +108,6 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->detJac);CHKERRQ(ierr);
 
   ierr = PetscFree(element->point);CHKERRQ(ierr);
-  ierr = PetscFree(element->scale);CHKERRQ(ierr);
   ierr = PetscFree(element->basis[0]);CHKERRQ(ierr);
   ierr = PetscFree(element->basis[1]);CHKERRQ(ierr);
   ierr = PetscFree(element->basis[2]);CHKERRQ(ierr);
@@ -199,7 +198,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nqp,PetscReal,&element->detJac);CHKERRQ(ierr);
 
     ierr = PetscMalloc1(nqp*dim,PetscReal,&element->point);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*dim,PetscReal,&element->scale);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen,PetscReal,&element->basis[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim,PetscReal,&element->basis[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim,PetscReal,&element->basis[2]);CHKERRQ(ierr);
@@ -221,7 +219,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
 
     ierr = PetscMemzero(element->point,   sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->scale,   sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[2],sizeof(PetscReal)*nqp*nen*dim*dim);CHKERRQ(ierr);
@@ -438,7 +435,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->detJac   += 1;
 
   point->point    += dim;
-  point->scale    += dim;
   point->basis[0] += nen;
   point->basis[1] += nen*dim;
   point->basis[2] += nen*dim*dim;
@@ -469,7 +465,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->detJac   = element->detJac;
 
   point->point    = element->point;
-  point->scale    = element->scale;
   point->basis[0] = element->basis[0];
   point->basis[1] = element->basis[1];
   point->basis[2] = element->basis[2];
@@ -673,14 +668,14 @@ PetscErrorCode IGAElementBuildProperty(IGAElement element)
 
 EXTERN_C_BEGIN
 extern void IGA_Quadrature_1D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
-                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
+                              PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_Quadrature_2D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
                               PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
-                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
+                              PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_Quadrature_3D(PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
                               PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
                               PetscInt,const PetscReal[],const PetscReal[],const PetscReal*,
-                              PetscReal[],PetscReal[],PetscReal*,PetscReal[]);
+                              PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
@@ -730,20 +725,19 @@ PetscErrorCode IGAElementBuildQuadrature(IGAElement element)
   {
     IGABasis *BD = element->BD;
     PetscInt *ID = element->ID;
+    PetscReal *u = element->point;
     PetscReal *w = element->weight;
     PetscReal *J = element->detJac;
-    PetscReal *u = element->point;
-    PetscReal *L = element->scale;
     switch (element->dim) {
     case 3: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
                               IGA_Quadrature_ARGS(ID,BD,1),
                               IGA_Quadrature_ARGS(ID,BD,2),
-                              w,J,u,L); break;
+                              u,w,J); break;
     case 2: IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
                               IGA_Quadrature_ARGS(ID,BD,1),
-                              w,J,u,L); break;
+                              u,w,J); break;
     case 1: IGA_Quadrature_1D(IGA_Quadrature_ARGS(ID,BD,0),
-                              w,J,u,L); break;
+                              u,w,J); break;
     }
   }
   PetscFunctionReturn(0);
@@ -833,39 +827,38 @@ PetscErrorCode IGAElementBuildQuadratureAtBoundary(IGAElement element,PetscInt d
   {
     IGABasis *BD = element->BD;
     PetscInt *ID = element->ID;
+    PetscReal *u = element->point;
     PetscReal *w = element->weight;
     PetscReal *J = element->detJac;
-    PetscReal *u = element->point;
-    PetscReal *L = element->scale;
     switch (element->dim) {
     case 3:
       switch (dir) {
       case 0: IGA_Quadrature_3D(IGA_Quadrature_BNDR(ID,BD,0,side),
                                 IGA_Quadrature_ARGS(ID,BD,1),
                                 IGA_Quadrature_ARGS(ID,BD,2),
-                                w,J,u,L); break;
+                                u,w,J); break;
       case 1: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
                                 IGA_Quadrature_BNDR(ID,BD,1,side),
                                 IGA_Quadrature_ARGS(ID,BD,2),
-                                w,J,u,L); break;
+                                u,w,J); break;
       case 2: IGA_Quadrature_3D(IGA_Quadrature_ARGS(ID,BD,0),
                                 IGA_Quadrature_ARGS(ID,BD,1),
                                 IGA_Quadrature_BNDR(ID,BD,2,side),
-                                w,J,u,L); break;
+                                u,w,J); break;
       } break;
     case 2:
       switch (dir) {
       case 0: IGA_Quadrature_2D(IGA_Quadrature_BNDR(ID,BD,0,side),
                                 IGA_Quadrature_ARGS(ID,BD,1),
-                                w,J,u,L); break;
+                                u,w,J); break;
       case 1: IGA_Quadrature_2D(IGA_Quadrature_ARGS(ID,BD,0),
                                 IGA_Quadrature_BNDR(ID,BD,1,side),
-                                w,J,u,L); break;
+                                u,w,J); break;
       } break;
     case 1:
       switch (dir) {
       case 0: IGA_Quadrature_1D(IGA_Quadrature_BNDR(ID,BD,0,side),
-                                w,J,u,L); break;
+                                u,w,J); break;
       } break;
     }
   }
