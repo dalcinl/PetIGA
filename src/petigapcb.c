@@ -5,12 +5,12 @@
 #else
 #include <petsc-private/pcimpl.h>
 #endif
-#include "petigapc.h"
+#include "petigabl.h"
 
 #if PETSC_VERSION_LE(3,3,0)
 #undef MatType
 typedef const char* MatType;
-#endif         
+#endif
 
 typedef struct {
   PetscInt dim,dof;

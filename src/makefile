@@ -13,8 +13,8 @@ ALL: lib
 #FFLAGS_STD = ${FFLAGS_STD_F03}
 #FFLAGS = ${FFLAGS_STD} -pedantic -Wall -Wextra -fcheck=all
 
-SOURCEH  = ../include/petiga.h petigapc.h petigagrid.h petigapart.h
 SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigaksp.c petigasnes.c petigats.c petigats2.c petigaio.c petigagrid.c petigapart.c snesfdcolor.c tsalpha2.c
+SOURCEH  = ../include/petiga.h petigabl.h petigagrid.h petigapart.h
 SOURCEF1 = petigaftn.F90 petigaval.F90
 SOURCEF2 = petigabsp.f90 petigaqdr.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90
 SOURCEF  = ${SOURCEF1} ${SOURCEF2}
