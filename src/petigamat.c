@@ -176,14 +176,13 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
 #define __FUNCT__ "InferMatrixType"
-PetscErrorCode InferMatrixType(Mat A,PetscBool *is,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
+PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  *is = *aij = *baij = *sbaij = PETSC_FALSE;
+  *aij = *baij = *sbaij = PETSC_FALSE;
   ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
-  if ( f) {ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr); f=0; *is = PETSC_TRUE;}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if ( f) {*aij = PETSC_TRUE; goto done;};
@@ -298,7 +297,11 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   *mat = A;
 
-  ierr = InferMatrixType(A,&is,&aij,&baij,&sbaij);CHKERRQ(ierr);
+  { /* Check for MATIS matrix subtype */
+    void (*f)(void) = 0;
+    ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
+    is = f ? PETSC_TRUE: PETSC_FALSE;
+  }
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
 #if PETSC_VERSION_LE(3,2,0)
@@ -318,6 +321,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
     ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
   }
+
+  ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
   if (!is) {
     lstart = iga->node_lstart;
