@@ -176,12 +176,14 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
 #define __FUNCT__ "InferMatrixType"
-PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
+PetscErrorCode InferMatrixType(Mat A,PetscBool *is,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  *aij = *baij = *sbaij = PETSC_FALSE;
+  *is = *aij = *baij = *sbaij = PETSC_FALSE;
+  ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
+  if ( f) {ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr); f=0; *is = PETSC_TRUE;}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if ( f) {*aij = PETSC_TRUE; goto done;};
@@ -259,7 +261,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
   PetscMPIInt    size;
-  PetscBool      aij,baij,sbaij,is;
+  PetscBool      is,aij,baij,sbaij;
   PetscInt       i,dim;
   PetscInt       *lstart,*lwidth;
   PetscInt       gstart[3] = {0,0,0};
@@ -296,14 +298,14 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   *mat = A;
 
-  { /* Check for MATIS matrix subtype */
-    void (*f)(void) = 0;
-    ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
-    is = f ? PETSC_TRUE: PETSC_FALSE;
-  }
+  ierr = InferMatrixType(A,&is,&aij,&baij,&sbaij);CHKERRQ(ierr);
+
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
+#if PETSC_VERSION_LE(3,2,0)
+#else
   ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
   ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
+#endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
@@ -316,8 +318,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
     ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
   }
-
-  ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
   if (!is) {
     lstart = iga->node_lstart;
@@ -420,11 +420,15 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 #if PETSC_VERSION_LE(3,2,0)
   /* XXX This is a vile hack. Perhaps we should just check for      */
   /* SeqDense and MPIDense that are the only I care about right now */
-  if (A->ops->setblocksize) {
-    ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
+  if ((*mat)->ops->setblocksize) {
+    ierr = MatSetBlockSize(*mat,bs);CHKERRQ(ierr);
   } else {
-    ierr = PetscLayoutSetBlockSize(A->rmap,bs);CHKERRQ(ierr);
-    ierr = PetscLayoutSetBlockSize(A->cmap,bs);CHKERRQ(ierr);
+    ierr = PetscLayoutSetBlockSize((*mat)->rmap,bs);CHKERRQ(ierr);
+    ierr = PetscLayoutSetBlockSize((*mat)->cmap,bs);CHKERRQ(ierr);
+  }
+  if (!is) {
+    ierr = MatSetLocalToGlobalMapping(*mat,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
+    ierr = MatSetLocalToGlobalMappingBlock(*mat,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
   }
 #endif
 
@@ -463,6 +467,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
     /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   }
+
   ierr = ISLocalToGlobalMappingDestroy(&ltogb);CHKERRQ(ierr);
 
 
