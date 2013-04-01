@@ -271,6 +271,7 @@ PetscErrorCode IGACreateTS2(IGA iga, TS *ts)
   ierr = TSCreate(comm,ts);CHKERRQ(ierr);
   ierr = TSSetType(*ts,TSALPHA2);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*ts,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerTS(*ts);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&V);CHKERRQ(ierr);

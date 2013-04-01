@@ -450,6 +450,7 @@ PetscErrorCode IGACreateTS(IGA iga, TS *ts)
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = TSCreate(comm,ts);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*ts,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerTS(*ts);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = TSSetSolution(*ts,U);CHKERRQ(ierr);
@@ -463,5 +464,39 @@ PetscErrorCode IGACreateTS(IGA iga, TS *ts)
   ierr = TSSetIJacobian(*ts,J,J,IGATSFormIJacobian,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 
+  PetscFunctionReturn(0);
+}
+
+/*
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_OptionsHandler_TS"
+static PetscErrorCode IGA_OptionsHandler_TS(PetscObject obj,void *ctx)
+{
+  TS             ts = (TS)obj;
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+  ierr = PetscObjectQuery((PetscObject)ts,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+
+  PetscFunctionReturn(0);
+}
+*/
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetOptionsHandlerTS"
+PetscErrorCode IGASetOptionsHandlerTS(TS ts)
+{
+  SNES           snes;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);*/
+  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

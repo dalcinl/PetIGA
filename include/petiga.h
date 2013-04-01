@@ -630,6 +630,14 @@ PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc);
+PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerPC(PC pc);
+PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp);
+PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerSNES(SNES snes);
+PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
+
+/* ---------------------------------------------------------------- */
+
 PETSC_EXTERN PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
 

@@ -81,7 +81,7 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
     ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
   }
   ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
-  
+
   ierr = PetscLogEventEnd(IGA_FormSystem,iga,matA,vecB,0);CHKERRQ(ierr);
 
   ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -120,8 +120,43 @@ PetscErrorCode IGACreateKSP(IGA iga, KSP *ksp)
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = KSPCreate(comm,ksp);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*ksp,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerKSP(*ksp);CHKERRQ(ierr);
   /*ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);*/
   /*ierr = KSPSetOperators(*ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);*/
   /*ierr = MatDestroy(&A);CHKERRQ(ierr);*/
+  PetscFunctionReturn(0);
+}
+
+/*
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_OptionsHandler_KSP"
+static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
+{
+  KSP            ksp = (KSP)obj;
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+  ierr = PetscObjectQuery((PetscObject)ksp,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+
+  PetscFunctionReturn(0);
+}
+*/
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetOptionsHandlerKSP"
+PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
+{
+  PC             pc;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);*/
+  ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerPC(pc);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
