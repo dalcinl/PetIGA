@@ -43,9 +43,6 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
 
-  ierr = PetscObjectQuery((PetscObject)snes,"fdcoloring",(PetscObject*)&fdcoloring);CHKERRQ(ierr);
-  if (fdcoloring) PetscFunctionReturn(0);
-
   ierr = SNESGetOptionsPrefix(snes,&prefix);CHKERRQ(ierr);
   ierr = SNESGetFunction(snes,&f,&fun,&funP);CHKERRQ(ierr);
   ierr = SNESGetJacobian(snes,&A,&B,&jac,&jacP);CHKERRQ(ierr);
@@ -57,6 +54,8 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"SNESSetJacobian() must be called first");
     PetscFunctionReturn(PETSC_ERR_ARG_WRONGSTATE);
   }
+  ierr = PetscObjectQuery((PetscObject)snes,"fdcoloring",(PetscObject*)&fdcoloring);CHKERRQ(ierr);
+  if (fdcoloring && fdcoloring == (MatFDColoring)jacP) PetscFunctionReturn(0);
 
   ierr = MatGetColoring((B?B:A),MATCOLORINGSL,&iscoloring);CHKERRQ(ierr);
   ierr = MatFDColoringCreate((B?B:A),iscoloring,&fdcoloring);CHKERRQ(ierr);
@@ -76,12 +75,14 @@ EXTERN_C_BEGIN
 #define __FUNCT__ "SNESSetFromOptions_FDColoring"
 PetscErrorCode SNESSetFromOptions_FDColoring(SNES snes)
 {
-  PetscBool      fdc = PETSC_FALSE;
-  PetscErrorCode ierr;
+  static PetscBool fdc = PETSC_FALSE;
+  PetscBool        opt;
+  PetscErrorCode   ierr;
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
   ierr = PetscOptionsBool("-snes_fd_color","Use colored finite differences to compute Jacobian","SNESSetUpFDColoring",fdc,&fdc,PETSC_NULL);CHKERRQ(ierr);
-  if (fdc) {ierr = SNESSetUpFDColoring(snes);CHKERRQ(ierr);}
+  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+  opt = fdc; fdc = PETSC_FALSE;
+  if (opt) {ierr = SNESSetUpFDColoring(snes);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 EXTERN_C_END
