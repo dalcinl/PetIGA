@@ -1,4 +1,5 @@
 #include "petiga.h"
+
 /* ---------------------------------------------------------------- */
 
 PETSC_STATIC_INLINE
@@ -112,12 +113,64 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LE(3,3,0)
+#include "petscbt.h"
+#endif
+
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
+#define __FUNCT__ "ComputeDirichletIndices"
+PetscErrorCode ComputeDirichletIndices(PetscInt dim,PetscInt bs,const PetscInt shape[3],
+                                       PetscInt count[][2],PetscInt *field[][2],
+                                       PetscInt *_ndirichlet,PetscInt *_idirichlet[])
+{
+  PetscBT        mask;
+  PetscInt       i, m = bs*shape[0]*shape[1]*shape[2];
+  PetscInt       dir, side, ijk[3], index = 0, pos = 0;
+  PetscInt       ndirichlet = 0, *idirichlet = 0;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidIntPointer(_ndirichlet,2);
+  PetscValidPointer(_idirichlet,3);
+#if PETSC_VERSION_LE(3,2,0)
+  ierr = PetscBTCreate(m,mask);CHKERRQ(ierr);
+#else
+  ierr = PetscBTCreate(m,&mask);CHKERRQ(ierr);
+#endif
+  for (ijk[2]=0; ijk[2]<shape[2]; ijk[2]++)
+    for (ijk[1]=0; ijk[1]<shape[1]; ijk[1]++)
+      for (ijk[0]=0; ijk[0]<shape[0]; ijk[0]++, index++)
+        for (dir=0; dir<dim; dir++)
+          for (side=0; side<=1; side++)
+            if (ijk[dir] == (!side?0:shape[dir]-1))
+              {
+                PetscInt c,n = count[dir][side];
+                PetscInt  *f = field[dir][side];
+                for (c=0; c<n; c++)
+                  if (!PetscBTLookupSet(mask,f[c]+bs*index)) ndirichlet++;
+              }
+  ierr = PetscMalloc(ndirichlet*sizeof(PetscInt),&idirichlet);CHKERRQ(ierr);
+  for (i=0; i<m; i++) if (PetscBTLookup(mask,i)) idirichlet[pos++] = i;
+#if PETSC_VERSION_LE(3,2,0)
+  ierr = PetscBTDestroy(mask);CHKERRQ(ierr);
+#else
+  ierr = PetscBTDestroy(&mask);CHKERRQ(ierr);
+#endif
+  *_ndirichlet = ndirichlet;
+  *_idirichlet = idirichlet;
+  PetscFunctionReturn(0);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPreparePCBDDC"
 PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 {
   Mat            mat;
   void           (*f)(void);
+  const char     *prefix;
+  PetscBool      graph = PETSC_TRUE;
+  PetscBool      dirichlet = PETSC_TRUE;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -131,8 +184,12 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   ierr = PetscObjectQueryFunction((PetscObject)pc,"PCBDDCSetLocalAdjacencyGraph_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
 
+  ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,0);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_dirichlet",&dirichlet,0);CHKERRQ(ierr);
+
 #if defined(PETSC_HAVE_PCBDDC)  /* XXX */
-  {
+  if (graph) {
     PetscInt i,dim,dof;
     PetscInt shape[3] = {1,1,1};
     PetscInt start[3] = {0,0,0};
@@ -147,6 +204,29 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     }
     ierr = ComputeBDDCGraph(dof,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
+  }
+  if (dirichlet) {
+    PetscInt  i,s,dim,dof;
+    PetscInt  shape[3]    = {1,1,1};
+    PetscInt  count[3][2] = {{0,0},{0,0},{0,0}};
+    PetscInt *field[3][2] = {{0,0},{0,0},{0,0}};
+    PetscInt  n=0,*indices=0;
+    IS        is;
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) {
+      shape[i] = iga->node_gwidth[i];
+      if (!iga->axis[i]->periodic)
+        for (s=0; s<=1; s++)
+          if (iga->proc_ranks[i] == (!s?0:iga->proc_sizes[i]-1)) {
+            count[i][s] = iga->boundary[i][s]->count;
+            field[i][s] = iga->boundary[i][s]->field;
+          }
+    }
+    ierr = ComputeDirichletIndices(dim,dof,shape,count,field,&n,&indices);CHKERRQ(ierr);
+    ierr = ISCreateGeneral(PETSC_COMM_SELF,n,indices,PETSC_OWN_POINTER,&is);CHKERRQ(ierr);
+    ierr = PCBDDCSetDirichletBoundaries(pc,is);CHKERRQ(ierr);
+    ierr = ISDestroy(&is);CHKERRQ(ierr);
   }
 #endif
 
