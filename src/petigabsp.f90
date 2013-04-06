@@ -1,16 +1,16 @@
 ! -*- f90 -*-
 
-subroutine IGA_Basis_BSpline(i,uu,p,d,U,N) &
+subroutine IGA_Basis_BSpline(k,uu,p,d,U,B) &
   bind(C, name="IGA_Basis_BSpline")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: i, p, d
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: k, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:i+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: N(0:d,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
   real   (kind=IGA_REAL_KIND   )  :: ders(0:p,0:d)
-  call BasisFunsDers(i,uu,p,d,U,ders)
-  N = transpose(ders)
+  call BasisFunsDers(k,uu,p,d,U,ders)
+  B = transpose(ders)
 contains
 pure subroutine BasisFunsDers(i,uu,p,n,U,ders)
   use PetIGA
@@ -75,3 +75,90 @@ pure subroutine BasisFunsDers(i,uu,p,n,U,ders)
   end do
 end subroutine BasisFunsDers
 end subroutine IGA_Basis_BSpline
+
+
+subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
+  bind(C, name="IGA_Basis_Lagrange")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: kk, p, d
+  real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:kk+p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
+  integer(kind=IGA_INTEGER_KIND)  :: m, i, j, k, l
+  real   (kind=IGA_REAL_KIND   )  :: Lp, Ls1, Ls2, Ls3
+  real   (kind=IGA_REAL_KIND   )  :: X(0:p)
+
+  forall (m=0:p) X(m) = U(kk) + m * (U(kk+1) - U(kk)) / p
+
+  do m = 0, p
+     Lp = 1
+     do i = 0, p
+        if (i == m) cycle
+        Lp = Lp * (uu-X(i))/(X(m)-X(i))
+     end do
+     B(0,m) = Lp
+  end do
+
+  if (d < 1) return
+  do m = 0, p
+     Ls1 = 0
+     do j = 0, p
+        if (j == m) cycle
+        Lp = 1
+        do i = 0, p
+           if (i == m .or. i == j) cycle
+           Lp = Lp * (uu-X(i))/(X(m)-X(i))
+        end do
+        Ls1 = Ls1 + Lp/(X(m)-X(j))
+     end do
+     B(1,m) = Ls1
+  end do
+
+  if (d < 2) return
+  do m = 0, p
+     Ls2 = 0
+     do k = 0, p
+        if (k == m) cycle
+        Ls1 = 0
+        do j = 0, p
+           if (j == m .or. j == k) cycle
+           Lp = 1
+           do i = 0, p
+              if (i == m .or. i == k .or. i == j) cycle
+              Lp = Lp * (uu-X(i))/(X(m)-X(i))
+           end do
+           Ls1 = Ls1 + Lp/(X(m)-X(j))
+        end do
+        Ls2 = Ls2 + Ls1/(X(m)-X(k))
+     end do
+     B(2,m) = Ls2
+  end do
+
+
+  if (d < 3) return
+  do m = 0, p
+     Ls3 = 0
+     do l = 0, p
+        if (l == m) cycle
+        Ls2 = 0
+        do k = 0, p
+           if (k == m .or. k == l) cycle
+           Ls1 = 0
+           do j = 0, p
+              if (j == m .or. j == l .or. j == k) cycle
+              Lp = 1
+              do i = 0, p
+                 if (i == m .or. i == l .or. i == k .or. i == j) cycle
+                 Lp = Lp * (uu-X(i))/(X(m)-X(i))
+              end do
+              Ls1 = Ls1 + Lp/(X(m)-X(j))
+           end do
+           Ls2 = Ls2 + Ls1/(X(m)-X(k))
+        end do
+        Ls3 = Ls3 + Ls2/(X(m)-X(l))
+     end do
+     B(3,m) = Ls3
+  end do
+
+end subroutine IGA_Basis_Lagrange

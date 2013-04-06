@@ -662,6 +662,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   {
     PetscBool flg;
     PetscInt  i,nw,nb;
+    IGABasisType btype[3] = {IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE};
     PetscBool wraps[3]    = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
     PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  nd,degrs[3] = {2,2,2};
@@ -680,6 +681,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
     for (i=0; i<dim; i++) if (iga->axis[i]->p   > 0) degrs[i] = iga->axis[i]->p;
     for (i=0; i<dim; i++) if (iga->rule[i]->nqp > 0) quadr[i] = iga->rule[i]->nqp;
+    for (i=0; i<dim; i++) btype[i] = iga->basis[i]->type;
 
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
 
@@ -708,6 +710,14 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 	if (nw == 0) w = PETSC_TRUE;
 	ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
+
+    /* Basis */
+    ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGABasisSetType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) btype[i] = btype[0]; /* XXX */
+    if (flg) for (i=0; i<dim; i++) {
+        ierr = IGABasisSetType(iga->basis[i],btype[i]);CHKERRQ(ierr);
+      }
+    for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
 
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
@@ -743,7 +753,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
     /* Quadrature */
-    ierr = PetscOptionsIntArray ("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
 	PetscInt q = (i<nq) ? quadr[i] : quadr[0];
 	if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}

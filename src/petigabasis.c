@@ -1,5 +1,12 @@
 #include "petiga.h"
 
+const char *const IGABasisTypes[] = {
+  "BSPLINE",
+  "BERNSTEIN",
+  "LAGRANGE",
+  /* */
+  "IGABasisType","IGA_BASIS_",0};
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisCreate"
 PetscErrorCode IGABasisCreate(IGABasis *basis)
@@ -61,15 +68,28 @@ PetscErrorCode IGABasisReference(IGABasis basis)
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGABasisSetType"
+PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(basis,1);
+  if (basis->type != type) {ierr = IGABasisReset(basis);CHKERRQ(ierr);}
+  basis->type = type;
+  PetscFunctionReturn(0);
+}
+
 EXTERN_C_BEGIN
-extern void IGA_Basis_BSpline(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal N[]);
+extern void IGA_Basis_BSpline (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal B[]);
+extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisInitQuadrature"
 PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
 {
-  PetscInt       p;
+  PetscInt       m,p;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
@@ -80,6 +100,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   PetscReal      *weight;
   PetscReal      *point;
   PetscReal      *value;
+  void          (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]);
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(basis,1);
@@ -88,8 +109,22 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   if (d < 0) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                       "Derivative order must be grather than zero, got %D",d);
 
+  m = axis->m;
   p = axis->p;
   U = axis->U;
+
+  if (basis->type != IGA_BASIS_BSPLINE) {
+    PetscInt s,j,k=1;
+    while (k < m) {
+      j = k; s = 1; while (++k < m && U[j] == U[k]) s++;
+      if (s < p) SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                          "Basis type %s requires C^0 continuity, "
+                          "Knot U[%D]=%G has multiplicity %D "
+                          "less than polynomial degree %D",
+                          IGABasisTypes[basis->type],j,U[j],s,p);
+    }
+    /* XXX */printf("using %s basis\n",IGABasisTypes[basis->type]);
+  }
 
   nqp = rule->nqp;
   X   = rule->point;
@@ -100,11 +135,20 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   nen  = p+1;
   ndr  = d+1;
 
+  switch (basis->type) {
+  case IGA_BASIS_BSPLINE:
+  case IGA_BASIS_BERNSTEIN:
+    ComputeBasis = IGA_Basis_BSpline; break;
+  case IGA_BASIS_LAGRANGE:
+    ComputeBasis = IGA_Basis_Lagrange; break;
+  }
+
   ierr = PetscMalloc1(nel,PetscInt,&offset);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel,PetscReal,&detJ);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,PetscReal,&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp,PetscReal,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp*nen*ndr,PetscReal,&value);CHKERRQ(ierr);
+  ierr = PetscMemzero(value,nel*nqp*nen*ndr*sizeof(PetscReal));CHKERRQ(ierr);
 
   for (iqp=0; iqp<nqp; iqp++) {
     weight[iqp] = W[iqp];
@@ -118,7 +162,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     detJ[iel] = J;
     for (iqp=0; iqp<nqp; iqp++) {
       u[iqp] = (X[iqp] + 1) * J + u0;
-      IGA_Basis_BSpline(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
+      ComputeBasis(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
     }
     offset[iel] = k-p;
   }
@@ -147,8 +191,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     basis->bnd_detJ  [0] = 1.0; basis->bnd_detJ  [1] = 1.0;
     basis->bnd_weight[0] = 1.0; basis->bnd_weight[1] = 1.0;
     basis->bnd_point [0] =  u0; basis->bnd_point [1] =  u1;
-    IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
-    IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
+    ComputeBasis(k0,u0,p,d,U,basis->bnd_value[0]);
+    ComputeBasis(k1,u1,p,d,U,basis->bnd_value[1]);
   }
 
   PetscFunctionReturn(0);

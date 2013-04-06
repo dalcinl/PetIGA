@@ -80,8 +80,18 @@ PETSC_EXTERN PetscErrorCode IGARuleInit(IGARule rule,PetscInt q);
 PETSC_EXTERN PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[]);
 PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[]);
 
+typedef enum {
+  IGA_BASIS_BSPLINE=0,
+  IGA_BASIS_BERNSTEIN,
+  IGA_BASIS_LAGRANGE
+} IGABasisType;
+
+PETSC_EXTERN const char *const IGABasisTypes[];
+
 struct _n_IGABasis {
   PetscInt refct;
+  /**/
+  IGABasisType type;  /* basis type */
   /**/
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
@@ -104,6 +114,7 @@ PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisReset(IGABasis basis);
 PETSC_EXTERN PetscErrorCode IGABasisReference(IGABasis basis);
+PETSC_EXTERN PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type);
 PETSC_EXTERN PetscErrorCode IGABasisInitQuadrature (IGABasis basis,IGAAxis axis,IGARule rule,PetscInt order);
 PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt order);
 
