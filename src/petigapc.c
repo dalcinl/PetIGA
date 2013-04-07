@@ -117,48 +117,92 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
 #include "petscbt.h"
 #endif
 
+#if PETSC_VERSION_LE(3,2,0)
+#undef PetscBTCreate
+#undef  __FUNCT__
+#define __FUNCT__ "PetscBTCreate"
+PETSC_STATIC_INLINE PetscErrorCode PetscBTCreate(PetscInt m,PetscBT *array)
+{
+  return PetscMalloc((m/PETSC_BITS_PER_BYTE+1)*sizeof(char),array) || PetscBTMemzero(m,*array);
+}
+#undef PetscBTDestroy
+#undef  __FUNCT__
+#define __FUNCT__ "PetscBTDestroy"
+PETSC_STATIC_INLINE PetscErrorCode PetscBTDestroy(PetscBT *array)
+{
+  return PetscFree(*array);
+}
+#endif
+
+PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
+{
+  char      BT_mask,BT_c;
+  PetscInt  BT_idx;
+
+  return (BT_idx        = (index)/PETSC_BITS_PER_BYTE,
+          BT_c          = array[BT_idx],
+          BT_mask       = (char)1 << ((index)%PETSC_BITS_PER_BYTE),
+          array[BT_idx] = BT_c & (~BT_mask),
+          BT_c & BT_mask);
+}
+
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
-#define __FUNCT__ "ComputeDirichletIndices"
-PetscErrorCode ComputeDirichletIndices(PetscInt dim,PetscInt bs,const PetscInt shape[3],
-                                       PetscInt count[][2],PetscInt *field[][2],
-                                       PetscInt *_ndirichlet,PetscInt *_idirichlet[])
+#define __FUNCT__ "ComputeBDDCBoundary"
+PetscErrorCode ComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt shape[3],
+                                   PetscBool atbnd[][2],PetscInt count[][2],PetscInt *field[][2],
+                                   PetscInt *_ndirichlet,PetscInt *_idirichlet[],
+                                   PetscInt *_nneumann,  PetscInt *_ineumann[])
 {
-  PetscBT        mask;
+  PetscBT        Dmask,Nmask;
   PetscInt       i, m = bs*shape[0]*shape[1]*shape[2];
-  PetscInt       dir, side, ijk[3], index = 0, pos = 0;
+  PetscInt       dir, side, ijk[3], index = 0, pos;
   PetscInt       ndirichlet = 0, *idirichlet = 0;
+  PetscInt       nneumann   = 0, *ineumann   = 0;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(_ndirichlet,2);
-  PetscValidPointer(_idirichlet,3);
-#if PETSC_VERSION_LE(3,2,0)
-  ierr = PetscBTCreate(m,mask);CHKERRQ(ierr);
-#else
-  ierr = PetscBTCreate(m,&mask);CHKERRQ(ierr);
-#endif
+  PetscValidIntPointer(_ndirichlet,6);
+  PetscValidPointer(_idirichlet,7);
+  PetscValidIntPointer(_nneumann,8);
+  PetscValidPointer(_ineumann,9);
+
+  ierr = PetscBTCreate(m,&Dmask);CHKERRQ(ierr);
+  ierr = PetscBTCreate(m,&Nmask);CHKERRQ(ierr);
+
   for (ijk[2]=0; ijk[2]<shape[2]; ijk[2]++)
     for (ijk[1]=0; ijk[1]<shape[1]; ijk[1]++)
       for (ijk[0]=0; ijk[0]<shape[0]; ijk[0]++, index++)
         for (dir=0; dir<dim; dir++)
           for (side=0; side<=1; side++)
-            if (ijk[dir] == (!side?0:shape[dir]-1))
+            if (atbnd[dir][side] && ijk[dir] == (!side?0:shape[dir]-1))
               {
                 PetscInt c,n = count[dir][side];
                 PetscInt  *f = field[dir][side];
-                for (c=0; c<n; c++)
-                  if (!PetscBTLookupSet(mask,f[c]+bs*index)) ndirichlet++;
+                for (c=0; c<n; c++) {
+                  i = f[c] + bs*index;
+                  if (!PetscBTLookupSet  (Dmask,i)) ndirichlet++;
+                  if ( PetscBTLookupClear(Nmask,i)) nneumann--;
+                }
+                for (c=0; c<bs; c++) {
+                  i = c + bs*index;
+                  if (!PetscBTLookup(Dmask,i))
+                    if (!PetscBTLookupSet(Nmask,i)) nneumann++;
+                }
               }
+
   ierr = PetscMalloc(ndirichlet*sizeof(PetscInt),&idirichlet);CHKERRQ(ierr);
-  for (i=0; i<m; i++) if (PetscBTLookup(mask,i)) idirichlet[pos++] = i;
-#if PETSC_VERSION_LE(3,2,0)
-  ierr = PetscBTDestroy(mask);CHKERRQ(ierr);
-#else
-  ierr = PetscBTDestroy(&mask);CHKERRQ(ierr);
-#endif
+  for (pos=0,i=0; i<m; i++) if (PetscBTLookup(Dmask,i)) idirichlet[pos++] = i;
+  ierr = PetscBTDestroy(&Dmask);CHKERRQ(ierr);
   *_ndirichlet = ndirichlet;
   *_idirichlet = idirichlet;
+
+  ierr = PetscMalloc(nneumann*sizeof(PetscInt),&ineumann);CHKERRQ(ierr);
+  for (pos=0,i=0; i<m; i++) if (PetscBTLookup(Nmask,i)) ineumann[pos++] = i;
+  ierr = PetscBTDestroy(&Nmask);CHKERRQ(ierr);
+  *_nneumann = nneumann;
+  *_ineumann = ineumann;
+
   PetscFunctionReturn(0);
 }
 
@@ -170,7 +214,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   void           (*f)(void);
   const char     *prefix;
   PetscBool      graph = PETSC_TRUE;
-  PetscBool      dirichlet = PETSC_TRUE;
+  PetscBool      boundary = PETSC_TRUE;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -186,7 +230,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,0);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_dirichlet",&dirichlet,0);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,0);CHKERRQ(ierr);
 
 #if defined(PETSC_HAVE_PCBDDC)  /* XXX */
   if (graph) {
@@ -205,13 +249,17 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = ComputeBDDCGraph(dof,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
   }
-  if (dirichlet) {
+  if (boundary) {
     PetscInt  i,s,dim,dof;
     PetscInt  shape[3]    = {1,1,1};
+    PetscBool atbnd[3][2] = {{PETSC_FALSE,PETSC_FALSE},
+                             {PETSC_FALSE,PETSC_FALSE},
+                             {PETSC_FALSE,PETSC_FALSE}};
     PetscInt  count[3][2] = {{0,0},{0,0},{0,0}};
     PetscInt *field[3][2] = {{0,0},{0,0},{0,0}};
-    PetscInt  n=0,*indices=0;
-    IS        is;
+    PetscInt  nd=0,*id=0;
+    PetscInt  nn=0,*in=0;
+    IS        isd,isn;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
@@ -219,14 +267,20 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
       if (!iga->axis[i]->periodic)
         for (s=0; s<=1; s++)
           if (iga->proc_ranks[i] == (!s?0:iga->proc_sizes[i]-1)) {
+            atbnd[i][s] = PETSC_TRUE;
             count[i][s] = iga->boundary[i][s]->count;
             field[i][s] = iga->boundary[i][s]->field;
           }
     }
-    ierr = ComputeDirichletIndices(dim,dof,shape,count,field,&n,&indices);CHKERRQ(ierr);
-    ierr = ISCreateGeneral(PETSC_COMM_SELF,n,indices,PETSC_OWN_POINTER,&is);CHKERRQ(ierr);
-    ierr = PCBDDCSetDirichletBoundaries(pc,is);CHKERRQ(ierr);
-    ierr = ISDestroy(&is);CHKERRQ(ierr);
+    ierr = ComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
+
+    ierr = ISCreateGeneral(PETSC_COMM_SELF,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
+    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
+    ierr = ISDestroy(&isd);CHKERRQ(ierr);
+
+    ierr = ISCreateGeneral(PETSC_COMM_SELF,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
+    ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
+    ierr = ISDestroy(&isn);CHKERRQ(ierr);
   }
 #endif
 
