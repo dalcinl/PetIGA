@@ -9,7 +9,9 @@ include ${PETIGA_DIR}/conf/petigatest
 
 all:
 	@${OMAKE} chk_petigadir PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-	@${OMAKE} all-legacy    PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
+	@if [ -f ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt ]; then \
+	${OMAKE} all-cmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
+	${OMAKE} all-legacy PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
 .PHONY: all
 
 
@@ -19,7 +21,9 @@ ${PETIGA_DIR}/${PETSC_ARCH}/include:
 	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/include
 ${PETIGA_DIR}/${PETSC_ARCH}/lib:
 	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/lib
-arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/conf ${PETIGA_DIR}/${PETSC_ARCH}/include ${PETIGA_DIR}/${PETSC_ARCH}/lib
+arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/conf \
+           ${PETIGA_DIR}/${PETSC_ARCH}/include \
+           ${PETIGA_DIR}/${PETSC_ARCH}/lib
 .PHONY: arch-tree
 
 #
