@@ -123,7 +123,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
                           "less than polynomial degree %D",
                           IGABasisTypes[basis->type],j,U[j],s,p);
     }
-    /* XXX */printf("using %s basis\n",IGABasisTypes[basis->type]);
   }
 
   nqp = rule->nqp;
@@ -141,6 +140,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     ComputeBasis = IGA_Basis_BSpline; break;
   case IGA_BASIS_LAGRANGE:
     ComputeBasis = IGA_Basis_Lagrange; break;
+  default:
+    ComputeBasis = 0;
   }
 
   ierr = PetscMalloc1(nel,PetscInt,&offset);CHKERRQ(ierr);
