@@ -89,7 +89,9 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
   real   (kind=IGA_REAL_KIND   )  :: Lp, Ls1, Ls2, Ls3
   real   (kind=IGA_REAL_KIND   )  :: X(0:p)
 
-  forall (m=0:p) X(m) = U(kk) + m * (U(kk+1) - U(kk)) / p
+  do m = 0, p
+     X(m) = U(kk) + m * (U(kk+1) - U(kk)) / p
+  end do
 
   do m = 0, p
      Lp = 1.0

@@ -19,12 +19,12 @@ pure subroutine IGA_Quadrature_3D(&
   integer(kind=IGA_INTEGER_KIND) :: iq
   integer(kind=IGA_INTEGER_KIND) :: jq
   integer(kind=IGA_INTEGER_KIND) :: kq
-  forall (kq=1:knq, jq=1:jnq, iq=1:inq)
+  do kq=1,knq; do jq=1,jnq; do iq=1,inq
      X(1,iq,jq,kq) = iX(iq)
      X(2,iq,jq,kq) = jX(jq)
      X(3,iq,jq,kq) = kX(kq)
      W(  iq,jq,kq) = iW(iq) * jW(jq) * kW(kq)
-  end forall
+  end do; end do; end do
   J = iJ * jJ * kJ
 end subroutine IGA_Quadrature_3D
 
@@ -106,18 +106,18 @@ pure subroutine TensorBasisFuns(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim,dim,dim,ina,jna,kna)
   integer(kind=IGA_INTEGER_KIND)  :: ia, ja, ka
   !
-  forall (ia=1:ina, ja=1:jna, ka=1:kna)
+  do ka=1,kna; do ja=1,jna; do ia=1,ina
      N0(ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(0,ka)
-  end forall
+  end do; end do; end do
   !
-  forall (ia=1:ina, ja=1:jna, ka=1:kna)
+  do ka=1,kna; do ja=1,jna; do ia=1,ina
      N1(1,ia,ja,ka) = iN(1,ia) * jN(0,ja) * kN(0,ka)
      N1(2,ia,ja,ka) = iN(0,ia) * jN(1,ja) * kN(0,ka)
      N1(3,ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(1,ka)
-  end forall
+  end do; end do; end do
   !
   if (ord < 2) return ! XXX Optimize!
-  forall (ia=1:ina, ja=1:jna, ka=1:kna)
+  do ka=1,kna; do ja=1,jna; do ia=1,ina
      N2(1,1,ia,ja,ka) = iN(2,ia) * jN(0,ja) * kN(0,ka)
      N2(2,1,ia,ja,ka) = iN(1,ia) * jN(1,ja) * kN(0,ka)
      N2(3,1,ia,ja,ka) = iN(1,ia) * jN(0,ja) * kN(1,ka)
@@ -127,10 +127,10 @@ pure subroutine TensorBasisFuns(&
      N2(1,3,ia,ja,ka) = iN(1,ia) * jN(0,ja) * kN(1,ka)
      N2(2,3,ia,ja,ka) = iN(0,ia) * jN(1,ja) * kN(1,ka)
      N2(3,3,ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(2,ka)
-  end forall
+  end do; end do; end do
   !
   if (ord < 3) return ! XXX Optimize!
-  forall (ia=1:ina, ja=1:jna, ka=1:kna)
+  do ka=1,kna; do ja=1,jna; do ia=1,ina
      N3(1,1,1,ia,ja,ka) = iN(3,ia) * jN(0,ja) * kN(0,ka)
      N3(2,1,1,ia,ja,ka) = iN(2,ia) * jN(1,ja) * kN(0,ka)
      N3(3,1,1,ia,ja,ka) = iN(2,ia) * jN(0,ja) * kN(1,ka)
@@ -158,7 +158,7 @@ pure subroutine TensorBasisFuns(&
      N3(1,3,3,ia,ja,ka) = iN(1,ia) * jN(0,ja) * kN(2,ka)
      N3(2,3,3,ia,ja,ka) = iN(0,ia) * jN(1,ja) * kN(2,ka)
      N3(3,3,3,ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(3,ka)
-  end forall
+  end do; end do; end do
   !
 end subroutine TensorBasisFuns
 
@@ -250,13 +250,13 @@ subroutine IGA_BoundaryArea_3D(&
   dS = 0.0
   do jq=1,jnqp
      do iq=1,inqp
-        forall (ia=1:inen, ja=1:jnen)
+        do ja=1,jnen; do ia=1,inen
            N0(ia,ja) = iN(0,ia,iq) * jN(0,ja,jq)
-        end forall
-        forall (ia=1:inen, ja=1:jnen)
+        end do; end do
+        do ja=1,jnen; do ia=1,inen
            N1(1,ia,ja) = iN(1,ia,iq) * jN(0,ja,jq)
            N1(2,ia,ja) = iN(0,ia,iq) * jN(1,ja,jq)
-        end forall
+        end do; end do
         if (rational /= 0) then
            call Rationalize(nen,Xw,N0,N1)
         end if
@@ -279,8 +279,9 @@ pure subroutine Rationalize(nen,W,R0,R1)
   R0 = W * R0
   W0 = sum(R0)
   R0 = R0 / W0
-  forall(i=1:dim) &
+  do i=1,dim
   R1(i,:) = W*R1(i,:) - R0 * sum(W*R1(i,:))
+  end do
   R1 = R1 / W0
 end subroutine Rationalize
 pure subroutine Jacobian(nen,N,X,J)

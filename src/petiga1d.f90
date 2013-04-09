@@ -11,10 +11,10 @@ pure subroutine IGA_Quadrature_1D(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: W(    inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: J(    inq)
   integer(kind=IGA_INTEGER_KIND)  :: iq
-  forall (iq=1:inq)
+  do iq=1,inq
      X(1,iq) = iX(iq)
      W(  iq) = iW(iq)
-  end forall
+  end do
   J = iJ
 end subroutine IGA_Quadrature_1D
 
@@ -76,23 +76,23 @@ pure subroutine TensorBasisFuns(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim,dim,dim,ina)
   integer(kind=IGA_INTEGER_KIND)  :: ia
   !
-  forall (ia=1:ina)
+  do ia=1,ina
      N0(ia) = iN(0,ia)
-  end forall
+  end do
   !
-  forall (ia=1:ina)
+  do ia=1,ina
      N1(1,ia) = iN(1,ia)
-  end forall
+  end do
   !
   if (ord < 2) return
-  forall (ia=1:ina)
+  do ia=1,ina
      N2(1,1,ia) = iN(2,ia)
-  end forall
+  end do
   !
   if (ord < 3) return
-  forall (ia=1:ina)
+  do ia=1,ina
      N3(1,1,1,ia) = iN(3,ia)
-  end forall
+  end do
   !
 end subroutine TensorBasisFuns
 

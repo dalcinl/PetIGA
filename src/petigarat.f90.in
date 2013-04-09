@@ -21,33 +21,33 @@ pure subroutine Rationalize(&
   real   (kind=IGA_REAL_KIND   )  :: W2(dim,dim)
   real   (kind=IGA_REAL_KIND   )  :: W3(dim,dim,dim)
   !
-  forall (a=1:nen)
+  do a=1,nen
      R0(a) = W(a) * R0(a)
-  end forall
+  end do
   W0 = sum(R0)
   R0 = R0 / W0
   !
-  forall (i=1:dim)
+  do i=1,dim
      W1(i) = sum(W*R1(i,:))
      R1(i,:) = W*R1(i,:) - R0(:) * W1(i)
-  end forall
+  end do
   R1 = R1 / W0
   !
   if (order < 2) return
-  forall (i=1:dim, j=1:dim)
+  do j=1,dim; do i=1,dim
      W2(i,j) = sum(W*R2(i,j,:))
      R2(i,j,:) = W*R2(i,j,:)   - R0(:)*W2(i,j) &
                - R1(i,:)*W1(j) - R1(j,:)*W1(i)
-  end forall
+  end do; end do
   R2 = R2 / W0
   !
   if (order < 3) return
-  forall (i=1:dim, j=1:dim, k=1:dim)
+  do k=1,dim; do j=1,dim; do i=1,dim
      W3(i,j,k) = sum(W*R3(i,j,k,:))
      R3(i,j,k,:) = W*R3(i,j,k,:)   - R0(:)*W3(i,j,k) &
                  - R1(i,:)*W2(j,k) - R1(j,:)*W2(i,k) - R1(k,:)*W2(i,j) &
                  - R2(j,k,:)*W1(i) - R2(i,k,:)*W1(j) - R2(i,j,:)*W1(k)
-  end forall
+  end do; end do; end do
   R3 = R3 / W0
   !
 end subroutine Rationalize
