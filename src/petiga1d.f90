@@ -31,8 +31,8 @@ pure subroutine IGA_BasisFuns_1D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: rational
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina, ind
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(ina)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina,inq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(dim+1,  ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina,inq)
@@ -114,7 +114,7 @@ pure subroutine IGA_ShapeFuns_1D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)    :: X(dim+1,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: X(dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M0(       nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M1(dim,   nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M2(dim**2,nen,nqp)

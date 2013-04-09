@@ -45,10 +45,10 @@ pure subroutine IGA_BasisFuns_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina, ind
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna, jnd
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq, kna, knd
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(ina*jna*kna)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna,jnq)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:knd,kna,knq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(dim+1,  ina*jna*kna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina*jna*kna,inq,jnq,knq)
@@ -180,7 +180,7 @@ pure subroutine IGA_ShapeFuns_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)    :: X(dim+1,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: X(dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M0(       nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M1(dim,   nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: M2(dim**2,nen,nqp)
