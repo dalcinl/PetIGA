@@ -16,7 +16,7 @@ pure function Determinant(dim,A) result (detA)
             - A(2,1) * ( A(1,2)*A(3,3) - A(3,2)*A(1,3) ) &
             + A(3,1) * ( A(1,2)*A(2,3) - A(2,2)*A(1,3) )
   case default
-     detA = 0
+     detA = 0.0
   end select
 end function Determinant
 
@@ -48,6 +48,6 @@ pure function Inverse(dim,detA,A) result (invA)
      invA(3,3) = + A(1,1)*A(2,2) - A(1,2)*A(2,1)
      invA = invA/detA
   case default
-     invA = 0
+     invA = 0.0
   end select
 end function Inverse

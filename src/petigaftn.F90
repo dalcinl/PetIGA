@@ -292,7 +292,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND)  :: V
       ! V = dot_product(N,U)
       integer a
-      V = 0
+      V = 0.0
       do a = 1, size(U,1) ! nen
          V = V + N(a) * U(a)
       end do
@@ -305,7 +305,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND)  :: V(DOF)            ! dof
       ! V = matmul(N,transpose(U))
       integer a
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          V = V + N(a) * U(:,a)
       end do
@@ -318,7 +318,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM)            ! dim
       !V = matmul(N,U)
       integer a
-      V = 0
+      V = 0.0
       do a = 1, size(U,1) ! nen
          V(:) = V(:) + N(:,a) * U(a)
       end do
@@ -331,7 +331,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DOF)        ! dim,dof
       ! V = matmul(N,transpose(U))
       integer a, c
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          do c = 1, size(U,1) ! dof
             V(:,c) = V(:,c) + N(:,a) * U(c,a)
@@ -345,7 +345,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)     ! nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DIM)          ! dim,dim
       integer a
-      V = 0
+      V = 0.0
       do a = 1, size(U,1) ! nen
          V(:,:) = V(:,:) + N(:,:,a) * U(a)
       end do
@@ -357,7 +357,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)   ! dof,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DIM,DOF)      ! dim,dim,dof
       integer a, c
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          do c = 1, size(U,1) ! dof
             V(:,:,c) = V(:,:,c) + N(:,:,a) * U(c,a)
@@ -371,7 +371,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)       ! nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DIM,DIM)        ! dim,dim,dim
       integer a
-      V = 0
+      V = 0.0
       do a = 1, size(U,1) ! nen
          V(:,:,:) = V(:,:,:) + N(:,:,:,a) * U(a)
       end do
@@ -383,7 +383,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)     ! dof,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DIM,DIM,DOF)    ! dim,dim,dim,dof
       integer a, c
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          do c = 1, size(U,1) ! dof
             V(:,:,:,c) = V(:,:,:,c) + N(:,:,:,a) * U(c,a)
@@ -397,7 +397,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V
       integer a, c, i
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          do i = 1, size(N,1) ! dim
             V = V + N(i,a) * U(i,a)
@@ -411,7 +411,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)     ! nen
       scalar (kind=IGA_SCALAR_KIND)  :: V
       integer a, c, i
-      V = 0
+      V = 0.0
       do a = 1, size(U,1) ! nen
          do i = 1, size(N,1) ! dim
             V = V + N(i,i,a) * U(a)
@@ -425,7 +425,7 @@ module PetIGA
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:)   ! dof,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DOF)
       integer a, c, i
-      V = 0
+      V = 0.0
       do a = 1, size(U,2) ! nen
          do c = 1, size(U,1) ! dof
             do i = 1, size(N,1) ! dim

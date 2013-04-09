@@ -45,7 +45,7 @@ pure subroutine GeometryMap(&
   ! 1st derivatives
   X1 = transpose(Grad)
   E1 = transpose(InvG)
-  R1 = 0
+  R1 = 0.0
   do idx = 1,nen
      do i = 1,dim
         do a = 1,dim
@@ -56,7 +56,7 @@ pure subroutine GeometryMap(&
 
   ! 2nd derivatives
   if (order < 2) return
-  X2 = 0
+  X2 = 0.0
   do b = 1,dim
      do a = 1,dim
         do i = 1,dim
@@ -66,7 +66,7 @@ pure subroutine GeometryMap(&
         end do
      end do
   end do
-  E2 = 0
+  E2 = 0.0
   do j = 1,dim
      do i = 1,dim
         do c = 1,dim
@@ -80,7 +80,7 @@ pure subroutine GeometryMap(&
         end do
      end do
   end do
-  R2 = 0
+  R2 = 0.0
   do idx = 1,nen
      do j = 1,dim
         do i = 1,dim
@@ -96,7 +96,7 @@ pure subroutine GeometryMap(&
 
   ! 3rd derivatives
   if (order < 3) return
-  X3 = 0
+  X3 = 0.0
   do c = 1,dim
      do b = 1,dim
         do a = 1,dim
@@ -108,7 +108,7 @@ pure subroutine GeometryMap(&
         end do
      end do
   end do
-  E3 = 0
+  E3 = 0.0
   do k = 1,dim
      do j = 1,dim
         do i = 1,dim
@@ -129,7 +129,7 @@ pure subroutine GeometryMap(&
         end do
      end do
   end do
-  R3 = 0
+  R3 = 0.0
   do idx = 1,nen
      do k = 1,dim
         do j = 1,dim

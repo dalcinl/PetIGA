@@ -92,7 +92,7 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
   forall (m=0:p) X(m) = U(kk) + m * (U(kk+1) - U(kk)) / p
 
   do m = 0, p
-     Lp = 1
+     Lp = 1.0
      do i = 0, p
         if (i == m) cycle
         Lp = Lp * (uu-X(i))/(X(m)-X(i))
@@ -102,10 +102,10 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
 
   if (d < 1) return
   do m = 0, p
-     Ls1 = 0
+     Ls1 = 0.0
      do j = 0, p
         if (j == m) cycle
-        Lp = 1
+        Lp = 1.0
         do i = 0, p
            if (i == m .or. i == j) cycle
            Lp = Lp * (uu-X(i))/(X(m)-X(i))
@@ -117,13 +117,13 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
 
   if (d < 2) return
   do m = 0, p
-     Ls2 = 0
+     Ls2 = 0.0
      do k = 0, p
         if (k == m) cycle
-        Ls1 = 0
+        Ls1 = 0.0
         do j = 0, p
            if (j == m .or. j == k) cycle
-           Lp = 1
+           Lp = 1.0
            do i = 0, p
               if (i == m .or. i == k .or. i == j) cycle
               Lp = Lp * (uu-X(i))/(X(m)-X(i))
@@ -138,16 +138,16 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
 
   if (d < 3) return
   do m = 0, p
-     Ls3 = 0
+     Ls3 = 0.0
      do l = 0, p
         if (l == m) cycle
-        Ls2 = 0
+        Ls2 = 0.0
         do k = 0, p
            if (k == m .or. k == l) cycle
-           Ls1 = 0
+           Ls1 = 0.0
            do j = 0, p
               if (j == m .or. j == l .or. j == k) cycle
-              Lp = 1
+              Lp = 1.0
               do i = 0, p
                  if (i == m .or. i == l .or. i == k .or. i == j) cycle
                  Lp = Lp * (uu-X(i))/(X(m)-X(i))
