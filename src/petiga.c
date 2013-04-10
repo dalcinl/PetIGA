@@ -180,21 +180,18 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   {
-    MPI_Comm  comm;
-    PetscBool geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
-    PetscBool rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
-    PetscInt  i,dim,dof;
+    MPI_Comm comm;
+    PetscInt i,dim,dof,order;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    ierr = IGAGetOrder(iga,&order);CHKERRQ(ierr);
 
-    ierr = PetscViewerASCIIPrintf(viewer,"IGA: dimension=%D  dofs/node=%D  geometry=%s  rational=%s\n",
-				  dim,dof,geometry?"yes":"no",rational?"yes":"no");CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(viewer,"IGA: dim=%D  dof=%D  order=%D  geometry=%D  rational=%D  property=%D\n",
+                                  dim,dof,order,iga->geometry,(PetscInt)iga->rational,iga->property);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
-      IGAAxis *AX = iga->axis;
-      IGARule *QR = iga->rule;
       ierr = PetscViewerASCIIPrintf(viewer,"Axis %D: periodic=%d  degree=%D  quadrature=%D  processors=%D  nodes=%D  elements=%D\n",
-				    i,(int)AX[i]->periodic,AX[i]->p,QR[i]->nqp,
+				    i,(int)iga->axis[i]->periodic,iga->axis[i]->p,iga->rule[i]->nqp,
 				    iga->proc_sizes[i],iga->node_sizes[i],iga->elem_sizes[i]);CHKERRQ(ierr);
     }
     { /* */
