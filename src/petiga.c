@@ -406,6 +406,17 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAGetOrder"
+PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidIntPointer(order,2);
+  *order= iga->order;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetProcessors"
 PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 {
