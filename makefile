@@ -68,6 +68,11 @@ ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: CMakeLists.txt ${PETIGA_DIR}/${PETSC
 cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 cmake-build: cmake-boot
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
+cmake-clean:
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/Makefile
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/cmake_install.cmake
 all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
 	-@echo "Building PetIGA (CMake build)"
