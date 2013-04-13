@@ -115,6 +115,16 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
 
 #if PETSC_VERSION_LE(3,3,0)
 #include "petscbt.h"
+PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
+{
+  char      BT_mask,BT_c;
+  PetscInt  BT_idx;
+  return (BT_idx        = (index)/PETSC_BITS_PER_BYTE,
+          BT_c          = array[BT_idx],
+          BT_mask       = (char)1 << ((index)%PETSC_BITS_PER_BYTE),
+          array[BT_idx] = BT_c & (~BT_mask),
+          BT_c & BT_mask);
+}
 #endif
 
 #if PETSC_VERSION_LE(3,2,0)
@@ -133,18 +143,6 @@ PETSC_STATIC_INLINE PetscErrorCode PetscBTDestroy(PetscBT *array)
   return PetscFree(*array);
 }
 #endif
-
-PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
-{
-  char      BT_mask,BT_c;
-  PetscInt  BT_idx;
-
-  return (BT_idx        = (index)/PETSC_BITS_PER_BYTE,
-          BT_c          = array[BT_idx],
-          BT_mask       = (char)1 << ((index)%PETSC_BITS_PER_BYTE),
-          array[BT_idx] = BT_c & (~BT_mask),
-          BT_c & BT_mask);
-}
 
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
