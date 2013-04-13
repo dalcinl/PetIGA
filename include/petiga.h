@@ -292,9 +292,9 @@ struct _p_IGA {
 PETSC_EXTERN PetscClassId IGA_CLASSID;
 #define IGA_FILE_CLASSID 1211299
 
-PETSC_EXTERN PetscErrorCode IGAInitializePackage(const char path[]);
+PETSC_EXTERN PetscErrorCode IGAInitializePackage(void);
 PETSC_EXTERN PetscErrorCode IGAFinalizePackage(void);
-PETSC_EXTERN PetscErrorCode IGARegisterAll(const char path[]);
+PETSC_EXTERN PetscErrorCode IGARegisterAll(void);
 
 PETSC_EXTERN PetscErrorCode IGACreate(MPI_Comm comm,IGA *iga);
 PETSC_EXTERN PetscErrorCode IGADestroy(IGA *iga);

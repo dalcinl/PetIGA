@@ -1,9 +1,22 @@
 #include "petiga.h"
 
+PETSC_EXTERN PetscBool     IGARegisterAllCalled;
 PETSC_EXTERN PetscLogEvent IGA_FormScalar;
 PETSC_EXTERN PetscLogEvent IGA_FormSystem;
 PETSC_EXTERN PetscLogEvent IGA_FormFunction;
 PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
+
+#if PETSC_VERSION_LE(3,3,0)
+#define PCRegisterAll() PCRegisterAll(0)
+#define TSRegisterAll() TSRegisterAll(0)
+#define PCRegister(s,f) PCRegister(s,0,0,f)
+#define TSRegister(s,f) TSRegister(s,0,0,f)
+#define PetscFunctionList        PetscFList
+#define PetscFunctionListDestroy PetscFListDestroy
+#endif
+
+PETSC_EXTERN PetscFunctionList PCList;
+PETSC_EXTERN PetscFunctionList TSList;
 
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_EBE(PC);
@@ -18,10 +31,11 @@ EXTERN_C_BEGIN
 extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
 EXTERN_C_END
 
-PetscClassId IGA_CLASSID = 0;
-
 static PetscBool IGAPackageInitialized = PETSC_FALSE;
-PetscBool IGARegisterAllCalled = PETSC_FALSE;
+PetscBool        IGARegisterAllCalled  = PETSC_FALSE;
+
+PetscClassId  IGA_CLASSID = 0;
+
 PetscLogEvent IGA_FormScalar = 0;
 PetscLogEvent IGA_FormSystem = 0;
 PetscLogEvent IGA_FormFunction = 0;
@@ -29,16 +43,16 @@ PetscLogEvent IGA_FormJacobian = 0;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARegisterAll"
-PetscErrorCode IGARegisterAll(const char path[])
+PetscErrorCode IGARegisterAll(void)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
   IGARegisterAllCalled = PETSC_TRUE;
-  ierr = PCRegisterAll(path);CHKERRQ(ierr);
-  ierr = PCRegisterDynamic(PCEBE,path,"PCCreate_EBE",PCCreate_EBE);CHKERRQ(ierr);
-  ierr = PCRegisterDynamic(PCBBB,path,"PCCreate_BBB",PCCreate_BBB);CHKERRQ(ierr);
-  ierr = TSRegisterAll(path);CHKERRQ(ierr);
-  ierr = TSRegisterDynamic(TSALPHA2,path,"TSCreate_Alpha2",TSCreate_Alpha2);CHKERRQ(ierr);
+  ierr = PCRegisterAll();CHKERRQ(ierr);
+  ierr = PCRegister(PCEBE,PCCreate_EBE);CHKERRQ(ierr);
+  ierr = PCRegister(PCBBB,PCCreate_BBB);CHKERRQ(ierr);
+  ierr = TSRegisterAll();CHKERRQ(ierr);
+  ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -46,13 +60,16 @@ PetscErrorCode IGARegisterAll(const char path[])
 #define __FUNCT__ "IGAFinalizePackage"
 PetscErrorCode IGAFinalizePackage(void)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
+  if (PCList) {ierr = PetscFunctionListDestroy(&PCList);CHKERRQ(ierr);}
+  if (TSList) {ierr = PetscFunctionListDestroy(&TSList);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAInitializePackage"
-PetscErrorCode IGAInitializePackage(const char path[])
+PetscErrorCode IGAInitializePackage(void)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -61,7 +78,7 @@ PetscErrorCode IGAInitializePackage(const char path[])
   /* Register Classes */
   ierr = PetscClassIdRegister("IGA",&IGA_CLASSID);CHKERRQ(ierr);
   /* Register Constructors */
-  ierr = IGARegisterAll(path);CHKERRQ(ierr);
+  ierr = IGARegisterAll();CHKERRQ(ierr);
   /* Register Events */
   ierr = PetscLogEventRegister("IGAFormScalar",IGA_CLASSID,&IGA_FormScalar);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormSystem",IGA_CLASSID,&IGA_FormSystem);CHKERRQ(ierr);
@@ -78,11 +95,15 @@ PetscErrorCode IGAInitializePackage(const char path[])
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "PetscDLLibraryRegister_petiga"
+#if PETSC_VERSION_LE(3,3,3)
 PetscErrorCode PetscDLLibraryRegister_petiga(const char path[])
+#else
+PetscErrorCode PetscDLLibraryRegister_petiga(void)
+#endif
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = IGAInitializePackage(path);CHKERRQ(ierr);
+  ierr = IGAInitializePackage();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 EXTERN_C_END

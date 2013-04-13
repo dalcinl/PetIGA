@@ -5,6 +5,11 @@
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
 #endif
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#define PetscObjectComposeFunction(o,n,f) \
+        PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
+#endif
+
 #if PETSC_VERSION_(3,2,0)
 #define PetscObjectTypeCompare PetscTypeCompare
 #define TSPreStage(ts,t) (0)
@@ -239,17 +244,18 @@ static PetscErrorCode TSDestroy_Alpha2(TS ts)
   PetscFunctionBegin;
   ierr = TSReset_Alpha2(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetIFunction2_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetIJacobian2_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSComputeIFunction2_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSComputeIJacobian2_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetSolution2_C",   "",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSGetSolution2_C",   "",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSolve2_C",         "",PETSC_NULL);CHKERRQ(ierr);
-
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2SetRadius_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2SetParams_C","",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2GetParams_C","",PETSC_NULL);CHKERRQ(ierr);
+  /* */
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",PETSC_NULL);CHKERRQ(ierr);
+  /* */
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",PETSC_NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -524,13 +530,13 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ts->ops->view           = TSView_Alpha2;
   ts->ops->setfromoptions = TSSetFromOptions_Alpha2;
 
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetIFunction2_C","TSSetIFunction2_Alpha2",TSSetIFunction2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetIJacobian2_C","TSSetIJacobian2_Alpha2",TSSetIJacobian2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSComputeIFunction2_C","TSComputeIFunction2_Alpha2",TSComputeIFunction2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSComputeIJacobian2_C","TSComputeIJacobian2_Alpha2",TSComputeIJacobian2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSetSolution2_C","TSSetSolution2_Alpha2",TSSetSolution2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSGetSolution2_C","TSGetSolution2_Alpha2",TSGetSolution2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSSolve2_C","TSSolve2_Alpha2",TSSolve2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",TSSetIFunction2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",TSSetIJacobian2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",TSComputeIFunction2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",TSComputeIJacobian2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha2);CHKERRQ(ierr);
 
   ierr = PetscNewLog(ts,TS_Alpha2,&th);CHKERRQ(ierr);
   ts->data = (void*)th;
@@ -540,9 +546,9 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   th->Beta    = 0.25;
   th->StageTime = TSUpdateStageTime_Alpha2;
   th->StageVecs = TSUpdateStageVecs_Alpha2;
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2SetRadius_C","TSAlpha2SetRadius_Alpha2",TSAlpha2SetRadius_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2SetParams_C","TSAlpha2SetParams_Alpha2",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunctionDynamic((PetscObject)ts,"TSAlpha2GetParams_C","TSAlpha2GetParams_Alpha2",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",TSAlpha2SetRadius_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
 
   if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
 

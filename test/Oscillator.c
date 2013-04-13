@@ -1,6 +1,10 @@
 #include <petsc.h>
 #include <petscts2.h>
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#define TSRegister(s,f) TSRegister(s,0,0,f)
+#endif
+
 typedef struct {
   PetscReal Omega; /* frequency */
   PetscReal Xi;    /* damping   */
@@ -119,6 +123,7 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
   TSConvergedReason reason;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  if (i<0) PetscFunctionReturn(0); /*XXX temporary petsc-dev fix */
 
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
   ierr = TSGetSolution2(ts,&X,&V);CHKERRQ(ierr);
@@ -152,7 +157,7 @@ int main(int argc, char *argv[]) {
   PetscErrorCode ierr;
 
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-  ierr = TSRegisterDynamic(TSALPHA2,0,"TSCreate_Alpha2",TSCreate_Alpha2);CHKERRQ(ierr);
+  ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
 
   user.Omega = 1.0;
   user.Xi    = 0.0;

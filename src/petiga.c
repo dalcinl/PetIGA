@@ -28,14 +28,14 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   PetscValidPointer(_iga,2);
   *_iga = PETSC_NULL;
 #ifndef PETSC_USE_DYNAMIC_LIBRARIES
-  ierr = IGAInitializePackage(PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAInitializePackage();CHKERRQ(ierr);
 #endif
 #if PETSC_VERSION_LE(3,3,0)
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,
-			   "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+                           "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
 #else
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,
-			   "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+                           "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
 #endif
 
   *_iga = iga;
@@ -191,8 +191,8 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
                                   dim,dof,order,iga->geometry,(PetscInt)iga->rational,iga->property);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       ierr = PetscViewerASCIIPrintf(viewer,"Axis %D: periodic=%d  degree=%D  quadrature=%D  processors=%D  nodes=%D  elements=%D\n",
-				    i,(int)iga->axis[i]->periodic,iga->axis[i]->p,iga->rule[i]->nqp,
-				    iga->proc_sizes[i],iga->node_sizes[i],iga->elem_sizes[i]);CHKERRQ(ierr);
+                                    i,(int)iga->axis[i]->periodic,iga->axis[i]->p,iga->rule[i]->nqp,
+                                    iga->proc_sizes[i],iga->node_sizes[i],iga->elem_sizes[i]);CHKERRQ(ierr);
     }
     { /* */
       PetscInt isum[2],imin[2],imax[2],iloc[2] = {1, 1};
@@ -201,31 +201,31 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
       ierr = MPI_Allreduce(iloc,imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
       ierr = MPI_Allreduce(iloc,imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - nodes:    sum=%D  min=%D  max=%D  max/min=%g\n",
-				    isum[0],imin[0],imax[0],(double)imax[0]/(double)imin[0]);CHKERRQ(ierr);
+                                    isum[0],imin[0],imax[0],(double)imax[0]/(double)imin[0]);CHKERRQ(ierr);
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
-				    isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
+                                    isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
     }
     if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) {
-	PetscMPIInt rank; PetscInt *ranks = iga->proc_ranks;
-	PetscInt *nnp = iga->node_lwidth, tnnp = 1, *snp = iga->node_lstart;
-	PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
-	for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
-	ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
-	ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);CHKERRQ(ierr);
-	ierr = PetscViewerASCIISynchronizedPrintf(viewer,"[%d] (%D,%D,%D): ",
-						  (int)rank,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
-	ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nodes=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D  ",
-						  snp[0],snp[0]+nnp[0]-1,
-						  snp[1],snp[1]+nnp[1]-1,
-						  snp[2],snp[2]+nnp[2]-1,
-						  nnp[0],nnp[1],nnp[2],tnnp);CHKERRQ(ierr);
-	ierr = PetscViewerASCIISynchronizedPrintf(viewer,"elements=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D\n",
-						  sel[0],sel[0]+nel[0]-1,
-						  sel[1],sel[1]+nel[1]-1,
-						  sel[2],sel[2]+nel[2]-1,
-						  nel[0],nel[1],nel[2],tnel);CHKERRQ(ierr);
-	ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-	ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);CHKERRQ(ierr);
+        PetscMPIInt rank; PetscInt *ranks = iga->proc_ranks;
+        PetscInt *nnp = iga->node_lwidth, tnnp = 1, *snp = iga->node_lstart;
+        PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
+        for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
+        ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"[%d] (%D,%D,%D): ",
+                                                  (int)rank,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nodes=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D  ",
+                                                  snp[0],snp[0]+nnp[0]-1,
+                                                  snp[1],snp[1]+nnp[1]-1,
+                                                  snp[2],snp[2]+nnp[2]-1,
+                                                  nnp[0],nnp[1],nnp[2],tnnp);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedPrintf(viewer,"elements=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D\n",
+                                                  sel[0],sel[0]+nel[0]-1,
+                                                  sel[1],sel[1]+nel[1]-1,
+                                                  sel[2],sel[2]+nel[2]-1,
+                                                  nel[0],nel[1],nel[2],tnel);CHKERRQ(ierr);
+        ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+        ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);CHKERRQ(ierr);
       }
     }
   PetscFunctionReturn(0);
@@ -264,10 +264,10 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscValidLogicalCollectiveInt(iga,dim,2);
   if (dim < 1 || dim > 3)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Number of parametric dimensions must be in range [1,3], got %D",dim);
+             "Number of parametric dimensions must be in range [1,3], got %D",dim);
   if (iga->dim > 0 && iga->dim != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
+             "Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
   iga->dim = dim;
   PetscFunctionReturn(0);
 }
@@ -305,10 +305,10 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscValidLogicalCollectiveInt(iga,dof,2);
   if (dof < 1)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Number of DOFs per node must be greater than one, got %D",dof);
+             "Number of DOFs per node must be greater than one, got %D",dof);
   if (iga->dof > 0 && iga->dof != dof)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
+             "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
   iga->dof = dof;
   PetscFunctionReturn(0);
 }
@@ -350,10 +350,10 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   PetscValidCharPointer(name,3);
   if (iga->dof < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-	    "Must call IGASetDof() first");
+            "Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
   if (!iga->fieldname) {
     ierr = PetscMalloc1(iga->dof+1,char*,&iga->fieldname);CHKERRQ(ierr);
     ierr = PetscMemzero(iga->fieldname,(iga->dof+1)*sizeof(char*));CHKERRQ(ierr);
@@ -374,10 +374,10 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
   PetscValidPointer(name,3);
   if (iga->dof < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-	    "Must call IGASetDof() first");
+            "Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
   if (iga->fieldname)
     *name = iga->fieldname[field];
   else
@@ -394,10 +394,10 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   PetscValidLogicalCollectiveInt(iga,order,2);
   if (order < 0)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Order must be nonnegative, got %D",order);
+             "Order must be nonnegative, got %D",order);
   if (iga->order >= 0 && iga->order != order)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-	     "Cannot change order from %D after it was set to %D",iga->order,order);
+             "Cannot change order from %D after it was set to %D",iga->order,order);
   iga->order = order;
   PetscFunctionReturn(0);
 }
@@ -429,10 +429,10 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
   ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
   if (processors < 1)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Number of processors must be nonnegative, got %D",processors);
+             "Number of processors must be nonnegative, got %D",processors);
   if (size % processors != 0)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Number of processors %D is incompatible with communicator size %d",processors,(int)size);
+             "Number of processors %D is incompatible with communicator size %d",processors,(int)size);
   for (k=0; k<dim; k++)
     np[k] = iga->proc_sizes[k];
   np[i] = prod = processors;
@@ -440,7 +440,7 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
     if (k!=i && np[k]>0) prod *= np[k];
   if (size % prod != 0)
     SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
+             "Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
   iga->proc_sizes[i] = processors;
   PetscFunctionReturn(0);
 }
@@ -460,9 +460,9 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
     ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
     for (i=0; i<dim; i++) if(iga->axis[i]->periodic) periodic = PETSC_TRUE;
     if (size > 1) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
-			  "Collocation not supported in parallel");
+                          "Collocation not supported in parallel");
     if (periodic) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
-			  "Collocation not supported with periodicity");
+                          "Collocation not supported with periodicity");
   }
   if (collocation && iga->setup) { /* collocation */
     PetscInt i;
@@ -707,16 +707,16 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
-	PetscInt n = procs[i];
-	if (n > 0) {ierr = IGASetProcessors(iga,i,n);CHKERRQ(ierr);}
+        PetscInt n = procs[i];
+        if (n > 0) {ierr = IGASetProcessors(iga,i,n);CHKERRQ(ierr);}
       }
 
     /* Periodicity */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-	PetscBool w = (i<nw) ? wraps[i] : wraps[0];
-	if (nw == 0) w = PETSC_TRUE;
-	ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
+        PetscBool w = (i<nw) ? wraps[i] : wraps[0];
+        if (nw == 0) w = PETSC_TRUE;
+        ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
 
     /* Basis */
@@ -741,18 +741,18 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
       ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
       for (i=0; i<dim; i++) {
-	PetscInt   N = (i<ne) ? elems[i] : elems[0];
-	PetscInt   p = (i<nd) ? degrs[i] : degrs[0];
-	PetscInt   C = (i<nc) ? conts[i] : conts[0];
-	PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
-	PetscBool  w = iga->axis[i]->periodic;
-	if (p < 1) p = iga->axis[i]->p; if (p < 1) p = 2;
-	if (flg || (iga->axis[i]->p==0||iga->axis[i]->m==1)) {
-	  ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
-	  ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
-	  ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
-	  ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
-	}
+        PetscInt   N = (i<ne) ? elems[i] : elems[0];
+        PetscInt   p = (i<nd) ? degrs[i] : degrs[0];
+        PetscInt   C = (i<nc) ? conts[i] : conts[0];
+        PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
+        PetscBool  w = iga->axis[i]->periodic;
+        if (p < 1) p = iga->axis[i]->p; if (p < 1) p = 2;
+        if (flg || (iga->axis[i]->p==0||iga->axis[i]->m==1)) {
+          ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
+          ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
+          ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
+          ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
+        }
       }
     }
 
@@ -763,8 +763,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Quadrature */
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
-	PetscInt q = (i<nq) ? quadr[i] : quadr[0];
-	if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+        PetscInt q = (i<nq) ? quadr[i] : quadr[0];
+        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
       }
 
   setupcalled:
@@ -837,12 +837,12 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 #define __FUNCT__ "IGACreateDM"
 static
 PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
-			   const PetscInt gsizes[],
-			   const PetscInt lsizes[],
-			   const PetscBool periodic[],
-			   PetscBool stencil_box,
-			   PetscInt  stencil_width,
-			   DM *dm_)
+                           const PetscInt gsizes[],
+                           const PetscInt lsizes[],
+                           const PetscBool periodic[],
+                           PetscBool stencil_box,
+                           PetscInt  stencil_width,
+                           DM *dm_)
 {
   PetscInt         i,dim;
   MPI_Comm         subcomms[3];
@@ -903,7 +903,7 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->elem_sizes,iga->elem_width,
-		     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -918,7 +918,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->geom_sizes,iga->geom_lwidth,
-		     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -957,7 +957,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->node_sizes,iga->node_lwidth,
-		     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1036,7 +1036,7 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
     for (i=0; i<iga->dim; i++)
       grid_sizes[i] = iga->axis[i]->nel;
     ierr = IGA_Partition(size,rank,iga->dim,grid_sizes,
-			 proc_sizes,proc_ranks);CHKERRQ(ierr);
+                         proc_sizes,proc_ranks);CHKERRQ(ierr);
     for (i=iga->dim; i<3; i++) {
       proc_sizes[i] = 1;
       proc_ranks[i] = 0;
@@ -1049,7 +1049,7 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
     for (i=0; i<iga->dim; i++)
       elem_sizes[i] = iga->axis[i]->nel;
     ierr = IGA_Distribute(iga->dim,iga->proc_sizes,iga->proc_ranks,
-			  elem_sizes,elem_width,elem_start);CHKERRQ(ierr);
+                          elem_sizes,elem_width,elem_start);CHKERRQ(ierr);
     for (i=iga->dim; i<3; i++) {
       elem_sizes[i] = 1;
       elem_start[i] = 0;
@@ -1074,9 +1074,9 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
       gend = span[elast] + 1;
       lstart = span[efirst] - p;
       if(elast < nel-1)
-	lend = span[elast+1] - p;
+        lend = span[elast+1] - p;
       else
-	lend = span[elast] + 1;
+        lend = span[elast] + 1;
       geom_sizes[i]  = size;
       geom_lstart[i] = lstart;
       geom_lwidth[i] = lend - lstart;
@@ -1131,7 +1131,7 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
       node_gstart[i] = iga->geom_gstart[i];
       node_gwidth[i] = iga->geom_gwidth[i];
       if (rank == size-1)
-	node_lwidth[i] = node_sizes[i] - node_lstart[i];
+        node_lwidth[i] = node_sizes[i] - node_lstart[i];
     }
     for (i=iga->dim; i<3; i++) {
       node_sizes[i]  = 1;
@@ -1161,9 +1161,9 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
     /* create the grid context */
     ierr = IGA_Grid_Create(((PetscObject)iga)->comm,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_Init(grid,
-			 iga->dim,iga->dof,iga->node_sizes,
-			 iga->node_lstart,iga->node_lwidth,
-			 iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
+                         iga->dim,iga->dof,iga->node_sizes,
+                         iga->node_lstart,iga->node_lwidth,
+                         iga->node_gstart,iga->node_gwidth);CHKERRQ(ierr);
     /* build the scalar and block application orderings */
     ierr = IGA_Grid_GetAO(grid,&iga->ao);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->ao);CHKERRQ(ierr);
@@ -1181,8 +1181,8 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
     ierr = PetscObjectReference((PetscObject)iga->l2g);CHKERRQ(ierr);
     /* build global <-> natural vector scatter */
     ierr = IGA_Grid_NewScatterApp(grid,
-				  iga->geom_sizes,iga->geom_lstart,iga->geom_lwidth,
-				  &iga->natural,&iga->n2g,&iga->g2n);CHKERRQ(ierr);
+                                  iga->geom_sizes,iga->geom_lstart,iga->geom_lwidth,
+                                  &iga->natural,&iga->n2g,&iga->g2n);CHKERRQ(ierr);
     /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
@@ -1276,7 +1276,7 @@ PetscErrorCode IGASetUp(IGA iga)
 
   if (iga->dim < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-	    "Must call IGASetDim() first");
+            "Must call IGASetDim() first");
 
   iga->setup = PETSC_TRUE;
 
@@ -1415,9 +1415,9 @@ PetscErrorCode IGASetUserJacobian(IGA iga,IGAUserJacobian Jacobian,void *JacCtx)
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-			    PetscReal shift,const PetscScalar *V,
-			    PetscReal t,const PetscScalar *U,
-			    PetscScalar *R,void *ctx);
+                            PetscReal shift,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *R,void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -1457,9 +1457,9 @@ PetscErrorCode IGASetUserIFunction(IGA iga,IGAUserIFunction IFunction,void *IFun
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-			    PetscReal shift,const PetscScalar *V,
-			    PetscReal t,const PetscScalar *U,
-			    PetscScalar *J,void *ctx);
+                            PetscReal shift,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *J,void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
@@ -1498,10 +1498,10 @@ PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJac
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-			    PetscReal a,const PetscScalar *A,
-			    PetscReal v,const PetscScalar *V,
-			    PetscReal t,const PetscScalar *U,
-			    PetscScalar *F,void *ctx);
+                            PetscReal a,const PetscScalar *A,
+                            PetscReal v,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *F,void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -1543,10 +1543,10 @@ PetscErrorCode IGASetUserIFunction2(IGA iga,IGAUserIFunction2 IFunction,void *IF
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-			    PetscReal a,const PetscScalar *A,
-			    PetscReal v,const PetscScalar *V,
-			    PetscReal t,const PetscScalar *U,
-			    PetscScalar *J,void *ctx);
+                            PetscReal a,const PetscScalar *A,
+                            PetscReal v,const PetscScalar *V,
+                            PetscReal t,const PetscScalar *U,
+                            PetscScalar *J,void *ctx);
 
 +  p   - point at which to compute the Jacobian
 .  dt  - time step size
@@ -1587,10 +1587,10 @@ PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJacobian,void *IJ
 
    Details of IEFunction:
 $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
-			     PetscReal shift,const PetscScalar *V0,
-			     PetscReal t1,const PetscScalar *U1,
-			     PetscReal t0,const PetscScalar *U0,
-			     PetscScalar *R,void *ctx);
+                             PetscReal shift,const PetscScalar *V0,
+                             PetscReal t1,const PetscScalar *U1,
+                             PetscReal t0,const PetscScalar *U0,
+                             PetscScalar *R,void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -1632,10 +1632,10 @@ PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *I
 
    Details of IEJacobian:
 $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
-			     PetscReal shift,const PetscScalar *V0,
-			     PetscReal t1,const PetscScalar *U1,
-			     PetscReal t0,const PetscScalar *U0,
-			     PetscScalar *J,void *ctx);
+                             PetscReal shift,const PetscScalar *V0,
+                             PetscReal t1,const PetscScalar *U1,
+                             PetscReal t0,const PetscScalar *U0,
+                             PetscScalar *J,void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
