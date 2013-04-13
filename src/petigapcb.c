@@ -362,8 +362,8 @@ static PetscErrorCode PCDestroy_BBB(PC pc)
 
 EXTERN_C_BEGIN
 #undef  __FUNCT__
-#define __FUNCT__ "PCCreate_BBB"
-PetscErrorCode PCCreate_BBB(PC pc)
+#define __FUNCT__ "PCCreate_IGABBB"
+PetscErrorCode PCCreate_IGABBB(PC pc)
 {
   PC_BBB         *bbb = 0;
   PetscErrorCode ierr;

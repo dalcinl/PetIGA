@@ -599,8 +599,9 @@ PETSC_EXTERN PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],
 PETSC_EXTERN PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S[],
                                           IGAUserScalar Scalar,void *ctx);
 
-#define PCEBE "ebe"
-#define PCBBB "bbb"
+#define PCIGAEBE "igaebe"
+#define PCIGABBB "igabbb"
+
 PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 PETSC_EXTERN PetscErrorCode IGAComputeSystem(IGA iga,Mat A,Vec B);
 

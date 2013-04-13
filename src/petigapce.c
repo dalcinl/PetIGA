@@ -271,8 +271,8 @@ static PetscErrorCode PCDestroy_EBE(PC pc)
 
 EXTERN_C_BEGIN
 #undef  __FUNCT__
-#define __FUNCT__ "PCCreate_EBE"
-PetscErrorCode PCCreate_EBE(PC pc)
+#define __FUNCT__ "PCCreate_IGAEBE"
+PetscErrorCode PCCreate_IGAEBE(PC pc)
 {
   PC_EBE         *ebe = 0;
   PetscErrorCode ierr;

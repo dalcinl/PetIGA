@@ -19,8 +19,8 @@ PETSC_EXTERN PetscFunctionList PCList;
 PETSC_EXTERN PetscFunctionList TSList;
 
 EXTERN_C_BEGIN
-extern PetscErrorCode PCCreate_EBE(PC);
-extern PetscErrorCode PCCreate_BBB(PC);
+extern PetscErrorCode PCCreate_IGAEBE(PC);
+extern PetscErrorCode PCCreate_IGABBB(PC);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
@@ -49,8 +49,8 @@ PetscErrorCode IGARegisterAll(void)
   PetscFunctionBegin;
   IGARegisterAllCalled = PETSC_TRUE;
   ierr = PCRegisterAll();CHKERRQ(ierr);
-  ierr = PCRegister(PCEBE,PCCreate_EBE);CHKERRQ(ierr);
-  ierr = PCRegister(PCBBB,PCCreate_BBB);CHKERRQ(ierr);
+  ierr = PCRegister(PCIGAEBE,PCCreate_IGAEBE);CHKERRQ(ierr);
+  ierr = PCRegister(PCIGABBB,PCCreate_IGABBB);CHKERRQ(ierr);
   ierr = TSRegisterAll();CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
   PetscFunctionReturn(0);
