@@ -53,6 +53,11 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid,VecScatter*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid,VecScatter*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid,VecScatter*);
 
+PETSC_EXTERN PetscErrorCode IGA_Grid_GlobalToLocal(IGA_Grid,Vec,Vec);
+PETSC_EXTERN PetscErrorCode IGA_Grid_LocalToGlobal(IGA_Grid,Vec,Vec,InsertMode);
+PETSC_EXTERN PetscErrorCode IGA_Grid_NaturalToGlobal(IGA_Grid,Vec,Vec);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid,Vec,Vec);
+
 PETSC_EXTERN PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
                                                    const PetscInt[],
                                                    const PetscInt[],

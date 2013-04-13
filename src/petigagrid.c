@@ -467,7 +467,71 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_GlobalToLocal"
+PetscErrorCode IGA_Grid_GlobalToLocal(IGA_Grid g,Vec gvec,Vec lvec)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
+  ierr = IGA_Grid_GetScatterG2L(g,&g->g2l);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g->g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g->g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_LocalToGlobal"
+PetscErrorCode IGA_Grid_LocalToGlobal(IGA_Grid g,Vec lvec,Vec gvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  if (addv == ADD_VALUES) {
+    ierr = IGA_Grid_GetScatterG2L(g,&g->g2l);CHKERRQ(ierr);
+    ierr = VecScatterBegin(g->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (g->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  } else if (addv == INSERT_VALUES) {
+    ierr = IGA_Grid_GetScatterL2G(g,&g->l2g);CHKERRQ(ierr);
+    ierr = VecScatterBegin(g->l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+    ierr = VecScatterEnd  (g->l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  } else SETERRQ(g->comm,PETSC_ERR_SUP,"Not yet implemented");
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_NaturalToGlobal"
+PetscErrorCode IGA_Grid_NaturalToGlobal(IGA_Grid g,Vec nvec,Vec gvec)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(nvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  ierr = IGA_Grid_GetScatterG2N(g,&g->g2n);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g->g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g->g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_GlobalToNatural"
+PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid g,Vec gvec,Vec nvec)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(nvec,VEC_CLASSID,3);
+  ierr = IGA_Grid_GetScatterG2N(g,&g->g2n);CHKERRQ(ierr);
+  ierr = VecScatterBegin(g->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  ierr = VecScatterEnd  (g->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_NewScatterApp"
