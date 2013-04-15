@@ -137,7 +137,6 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
      B(2,m) = Ls2
   end do
 
-
   if (d < 3) return
   do m = 0, p
      Ls3 = 0.0
@@ -164,3 +163,50 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
   end do
 
 end subroutine IGA_Basis_Lagrange
+
+
+subroutine IGA_Basis_Hierarchical(kk,uu,p,d,U,B) &
+  bind(C, name="IGA_Basis_Hierarchical")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: kk, p, d
+  real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:kk+p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
+  integer(kind=IGA_INTEGER_KIND)  :: i, k
+  real   (kind=IGA_REAL_KIND   )  :: J, x, Lp(0:p,0:d)
+  real   (kind=IGA_REAL_KIND   ), parameter :: two = 2.0
+
+  J = (U(kk+1)-U(kk))/2.0
+  x = (uu-U(kk))/J - 1.0
+
+  B(0,0) = (1.0-x)/2.0
+  B(0,p) = (x+1.0)/2.0
+  if (d > 0) then
+     B(1,0) = -0.5
+     B(1,p) = +0.5
+  endif
+
+  if (p > 1) then
+     Lp(:,:) = 0.0
+     Lp(0,0) = 1.0
+     Lp(1,0) = x
+     if (d > 0) then
+        Lp(0,1) = 0.0
+        Lp(1,1) = 1.0
+     end if
+     do i = 1, p-1
+        Lp(i+1,0) = ((2*i+1)*x*Lp(i,0) - i*Lp(i-1,0))/(i+1)
+        B(0,i) = (-Lp(i+1,0) + Lp(i-1,0))/sqrt(two*(2*(i+1)-1))
+        do k = 1, d
+           Lp(i+1,k) = (2*i+1)*Lp(i,k-1) + Lp(i-1,k)
+           B(k,i) = (-Lp(i+1,k) + Lp(i-1,k))/sqrt(two*(2*(i+1)-1))
+        end do
+     end do
+  end if
+
+  do k = 1, d
+     B(k,:) = B(k,:)/(J**k)
+  end do
+
+end subroutine IGA_Basis_Hierarchical

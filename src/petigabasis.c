@@ -4,6 +4,7 @@ const char *const IGABasisTypes[] = {
   "BSPLINE",
   "BERNSTEIN",
   "LAGRANGE",
+  "HIERARCHICAL",
   /* */
   "IGABasisType","IGA_BASIS_",0};
 
@@ -81,8 +82,9 @@ PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type)
 }
 
 EXTERN_C_BEGIN
-extern void IGA_Basis_BSpline (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal B[]);
-extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
+extern void IGA_Basis_BSpline     (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal B[]);
+extern void IGA_Basis_Lagrange    (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
+extern void IGA_Basis_Hierarchical(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -140,6 +142,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
     ComputeBasis = IGA_Basis_BSpline; break;
   case IGA_BASIS_LAGRANGE:
     ComputeBasis = IGA_Basis_Lagrange; break;
+  case IGA_BASIS_HIERARCHICAL:
+    ComputeBasis = IGA_Basis_Hierarchical; break;
   default:
     ComputeBasis = 0;
   }
