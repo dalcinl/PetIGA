@@ -14,6 +14,18 @@ PetscScalar Peaks(PetscReal x, PetscReal y)
     /**/ - 1.0/3 * exp(-pow(X+1,2) - pow(Y,2));
 }
 
+PetscScalar Hill(PetscReal x, PetscReal y)
+{
+  return   (x-1)*(x-1)*(x+1)*(x+1)
+    /**/ * (y-1)*(y-1)*(y+1)*(y+1);
+}
+
+PetscScalar Sine(PetscReal x, PetscReal y)
+{
+  return   sin(M_PI*x)
+    /**/ * sin(M_PI*y);
+}
+
 typedef struct {
   PetscScalar (*Function)(PetscReal x, PetscReal y);
 } AppCtx;
@@ -26,8 +38,9 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   AppCtx *user = (AppCtx *)ctx;
   PetscReal x = p->point[0];
   PetscReal y = p->point[1];
-  PetscReal *N = p->shape[0];
+  PetscScalar f = user->Function(x,y);
 
+  PetscReal *N = p->shape[0];
   PetscInt a,b,nen=p->nen;
   for (a=0; a<nen; a++) {
     PetscReal Na = N[a];
@@ -35,8 +48,26 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
       PetscReal Nb = N[b];
       K[a*nen+b] = Na * Nb;
     }
-    F[a] = Na * user->Function(x,y);
+    F[a] = Na * f;
   }
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Error"
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+{
+  AppCtx *user = (AppCtx *)ctx;
+  PetscReal x = p->point[0];
+  PetscReal y = p->point[1];
+  PetscScalar f = user->Function(x,y);
+
+  PetscScalar u;
+  IGAPointFormValue(p,U,&u);
+
+  PetscReal e = PetscAbsScalar(u - f);
+  S[0] = e*e;
+
   return 0;
 }
 
@@ -49,17 +80,22 @@ int main(int argc, char *argv[]) {
 
   AppCtx user;
 
-  PetscInt choice=0;
-  const char *choicelist[] = {"paraboloid", "peaks", 0};
-  PetscInt N[2] = {16,16}, nN = 2; 
-  PetscInt p[2] = { 2, 2}, np = 2;
-  PetscInt C[2] = {-1,-1}, nC = 2;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Projection2D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEList("-function","2D function",__FILE__,choicelist,2,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
+  PetscBool flg;
+  PetscBool w[2] = {PETSC_FALSE,PETSC_FALSE}; PetscInt nw = 2;
+  PetscInt  N[2] = {16,16}, nN = 2;
+  PetscInt  p[2] = { 2, 2}, np = 2;
+  PetscInt  C[2] = {-1,-1}, nC = 2;
+  PetscInt  choice=0;
+  const char *choicelist[] = {"paraboloid", "peaks", "hill", "sine", 0};
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2 Projection 2D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBoolArray("-periodic", "periodicity",    __FILE__,w,&nw,&flg);CHKERRQ(ierr);
+  if (flg && nw==0) w[nw++] = PETSC_TRUE;
+  ierr = PetscOptionsIntArray ("-N","number of elements",__FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-p","polynomial order",  __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-C","continuity order",  __FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEList    ("-function","2D function",__FILE__,choicelist,4,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  if (nw == 1) w[1] = w[0];
   if (nN == 1) N[1] = N[0];
   if (np == 1) p[1] = p[0];
   if (nC == 1) C[1] = C[0];
@@ -68,6 +104,8 @@ int main(int argc, char *argv[]) {
   switch (choice) {
   case 0: user.Function = Paraboloid; break;
   case 1: user.Function = Peaks;      break;
+  case 2: user.Function = Hill;       break;
+  case 3: user.Function = Sine;       break;
   }
 
   IGA iga;
@@ -78,8 +116,9 @@ int main(int argc, char *argv[]) {
   for (i=0; i<2; i++) {
     IGAAxis axis;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis,N[i],-1.0,1.0,C[i]);CHKERRQ(ierr);
+    ierr = IGAAxisSetPeriodic(axis,w[i]);CHKERRQ(ierr);
+    ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
+    ierr = IGAAxisInitUniform(axis,N[i],-1.0,1.0,C[i]);CHKERRQ(ierr);
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -98,8 +137,17 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  
+  PetscScalar error = 0;
+  ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
+  error = PetscSqrtReal(PetscRealPart(error));
+  PetscBool print_error = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(0,"-error",&print_error,0);CHKERRQ(ierr);
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+
+  PetscBool draw = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
+  if (draw) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);

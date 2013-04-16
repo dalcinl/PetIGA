@@ -21,6 +21,16 @@ PetscScalar Poly4(PetscReal x)
   return (x-1)*(x-a)*(x+a)*(x+1);
 }
 
+PetscScalar Hill(PetscReal x)
+{
+  return (x-1)*(x-1)*(x+1)*(x+1);
+}
+
+PetscScalar Sine(PetscReal x)
+{
+  return sin(M_PI*x);
+}
+
 
 typedef struct {
   PetscScalar (*Function)(PetscReal x);
@@ -33,8 +43,9 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
   PetscReal x = p->point[0];
+  PetscScalar f = user->Function(x);
+
   PetscReal *N = p->shape[0];
-  
   PetscInt a,b,nen=p->nen;
   for (a=0; a<nen; a++) {
     PetscReal Na = N[a];
@@ -42,8 +53,25 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
       PetscReal Nb = N[b];
       K[a*nen+b] = Na * Nb;
     }
-    F[a] = Na * user->Function(x);
+    F[a] = Na * f;
   }
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Error"
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+{
+  AppCtx *user = (AppCtx *)ctx;
+  PetscReal x = p->point[0];
+  PetscScalar f = user->Function(x);
+
+  PetscScalar u;
+  IGAPointFormValue(p,U,&u);
+
+  PetscReal e = PetscAbsScalar(u - f);
+  S[0] = e*e;
+
   return 0;
 }
 
@@ -56,16 +84,18 @@ int main(int argc, char *argv[]) {
 
   AppCtx user;
 
-  PetscInt choice=2;
-  const char *choicelist[] = {"line", "parabola", "poly3", "poly4", 0};
-  PetscBool t=PETSC_FALSE;
-  PetscInt N=16, p=2, C=PETSC_DECIDE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Projection1D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-periodic", "periodic",__FILE__,t,&t,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N", "number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p", "polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C", "global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEList("-function","1D function",__FILE__,choicelist,4,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
+  PetscBool w=PETSC_FALSE;
+  PetscInt  N=16;
+  PetscInt  p=2;
+  PetscInt  C=PETSC_DECIDE;
+  PetscInt  choice=2;
+  const char *choicelist[] = {"line", "parabola", "poly3", "poly4", "hill", "sine", 0};
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2 Projection 1D Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBool ("-periodic", "periodicity",__FILE__,w,&w,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-N", "number of elements",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-p", "polynomial order",  __FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-C", "continuity order",  __FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEList("-function","1D function", __FILE__,choicelist,6,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (C == PETSC_DECIDE) C = p-1;
   switch (choice) {
@@ -73,6 +103,8 @@ int main(int argc, char *argv[]) {
   case 1: user.Function = Parabola; break;
   case 2: user.Function = Poly3;    break;
   case 3: user.Function = Poly4;    break;
+  case 4: user.Function = Hill;     break;
+  case 5: user.Function = Sine;     break;
   }
 
   IGA iga;
@@ -81,7 +113,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   IGAAxis axis;
   ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
-  ierr = IGAAxisSetPeriodic(axis,t);CHKERRQ(ierr);
+  ierr = IGAAxisSetPeriodic(axis,w);CHKERRQ(ierr);
   ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis,N,-1.0,1.0,C);CHKERRQ(ierr);
 
@@ -95,15 +127,24 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  
+
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  
+  PetscScalar error = 0;
+  ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
+  error = PetscSqrtReal(PetscRealPart(error));
+  PetscBool print_error = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(0,"-error",&print_error,0);CHKERRQ(ierr);
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+
+  PetscBool draw = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
+  if (draw) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
