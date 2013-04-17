@@ -31,7 +31,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   { /* */
     PetscInt info = 0;
     ierr = PetscViewerBinaryRead(viewer,&info,1,PETSC_INT);CHKERRQ(ierr);
-    geometry = (info & 0x1) ? PETSC_TRUE : PETSC_FALSE; 
+    geometry = (info & 0x1) ? PETSC_TRUE : PETSC_FALSE;
     property = (info & 0x2) ? PETSC_TRUE : PETSC_FALSE;
   }
   ierr = IGAReset(iga);CHKERRQ(ierr);
@@ -45,11 +45,12 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       PetscReal *U;
       ierr = PetscViewerBinaryRead(viewer,&p,1,PETSC_INT);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,&m,1,PETSC_INT);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m,PetscReal,&U);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = IGAAxisSetKnots(axis,m-1,PETSC_NULL);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = IGAAxisGetKnots(axis,PETSC_NULL,&U);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
+      ierr = IGAAxisSetKnots(axis,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
+      ierr = PetscFree(U);CHKERRQ(ierr);
     }
   }
   ierr = IGASetUp_Basic(iga);CHKERRQ(ierr);

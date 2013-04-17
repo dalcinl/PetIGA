@@ -210,36 +210,35 @@ PetscErrorCode IGAAxisGetDegree(IGAAxis axis,PetscInt *p)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisSetKnots"
-PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[])
+PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 {
   PetscInt       k;
-  PetscReal      *V = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
-  if (U) PetscValidPointer(U,3);
+  PetscValidPointer(U,3);
 
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
             "Must call IGAAxisSetDegree() first");
   if (m < 2*axis->p+1)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of knots must be at least %D, got %D",2*(axis->p+1),m+1);
-  if (U) for (k=1; k<=m; k++)
-           if (U[k-1] > U[k])
-             SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                      "Knot sequence must be increasing, "
-                      "got U[%D]=%G > U[%D]=%G",
-                      k-1,U[k-1],k,U[k]);
+             "Number of knots must be at least %D, got %D",
+             2*(axis->p+1),m+1);
+  for (k=1; k<=m; k++)
+    if (U[k-1] > U[k])
+      SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+               "Knot sequence must be increasing, got U[%D]=%G > U[%D]=%G",
+               k-1,U[k-1],k,U[k]);
 
-  if (m != axis->m || !axis->U) {
+  if (m != axis->m) {
+    PetscReal *V;
     ierr = PetscMalloc((m+1)*sizeof(PetscReal),&V);CHKERRQ(ierr);
-    ierr = PetscMemzero(V,(m+1)*sizeof(PetscReal));CHKERRQ(ierr);
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = V;
   }
-  if (U) { ierr = PetscMemcpy(axis->U,U,(m+1)*sizeof(PetscReal));CHKERRQ(ierr); }
+  ierr = PetscMemcpy(axis->U,U,(m+1)*sizeof(PetscReal));CHKERRQ(ierr);
 
   axis->nel = axis->nnp = 0;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
