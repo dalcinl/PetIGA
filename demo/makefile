@@ -15,7 +15,8 @@ TARGETS = L2Proj1D L2Proj2D \
 	  Elasticity3D \
 	  HyperElasticity \
 	  PhaseFieldCrystal2D \
-          BoundaryIntegral
+          BoundaryIntegral \
+          Richards	
 
 ALL: ${TARGETS}
 clean::
@@ -108,6 +109,9 @@ PhaseFieldCrystal2D: PhaseFieldCrystal2D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 BoundaryIntegral: BoundaryIntegral.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+Richards: Richards.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 
