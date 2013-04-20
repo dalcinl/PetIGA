@@ -48,8 +48,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       ierr = PetscMalloc1(m,PetscReal,&U);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);CHKERRQ(ierr);
-      ierr = IGAAxisSetKnots(axis,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
+      ierr = IGAAxisInit(axis,p,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscFree(U);CHKERRQ(ierr);
     }
   }
