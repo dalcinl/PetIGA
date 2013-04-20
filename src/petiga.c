@@ -765,8 +765,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         PetscInt   N = (i<ne) ? elems[i] : elems[0];
         PetscReal *L = (i<nl) ? ulims[i] : ulims[0];
         PetscInt   C = (i<nc) ? conts[i] : conts[0];
-        if (p < 1) {if (axis->p > 0) p = axis->p   else p =  2;}
-        if (N < 1) {if (axis->m > 1) N = axis->nel else N = 16;}
+        if (p < 1) {if (axis->p > 0) p = axis->p;   else p =  2;}
+        if (N < 1) {if (axis->m > 1) N = axis->nel; else N = 16;}
         if (flg || (axis->p==0||axis->m==1)) {
           ierr = IGAAxisReset(axis);CHKERRQ(ierr);
           ierr = IGAAxisSetPeriodic(axis,w);CHKERRQ(ierr);
