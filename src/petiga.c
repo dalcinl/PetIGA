@@ -669,27 +669,45 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   {
     PetscBool flg;
-    PetscInt  i,nw,nb;
+    PetscInt  i,nw,nl;
     IGABasisType btype[3] = {IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE};
-    PetscBool wraps[3]    = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscBool    wraps[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE };
     PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
-    PetscInt  nd,degrs[3] = {2,2,2};
     PetscInt  nq,quadr[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
-    PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
     PetscInt  ne,elems[3] = {16,16,16};
-    PetscReal bbox[3][2]  = {{0,1},{0,1},{0,1}};
+    PetscInt  nd,degrs[3] = { 2, 2, 2};
+    PetscInt  nc,conts[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
+    PetscReal ulims[3][2] = {{0,1},{0,1},{0,1}};
     char      filename[PETSC_MAX_PATH_LEN] = {0};
-    char      vtype[256] = VECSTANDARD;
-    char      mtype[256] = MATBAIJ;
+    char      vtype[256]  = VECSTANDARD;
+    char      mtype[256]  = MATBAIJ;
     PetscInt  dim = (iga->dim > 0) ? iga->dim : 3;
     PetscInt  dof = (iga->dof > 0) ? iga->dof : 1;
     PetscInt  order = iga->order;
 
-    /* Periodicity, degree, and quadrature are initially what they are intially set to */
-    for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
-    for (i=0; i<dim; i++) if (iga->axis[i]->p   > 0) degrs[i] = iga->axis[i]->p;
-    for (i=0; i<dim; i++) if (iga->rule[i]->nqp > 0) quadr[i] = iga->rule[i]->nqp;
-    for (i=0; i<dim; i++) btype[i] = iga->basis[i]->type;
+    for (i=0; i<dim; i++) {
+      procs[i] = iga->proc_sizes[i];
+      wraps[i] = iga->axis[i]->periodic;
+      btype[i] = iga->basis[i]->type;
+      if (iga->rule[i]->nqp > 0)
+        quadr[i] = iga->rule[i]->nqp;
+    }
+    for (i=0; i<dim; i++) {
+      IGAAxis axis = iga->axis[i];
+      if (axis->p > 0)
+        degrs[i] = axis->p;
+      else if (i > 0)
+        degrs[i] = degrs[i-1];
+      if (axis->m > 1) {
+        elems[i]    = axis->nel;
+        ulims[i][0] = axis->U[axis->p];
+        ulims[i][1] = axis->U[axis->m-axis->p];
+      } else if (i > 0) {
+        elems[i]    = elems[i-1];
+        ulims[i][0] = ulims[i-1][0];
+        ulims[i][1] = ulims[i-1][1];
+      }
+    }
 
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
 
@@ -713,9 +731,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Periodicity */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
+    if (flg && !nw) for (i=0; i<dim; i++) wraps[i] = PETSC_TRUE;
     if (flg) for (i=0; i<dim; i++) {
-        PetscBool w = (i<nw) ? wraps[i] : wraps[0];
-        if (nw == 0) w = PETSC_TRUE;
+        PetscBool w = wraps[i];
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
 
@@ -739,33 +757,38 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),PETSC_NULL);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&bbox[0][0],(nb=2*dim,&nb),PETSC_NULL);CHKERRQ(ierr);
-      for (i=0; i<dim; i++) {
-        PetscInt   N = (i<ne) ? elems[i] : elems[0];
+      ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&ulims[0][0],(nl=2*dim,&nl),PETSC_NULL);CHKERRQ(ierr);
+      for (nl/=2, i=0; i<dim; i++) {
+        IGAAxis axis = iga->axis[i];
+        PetscBool  w = axis->periodic;
         PetscInt   p = (i<nd) ? degrs[i] : degrs[0];
+        PetscInt   N = (i<ne) ? elems[i] : elems[0];
+        PetscReal *L = (i<nl) ? ulims[i] : ulims[0];
         PetscInt   C = (i<nc) ? conts[i] : conts[0];
-        PetscReal *U = (i<nb/2) ? &bbox[i][0] : &bbox[0][0];
-        PetscBool  w = iga->axis[i]->periodic;
-        if (p < 1) p = iga->axis[i]->p; if (p < 1) p = 2;
-        if (flg || (iga->axis[i]->p==0||iga->axis[i]->m==1)) {
-          ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);
-          ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
-          ierr = IGAAxisSetDegree(iga->axis[i],p);CHKERRQ(ierr);
-          ierr = IGAAxisInitUniform(iga->axis[i],N,U[0],U[1],C);CHKERRQ(ierr);
+        if (p < 1) {if (axis->p > 0) p = axis->p   else p =  2;}
+        if (N < 1) {if (axis->m > 1) N = axis->nel else N = 16;}
+        if (flg || (axis->p==0||axis->m==1)) {
+          ierr = IGAAxisReset(axis);CHKERRQ(ierr);
+          ierr = IGAAxisSetPeriodic(axis,w);CHKERRQ(ierr);
+          ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
+          ierr = IGAAxisInitUniform(axis,N,L[0],L[1],C);CHKERRQ(ierr);
         }
       }
     }
 
-    /* Order */
-    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
-    if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
-
     /* Quadrature */
+    for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
         if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
       }
+
+    /* Order */
+    if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
+    order = PetscMax(order,1); order = PetscMin(order,3);
+    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
+    if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
   setupcalled:
 
@@ -779,9 +802,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
     if (iga->mattype)  {ierr = PetscStrncpy(mtype,iga->mattype,sizeof(mtype));CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_vec_type","Vector type","IGASetVecType",VecList,vtype,vtype,sizeof vtype,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsList("-iga_vec_type","Vector type","IGASetVecType",VecList,vtype,vtype,sizeof(vtype),&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof mtype,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof(mtype),&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
 
     /* View options, handled in IGASetUp() */
