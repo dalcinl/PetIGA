@@ -241,8 +241,13 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       shape[i] = iga->node_gwidth[i];
-      start[i] = iga->node_lstart[i] - iga->node_gstart[i];
-      width[i] = iga->node_lwidth[i];
+      if (iga->proc_sizes[i] > 1) {
+        start[i] = iga->node_lstart[i] - iga->node_gstart[i];
+        width[i] = iga->node_lwidth[i];
+      } else {
+        start[i] = iga->node_gstart[i];
+        width[i] = iga->node_gwidth[i];
+      }
     }
     ierr = ComputeBDDCGraph(dof,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
