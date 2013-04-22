@@ -3,10 +3,22 @@
 /* ---------------------------------------------------------------- */
 
 PETSC_STATIC_INLINE
-PetscInt Index(const PetscInt shape[],
-               PetscInt i,PetscInt j,PetscInt k)
+PetscInt Index(const PetscInt N[],PetscInt i,PetscInt j,PetscInt k)
 {
-  return i + j * shape[0] + k * shape[0] * shape[1];
+  return i + j * N[0] + k * N[0] * N[1];
+}
+
+PETSC_STATIC_INLINE
+PetscBool OnGrid(const PetscBool W[3],const PetscInt N[3],
+                 PetscInt *i,PetscInt *j,PetscInt *k)
+{
+  if (W[0]) { if (*i<0) *i += N[0]; else if (*i>=N[0]) *i -= N[0]; }
+  if (W[1]) { if (*j<0) *j += N[1]; else if (*j>=N[1]) *j -= N[1]; }
+  if (W[2]) { if (*k<0) *k += N[2]; else if (*k>=N[2]) *k -= N[2]; }
+  if (*i<0 || *i>=N[0]) return PETSC_FALSE;
+  if (*j<0 || *j>=N[1]) return PETSC_FALSE;
+  if (*k<0 || *k>=N[2]) return PETSC_FALSE;
+  return PETSC_TRUE;
 }
 
 PETSC_STATIC_INLINE
@@ -15,20 +27,13 @@ PetscInt Color(const PetscInt shape[3],
                const PetscInt width[3],
                PetscInt i,PetscInt j,PetscInt k)
 {
-  PetscInt r=0,g=0,b=0;
-  PetscInt L[3],R[3],C[2];
-
-  if (i<0||i>=shape[0]) return PETSC_MIN_INT;
-  if (j<0||j>=shape[1]) return PETSC_MIN_INT;
-  if (k<0||k>=shape[2]) return PETSC_MIN_INT;
-
+  PetscInt L[3],R[3],C[2],r=0,g=0,b=0;
   L[0] = start[0]; R[0] = start[0] + width[0] - 1;
   L[1] = start[1]; R[1] = start[1] + width[1] - 1;
   L[2] = start[2]; R[2] = start[2] + width[2] - 1;
   if (i<L[0]) r = i - L[0]; if (i>R[0]) r = i - R[0];
   if (j<L[1]) g = j - L[1]; if (j>R[1]) g = j - R[1];
   if (k<L[2]) b = k - L[2]; if (k>R[2]) b = k - R[2];
-
   C[0] = shape[0] - width[0] + 1;
   C[1] = shape[1] - width[1] + 1;
   return Index(C,r,g,b);
@@ -39,14 +44,15 @@ PetscInt STENCIL[7][3] = {{ 0,  0, -1},
                           { 0, -1,  0},
                           {-1,  0,  0},
                           { 0,  0,  0},
-                          { 0,  0, +1},
+                          {+1,  0,  0},
                           { 0, +1,  0},
-                          {+1,  0,  0}};
+                          { 0,  0, +1}};
 
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
 #define __FUNCT__ "ComputeBDDCGraph"
-PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
+PetscErrorCode ComputeBDDCGraph(PetscInt bs,
+                                const PetscBool wrap[3],const PetscInt shape[3],
                                 const PetscInt start[3],const PetscInt width[3],
                                 PetscInt *_nvtx,PetscInt *_xadj[],PetscInt *_adjy[])
 {
@@ -56,9 +62,9 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(_nvtx,5);
-  PetscValidPointer(_xadj,6);
-  PetscValidPointer(_adjy,7);
+  PetscValidIntPointer(_nvtx,6);
+  PetscValidPointer(_xadj,7);
+  PetscValidPointer(_adjy,8);
 
   /* Compute the number of vertices and adjacencies */
   nvtx = shape[0]*shape[1]*shape[2];
@@ -70,8 +76,10 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
           PetscInt ii = i + STENCIL[s][0];
           PetscInt jj = j + STENCIL[s][1];
           PetscInt kk = k + STENCIL[s][2];
-          PetscInt cc = Color(shape,start,width,ii,jj,kk);
-          if (cc == color) nadj++;
+          if (OnGrid(wrap,shape,&ii,&jj,&kk)) {
+            PetscInt cc = Color(shape,start,width,ii,jj,kk);
+            if (cc == color) nadj++;
+          }
         }
       }
 
@@ -94,10 +102,13 @@ PetscErrorCode ComputeBDDCGraph(PetscInt bs,const PetscInt shape[3],
           PetscInt ii = i + STENCIL[s][0];
           PetscInt jj = j + STENCIL[s][1];
           PetscInt kk = k + STENCIL[s][2];
-          PetscInt cc = Color(shape,start,width,ii,jj,kk);
-          if (cc == color)
-            vertices[nv++] = Index(shape,ii,jj,kk);
+          if (OnGrid(wrap,shape,&ii,&jj,&kk)) {
+            PetscInt cc = Color(shape,start,width,ii,jj,kk);
+            if (cc == color)
+              vertices[nv++] = Index(shape,ii,jj,kk);
+          }
         }
+        ierr = PetscSortInt(nv,vertices);CHKERRQ(ierr);
         for (c=0; c<bs; c++) {
           xadj[pos] = xadj[pos-1];
           for (v=0; v<nv; v++)
@@ -160,10 +171,10 @@ PetscErrorCode ComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt shape
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(_ndirichlet,6);
-  PetscValidPointer(_idirichlet,7);
-  PetscValidIntPointer(_nneumann,8);
-  PetscValidPointer(_ineumann,9);
+  PetscValidIntPointer(_ndirichlet,7);
+  PetscValidPointer(_idirichlet,8);
+  PetscValidIntPointer(_nneumann,9);
+  PetscValidPointer(_ineumann,10);
 
   ierr = PetscBTCreate(m,&Dmask);CHKERRQ(ierr);
   ierr = PetscBTCreate(m,&Nmask);CHKERRQ(ierr);
@@ -233,6 +244,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 #if defined(PETSC_HAVE_PCBDDC)  /* XXX */
   if (graph) {
     PetscInt i,dim,dof;
+    PetscBool wrap[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
     PetscInt shape[3] = {1,1,1};
     PetscInt start[3] = {0,0,0};
     PetscInt width[3] = {1,1,1};
@@ -247,9 +259,10 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
       } else {
         start[i] = iga->node_gstart[i];
         width[i] = iga->node_gwidth[i];
+        wrap[i]  = iga->axis[i]->periodic;
       }
     }
-    ierr = ComputeBDDCGraph(dof,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
+    ierr = ComputeBDDCGraph(dof,wrap,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
   }
   if (boundary) {
