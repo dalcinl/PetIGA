@@ -646,6 +646,19 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
+PETSC_STATIC_INLINE
+#undef  __FUNCT__
+#define __FUNCT__ "IGAOptionsReject"
+PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
+{
+  PetscErrorCode ierr;
+  PetscBool      flag = PETSC_FALSE;
+  PetscFunctionBegin;
+  ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
+  if (flag) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Disabled option: %s",name);
+  PetscFunctionReturn(0);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetFromOptions"
 /*@
@@ -740,7 +753,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Basis */
     ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGABasisSetType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) btype[i] = btype[0]; /* XXX */
+    if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
     if (flg) for (i=0; i<dim; i++) {
         ierr = IGABasisSetType(iga->basis[i],btype[i]);CHKERRQ(ierr);
       }
@@ -749,11 +762,13 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
+      const char *prefix = 0;
+      ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_elements"  );CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_degree"    );CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_continuity");CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_limits"    );CHKERRQ(ierr);
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
-      ierr = PetscOptionsReject("-iga_elements",  PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsReject("-iga_degree",    PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsReject("-iga_continuity",PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsReject("-iga_limits",    PETSC_NULL);CHKERRQ(ierr);
     } else { /* set axis details */
       ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),PETSC_NULL);CHKERRQ(ierr);
