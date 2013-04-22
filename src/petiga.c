@@ -731,7 +731,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Periodicity */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(nw=dim,&nw),&flg);CHKERRQ(ierr);
-    if (flg && !nw) for (i=0; i<dim; i++) wraps[i] = PETSC_TRUE;
+    if (flg && nw==0) for (i=0; i<dim; i++) wraps[i] = PETSC_TRUE;
+    if (flg && nw==1) for (i=1; i<dim; i++) wraps[i] = wraps[0]; /* XXX */
     if (flg) for (i=0; i<dim; i++) {
         PetscBool w = wraps[i];
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
