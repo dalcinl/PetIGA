@@ -16,7 +16,7 @@ TARGETS = L2Proj1D L2Proj2D \
 	  HyperElasticity \
 	  PhaseFieldCrystal2D \
           BoundaryIntegral \
-          Richards	
+          Richards
 
 ALL: ${TARGETS}
 clean::
