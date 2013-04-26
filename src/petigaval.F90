@@ -71,7 +71,7 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
      end select
   case (1)
      select case (axis)
-     case (0); N = (/ 1.0 /)
+     case (0); N = 1
      end select
   end select
   dS = sqrt(sum(N*N))
@@ -94,7 +94,7 @@ function normal3(s,t) result(n)
   real(kind=IGA_REAL_KIND)             :: n(3)
   real(kind=IGA_REAL_KIND), intent(in) :: s(3)
   real(kind=IGA_REAL_KIND), intent(in) :: t(3)
-  ! c_i = eps_ijk s_j tj
+  ! n_i = eps_ijk s_j tj
   n(1) = s(2) * t(3) - s(3) * t(2)
   n(2) = s(3) * t(1) - s(1) * t(3)
   n(3) = s(1) * t(2) - s(2) * t(1)
@@ -112,7 +112,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = matmul(N,transpose(U))
-  V = 0.0
+  V = 0
   do a = 1, nen
      V = V + N(a) * U(:,a)
   end do
@@ -128,7 +128,7 @@ subroutine IGA_GetGrad(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, c
   ! V = matmul(N,transpose(U))
-  V = 0.0
+  V = 0
   do a = 1, nen
      do c = 1, dof
         V(:,c) = V(:,c) + N(:,a) * U(c,a)
@@ -146,7 +146,7 @@ subroutine IGA_GetHess(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim*dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = matmul(N,transpose(U))
-  V = 0.0
+  V = 0
   do a = 1, nen
      do i = 1, dof
         V(:,i) = V(:,i) + N(:,a) * U(i,a)
@@ -163,7 +163,7 @@ subroutine IGA_GetDel2(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, c, i
-  V = 0.0
+  V = 0
   do a = 1, nen
      do c = 1, dof
         do i = 1, dim
@@ -183,7 +183,7 @@ subroutine IGA_GetDer3(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim*dim*dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = matmul(N,transpose(U))
-  V = 0.0
+  V = 0
   do a = 1, nen
      do i = 1, dof
         V(:,i) = V(:,i) + N(:,a) * U(i,a)
@@ -202,7 +202,7 @@ end subroutine IGA_GetDer3
 !  scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim**der,dof)
 !  integer(kind=IGA_INTEGER_KIND)  :: a, i
 !  ! V = matmul(N,transpose(U))
-!  V = 0.0
+!  V = 0
 !  do a = 1, nen
 !     do i = 1, dof
 !        V(:,i) = V(:,i) + N(:,a) * U(i,a)
@@ -221,7 +221,7 @@ subroutine IGA_Interpolate(nen,dof,dim,der,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim**der,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = matmul(N,transpose(U))
-  V = 0.0
+  V = 0
   do a = 1, nen
      do i = 1, dof
         V(:,i) = V(:,i) + N(:,a) * U(i,a)
