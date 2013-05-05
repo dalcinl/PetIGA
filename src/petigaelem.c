@@ -1216,21 +1216,21 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
       if (ID[i] == 0 && !w) BuildFix(element,i,0);
       if (ID[i] == e && !w) BuildFix(element,i,1);
     }
-  } 
+  }
   PetscFunctionReturn(0);
- collocation: 
+ collocation:
   element->nfix  = 0;
   element->nflux = 0;
   {
-    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
-    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
+    PetscInt L[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
+    PetscInt R[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
     {
       IGAAxis  *AX = element->parent->axis;
       PetscInt i,dim = element->dim;
       for (i=0; i<dim; i++) {
         PetscBool w = AX[i]->periodic;
         PetscInt  n = element->sizes[i]-1; /* last node */
-        A0[i] = 0; if (!w) A1[i] = n;
+        L[i] = 0; if (!w) R[i] = n;
       }
     }
     {
@@ -1248,12 +1248,12 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
               PetscInt iA = ioffset + ia;
               PetscInt jA = joffset + ja;
               PetscInt kA = koffset + ka;
-              /**/ if (iA == A0[0]) AddFixa(element,b[0][0],a);
-              else if (iA == A1[0]) AddFixa(element,b[0][1],a);
-              /**/ if (jA == A0[1]) AddFixa(element,b[1][0],a);
-              else if (jA == A1[1]) AddFixa(element,b[1][1],a);
-              /**/ if (kA == A0[2]) AddFixa(element,b[2][0],a);
-              else if (kA == A1[2]) AddFixa(element,b[2][1],a);
+              /**/ if (iA == L[0]) AddFixa(element,b[0][0],a);
+              else if (iA == R[0]) AddFixa(element,b[0][1],a);
+              /**/ if (jA == L[1]) AddFixa(element,b[1][0],a);
+              else if (jA == R[1]) AddFixa(element,b[1][1],a);
+              /**/ if (kA == L[2]) AddFixa(element,b[2][0],a);
+              else if (kA == R[2]) AddFixa(element,b[2][1],a);
               a++;
             }
     }
@@ -1360,7 +1360,7 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
     }
   }
   PetscFunctionReturn(0);
- collocation: 
+ collocation:
   {
     PetscInt f,n;
     n = element->nfix;
