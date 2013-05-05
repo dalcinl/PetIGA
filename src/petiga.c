@@ -836,6 +836,27 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAOptionsAlias"
+PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[])
+{
+  char           value[4096]= {0};
+  PetscBool      flag = PETSC_FALSE;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidCharPointer(name,1);
+  PetscValidCharPointer(alias,3);
+  ierr = PetscOptionsHasName(NULL,name,&flag);CHKERRQ(ierr);
+  if (flag) {
+    ierr = PetscOptionsGetString(NULL,name,value,sizeof(value),&flag);CHKERRQ(ierr);
+    ierr = PetscOptionsSetValue(alias,value);CHKERRQ(ierr);
+  } else if (defval) {
+    ierr = PetscOptionsHasName(NULL,alias,&flag);CHKERRQ(ierr);
+    if (!flag) {ierr = PetscOptionsSetValue(alias,defval);CHKERRQ(ierr);}
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGACreateSubComms1D"
 PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 {
