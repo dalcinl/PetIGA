@@ -453,18 +453,20 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveBool(iga,collocation,2);
-  if (collocation && !iga->collocation) {
+  if (collocation) {
     PetscMPIInt size = 1;
-    PetscInt i, dim = (iga->dim > 0) ? iga->dim : 3;
-    PetscBool periodic = PETSC_FALSE;
     ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) if(iga->axis[i]->periodic) periodic = PETSC_TRUE;
     if (size > 1) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
                           "Collocation not supported in parallel");
+  }
+  if (collocation && iga->setup) {
+    PetscInt i, dim = iga->dim;
+    PetscBool periodic = PETSC_FALSE;
+    for (i=0; i<dim; i++) if(iga->axis[i]->periodic) periodic = PETSC_TRUE;
     if (periodic) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
                           "Collocation not supported with periodicity");
   }
-  if (collocation && iga->setup) { /* collocation */
+  if (collocation && iga->setup) {
     PetscInt i;
     for (i=0; i<3; i++) {
       ierr = IGABasisDestroy(&iga->node_basis[i]);CHKERRQ(ierr);

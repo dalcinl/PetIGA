@@ -1195,6 +1195,22 @@ static void BuildFix(IGAElement element,PetscInt dir,PetscInt side)
   }
 }
 
+PETSC_STATIC_INLINE
+IGABoundary AtBoundary(IGAElement element,PetscInt dir,PetscInt side)
+{
+  IGABoundary b = element->parent->boundary[dir][side];
+  PetscInt e = side ? element->sizes[dir]-1 : 0;
+  return (element->ID[dir] == e) ? b : PETSC_NULL;
+}
+
+PETSC_STATIC_INLINE
+PetscReal DOT(PetscInt dim, PetscReal a[], PetscReal b[])
+{
+  PetscInt i; PetscReal s;
+  for (s=0.0, i=0; i<dim; i++) s += a[i]*b[i];
+  return s;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildFix"
 PetscErrorCode IGAElementBuildFix(IGAElement element)
@@ -1314,21 +1330,54 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   PetscFunctionReturn(0);
  collocation:
   {
-    PetscInt M = element->neq * element->dof;
-    PetscInt N = element->nen * element->dof;
-    PetscInt f,n;
-    n = element->nfix;
-    for (f=0; f<n; f++) {
-      PetscInt k = element->ifix[f];
-      PetscInt a = k / element->dof;
-      if (element->index == element->colmap[a]) {
-        PetscInt    c = k % element->dof;
-        PetscScalar v = element->vfix[f];
-        PetscInt i,j;
-        for (i=0; i<M; i++) K[i*N+k] = 0.0;
-        for (j=0; j<N; j++) K[c*N+j] = 0.0;
-        K[c*N+k] = 1.0;
-        F[c] = v;
+    PetscInt dim = element->dim;
+    PetscInt dof = element->dof;
+    PetscInt nen = element->nen;
+    PetscInt N = nen * dof;
+    PetscInt dir,side;
+    for (dir=0; dir<dim; dir++) {
+      for (side=0; side<2; side++) {
+        IGABoundary b = AtBoundary(element,dir,side);
+        if(b && b->nload) {
+          PetscInt  f,n = b->nload;
+          PetscReal normal[3] = {0.0,0.0,0.0};
+          PetscReal *dshape;
+          if (!element->geometry) {
+            normal[dir] = side ? 1.0 : -1.0;
+            dshape = element->basis[1];
+          } else {
+            PetscReal dS, *F = element->gradX[0];
+            IGA_GetNormal(dim,dir,side,F,&dS,normal);
+            dshape = element->shape[1];
+          }
+          for (f=0; f<n; f++) {
+            PetscInt  c = b->iload[f];
+            PetscReal v = b->vload[f];
+            PetscInt  a,j;
+            for (j=0; j<N; j++) K[c*N+j] = 0.0;
+            for (a=0; a<nen; a++)
+              K[c*N+a*dof+c] = DOT(dim,&dshape[a*dim],normal);
+            F[c] = v;
+          }
+        }
+        if (b && b->count) {
+          PetscInt  f,n = b->count;
+          PetscReal *shape;
+          if (!element->geometry) {
+            shape = element->basis[0];
+          } else {
+            shape = element->shape[0];
+          }
+          for (f=0; f<n; f++) {
+            PetscInt  c = b->field[f];
+            PetscReal v = b->value[f];
+            PetscInt  a,j;
+            for (j=0; j<N; j++) K[c*N+j] = 0.0;
+            for (a=0; a<nen; a++)
+              K[c*N+a*dof+c] = shape[a];
+            F[c] = v;
+          }
+        }
       }
     }
   }

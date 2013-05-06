@@ -230,7 +230,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
                       "Derivative order must be grather than zero, got %D",d);
 
   p = axis->p;
-  n = axis->m - p -1;
+  n = axis->m - p - 1;
   U = axis->U;
 
   nel  = axis->nnp;
@@ -252,8 +252,8 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
     PetscInt  k = IGA_FindSpan(n,p,u,U);
     PetscReal *N = &value[iel*nen*ndr];
     offset[iel] = k-p;
-    point[iel]  = u;
     detJ[iel]   = U[k+1]-U[k];
+    point[iel]  = u;
     IGA_Basis_BSpline(k,u,p,d,U,N);
   }
 
@@ -270,6 +270,19 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   basis->weight = weight;
   basis->point  = point;
   basis->value  = value;
+
+  {
+    PetscInt  k0 = p,    k1 = n;
+    PetscReal u0 = U[p], u1 = U[n+1];
+    ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[0]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen*ndr,PetscReal,&basis->bnd_value[1]);CHKERRQ(ierr);
+    basis->bnd_offset[0] = k0-p; basis->bnd_offset[1] =  k1-p;
+    basis->bnd_detJ  [0] =  1.0; basis->bnd_detJ  [1] =   1.0;
+    basis->bnd_weight[0] =  1.0; basis->bnd_weight[1] =   1.0;
+    basis->bnd_point [0] =   u0; basis->bnd_point [1] =    u1;
+    IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
+    IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
+  }
 
   PetscFunctionReturn(0);
 }
