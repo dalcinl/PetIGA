@@ -1,0 +1,247 @@
+/*
+  This code solves multiphase, multicomponent flow in porous media
+  (two phase, two component). Thanks to Bilal Saad for his
+  contribution.
+
+  keywords: transient, vector, implicit, nonlinear, dimension
+  independent, boundary integrals
+ */
+
+#include "petiga.h"
+
+typedef struct {
+  PetscScalar rholw,porosity,Pr,n,Slr,Sgr,H,Mh,T,mul,mug,Mw,Dlh,k;
+} AppCtx;
+
+typedef struct {
+  PetscScalar Pl,rholh;
+} Field;
+
+#undef __FUNCT__
+#define __FUNCT__ "ICTest1"
+PetscErrorCode ICTest1(IGA iga,Vec U,AppCtx *user)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  PetscScalar Mh = user->Mh;
+  PetscScalar H  = user->H;
+
+  DM da;
+  ierr = IGACreateNodeDM(iga,2,&da);CHKERRQ(ierr);
+  Field **u;
+  ierr = DMDAVecGetArray(da,U,&u);CHKERRQ(ierr);
+  DMDALocalInfo info;
+  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
+
+  PetscInt i,j;
+  for(i=info.xs;i<info.xs+info.xm;i++){
+    PetscReal x = (PetscReal)i / ( (PetscReal)(info.mx-1) );
+    for(j=info.ys;j<info.ys+info.ym;j++){
+      u[j][i].Pl = 10.;
+      if(x <= 0.5){
+	u[j][i].rholh = 15*Mh*H; // Pg = rholh/Mh
+      }else{
+	u[j][i].rholh = 25*Mh*H;
+      }
+    }
+  }
+  ierr = DMDAVecRestoreArray(da,U,&u);CHKERRQ(ierr); 
+  ierr = DMDestroy(&da);;CHKERRQ(ierr); 
+  PetscFunctionReturn(0); 
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "EquationOfState"
+void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rholh,PetscScalar rholh_t,PetscScalar *rholh_x,
+		     PetscScalar *Sl,PetscScalar *Sl_t,PetscScalar *krl,PetscScalar *krg,
+		     PetscScalar *rhogh,PetscScalar *rhogh_t,PetscScalar *Pg_x,AppCtx *user)
+{
+  // VanGenuchten, Henry
+  PetscScalar R     = 8.314e-5; // [J/(K-mol)]
+  PetscScalar Pr    = user->Pr;
+  PetscScalar n     = user->n, m = 1.-1./n;
+  PetscScalar Slr   = user->Slr;
+  PetscScalar Sgr   = user->Sgr;
+  PetscScalar H     = user->H;
+  PetscScalar Mh    = user->Mh;
+  PetscScalar T     = user->T;
+  PetscScalar Pc    = rholh/(H*Mh)-Pl;
+  PetscScalar Pc_t  = rholh_t/(H*Mh)-Pl_t;
+  PetscScalar Sle   = 1;
+  PetscScalar Sle_t = 0;
+  if(rholh/H/Mh-Pl > 0.0) {
+    Sle   = pow(pow((Pc/Pr),n)+1.,-m);
+    Sle_t = -m*n/Pr*pow(pow((Pc/Pr),n)+1.,-m-1.)*pow(Pc/Pr,n-1.)*Pc_t;
+  }
+  *Sl      = (1.-Slr-Sgr)*Sle+Slr;
+  *Sl_t    = (1.-Slr-Sgr)*Sle_t;
+  *krl     = sqrt(Sle)*pow(1.-pow(1.-pow(Sle,1./m),m),2);
+  *krg     = sqrt(1.-Sle)*pow(1.-pow(Sle,1./m),2*m);
+  *rhogh_t = rholh_t/(R*T*H);
+  *rhogh   = rholh  /(R*T*H); 
+  PetscInt i;
+  for(i=0;i<dim;i++) Pg_x[i] = rholh_x[i]/Mh*H; 
+  return;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Residual"
+PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+			PetscReal shift,const PetscScalar *V,
+			PetscReal t,const PetscScalar *U,
+			PetscScalar *R,void *ctx)
+{
+  AppCtx *user = (AppCtx *)ctx;
+  PetscScalar rholw = user->rholw; 
+  PetscScalar porosity = user->porosity; 
+  PetscScalar mul = user->mul;
+  PetscScalar mug = user->mug;
+  PetscScalar Mh  = user->Mh;
+  PetscScalar Mw  = user->Mw;
+  PetscScalar Dlh = user->Dlh;
+  PetscScalar k   = user->k;
+
+  PetscInt a,i,nen,dim;
+  IGAPointGetSizes(p,&nen,0,0);
+  IGAPointGetDims(p,&dim,NULL,NULL);
+
+  PetscScalar sol_t[2],sol[2],sol_x[2][dim];
+  IGAPointFormValue(p,V,&sol_t[0]);
+  IGAPointFormValue(p,U,&sol[0]);
+  IGAPointFormGrad (p,U,&sol_x[0][0]);
+
+  const PetscReal *N0,(*N1)[dim];
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+
+  PetscScalar  Pl      = sol[0];    // liquid pressure
+  PetscScalar  Pl_t    = sol_t[0];    
+  PetscScalar *Pl_x    = sol_x[0];    
+  PetscScalar  rholh   = sol[1];    // dissolved hydrogen
+  PetscScalar  rholh_t = sol_t[1]; 
+  PetscScalar *rholh_x = sol_x[1];
+
+  PetscScalar Sl,Sl_t,krl,krg,rhogh,rhogh_t,Pg_x[dim];
+  EquationOfState(dim,Pl,Pl_t,rholh,rholh_t,rholh_x,&Sl,&Sl_t,&krl,&krg,&rhogh,&rhogh_t,Pg_x,user);
+  PetscScalar Sg = 1.-Sl, Sg_t = -Sl_t;
+  PetscScalar cl = Sl*(rholh/Mh+rholw/Mw);
+  
+  PetscScalar den = rholh/Mh+rholw/Mw;
+  PetscScalar jlw[dim],ql[dim],qg[dim],g=0;
+  for(i=0;i<dim;i++) {
+    if(i==dim-1) g = 0.;
+    PetscScalar X_x = (rholh_x[i]/Mh)/den - (rholh/Mh)/(den*den)*(rholh_x[i]/Mh);
+    jlw[i] = porosity*Mh*cl*Dlh*X_x;
+    ql[i]  = -k*krl/mul*(Pl_x[i]-rholw*g);
+    qg[i]  = -k*krg/mug*(Pg_x[i]);
+  }
+
+  PetscScalar (*Re)[2] = (PetscScalar (*)[2])R;
+  for (a=0; a<nen; a++) {
+    PetscScalar gN_dot_ql = 0,gN_dot_qg = 0,gN_dot_jlw = 0;
+    for(i=0;i<dim;i++){
+      gN_dot_ql += N1[a][i]*ql[i];
+      gN_dot_qg += N1[a][i]*qg[i];
+      gN_dot_jlw += N1[a][i]*jlw[i];
+    }
+    Re[a][0]  = porosity*N0[a]*Sl_t*rholw-(rholw*gN_dot_ql + gN_dot_jlw);
+    Re[a][1]  = porosity*N0[a]*(Sl_t*rholh+Sl*rholh_t+Sg_t*rhogh+Sg*rhogh_t);
+    Re[a][1] -= (rholh*gN_dot_ql + rhogh*gN_dot_qg - gN_dot_jlw);
+  }
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Jacobian"
+PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+			PetscReal shift,const PetscScalar *V,
+			PetscReal t,const PetscScalar *U,
+			PetscScalar *J,void *ctx)
+{
+  // for now use the option -snes_fd_color for the Jacobian
+  return 0;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "GeometricAdaptivity"
+PetscErrorCode GeometricAdaptivity(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
+{
+  PetscErrorCode ierr;
+  PetscReal      dt;
+  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
+  *ok = PETSC_TRUE;
+  *nextdt = PetscMin(1.2*dt,833.0);
+  return 0;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "main"
+int main(int argc, char *argv[]) {
+
+  PetscErrorCode  ierr;
+  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
+
+  AppCtx user;
+  user.rholw    = 1000;
+  user.porosity = 0.3;
+  user.Pr       = 20;
+  user.n        = 1.54;
+  user.Slr      = 0.01;
+  user.Sgr      = 0.;
+  user.T        = 303;
+  user.H        = 0.765; 
+  user.Mw       = 1e-2;
+  user.Mh       = 2e-3;
+  user.mul      = 1e-8;
+  user.mug      = 9e-11;
+  user.Dlh      = 3e-9;
+  user.k        = 1e-16; 
+  PetscInt dim = 2, p = 1, N = 500,L = 1;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"r_","2c2p Options","2c2p");CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+  IGA         iga;
+  IGAAxis     axis;
+  ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
+  ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
+  ierr = IGASetDof(iga,2);CHKERRQ(ierr);
+
+  ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis,N,0.0,L,0);CHKERRQ(ierr);
+  ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis,N/10,0.0,0.1*L,0);CHKERRQ(ierr);
+  
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+  
+  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+
+  TS     ts;
+  ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
+  ierr = TSSetTimeStep(ts,0.17);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
+  ierr = TSAlphaSetRadius(ts,1.0);CHKERRQ(ierr);
+  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr); 
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+
+  PetscReal t; 
+  Vec       U;
+  ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
+  ierr = FormInitialCondition(iga,U,&user);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+
+ // Write outputs
+  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,U,"sol.dat");CHKERRQ(ierr);
+
+  ierr = VecDestroy(&U);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = IGADestroy(&iga);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
