@@ -70,15 +70,19 @@ int main(int argc, char *argv[]) {
   if (steady) {
     SNES snes;
     ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
+    ierr = SNESSetTolerances(snes,PETSC_DEFAULT,1e-5,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
     ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
     ierr = SNESSolve(snes,0,x);CHKERRQ(ierr);
     ierr = SNESDestroy(&snes);CHKERRQ(ierr);
   } else {
     TS ts;
+    SNES snes;
     ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
     ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
     ierr = TSSetDuration(ts,10000,0.1);CHKERRQ(ierr);
     ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
+    ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+    ierr = SNESSetTolerances(snes,PETSC_DEFAULT,1e-5,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
     ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
     ierr = TSSolve(ts,x,PETSC_NULL);CHKERRQ(ierr);
