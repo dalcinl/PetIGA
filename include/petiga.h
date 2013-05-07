@@ -399,7 +399,7 @@ struct _n_IGAElement {
   PetscInt  sizes[3];
   PetscInt  ID[3];
   PetscBool atboundary;
-  PetscInt  atboundary_id;
+  PetscInt  boundary_id;
   /**/
   PetscInt count;
   PetscInt index;

@@ -22,8 +22,23 @@
 
 */
 
-
 #include "petiga.h"
+
+PETSC_STATIC_INLINE
+PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i]*b[i];
+  return s;
+}
+
+PETSC_STATIC_INLINE
+PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i][i];
+  return s;
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "SystemGalerkin"
@@ -32,17 +47,14 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
 
-  const PetscReal *N1;
-  IGAPointGetShapeFuns(p,1,&N1);
+  const PetscReal (*N1)[dim];
+  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
 
-  PetscInt a,b,i;
+  PetscInt a,b;
   for (a=0; a<nen; a++) {
-    for (b=0; b<nen; b++) {
-      PetscScalar Kab = 0.0;
-      for (i=0; i<dim; i++)
-        Kab += N1[a*dim+i]*N1[b*dim+i];
-      K[a*nen+b] = Kab;
-    }
+    for (b=0; b<nen; b++)
+      K[a*nen+b] = DOT(dim,N1[a],N1[b]);
+    F[a] = 0.0;
   }
   return 0;
 }
@@ -57,11 +69,9 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
   const PetscReal (*N2)[dim][dim];
   IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
 
-  PetscInt a,i;
+  PetscInt a;
   for (a=0; a<nen; a++)
-    for (i=0; i<dim; i++)
-      K[a] += -N2[a][i][i];
-
+    K[a] += -DEL2(dim,N2[a]);
   F[0] = 0.0;
 
   return 0;

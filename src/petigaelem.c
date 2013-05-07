@@ -298,6 +298,7 @@ PetscBool IGANextElement(IGA iga,IGAElement element)
   element->nval = 0;
   element->nvec = 0;
   element->nmat = 0;
+  element->boundary_id = -1;
   /* */
   index = ++element->index;
   if (PetscUnlikely(index >= element->count)) {
@@ -341,30 +342,26 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
 #define __FUNCT__ "IGAElementNextUserOps"
 PetscBool IGAElementNextUserOps(IGAElement element,IGAUserOps *userops)
 {
-  static PetscInt counter = 0; /* XXX */
-  IGA iga = element->parent;
+  IGA      iga = element->parent;
   PetscInt dim = element->dim;
-  for (; PetscUnlikely(counter < 2*dim); counter++) {
-    PetscInt dir  = counter / 2;
-    PetscInt side = counter % 2;
-    PetscInt iel  = side ? element->sizes[dir]-1 : 0;
-    if (element->ID[dir] != iel) continue;
+  while (++element->boundary_id < 2*dim) {
+    PetscInt i = element->boundary_id / 2;
+    PetscInt s = element->boundary_id % 2;
+    PetscInt e = s ? element->sizes[i]-1 : 0;
+    if (element->ID[i] != e) continue;
+    if (!iga->boundary[i][s]->userops) continue;
+    *userops = iga->boundary[i][s]->userops;
     element->atboundary = PETSC_TRUE;
-    element->atboundary_id = counter;
-    *userops = iga->boundary[dir][side]->userops;
-    if (!(*userops)) continue;
-    counter++;
     return PETSC_TRUE;
   }
-  if (PetscLikely(counter == 2*dim)) {
-    element->atboundary = PETSC_FALSE;
-    element->atboundary_id = 0;
+  if (element->boundary_id++ == 2*dim) {
     *userops = iga->userops;
-    counter++;
+    element->atboundary = PETSC_FALSE;
     return PETSC_TRUE;
   }
   *userops = 0;
-  counter = 0;
+  element->atboundary  = PETSC_FALSE;
+  element->boundary_id = -1;
   return PETSC_FALSE;
 }
 
@@ -401,16 +398,15 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point)
   (*point)->nsd = element->nsd;
   (*point)->npd = element->npd;
 
-  if (PetscUnlikely(!element->atboundary)) {
+  if (PetscLikely(!element->atboundary)) {
     ierr = IGAElementBuildQuadrature(element);CHKERRQ(ierr);
     ierr = IGAElementBuildShapeFuns(element);CHKERRQ(ierr);
   } else {
-    PetscInt i = element->atboundary_id / 2;
-    PetscInt s = element->atboundary_id % 2;
+    PetscInt i = element->boundary_id / 2;
+    PetscInt s = element->boundary_id % 2;
     (*point)->count = element->nqp / element->BD[i]->nqp;
     ierr = IGAElementBuildQuadratureAtBoundary(element,i,s);CHKERRQ(ierr);
     ierr = IGAElementBuildShapeFunsAtBoundary (element,i,s);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
   }
   PetscFunctionReturn(0);
 }
@@ -509,7 +505,13 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
     PetscFunctionReturn(PETSC_ERR_PLIB);
   }
   *point = PETSC_NULL;
-  PetscFunctionReturn(0);
+  /* XXX */
+  if (PetscLikely(!element->collocation)) PetscFunctionReturn(0);
+  if (PetscLikely(!element->atboundary))  PetscFunctionReturn(0);
+  element->atboundary  = PETSC_FALSE;
+  element->boundary_id = 2*element->dim;
+  /* XXX */
+ PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
@@ -1204,10 +1206,10 @@ IGABoundary AtBoundary(IGAElement element,PetscInt dir,PetscInt side)
 }
 
 PETSC_STATIC_INLINE
-PetscReal DOT(PetscInt dim, PetscReal a[], PetscReal b[])
+PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
-  PetscInt i; PetscReal s;
-  for (s=0.0, i=0; i<dim; i++) s += a[i]*b[i];
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i]*b[i];
   return s;
 }
 
