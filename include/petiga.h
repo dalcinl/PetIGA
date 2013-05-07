@@ -398,6 +398,7 @@ struct _n_IGAElement {
   PetscInt  width[3];
   PetscInt  sizes[3];
   PetscInt  ID[3];
+  IGABasis  BD[3];
   PetscBool atboundary;
   PetscInt  boundary_id;
   /**/
@@ -411,8 +412,6 @@ struct _n_IGAElement {
   PetscInt dim;
   PetscInt nsd;
   PetscInt npd;
-
-  IGABasis *BD;
 
   PetscInt    *mapping;   /*[nen]      */
   PetscBool   geometry;

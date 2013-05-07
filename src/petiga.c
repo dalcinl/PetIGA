@@ -453,12 +453,6 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveBool(iga,collocation,2);
-  if (collocation) {
-    PetscMPIInt size = 1;
-    ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
-    if (size > 1) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
-                          "Collocation not supported in parallel");
-  }
   if (collocation && iga->setup) {
     PetscInt i, dim = iga->dim;
     PetscBool periodic = PETSC_FALSE;
@@ -1071,60 +1065,74 @@ PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
   PetscFunctionReturn(0);
 }
 
+EXTERN_C_BEGIN
+extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
+extern PetscInt  IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal U[]);
+EXTERN_C_END
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Stage1"
 PetscErrorCode IGASetUp_Stage1(IGA iga)
 {
-  PetscInt       i;
+  PetscInt       i,dim;
+  PetscInt       grid_sizes[3] = {1,1,1};
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (iga->setupstage >= 1) PetscFunctionReturn(0);
   iga->setupstage = 1;
 
-  for (i=0; i<iga->dim; i++)
+  dim = iga->dim;
+
+  for (i=0; i<dim; i++)
     {ierr = IGAAxisSetUp(iga->axis[i]);CHKERRQ(ierr);}
-  for (i=iga->dim; i<3; i++)
+  for (i=dim; i<3; i++)
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
+
+  if (!iga->collocation)
+    for (i=0; i<dim; i++)
+      grid_sizes[i] = iga->axis[i]->nel;
+  else
+    for (i=0; i<dim; i++)
+      grid_sizes[i] = iga->axis[i]->nnp;
 
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
     PetscMPIInt size,rank;
-    PetscInt    grid_sizes[3] = {1,1,1};
     PetscInt    *proc_sizes = iga->proc_sizes;
     PetscInt    *proc_ranks = iga->proc_ranks;
     ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
     ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
-    for (i=0; i<iga->dim; i++)
-      grid_sizes[i] = iga->axis[i]->nel;
     ierr = IGA_Partition(size,rank,iga->dim,grid_sizes,
                          proc_sizes,proc_ranks);CHKERRQ(ierr);
-    for (i=iga->dim; i<3; i++) {
+    for (i=dim; i<3; i++) {
       proc_sizes[i] = 1;
       proc_ranks[i] = 0;
     }
   }
+
   { /* element partitioning */
     PetscInt *elem_sizes = iga->elem_sizes;
     PetscInt *elem_start = iga->elem_start;
     PetscInt *elem_width = iga->elem_width;
-    for (i=0; i<iga->dim; i++)
-      elem_sizes[i] = iga->axis[i]->nel;
+    for (i=0; i<dim; i++) elem_sizes[i] = grid_sizes[i];
     ierr = IGA_Distribute(iga->dim,iga->proc_sizes,iga->proc_ranks,
                           elem_sizes,elem_width,elem_start);CHKERRQ(ierr);
-    for (i=iga->dim; i<3; i++) {
+    for (i=dim; i<3; i++) {
       elem_sizes[i] = 1;
       elem_start[i] = 0;
       elem_width[i] = 1;
     }
   }
+
+  if (!iga->collocation)
   { /* geometry partitioning */
     PetscInt *geom_sizes  = iga->geom_sizes;
     PetscInt *geom_lstart = iga->geom_lstart;
     PetscInt *geom_lwidth = iga->geom_lwidth;
     PetscInt *geom_gstart = iga->geom_gstart;
     PetscInt *geom_gwidth = iga->geom_gwidth;
-    for (i=0; i<iga->dim; i++) {
+    for (i=0; i<dim; i++) {
       PetscInt nel    = iga->elem_sizes[i];
       PetscInt efirst = iga->elem_start[i];
       PetscInt elast  = iga->elem_start[i] + iga->elem_width[i] - 1;
@@ -1145,7 +1153,42 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
       geom_gstart[i] = gstart;
       geom_gwidth[i] = gend - gstart;
     }
-    for (i=iga->dim; i<3; i++) {
+    for (i=dim; i<3; i++) {
+      geom_sizes[i]  = 1;
+      geom_lstart[i] = 0;
+      geom_lwidth[i] = 1;
+      geom_gstart[i] = 0;
+      geom_gwidth[i] = 1;
+    }
+  } else
+  {  /* geometry partitioning */
+    PetscInt *geom_sizes  = iga->geom_sizes;
+    PetscInt *geom_lstart = iga->geom_lstart;
+    PetscInt *geom_lwidth = iga->geom_lwidth;
+    PetscInt *geom_gstart = iga->geom_gstart;
+    PetscInt *geom_gwidth = iga->geom_gwidth;
+    for (i=0; i<dim; i++) {
+      PetscInt   p = iga->axis[i]->p;
+      PetscInt   m = iga->axis[i]->m;
+      PetscReal *U = iga->axis[i]->U;
+      PetscInt   n = m - p - 1;
+      geom_sizes[i]  = iga->elem_sizes[i];
+      geom_lstart[i] = iga->elem_start[i];
+      geom_lwidth[i] = iga->elem_width[i];
+      {
+        PetscInt  a = geom_lstart[i];
+        PetscReal u = IGA_Greville(a,p,U);
+        PetscInt  k = IGA_FindSpan(n,p,u,U);
+        geom_gstart[i] = k - p;
+      }
+      {
+        PetscInt  a = geom_lstart[i] + geom_lwidth[i] - 1;
+        PetscReal u = IGA_Greville(a,p,U);
+        PetscInt  k = IGA_FindSpan(n,p,u,U);
+        geom_gwidth[i] = k + 1 - geom_gstart[i];
+      }
+    }
+    for (i=dim; i<3; i++) {
       geom_sizes[i]  = 1;
       geom_lstart[i] = 0;
       geom_lwidth[i] = 1;
@@ -1153,6 +1196,7 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
       geom_gwidth[i] = 1;
     }
   }
+
   /* element */
   ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
@@ -1192,6 +1236,10 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
       node_lwidth[i] = iga->geom_lwidth[i];
       node_gstart[i] = iga->geom_gstart[i];
       node_gwidth[i] = iga->geom_gwidth[i];
+      if (rank == 0 && node_lstart[i] < 0) {
+        node_lwidth[i] += node_lstart[i];
+        node_lstart[i] = 0;
+      }
       if (rank == size-1)
         node_lwidth[i] = node_sizes[i] - node_lstart[i];
     }

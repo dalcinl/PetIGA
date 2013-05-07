@@ -290,8 +290,8 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
 PetscInt IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal U[])
 {
   PetscInt low,high,span;
-  if(u >= U[n+1]) return n;
   if(u <= U[p])   return p;
+  if(u >= U[n+1]) return n;
   low  = p;
   high = n+1;
   span = (high+low)/2;
