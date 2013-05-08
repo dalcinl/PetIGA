@@ -232,6 +232,7 @@ struct _p_IGA {
   PETSCHEADER(struct _IGAOps);
   PetscBool  setup;
   PetscInt   setupstage;
+  PetscBool  collocation;
 
   IGAUserOps userops;
   VecType    vectype;
@@ -245,8 +246,8 @@ struct _p_IGA {
   IGAAxis     axis[3];
   IGARule     rule[3];
   IGABoundary boundary[3][2];
-
   IGABasis    basis[3];
+
   IGAElement  iterator;
 
   PetscInt    geometry;
@@ -285,11 +286,6 @@ struct _p_IGA {
   Vec        vwork[16];
   Vec        natural;
   VecScatter n2g,g2n;
-
-  /* stuff added for collocation */
-  PetscBool   collocation;
-  IGABasis    node_basis[3];
-  IGAElement  node_iterator;
 };
 
 PETSC_EXTERN PetscClassId IGA_CLASSID;

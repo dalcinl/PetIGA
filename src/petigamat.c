@@ -112,6 +112,11 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
   PetscReal *U = iga->axis[dir]->U;
   PetscInt k;
 
+  if (PetscUnlikely(iga->collocation)) {
+    k = iga->basis[dir]->offset[i];
+    *first = k; *last  = k + p; return;
+  }
+
   /* compute index of the leftmost overlapping basis */
   k = i;
   while (U[k]==U[k+1]) k++; /* XXX Using "==" with floating point values ! */
@@ -133,11 +138,6 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
     *first = k - s - n;
   }
 
-  if (PetscUnlikely(iga->collocation)) { /* collocation */
-    PetscInt offset = iga->node_basis[dir]->offset[i];
-    *first = offset;
-    *last  = offset + p;
-  }
 }
 
 PETSC_STATIC_INLINE

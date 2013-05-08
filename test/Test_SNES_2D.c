@@ -80,6 +80,69 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "FunctionCollocation"
+PetscErrorCode FunctionCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *ctx)
+{
+  PetscReal xy[2];
+  IGAPointFormPoint(p,xy);
+  PetscReal x = xy[0];
+  PetscReal y = xy[1];
+
+  PetscScalar u0[4],u1[4][2],u2[4][2][2];
+  IGAPointFormValue(p,Ue,&u0[0]);
+  IGAPointFormGrad (p,Ue,&u1[0][0]);
+  IGAPointFormHess (p,Ue,&u2[0][0][0]);
+
+  PetscScalar PETSC_UNUSED u = u0[0];
+  PetscScalar PETSC_UNUSED v = u0[1];
+  PetscScalar PETSC_UNUSED w = u0[2];
+  PetscScalar PETSC_UNUSED r = u0[3];
+
+  PetscScalar PETSC_UNUSED u_x = u1[0][0], u_y = u1[0][1];
+  PetscScalar PETSC_UNUSED v_x = u1[1][0], v_y = u1[1][1];
+  PetscScalar PETSC_UNUSED w_x = u1[2][0], w_y = u1[2][1];
+  PetscScalar PETSC_UNUSED r_x = u1[3][0], r_y = u1[3][1];
+
+  PetscScalar PETSC_UNUSED u_xx = u2[0][0][0], u_yy = u2[0][1][1];
+  PetscScalar PETSC_UNUSED v_xx = u2[1][0][0], v_yy = u2[1][1][1];
+  PetscScalar PETSC_UNUSED w_xx = u2[2][0][0], w_yy = u2[2][1][1];
+  PetscScalar PETSC_UNUSED r_xx = u2[3][0][0], r_yy = u2[3][1][1];
+
+  Fe[0] = u - Peaks(x,y);
+  Fe[1] = -(v_xx + v_yy) - 1.0;
+  Fe[2] = -(w_xx + w_yy) + w - 1.0;
+  Fe[3] = -(r_xx + r_yy) - 1*exp(r);
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "JacobianCollocation"
+PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *ctx)
+{
+  PetscInt nen = p->nen;
+
+  PetscScalar u0[4];
+  IGAPointFormValue(p,Ue,&u0[0]);
+  PetscScalar r = u0[3];
+
+  PetscReal N0[nen],N2[nen][2][2];
+  IGAPointFormShapeFuns(p,0,&N0[0]);
+  IGAPointFormShapeFuns(p,2,&N2[0][0][0]);
+
+  PetscInt a;
+  for (a=0; a<nen; a++) {
+    PetscReal Na    = N0[a];
+    PetscReal Na_xx = N2[a][0][0];
+    PetscReal Na_yy = N2[a][1][1];
+    Je[0*nen*4+a*4+0] = Na;
+    Je[1*nen*4+a*4+1] = -(Na_xx + Na_yy);
+    Je[2*nen*4+a*4+2] = -(Na_xx + Na_yy) + Na;
+    Je[3*nen*4+a*4+3] = -(Na_xx + Na_yy) - Na * 1*exp(r);
+  }
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
@@ -87,13 +150,12 @@ int main(int argc, char *argv[]) {
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  PetscInt N=16, p=2, C=PETSC_DECIDE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","MultiComp2D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (C == PETSC_DECIDE) C = p-1;
+  ierr = IGAOptionsAlias("-N","16","-iga_elements");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-p", "2","-iga_degree");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-C","-1","-iga_continuity");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-L","-1,+1","-iga_limits");CHKERRQ(ierr);
 
 #if PETSC_VERSION_(3,2,0)
   {
@@ -110,41 +172,50 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDim(iga,2);CHKERRQ(ierr);
   ierr = IGASetDof(iga,4);CHKERRQ(ierr);
 
-  IGAAxis axis0;
-  ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis0,p);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis0,N,-1.0,1.0,C);CHKERRQ(ierr);
-  IGAAxis axis1;
-  ierr = IGAGetAxis(iga,1,&axis1);CHKERRQ(ierr);
-  ierr = IGAAxisCopy(axis0,axis1);CHKERRQ(ierr);
+  ierr = IGASetFieldName(iga,0,"L2Projection");CHKERRQ(ierr);
+  ierr = IGASetFieldName(iga,1,"Poisson");CHKERRQ(ierr);
+  ierr = IGASetFieldName(iga,2,"ReactionDiffusion");CHKERRQ(ierr);
+  ierr = IGASetFieldName(iga,3,"Bratu");CHKERRQ(ierr);
 
   IGABoundary bnd;
   PetscInt dir,side;
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
+      PetscScalar field = 1;
       PetscScalar value = 1.0;
       ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,1,value);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
     }
   }
-  for (side=0, dir=0; dir<2; dir++) {
+  for (dir=0; dir<2; dir++) {
+    PetscScalar field = 2;
     PetscScalar value = 0.0;
-    ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,2,value);CHKERRQ(ierr);
+    /*PetscScalar load  = 0.0;*/
+    ierr = IGAGetBoundary(iga,dir,side=0,&bnd);CHKERRQ(ierr);
+    ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
+    ierr = IGAGetBoundary(iga,dir,side=1,&bnd);CHKERRQ(ierr);
+    /*ierr = IGABoundarySetLoad(bnd,field,load);CHKERRQ(ierr);*/
+    ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
   }
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
+      PetscScalar field = 3;
       PetscScalar value = 0.0;
       ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,3,value);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
     }
   }
 
-  ierr = IGASetUserFunction(iga,Function,0);CHKERRQ(ierr);
-  ierr = IGASetUserJacobian(iga,Jacobian,0);CHKERRQ(ierr);
-
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  if (!iga->collocation) {
+    ierr = IGASetUserFunction(iga,Function,0);CHKERRQ(ierr);
+    ierr = IGASetUserJacobian(iga,Jacobian,0);CHKERRQ(ierr);
+  } else {
+    ierr = IGASetUserFunction(iga,FunctionCollocation,0);CHKERRQ(ierr);
+    ierr = IGASetUserJacobian(iga,JacobianCollocation,0);CHKERRQ(ierr);
+  }
 
   Vec x;
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
@@ -159,12 +230,6 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = SNESDestroy(&snes);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
-
-  PetscBool flag = PETSC_FALSE;
-  PetscReal secs = -1;
-  ierr = PetscOptionsHasName(0,"-sleep",&flag);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(0,"-sleep",&secs,0);CHKERRQ(ierr);
-  if (flag) {ierr = PetscSleep(secs);CHKERRQ(ierr);}
 
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;

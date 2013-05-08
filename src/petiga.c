@@ -106,10 +106,6 @@ PetscErrorCode IGADestroy(IGA *_iga)
   }
   ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
 
-  for (i=0; i<3; i++) /* collocation */
-    {ierr = IGABasisDestroy(&iga->node_basis[i]);CHKERRQ(ierr);}
-  ierr = IGAElementDestroy(&iga->node_iterator);CHKERRQ(ierr);
-
   ierr = IGAReset(iga);CHKERRQ(ierr);
   ierr = PetscHeaderDestroy(&iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -152,7 +148,6 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
 
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
-  ierr = IGAElementReset(iga->node_iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -205,7 +200,8 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
       ierr = PetscViewerASCIIPrintf(viewer,"Partitioning - elements: sum=%D  min=%D  max=%D  max/min=%g\n",
                                     isum[1],imin[1],imax[1],(double)imax[1]/(double)imin[1]);CHKERRQ(ierr);
     }
-    if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) {
+    if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL)
+      {
         PetscMPIInt rank; PetscInt *ranks = iga->proc_ranks;
         PetscInt *nnp = iga->node_lwidth, tnnp = 1, *snp = iga->node_lstart;
         PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
@@ -227,7 +223,7 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
         ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
         ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);CHKERRQ(ierr);
       }
-    }
+  }
   PetscFunctionReturn(0);
 }
 
@@ -449,7 +445,6 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 #define __FUNCT__ "IGASetUseCollocation"
 PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
 {
-  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveBool(iga,collocation,2);
@@ -457,25 +452,6 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
     SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
             "Cannot change collocation after IGASetUp()");
   iga->collocation = collocation;
-  if (collocation && iga->setup) {
-    PetscInt i, dim = iga->dim;
-    PetscBool periodic = PETSC_FALSE;
-    for (i=0; i<dim; i++) if(iga->axis[i]->periodic) periodic = PETSC_TRUE;
-    if (periodic) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,
-                          "Collocation not supported with periodicity");
-  }
-  if (collocation && iga->setup) {
-    PetscInt i;
-    for (i=0; i<3; i++) {
-      ierr = IGABasisDestroy(&iga->node_basis[i]);CHKERRQ(ierr);
-      ierr = IGABasisCreate(&iga->node_basis[i]);CHKERRQ(ierr);
-      ierr = IGABasisInitCollocation(iga->node_basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
-    }
-    ierr = IGAElementDestroy(&iga->node_iterator);CHKERRQ(ierr);
-    ierr = IGAElementCreate(&iga->node_iterator);CHKERRQ(ierr);
-    iga->node_iterator->collocation = PETSC_TRUE;
-    ierr = IGAElementInit(iga->node_iterator,iga);CHKERRQ(ierr);
-  }
   PetscFunctionReturn(0);
 }
 
@@ -798,6 +774,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
     }
 
+    /* Order */
+    if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
+    order = PetscMax(order,1); order = PetscMin(order,3);
+    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
+    if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
+
     /* Quadrature */
     for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
@@ -805,12 +787,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
         if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
       }
-
-    /* Order */
-    if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
-    order = PetscMax(order,1); order = PetscMin(order,3);
-    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
-    if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
   setupcalled:
 
@@ -1414,17 +1390,27 @@ PetscErrorCode IGASetUp(IGA iga)
   iga->order = PetscMax(iga->order,1); /* XXX */
   iga->order = PetscMin(iga->order,3); /* XXX */
 
-  for (i=0; i<3; i++) {
-    if (i >= iga->dim) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
-    if (iga->rule[i]->nqp < 1) {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
-    ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+  if (iga->collocation) {
+    for (i=0; i<iga->dim; i++)
+      if(iga->axis[i]->periodic)
+        SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Collocation not supported with periodicity");
   }
+
+  for (i=0; i<3; i++)
+    if (!iga->collocation && (i >= iga->dim || iga->rule[i]->nqp < 1))
+      {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
+    else
+      {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
+
+  for (i=0; i<3; i++)
+    if (!iga->collocation)
+      {ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);}
+    else
+      {ierr = IGABasisInitCollocation(iga->basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);}
+
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
 
   ierr = IGASetUp_View(iga);CHKERRQ(ierr);
-
-  if (iga->collocation) {ierr = IGASetUseCollocation(iga,PETSC_TRUE);CHKERRQ(ierr);}  /* collocation */
-
   PetscFunctionReturn(0);
 }
 

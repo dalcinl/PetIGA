@@ -93,12 +93,17 @@ runex0d_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 16 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type baij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N 16 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type sbaij
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -N  8 -p 1 -ksp_type cg -iga_mat_type is -is_mat_type dense
+runex0e_1:
+	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 2 -iga_collocation
+runex0e_4:
+	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -p 4 -iga_collocation
 
 Test_SNES_2D = Test_SNES_2D.PETSc  \
 	       runex0a_1 runex0a_4 \
 	       runex0b_1 runex0b_4 \
 	       runex0c_1 runex0c_4 \
 	       runex0d_1 runex0d_4 \
+	       runex0e_1 runex0e_4 \
 	       Test_SNES_2D.rm
 
 
@@ -144,6 +149,7 @@ test-build: Test_SNES_2D.PETSc
 	      ${MPIEXEC} -n 2 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	      ${MPIEXEC} -n 3 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	      ${MPIEXEC} -n 4 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
+	      ${MPIEXEC} -n 9 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	    fi; \
 	    ${OMAKE} Test_SNES_2D.rm PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
 	   fi
