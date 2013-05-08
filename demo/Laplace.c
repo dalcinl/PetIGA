@@ -32,14 +32,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-PETSC_STATIC_INLINE
-PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
-{
-  PetscInt i; PetscReal s = 0.0;
-  for (i=0; i<dim; i++) s += a[i][i];
-  return s;
-}
-
 #undef  __FUNCT__
 #define __FUNCT__ "SystemGalerkin"
 PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
@@ -59,6 +51,14 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
   return 0;
 }
 
+PETSC_STATIC_INLINE
+PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i][i];
+  return s;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "SystemCollocation"
 PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
@@ -73,7 +73,6 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
   for (a=0; a<nen; a++)
     K[a] += -DEL2(dim,N2[a]);
   F[0] = 0.0;
-
   return 0;
 }
 
@@ -97,14 +96,15 @@ int main(int argc, char *argv[]) {
 
   // Setup options
 
-  PetscInt  i;
   PetscBool collocation = PETSC_FALSE;
   PetscBool print_error = PETSC_FALSE;
+  PetscBool check_error = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-collocation","Enable to use collocation",__FILE__,collocation,&collocation,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-save","Save the solution to file",__FILE__,save,&save,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -114,21 +114,23 @@ int main(int argc, char *argv[]) {
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
-  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-  if (iga->dim < 1) {ierr = IGASetDim(iga,3);CHKERRQ(ierr);}
-  ierr = IGASetUp(iga);CHKERRQ(ierr);
   if (collocation) {ierr = IGASetUseCollocation(iga,PETSC_TRUE);CHKERRQ(ierr);}
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  if (iga->dim < 1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   // Set boundary conditions
 
-  PetscInt dim;
+  PetscInt dim,dir;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  for (i=0; i<dim; i++) {
+  for (dir=0; dir<dim; dir++) {
     IGABoundary bnd;
-    ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,i,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetLoad(bnd,0,0.0);CHKERRQ(ierr);
+    PetscScalar value = 1.0;
+    PetscScalar load  = 0.0;
+    ierr = IGAGetBoundary(iga,dir,0,&bnd);CHKERRQ(ierr);
+    ierr = IGABoundarySetValue(bnd,0,value);CHKERRQ(ierr);
+    ierr = IGAGetBoundary(iga,dir,1,&bnd);CHKERRQ(ierr);
+    ierr = IGABoundarySetLoad(bnd,0,load);CHKERRQ(ierr);
   }
 
   // Assemble
@@ -141,6 +143,7 @@ int main(int argc, char *argv[]) {
   if (!iga->collocation) {
     ierr = IGASetUserSystem(iga,SystemGalerkin,PETSC_NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
   } else {
     ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_FALSE);CHKERRQ(ierr);
@@ -157,19 +160,15 @@ int main(int argc, char *argv[]) {
 
   // Various post-processing options
 
-  if (print_error) {
-    PetscScalar error = 0;
-    ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
-    error = PetscSqrtReal(PetscRealPart(error));
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);
-  }
-  if (save) {
-    ierr = IGAWrite(iga,"LaplaceGeometry.dat");CHKERRQ(ierr);
-    ierr = IGAWriteVec(iga,x,"LaplaceSolution.dat");CHKERRQ(ierr);
-  }
-  if (draw && dim <= 2) {
-    ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  }
+  PetscScalar error = 0;
+  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
+  error = PetscSqrtReal(PetscRealPart(error));
+
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+  if (check_error) {if (error>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%G\n",error);}
+  if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+  if (save)        {ierr = IGAWrite(iga,"LaplaceGeometry.dat");CHKERRQ(ierr);}
+  if (save)        {ierr = IGAWriteVec(iga,x,"LaplaceSolution.dat");CHKERRQ(ierr);}
 
   // Cleanup
 

@@ -180,15 +180,15 @@ runex6d_8:
 runex6d_9:
 	-@${MPIEXEC} -n 9 ./Bratu ${OPTS} -iga_dim 2 -steady true -iga_collocation
 runex7a_1:
-	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -dim 1
+	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 1
 runex7a_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -dim 1
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 1
 runex7b_1:
-	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -dim 2
+	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 2
 runex7b_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -dim 2
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 2
 runex7c_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -dim 3
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 3
 runex8_1:
 	-@${MPIEXEC} -n 1 ./ElasticRod ${OPTS} -ts_max_steps 10
 runex8_4:

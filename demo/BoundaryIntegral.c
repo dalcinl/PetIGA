@@ -1,6 +1,6 @@
 /*
   This code solves the Laplace problem where the boundary conditions
-  can be changed from Nuemann to Dirichlet via the commandline. While
+  can be changed from Neumann to Dirichlet via the commandline. While
   its primary use is in regression tests for PetIGA, it also
   demonstrates how boundary integrals may be performed to enforce
   things like Neumann conditions.
@@ -20,14 +20,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;
   for (i=0; i<dim; i++) s += a[i]*b[i];
-  return s;
-}
-
-PETSC_STATIC_INLINE
-PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
-{
-  PetscInt i; PetscReal s = 0.0;
-  for (i=0; i<dim; i++) s += a[i][i];
   return s;
 }
 
@@ -58,6 +50,14 @@ PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   for (a=0; a<nen; a++)
     F[a] = N0[a] * 1.0;
   return 0;
+}
+
+PETSC_STATIC_INLINE
+PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i][i];
+  return s;
 }
 
 #undef  __FUNCT__
@@ -137,29 +137,35 @@ int main(int argc, char *argv[]) {
   user.dir  = 0;
   user.side = 1;
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-dir", "direction",__FILE__,user.dir, &user.dir, PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-side","side",     __FILE__,user.side,&user.side,PETSC_NULL);CHKERRQ(ierr);
+  PetscBool print_error = PETSC_FALSE;
+  PetscBool check_error = PETSC_FALSE;
+  PetscBool draw = PETSC_FALSE;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsInt ("-dir", "Neuman BC direction",__FILE__,user.dir, &user.dir, PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-  if (iga->dim < 1) {ierr = IGASetDim(iga,3);CHKERRQ(ierr);}
+  if (iga->dim < 1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
 
   PetscInt dim;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-
-  IGABoundary bnd;
   PetscInt d =  !user.side;
   PetscInt n = !!user.side;
   if (!iga->collocation) {
+    IGABoundary bnd;
     ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
     ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
     ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr);
     ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
   } else {
+    IGABoundary bnd;
     PetscInt dir,side;
     for (dir=0; dir<dim; dir++) {
       for (side=0; side<2; side++) {
@@ -195,10 +201,10 @@ int main(int argc, char *argv[]) {
   PetscScalar error = 0;
   ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);
 
-  PetscBool draw = PETSC_TRUE;
-  if (draw && dim <= 2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
+  if (check_error) {if (error>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%G\n",error);}
+  if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);

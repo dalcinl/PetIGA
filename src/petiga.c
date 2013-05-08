@@ -453,6 +453,10 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveBool(iga,collocation,2);
+  if (iga->setupstage > 0 && iga->collocation != collocation)
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+            "Cannot change collocation after IGASetUp()");
+  iga->collocation = collocation;
   if (collocation && iga->setup) {
     PetscInt i, dim = iga->dim;
     PetscBool periodic = PETSC_FALSE;
@@ -472,7 +476,6 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
     iga->node_iterator->collocation = PETSC_TRUE;
     ierr = IGAElementInit(iga->node_iterator,iga);CHKERRQ(ierr);
   }
-  iga->collocation = collocation;
   PetscFunctionReturn(0);
 }
 
@@ -679,6 +682,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   {
     PetscBool flg;
     PetscInt  i,nw,nl;
+    const char *prefix = 0;
+    PetscBool collocation = iga->collocation;
     IGABasisType btype[3] = {IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE};
     PetscBool    wraps[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE };
     PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
@@ -693,6 +698,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscInt  dim = (iga->dim > 0) ? iga->dim : 3;
     PetscInt  dof = (iga->dof > 0) ? iga->dof : 1;
     PetscInt  order = iga->order;
+
+    ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
 
     for (i=0; i<dim; i++) {
       procs[i] = iga->proc_sizes[i];
@@ -731,6 +738,11 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) {ierr = IGASetDof(iga,dof);CHKERRQ(ierr);}
     dof = (iga->dof > 0) ? iga->dof : 1;
 
+    /* Collocation */
+    ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetUseCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = IGASetUseCollocation(iga,collocation);CHKERRQ(ierr);}
+    if (iga->collocation) {ierr = IGAOptionsReject(prefix,"-iga_quadrature");CHKERRQ(ierr);}
+
     /* Processor grid */
     ierr = PetscOptionsIntArray("-iga_processors","Processor grid","IGASetProcessors",procs,(np=dim,&np),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<np; i++) {
@@ -758,8 +770,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Geometry */
     ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (flg) { /* load from file */
-      const char *prefix = 0;
-      ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_elements"  );CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_degree"    );CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_continuity");CHKERRQ(ierr);
@@ -803,12 +813,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
   setupcalled:
-
-    /* Collocation */ {
-      PetscBool collocation = iga->collocation;
-      ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
-      if (flg) {ierr = IGASetUseCollocation(iga,collocation);CHKERRQ(ierr);}
-    }
 
     /* Matrix and Vector type */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
