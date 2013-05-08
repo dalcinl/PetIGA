@@ -17,39 +17,7 @@ typedef struct {
   PetscScalar Pl,rholh;
 } Field;
 
-#undef __FUNCT__
-#define __FUNCT__ "ICTest1"
-PetscErrorCode ICTest1(IGA iga,Vec U,AppCtx *user)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-
-  PetscScalar Mh = user->Mh;
-  PetscScalar H  = user->H;
-
-  DM da;
-  ierr = IGACreateNodeDM(iga,2,&da);CHKERRQ(ierr);
-  Field **u;
-  ierr = DMDAVecGetArray(da,U,&u);CHKERRQ(ierr);
-  DMDALocalInfo info;
-  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
-
-  PetscInt i,j;
-  for(i=info.xs;i<info.xs+info.xm;i++){
-    PetscReal x = (PetscReal)i / ( (PetscReal)(info.mx-1) );
-    for(j=info.ys;j<info.ys+info.ym;j++){
-      u[j][i].Pl = 10.;
-      if(x <= 0.5){
-	u[j][i].rholh = 15*Mh*H; // Pg = rholh/Mh
-      }else{
-	u[j][i].rholh = 25*Mh*H;
-      }
-    }
-  }
-  ierr = DMDAVecRestoreArray(da,U,&u);CHKERRQ(ierr); 
-  ierr = DMDestroy(&da);;CHKERRQ(ierr); 
-  PetscFunctionReturn(0); 
-}
+PetscReal SEC_PER_YEAR = 365.0*24.0*3600.0;
 
 #undef __FUNCT__
 #define __FUNCT__ "EquationOfState"
@@ -163,6 +131,41 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "LeftInjectionJacobian"
+PetscErrorCode LeftInjectionJacobian(IGAPoint p,PetscReal dt,
+				     PetscReal shift,const PetscScalar *V,
+				     PetscReal t,const PetscScalar *U,
+				     PetscScalar *J,void *ctx)
+{
+  // for now use the option -snes_fd_color for the Jacobian
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "LeftInjectionResidual"
+PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
+				     PetscReal shift,const PetscScalar *V,
+				     PetscReal t,const PetscScalar *U,
+				     PetscScalar *R,void *ctx)
+{
+  PetscInt a,nen;
+  IGAPointGetSizes(p,&nen,0,0);
+
+  const PetscReal *N0;
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+
+  PetscScalar Qh = 0;
+  if(t <= 5e5) Qh = -5.57e-6; // inflow
+
+  PetscScalar (*Re)[2] = (PetscScalar (*)[2])R;
+  for (a=0; a<nen; a++) {
+    Re[a][0] = 0.0;
+    Re[a][1] = N0[a]*Qh;
+  }
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "GeometricAdaptivity"
 PetscErrorCode GeometricAdaptivity(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
@@ -176,12 +179,67 @@ PetscErrorCode GeometricAdaptivity(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
+#define __FUNCT__ "GeometricAdaptivity3"
+PetscErrorCode GeometricAdaptivity3(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
+{
+  PetscErrorCode       ierr;
+  PetscReal            dt;
+  SNES                 snes;
+  SNESConvergedReason  snesreason;
+  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
+  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+  ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
+  if (snesreason < 0) {
+    *ok = PETSC_FALSE;
+    *nextdt = 0.9*dt;
+    PetscFunctionReturn(0);
+  }
+  *ok = PETSC_TRUE;
+  *nextdt = PetscMin(1.01*dt,10000);
+  return 0;
+}
+
+
+#undef __FUNCT__
+#define __FUNCT__ "ICTest1"
+PetscErrorCode ICTest1(IGA iga,Vec U,AppCtx *user)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  PetscScalar Mh = user->Mh;
+  PetscScalar H  = user->H;
+
+  DM da;
+  ierr = IGACreateNodeDM(iga,2,&da);CHKERRQ(ierr);
+  Field **u;
+  ierr = DMDAVecGetArray(da,U,&u);CHKERRQ(ierr);
+  DMDALocalInfo info;
+  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
+
+  PetscInt i,j;
+  for(i=info.xs;i<info.xs+info.xm;i++){
+    PetscReal x = (PetscReal)i / ( (PetscReal)(info.mx-1) );
+    for(j=info.ys;j<info.ys+info.ym;j++){
+      u[j][i].Pl = 10.;
+      if(x <= 0.5){
+	u[j][i].rholh = 15*Mh*H; // Pg = rholh/Mh
+      }else{
+	u[j][i].rholh = 25*Mh*H;
+      }
+    }
+  }
+  ierr = DMDAVecRestoreArray(da,U,&u);CHKERRQ(ierr); 
+  ierr = DMDestroy(&da);;CHKERRQ(ierr); 
+  PetscFunctionReturn(0); 
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "Test1"
+PetscErrorCode Test1()
+{
 
   PetscErrorCode  ierr;
-  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-
   AppCtx user;
   user.rholw    = 1000;
   user.porosity = 0.3;
@@ -225,23 +283,140 @@ int main(int argc, char *argv[]) {
   ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.17);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
-  ierr = TSAlphaSetRadius(ts,1.0);CHKERRQ(ierr);
+  ierr = TSAlphaSetRadius(ts,0.75);CHKERRQ(ierr);
   ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr); 
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t; 
   Vec       U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
-  ierr = FormInitialCondition(iga,U,&user);CHKERRQ(ierr);
+  ierr = ICTest1(iga,U,&user);CHKERRQ(ierr);
   ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
 
- // Write outputs
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   ierr = IGAWriteVec(iga,U,"sol.dat");CHKERRQ(ierr);
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
+
+  return 0;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "ICTest3"
+PetscErrorCode ICTest3(IGA iga,Vec U,AppCtx *user)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+
+  DM da;
+  ierr = IGACreateNodeDM(iga,2,&da);CHKERRQ(ierr);
+  Field **u;
+  ierr = DMDAVecGetArray(da,U,&u);CHKERRQ(ierr);
+  DMDALocalInfo info;
+  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
+
+  PetscInt i,j;
+  for(i=info.xs;i<info.xs+info.xm;i++){
+    for(j=info.ys;j<info.ys+info.ym;j++){
+      u[j][i].Pl    = 10.;
+      u[j][i].rholh = 0; 
+    }
+  }
+  ierr = DMDAVecRestoreArray(da,U,&u);CHKERRQ(ierr); 
+  ierr = DMDestroy(&da);;CHKERRQ(ierr); 
+  PetscFunctionReturn(0); 
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "Test3"
+PetscErrorCode Test3()
+{
+  PetscErrorCode  ierr;
+
+  AppCtx user;
+  user.rholw    = 1000;
+  user.porosity = 0.15;
+  user.Pr       = 20;
+  user.n        = 1.49;
+  user.Slr      = 0.4;
+  user.Sgr      = 0.;
+  user.T        = 303;
+  user.H        = 0.765; 
+  user.Mw       = 1e-2;
+  user.Mh       = 2e-3;
+  user.mul      = 1e-8/SEC_PER_YEAR;
+  user.mug      = 9e-11/SEC_PER_YEAR;
+  user.Dlh      = 3e-9*SEC_PER_YEAR;
+  user.k        = 5e-20; 
+  PetscInt dim = 2, p = 1, N = 200, L = 200;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"r_","2c2p Options","2c2p");CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+  IGA         iga;
+  IGAAxis     axis;
+  ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
+  ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
+  ierr = IGASetDof(iga,2);CHKERRQ(ierr);
+
+  ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis,N,0.0,L,0);CHKERRQ(ierr);
+  ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
+  ierr = IGAAxisInitUniform(axis,N/10,0.0,0.1*L,0);CHKERRQ(ierr);
+  
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+  
+  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+
+  IGABoundary bnd;
+  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
+  ierr = IGABoundarySetUserIFunction(bnd,LeftInjectionResidual,&user);CHKERRQ(ierr);
+  ierr = IGABoundarySetUserIJacobian(bnd,LeftInjectionJacobian,&user);CHKERRQ(ierr);
+  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
+  ierr = IGABoundarySetValue(bnd,0,10.0);CHKERRQ(ierr);
+  ierr = IGABoundarySetValue(bnd,1, 0.0);CHKERRQ(ierr);
+
+  TS     ts;
+  ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
+  ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
+  ierr = TSAlphaSetRadius(ts,0.75);CHKERRQ(ierr);
+  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity3,NULL);CHKERRQ(ierr); 
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+
+  PetscReal t; 
+  Vec       U;
+  ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
+  ierr = ICTest3(iga,U,&user);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+
+  ierr = IGAWrite(iga,"iga_test3.dat");CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,U,"ss_test3.dat");CHKERRQ(ierr);
+
+  ierr = VecDestroy(&U);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = IGADestroy(&iga);CHKERRQ(ierr);
+
+  return ierr;
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "main"
+int main(int argc, char *argv[]) {
+
+  PetscErrorCode  ierr;
+  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
+
+  //Test1();
+  //Test2();
+  ierr = Test3();CHKERRQ(ierr);
+
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }

@@ -16,7 +16,12 @@ TARGETS = L2Proj1D L2Proj2D \
 	  HyperElasticity \
 	  PhaseFieldCrystal2D \
           BoundaryIntegral \
-          Richards	
+          Richards \
+          TwoPhaseTwoComponent \
+	  ShallowWater \
+          ClassicalShell \
+	  LoggChallenge \
+          ElasticRod
 
 ALL: ${TARGETS}
 clean::
@@ -27,7 +32,7 @@ FFLAGS    = #-g3 -Wall -Wextra -fcheck=all
 CPPFLAGS  =
 FPPFLAGS  =
 LOCDIR    = demo/
-EXAMPLESC = CahnHilliard2D.c
+EXAMPLESC = 
 EXAMPLESF =
 MANSEC    = IGA
 
@@ -112,6 +117,9 @@ BoundaryIntegral: BoundaryIntegral.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Richards: Richards.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+TwoPhaseTwoComponent: TwoPhaseTwoComponent.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 
