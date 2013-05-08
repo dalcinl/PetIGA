@@ -1,27 +1,25 @@
-TARGETS = L2Proj1D L2Proj2D \
-	  Poisson1D Poisson2D Poisson3D \
-	  L2Projection \
-	  AdaptiveL2Projection \
-	  AdvectionDiffusion \
-	  Laplace \
-	  Poisson \
-	  Neumann \
-	  Bratu \
-	  PatternFormation \
-	  CahnHilliard2D \
-	  CahnHilliard3D \
-	  NavierStokesKorteweg2D \
-	  NavierStokesVMS \
-	  Elasticity3D \
-	  HyperElasticity \
-	  PhaseFieldCrystal2D \
-      BoundaryIntegral \
-      Richards \
-      TwoPhaseTwoComponent \
-	  ShallowWater \
-      ClassicalShell \
-	  LoggChallenge \
-      ElasticRod
+TARGETS = \
+L2Proj1D L2Proj2D \
+Poisson1D Poisson2D Poisson3D \
+L2Projection AdaptiveL2Projection \
+Laplace BoundaryIntegral \
+Poisson LoggChallenge \
+Neumann \
+AdvectionDiffusion \
+Bratu \
+PatternFormation \
+CahnHilliard2D \
+CahnHilliard3D \
+NavierStokesKorteweg2D \
+NavierStokesVMS \
+Elasticity3D \
+HyperElasticity \
+PhaseFieldCrystal2D \
+Richards \
+TwoPhaseTwoComponent \
+ShallowWater \
+ClassicalShell \
+ElasticRod
 
 ALL: ${TARGETS}
 clean::
@@ -32,7 +30,7 @@ FFLAGS    = #-g3 -Wall -Wextra -fcheck=all
 CPPFLAGS  =
 FPPFLAGS  =
 LOCDIR    = demo/
-EXAMPLESC = 
+EXAMPLESC =
 EXAMPLESF =
 MANSEC    = IGA
 
@@ -56,6 +54,7 @@ Poisson2D: Poisson2D.o chkopts
 Poisson3D: Poisson3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+
 L2Projection: L2Projection.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -65,13 +64,16 @@ AdaptiveL2Projection: AdaptiveL2Projection.o chkopts
 Laplace: Laplace.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
+BoundaryIntegral: BoundaryIntegral.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 Poisson: Poisson.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-Neumann: Neumann.o chkopts
+LoggChallenge: LoggChallenge.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-LoggChallenge: LoggChallenge.o chkopts
+Neumann: Neumann.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Bratu: Bratu.o BratuFJ.o chkopts
@@ -111,9 +113,6 @@ HyperElasticity: HyperElasticity.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 PhaseFieldCrystal2D: PhaseFieldCrystal2D.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
-BoundaryIntegral: BoundaryIntegral.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Richards: Richards.o chkopts
