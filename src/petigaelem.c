@@ -99,7 +99,13 @@ PetscErrorCode IGAElementReset(IGAElement element)
   element->count =  0;
   element->index = -1;
 
+  if (element->rowmap != element->mapping)
+    {ierr = PetscFree(element->rowmap);CHKERRQ(ierr);}
+  if (element->colmap != element->mapping)
+    {ierr = PetscFree(element->colmap);CHKERRQ(ierr);}
+  element->rowmap = element->colmap = 0;
   ierr = PetscFree(element->mapping);CHKERRQ(ierr);
+
   ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(element->rationalW);CHKERRQ(ierr);
   ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
@@ -136,6 +142,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   PetscInt *start;
   PetscInt *width;
   PetscInt *sizes;
+  IGABasis *BD;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -152,23 +159,20 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   start = iga->elem_start;
   width = iga->elem_width;
   sizes = iga->elem_sizes;
-  element->BD = iga->basis;
-  if (PetscUnlikely(element->collocation)) { /* collocation */
-    start = iga->node_lstart;
-    width = iga->node_lwidth;
-    sizes = iga->node_sizes;
-    element->BD = iga->node_basis;
-  }
+  BD = element->collocation ? iga->node_basis : iga->basis;
+
   { /* */
     PetscInt i,dim = element->dim;
     PetscInt nel=1,nen=1,nqp=1;
+    for (i=0; i<3; i++)
+      element->BD[i] = BD[i];
     for (i=0; i<dim; i++) {
       element->start[i] = start[i];
       element->width[i] = width[i];
       element->sizes[i] = sizes[i];
-      nel *= element->width[i];
-      nen *= element->BD[i]->nen;
-      nqp *= element->BD[i]->nqp;
+      nel *= width[i];
+      nen *= BD[i]->nen;
+      nqp *= BD[i]->nqp;
     }
     for (i=dim; i<3; i++) {
       element->start[i] = 0;
@@ -180,6 +184,18 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     element->nen   = nen;
     element->nqp   = nqp;
   }
+  { /**/
+    PetscInt nen = element->nen;
+    ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
+    if (!element->collocation) {
+      element->neq = nen;
+      element->rowmap = element->mapping;
+    } else {
+      element->neq = 1;
+      ierr = PetscMalloc1(1,PetscInt,&element->rowmap);CHKERRQ(ierr);
+    }
+    element->colmap = element->mapping;
+  }
   { /* */
     PetscInt dim = element->dim;
     PetscInt nsd = element->nsd;
@@ -189,7 +205,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 
     /* */
 
-    ierr = PetscMalloc1(nen,PetscInt,&element->mapping);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*nsd,PetscReal,&element->geometryX);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen,PetscReal,&element->rationalW);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*npd,PetscScalar,&element->propertyA);CHKERRQ(ierr);
@@ -233,14 +248,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
 
     ierr = PetscMemzero(element->normal,sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
-  }
-  element->neq    = element->nen;
-  element->rowmap = element->mapping;
-  element->colmap = element->mapping;
-  if (PetscUnlikely(element->collocation)) { /* collocation */
-    element->neq    = 1;
-    element->rowmap = &element->index;
-    element->colmap = element->mapping;
   }
   { /* */
     PetscInt nen = element->nen;
@@ -298,6 +305,7 @@ PetscBool IGANextElement(IGA iga,IGAElement element)
   element->nval = 0;
   element->nvec = 0;
   element->nmat = 0;
+  element->boundary_id = -1;
   /* */
   index = ++element->index;
   if (PetscUnlikely(index >= element->count)) {
@@ -341,30 +349,26 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
 #define __FUNCT__ "IGAElementNextUserOps"
 PetscBool IGAElementNextUserOps(IGAElement element,IGAUserOps *userops)
 {
-  static PetscInt counter = 0; /* XXX */
-  IGA iga = element->parent;
+  IGA      iga = element->parent;
   PetscInt dim = element->dim;
-  for (; PetscUnlikely(counter < 2*dim); counter++) {
-    PetscInt dir  = counter / 2;
-    PetscInt side = counter % 2;
-    PetscInt iel  = side ? element->sizes[dir]-1 : 0;
-    if (element->ID[dir] != iel) continue;
+  while (++element->boundary_id < 2*dim) {
+    PetscInt i = element->boundary_id / 2;
+    PetscInt s = element->boundary_id % 2;
+    PetscInt e = s ? element->sizes[i]-1 : 0;
+    if (element->ID[i] != e) continue;
+    if (!iga->boundary[i][s]->userops) continue;
+    *userops = iga->boundary[i][s]->userops;
     element->atboundary = PETSC_TRUE;
-    element->atboundary_id = counter;
-    *userops = iga->boundary[dir][side]->userops;
-    if (!(*userops)) continue;
-    counter++;
     return PETSC_TRUE;
   }
-  if (PetscLikely(counter == 2*dim)) {
-    element->atboundary = PETSC_FALSE;
-    element->atboundary_id = 0;
+  if (element->boundary_id++ == 2*dim) {
     *userops = iga->userops;
-    counter++;
+    element->atboundary = PETSC_FALSE;
     return PETSC_TRUE;
   }
   *userops = 0;
-  counter = 0;
+  element->atboundary  = PETSC_FALSE;
+  element->boundary_id = -1;
   return PETSC_FALSE;
 }
 
@@ -401,16 +405,15 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point)
   (*point)->nsd = element->nsd;
   (*point)->npd = element->npd;
 
-  if (PetscUnlikely(!element->atboundary)) {
+  if (PetscLikely(!element->atboundary)) {
     ierr = IGAElementBuildQuadrature(element);CHKERRQ(ierr);
     ierr = IGAElementBuildShapeFuns(element);CHKERRQ(ierr);
   } else {
-    PetscInt i = element->atboundary_id / 2;
-    PetscInt s = element->atboundary_id % 2;
+    PetscInt i = element->boundary_id / 2;
+    PetscInt s = element->boundary_id % 2;
     (*point)->count = element->nqp / element->BD[i]->nqp;
     ierr = IGAElementBuildQuadratureAtBoundary(element,i,s);CHKERRQ(ierr);
     ierr = IGAElementBuildShapeFunsAtBoundary (element,i,s);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
   }
   PetscFunctionReturn(0);
 }
@@ -509,7 +512,13 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
     PetscFunctionReturn(PETSC_ERR_PLIB);
   }
   *point = PETSC_NULL;
-  PetscFunctionReturn(0);
+  /* XXX */
+  if (PetscLikely(!element->collocation)) PetscFunctionReturn(0);
+  if (PetscLikely(!element->atboundary))  PetscFunctionReturn(0);
+  element->atboundary  = PETSC_FALSE;
+  element->boundary_id = 2*element->dim;
+  /* XXX */
+ PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
@@ -604,6 +613,12 @@ PetscErrorCode IGAElementBuildMapping(IGAElement element)
           mapping[a++] = iA + jA*jstride + kA*kstride;
         }
       }
+    }
+    if (PetscUnlikely(element->collocation)) {
+      PetscInt iA = ID[0] - istart;
+      PetscInt jA = ID[1] - jstart;
+      PetscInt kA = ID[2] - kstart;
+      element->rowmap[0] = iA + jA*jstride + kA*kstride;
     }
   }
   PetscFunctionReturn(0);
@@ -1195,6 +1210,22 @@ static void BuildFix(IGAElement element,PetscInt dir,PetscInt side)
   }
 }
 
+PETSC_STATIC_INLINE
+IGABoundary AtBoundary(IGAElement element,PetscInt dir,PetscInt side)
+{
+  IGABoundary b = element->parent->boundary[dir][side];
+  PetscInt e = side ? element->sizes[dir]-1 : 0;
+  return (element->ID[dir] == e) ? b : PETSC_NULL;
+}
+
+PETSC_STATIC_INLINE
+PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i]*b[i];
+  return s;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildFix"
 PetscErrorCode IGAElementBuildFix(IGAElement element)
@@ -1216,21 +1247,21 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
       if (ID[i] == 0 && !w) BuildFix(element,i,0);
       if (ID[i] == e && !w) BuildFix(element,i,1);
     }
-  } 
+  }
   PetscFunctionReturn(0);
- collocation: 
+ collocation:
   element->nfix  = 0;
   element->nflux = 0;
   {
-    PetscInt A0[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
-    PetscInt A1[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
+    PetscInt L[3] = {PETSC_MIN_INT,PETSC_MIN_INT,PETSC_MIN_INT};
+    PetscInt R[3] = {PETSC_MAX_INT,PETSC_MAX_INT,PETSC_MAX_INT};
     {
       IGAAxis  *AX = element->parent->axis;
       PetscInt i,dim = element->dim;
       for (i=0; i<dim; i++) {
         PetscBool w = AX[i]->periodic;
         PetscInt  n = element->sizes[i]-1; /* last node */
-        A0[i] = 0; if (!w) A1[i] = n;
+        L[i] = 0; if (!w) R[i] = n;
       }
     }
     {
@@ -1248,12 +1279,12 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
               PetscInt iA = ioffset + ia;
               PetscInt jA = joffset + ja;
               PetscInt kA = koffset + ka;
-              /**/ if (iA == A0[0]) AddFixa(element,b[0][0],a);
-              else if (iA == A1[0]) AddFixa(element,b[0][1],a);
-              /**/ if (jA == A0[1]) AddFixa(element,b[1][0],a);
-              else if (jA == A1[1]) AddFixa(element,b[1][1],a);
-              /**/ if (kA == A0[2]) AddFixa(element,b[2][0],a);
-              else if (kA == A1[2]) AddFixa(element,b[2][1],a);
+              /**/ if (iA == L[0]) AddFixa(element,b[0][0],a);
+              else if (iA == R[0]) AddFixa(element,b[0][1],a);
+              /**/ if (jA == L[1]) AddFixa(element,b[1][0],a);
+              else if (jA == R[1]) AddFixa(element,b[1][1],a);
+              /**/ if (kA == L[2]) AddFixa(element,b[2][0],a);
+              else if (kA == R[2]) AddFixa(element,b[2][1],a);
               a++;
             }
     }
@@ -1314,21 +1345,54 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   PetscFunctionReturn(0);
  collocation:
   {
-    PetscInt M = element->neq * element->dof;
-    PetscInt N = element->nen * element->dof;
-    PetscInt f,n;
-    n = element->nfix;
-    for (f=0; f<n; f++) {
-      PetscInt k = element->ifix[f];
-      PetscInt a = k / element->dof;
-      if (element->index == element->colmap[a]) {
-        PetscInt    c = k % element->dof;
-        PetscScalar v = element->vfix[f];
-        PetscInt i,j;
-        for (i=0; i<M; i++) K[i*N+k] = 0.0;
-        for (j=0; j<N; j++) K[c*N+j] = 0.0;
-        K[c*N+k] = 1.0;
-        F[c] = v;
+    PetscInt dim = element->dim;
+    PetscInt dof = element->dof;
+    PetscInt nen = element->nen;
+    PetscInt N = nen * dof;
+    PetscInt dir,side;
+    for (dir=0; dir<dim; dir++) {
+      for (side=0; side<2; side++) {
+        IGABoundary b = AtBoundary(element,dir,side);
+        if(b && b->nload) {
+          PetscInt  f,n = b->nload;
+          PetscReal normal[3] = {0.0,0.0,0.0};
+          PetscReal *dshape;
+          if (!element->geometry) {
+            normal[dir] = side ? 1.0 : -1.0;
+            dshape = element->basis[1];
+          } else {
+            PetscReal dS, *F = element->gradX[0];
+            IGA_GetNormal(dim,dir,side,F,&dS,normal);
+            dshape = element->shape[1];
+          }
+          for (f=0; f<n; f++) {
+            PetscInt  c = b->iload[f];
+            PetscReal v = b->vload[f];
+            PetscInt  a,j;
+            for (j=0; j<N; j++) K[c*N+j] = 0.0;
+            for (a=0; a<nen; a++)
+              K[c*N+a*dof+c] = DOT(dim,&dshape[a*dim],normal);
+            F[c] = v;
+          }
+        }
+        if (b && b->count) {
+          PetscInt  f,n = b->count;
+          PetscReal *shape;
+          if (!element->geometry) {
+            shape = element->basis[0];
+          } else {
+            shape = element->shape[0];
+          }
+          for (f=0; f<n; f++) {
+            PetscInt  c = b->field[f];
+            PetscReal v = b->value[f];
+            PetscInt  a,j;
+            for (j=0; j<N; j++) K[c*N+j] = 0.0;
+            for (a=0; a<nen; a++)
+              K[c*N+a*dof+c] = shape[a];
+            F[c] = v;
+          }
+        }
       }
     }
   }
@@ -1360,14 +1424,14 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
     }
   }
   PetscFunctionReturn(0);
- collocation: 
+ collocation:
   {
     PetscInt f,n;
     n = element->nfix;
     for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt a = k / element->dof;
-      if (element->index == element->colmap[a]) {
+      if (element->rowmap[0] == element->colmap[a]) {
         PetscInt    c = k % element->dof;
         PetscScalar v = element->vfix[f];
         PetscScalar u = element->ufix[f];
@@ -1409,10 +1473,9 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
     for (f=0; f<n; f++) {
       PetscInt k = element->ifix[f];
       PetscInt a = k / element->dof;
-      if (element->index == element->colmap[a]) {
+      if (element->rowmap[0] == element->colmap[a]) {
         PetscInt c = k % element->dof;
         PetscInt i,j;
-        if (element->index != element->colmap[a]) continue;
         for (i=0; i<M; i++) J[i*N+k] = 0.0;
         for (j=0; j<N; j++) J[c*N+j] = 0.0;
         J[c*N+k] = 1.0;

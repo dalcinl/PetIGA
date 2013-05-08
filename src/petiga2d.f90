@@ -199,8 +199,8 @@ subroutine IGA_BoundaryArea_2D(&
      if (side==1) k=m(2)
      Xx => Cx(:,:,k); Xw => Cw(:,k)
   end select
-  detJ = 1.0
-  dS = 0.0
+  detJ = 1
+  dS = 0
   do q=1,nqp
      N0(  :) = N(0,:,q)
      N1(1,:) = N(1,:,q)

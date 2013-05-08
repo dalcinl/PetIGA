@@ -55,10 +55,12 @@ PETSC_EXTERN PetscErrorCode IGAAxisSetPeriodic(IGAAxis axis,PetscBool periodic);
 PETSC_EXTERN PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic);
 PETSC_EXTERN PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p);
 PETSC_EXTERN PetscErrorCode IGAAxisGetDegree(IGAAxis axis,PetscInt *p);
-PETSC_EXTERN PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,PetscReal U[]);
+PETSC_EXTERN PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[]);
 PETSC_EXTERN PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[]);
 PETSC_EXTERN PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf);
 PETSC_EXTERN PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp);
+PETSC_EXTERN PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *spans[]);
+PETSC_EXTERN PetscErrorCode IGAAxisInit(IGAAxis axis,PetscInt p,PetscInt m,const PetscReal U[]);
 PETSC_EXTERN PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],PetscInt C);
 PETSC_EXTERN PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C);
 PETSC_EXTERN PetscErrorCode IGAAxisSetUp(IGAAxis axis);
@@ -308,6 +310,7 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGASetFromOptions(IGA iga);
+PETSC_EXTERN PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[]);
 
 PETSC_EXTERN PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
@@ -395,8 +398,9 @@ struct _n_IGAElement {
   PetscInt  width[3];
   PetscInt  sizes[3];
   PetscInt  ID[3];
+  IGABasis  BD[3];
   PetscBool atboundary;
-  PetscInt  atboundary_id;
+  PetscInt  boundary_id;
   /**/
   PetscInt count;
   PetscInt index;
@@ -408,8 +412,6 @@ struct _n_IGAElement {
   PetscInt dim;
   PetscInt nsd;
   PetscInt npd;
-
-  IGABasis *BD;
 
   PetscInt    *mapping;   /*[nen]      */
   PetscBool   geometry;

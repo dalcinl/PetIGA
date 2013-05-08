@@ -248,11 +248,14 @@ int main(int argc, char *argv[]) {
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
-  PetscReal t; 
   Vec       U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(iga,U,&user);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+#if PETSC_VERSION_LE(3,3,0)
+  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+#else
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
+#endif
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);

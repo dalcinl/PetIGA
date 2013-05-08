@@ -246,8 +246,8 @@ subroutine IGA_BoundaryArea_3D(&
      if (side==1) k=m(3)
      Xx => Cx(:,:,:,k); Xw => Cw(:,:,k)
   end select
-  detJ = 1.0
-  dS = 0.0
+  detJ = 1
+  dS = 0
   do jq=1,jnqp
      do iq=1,inqp
         do ja=1,jnen; do ia=1,inen
