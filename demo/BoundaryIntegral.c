@@ -1,3 +1,13 @@
+/*
+  This code solves the Laplace problem where the boundary conditions
+  can be changed from Nuemann to Dirichlet via the commandline. While
+  its primary use is in regression tests for PetIGA, it also
+  demonstrates how boundary integrals may be performed to enforce
+  things like Neumann conditions.
+
+  keywords: steady, scalar, linear, testing, dimension independent,
+  boundary integrals
+ */
 #include "petiga.h"
 
 #undef  __FUNCT__
@@ -22,8 +32,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   }
   return 0;
 }
-
-
 
 #undef  __FUNCT__
 #define __FUNCT__ "Neumann"

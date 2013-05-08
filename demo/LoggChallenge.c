@@ -1,19 +1,18 @@
-#include "petiga.h"
-
 /*
+This code was written in response to a challenge posed by Anders Logg
+on Google+. The challenge:
 
-Solve the partial diferential equation
+   Solve the partial diferential equation
 
-   -Laplacian(u) = f
+      -Laplacian(u) = f
 
-with homogeneous Dirichlet boundary conditions on the unit square for
+   with homogeneous Dirichlet boundary conditions on the unit square for
 
-   f(x,y) = 2 pi^2 sin(pi*x) * sin(pi*y).
+      f(x,y) = 2 pi^2 sin(pi*x) * sin(pi*y).
 
-+ Who can obtain the smallest error?
-+ Who can compute a solution with an error smaller than 10^-6?
-
+   Who can compute a solution with an (L2) error smaller than 10^-6?
 */
+#include "petiga.h"
 
 PetscReal Forcing(PetscReal x, PetscReal y)
 {

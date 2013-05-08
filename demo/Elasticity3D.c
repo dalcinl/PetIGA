@@ -1,3 +1,9 @@
+/*
+  This code solves the 3D elasticity equations given the Lame
+  constants and subject to Dirichlet boundary conditions.
+
+  keywords: steady, vector, linear
+ */
 #include "petiga.h"
 
 typedef struct {
@@ -13,10 +19,11 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscReal lambda = user->lambda;
   PetscReal mu = user->mu;
 
-  PetscReal (*N1)[3] = (PetscReal (*)[3]) p->shape[1];
+  const PetscReal (*N1)[3];
+  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+
   PetscInt a,b,nen=p->nen;
   PetscScalar (*Kl)[3][nen][3] = (PetscScalar (*)[3][nen][3])K;
-
   for (a=0; a<nen; a++) {
     PetscReal Na_x = N1[a][0];
     PetscReal Na_y = N1[a][1];

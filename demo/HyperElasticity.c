@@ -3,7 +3,6 @@
 #include "petscblaslapack.h"
 
 /*
-
   This code implements a HyperElastic material model in the context of
   large deformation elasticity. Implementation credit goes to students
   of the 2012 summer course `Nonlinear Finite Element Analysis' given

@@ -1,14 +1,15 @@
-#include "petiga.h"
-
 /*
+  This code solves the following system of PDEs
+  
+     u_t = D_1 \nabla^2 u + f(u,v)
+     v_t = D_2 \nabla^2 v + g(u,v)
 
-u_t = D_1 \nabla^2 u + f(u,v)
-v_t = D_2 \nabla^2 v + g(u,v)
+     f(u,v) = alpha*u*(1-tau1*v**2) + v*(1-tau2*u);
+     g(u,v) = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
 
-f(u,v) = alpha*u*(1-tau1*v**2) + v*(1-tau2*u);
-g(u,v) = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
-
+  and highlights how to use implicit/explicit capabilities of PetIGA.
 */
+#include "petiga.h"
 
 #define EXPLICIT 1
 typedef struct {

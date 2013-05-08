@@ -1,3 +1,6 @@
+/*
+  keywords: steady, vector, linear
+ */
 #include "petiga.h"
 
 typedef struct {

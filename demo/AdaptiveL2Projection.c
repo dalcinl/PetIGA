@@ -1,3 +1,11 @@
+/*
+  This code computes the L2 projection of a function defined in
+  Function to a B-spline space. The space is adaptively refined by a
+  brute force strategy: which knot do we insert such that the global
+  L2 error is reduced the most?
+
+  keywords: scalar, linear
+ */
 #include "petiga.h"
 
 #define SQ(A) (A)*(A)
@@ -13,8 +21,7 @@ PetscScalar Function(PetscReal x, PetscReal y, PetscReal z)
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
-  PetscInt nen;
-  IGAPointGetSizes(p,0,&nen,0);
+  PetscInt nen = p->nen;
   
   PetscReal x[3] = {0,0,0};
   IGAPointFormPoint(p,x);
@@ -57,7 +64,6 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 #define __FUNCT__ "ComputeError"
 PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MAX_BREAKS],PetscInt *N,PetscReal *error)
 {
-  
   PetscErrorCode  ierr;
   PetscInt i;
   IGA iga;

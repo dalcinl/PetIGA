@@ -1,3 +1,12 @@
+/* 
+   This code solves the steady and unsteady Bratu equation. It also
+   demonstrates how the user-specified routines, here the Function and
+   Jacobian routines, can be implemented in Fortran (see BratuFJ.F90)
+   yet called from PetIGA in C.
+
+   keywords: steady, transient, scalar, implicit, nonlinear, testing,
+   dimension independent, collocation, fortran
+*/
 #include "petiga.h"
 
 typedef struct { 
