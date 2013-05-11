@@ -84,7 +84,7 @@ PetscErrorCode IGABoundaryClear(IGABoundary boundary)
   PetscValidPointer(boundary,1);
   boundary->count = 0;
   boundary->nload = 0;
-  if (boundary->userops) {ierr = PetscMemzero(boundary->userops,sizeof(struct _IGAUserOps));CHKERRQ(ierr);}
+  ierr = PetscFree(boundary->userops);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
