@@ -23,7 +23,7 @@ typedef struct {
 #undef __FUNCT__
 #define __FUNCT__ "NeoHookeanModel"
 void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   PetscReal lambda = user->lambda;
@@ -32,29 +32,29 @@ void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pe
   // Interpolate the solution and gradient given U
   PetscScalar u[3];
   PetscScalar grad_u[3][3];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
 
   // F = I + u_{i,j}
-  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2]; 
-  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2]; 
-  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2]; 
+  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2];
+  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2];
+  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2];
 
-  // Finv 
+  // Finv
   PetscScalar Finv[3][3],J,Jinv;
   J  = F[0][0]*(F[1][1]*F[2][2]-F[1][2]*F[2][1]);
   J -= F[0][1]*(F[1][0]*F[2][2]-F[1][2]*F[2][0]);
   J += F[0][2]*(F[1][0]*F[2][1]-F[1][1]*F[2][0]);
   Jinv = 1./J;
-  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv; 
+  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv;
   Finv[1][0] = -(F[1][0]*F[2][2]-F[1][2]*F[2][0])*Jinv;
   Finv[2][0] =  (F[1][0]*F[2][1]-F[2][0]*F[1][1])*Jinv;
   Finv[0][1] = -(F[0][1]*F[2][2]-F[0][2]*F[2][1])*Jinv;
-  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv; 
+  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv;
   Finv[2][1] = -(F[0][0]*F[2][1]-F[2][0]*F[0][1])*Jinv;
   Finv[0][2] =  (F[0][1]*F[1][2]-F[0][2]*F[1][1])*Jinv;
   Finv[1][2] = -(F[0][0]*F[1][2]-F[1][0]*F[0][2])*Jinv;
-  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv; 
+  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv;
 
   // C^-1 = (F^T F)^-1 = F^-1 F^-T
   PetscScalar Cinv[3][3];
@@ -79,31 +79,31 @@ void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pe
   S[2][0] = temp*Cinv[2][0] + mu*(-Cinv[2][0]);
   S[2][1] = temp*Cinv[2][1] + mu*(-Cinv[2][1]);
   S[2][2] = temp*Cinv[2][2] + mu*(1.0-Cinv[2][2]);
-    
+
   // C_abcd=lambda*J^2*Cinv_ab*Cinv_cd+[2*miu-lambda(J^2-1)]*0.5(Cinv_ac*Cinv_bd+Cinv_ad*Cinv_bc)
   PetscScalar temp1=lambda*J*J;
   PetscScalar temp2=2*mu-lambda*(J*J-1);
   D[0][0]=temp1*Cinv[0][0]*Cinv[0][0]+temp2*0.5*(Cinv[0][0]*Cinv[0][0]+Cinv[0][0]*Cinv[0][0]);
-  D[0][1]=temp1*Cinv[0][0]*Cinv[1][1]+temp2*0.5*(Cinv[0][1]*Cinv[0][1]+Cinv[0][1]*Cinv[0][1]); 
-  D[0][2]=temp1*Cinv[0][0]*Cinv[2][2]+temp2*0.5*(Cinv[0][2]*Cinv[0][2]+Cinv[0][2]*Cinv[0][2]); 
-  D[0][3]=temp1*Cinv[0][0]*Cinv[0][1]+temp2*0.5*(Cinv[0][0]*Cinv[0][1]+Cinv[0][1]*Cinv[0][0]); 
-  D[0][4]=temp1*Cinv[0][0]*Cinv[1][2]+temp2*0.5*(Cinv[0][1]*Cinv[0][2]+Cinv[0][2]*Cinv[0][1]); 
-  D[0][5]=temp1*Cinv[0][0]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[0][2]+Cinv[0][2]*Cinv[0][0]); 
-  D[1][1]=temp1*Cinv[1][1]*Cinv[1][1]+temp2*0.5*(Cinv[1][1]*Cinv[1][1]+Cinv[1][1]*Cinv[1][1]); 
-  D[1][2]=temp1*Cinv[1][1]*Cinv[2][2]+temp2*0.5*(Cinv[1][2]*Cinv[1][2]+Cinv[1][2]*Cinv[1][2]); 
-  D[1][3]=temp1*Cinv[1][1]*Cinv[0][1]+temp2*0.5*(Cinv[1][0]*Cinv[1][1]+Cinv[1][1]*Cinv[1][0]); 
-  D[1][4]=temp1*Cinv[1][1]*Cinv[1][2]+temp2*0.5*(Cinv[1][1]*Cinv[1][2]+Cinv[1][2]*Cinv[1][1]); 
-  D[1][5]=temp1*Cinv[1][1]*Cinv[0][2]+temp2*0.5*(Cinv[1][0]*Cinv[1][2]+Cinv[1][2]*Cinv[1][0]); 
-  D[2][2]=temp1*Cinv[2][2]*Cinv[2][2]+temp2*0.5*(Cinv[2][2]*Cinv[2][2]+Cinv[2][2]*Cinv[2][2]); 
-  D[2][3]=temp1*Cinv[2][2]*Cinv[0][1]+temp2*0.5*(Cinv[2][0]*Cinv[2][1]+Cinv[2][1]*Cinv[2][0]); 
-  D[2][4]=temp1*Cinv[2][2]*Cinv[1][2]+temp2*0.5*(Cinv[2][1]*Cinv[2][2]+Cinv[2][2]*Cinv[2][1]); 
-  D[2][5]=temp1*Cinv[2][2]*Cinv[0][2]+temp2*0.5*(Cinv[2][0]*Cinv[2][2]+Cinv[2][2]*Cinv[2][0]); 
-  D[3][3]=temp1*Cinv[0][1]*Cinv[0][1]+temp2*0.5*(Cinv[0][0]*Cinv[1][1]+Cinv[0][1]*Cinv[1][0]); 
-  D[3][4]=temp1*Cinv[0][1]*Cinv[1][2]+temp2*0.5*(Cinv[0][1]*Cinv[1][2]+Cinv[0][2]*Cinv[1][1]); 
-  D[3][5]=temp1*Cinv[0][1]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[1][2]+Cinv[0][2]*Cinv[1][0]); 
-  D[4][4]=temp1*Cinv[1][2]*Cinv[1][2]+temp2*0.5*(Cinv[1][1]*Cinv[2][2]+Cinv[1][2]*Cinv[2][1]); 
-  D[4][5]=temp1*Cinv[1][2]*Cinv[0][2]+temp2*0.5*(Cinv[1][0]*Cinv[2][2]+Cinv[1][2]*Cinv[2][0]); 
-  D[5][5]=temp1*Cinv[0][2]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[2][2]+Cinv[0][2]*Cinv[2][0]); 
+  D[0][1]=temp1*Cinv[0][0]*Cinv[1][1]+temp2*0.5*(Cinv[0][1]*Cinv[0][1]+Cinv[0][1]*Cinv[0][1]);
+  D[0][2]=temp1*Cinv[0][0]*Cinv[2][2]+temp2*0.5*(Cinv[0][2]*Cinv[0][2]+Cinv[0][2]*Cinv[0][2]);
+  D[0][3]=temp1*Cinv[0][0]*Cinv[0][1]+temp2*0.5*(Cinv[0][0]*Cinv[0][1]+Cinv[0][1]*Cinv[0][0]);
+  D[0][4]=temp1*Cinv[0][0]*Cinv[1][2]+temp2*0.5*(Cinv[0][1]*Cinv[0][2]+Cinv[0][2]*Cinv[0][1]);
+  D[0][5]=temp1*Cinv[0][0]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[0][2]+Cinv[0][2]*Cinv[0][0]);
+  D[1][1]=temp1*Cinv[1][1]*Cinv[1][1]+temp2*0.5*(Cinv[1][1]*Cinv[1][1]+Cinv[1][1]*Cinv[1][1]);
+  D[1][2]=temp1*Cinv[1][1]*Cinv[2][2]+temp2*0.5*(Cinv[1][2]*Cinv[1][2]+Cinv[1][2]*Cinv[1][2]);
+  D[1][3]=temp1*Cinv[1][1]*Cinv[0][1]+temp2*0.5*(Cinv[1][0]*Cinv[1][1]+Cinv[1][1]*Cinv[1][0]);
+  D[1][4]=temp1*Cinv[1][1]*Cinv[1][2]+temp2*0.5*(Cinv[1][1]*Cinv[1][2]+Cinv[1][2]*Cinv[1][1]);
+  D[1][5]=temp1*Cinv[1][1]*Cinv[0][2]+temp2*0.5*(Cinv[1][0]*Cinv[1][2]+Cinv[1][2]*Cinv[1][0]);
+  D[2][2]=temp1*Cinv[2][2]*Cinv[2][2]+temp2*0.5*(Cinv[2][2]*Cinv[2][2]+Cinv[2][2]*Cinv[2][2]);
+  D[2][3]=temp1*Cinv[2][2]*Cinv[0][1]+temp2*0.5*(Cinv[2][0]*Cinv[2][1]+Cinv[2][1]*Cinv[2][0]);
+  D[2][4]=temp1*Cinv[2][2]*Cinv[1][2]+temp2*0.5*(Cinv[2][1]*Cinv[2][2]+Cinv[2][2]*Cinv[2][1]);
+  D[2][5]=temp1*Cinv[2][2]*Cinv[0][2]+temp2*0.5*(Cinv[2][0]*Cinv[2][2]+Cinv[2][2]*Cinv[2][0]);
+  D[3][3]=temp1*Cinv[0][1]*Cinv[0][1]+temp2*0.5*(Cinv[0][0]*Cinv[1][1]+Cinv[0][1]*Cinv[1][0]);
+  D[3][4]=temp1*Cinv[0][1]*Cinv[1][2]+temp2*0.5*(Cinv[0][1]*Cinv[1][2]+Cinv[0][2]*Cinv[1][1]);
+  D[3][5]=temp1*Cinv[0][1]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[1][2]+Cinv[0][2]*Cinv[1][0]);
+  D[4][4]=temp1*Cinv[1][2]*Cinv[1][2]+temp2*0.5*(Cinv[1][1]*Cinv[2][2]+Cinv[1][2]*Cinv[2][1]);
+  D[4][5]=temp1*Cinv[1][2]*Cinv[0][2]+temp2*0.5*(Cinv[1][0]*Cinv[2][2]+Cinv[1][2]*Cinv[2][0]);
+  D[5][5]=temp1*Cinv[0][2]*Cinv[0][2]+temp2*0.5*(Cinv[0][0]*Cinv[2][2]+Cinv[0][2]*Cinv[2][0]);
   D[1][0]=D[0][1];
   D[2][0]=D[0][2];
   D[3][0]=D[0][3];
@@ -118,13 +118,13 @@ void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pe
   D[5][2]=D[2][5];
   D[4][3]=D[3][4];
   D[5][3]=D[3][5];
-  D[5][4]=D[4][5];  
+  D[5][4]=D[4][5];
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "StVenantModel"
 void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   PetscReal lambda = user->lambda;
@@ -133,13 +133,13 @@ void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pets
   // Interpolate the solution and gradient given U
   PetscScalar u[3];
   PetscScalar grad_u[3][3];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
 
   // F = I + u_{i,j}
-  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2]; 
-  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2]; 
-  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2]; 
+  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2];
+  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2];
+  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2];
 
   // C^-1 = (F^T F)^-1 = F^-1 F^-T
   PetscScalar C[3][3];
@@ -165,8 +165,8 @@ void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pets
   S[2][0] = mu*C[2][0];
   S[2][1] = mu*C[2][1];
   S[2][2] = temp + mu*(C[2][2]-1);
-    
-  //C_abcd = lambda*delta_ab*delta_cd+2*mu*0.5*(delta_ac*delta_bd+delta_ad*delta_bc) 
+
+  //C_abcd = lambda*delta_ab*delta_cd+2*mu*0.5*(delta_ac*delta_bd+delta_ad*delta_bc)
   //Elasticity material tensor
   D[0][0]=lambda+2*mu;
   D[0][1]=lambda;
@@ -203,13 +203,13 @@ void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pets
   D[5][2]=D[2][5];
   D[4][3]=D[3][4];
   D[5][3]=D[3][5];
-  D[5][4]=D[4][5];  
+  D[5][4]=D[4][5];
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "MooneyRivlinModel1"
 void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   PetscReal a = user->a;
@@ -220,29 +220,29 @@ void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
   // Interpolate the solution and gradient given U
   PetscScalar u[3];
   PetscScalar grad_u[3][3];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
 
   // F = I + u_{i,j}
-  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2]; 
-  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2]; 
-  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2]; 
+  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2];
+  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2];
+  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2];
 
-  // Finv 
+  // Finv
   PetscScalar Finv[3][3],J,Jinv;
   J  = F[0][0]*(F[1][1]*F[2][2]-F[1][2]*F[2][1]);
   J -= F[0][1]*(F[1][0]*F[2][2]-F[1][2]*F[2][0]);
   J += F[0][2]*(F[1][0]*F[2][1]-F[1][1]*F[2][0]);
   Jinv = 1./J;
-  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv; 
+  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv;
   Finv[1][0] = -(F[1][0]*F[2][2]-F[1][2]*F[2][0])*Jinv;
   Finv[2][0] =  (F[1][0]*F[2][1]-F[2][0]*F[1][1])*Jinv;
   Finv[0][1] = -(F[0][1]*F[2][2]-F[0][2]*F[2][1])*Jinv;
-  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv; 
+  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv;
   Finv[2][1] = -(F[0][0]*F[2][1]-F[2][0]*F[0][1])*Jinv;
   Finv[0][2] =  (F[0][1]*F[1][2]-F[0][2]*F[1][1])*Jinv;
   Finv[1][2] = -(F[0][0]*F[1][2]-F[1][0]*F[0][2])*Jinv;
-  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv; 
+  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv;
 
   // C^-1 = (F^T F)^-1 = F^-1 F^-T
   PetscScalar Cinv[3][3];
@@ -279,7 +279,7 @@ void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
   S[2][0]=(J*J*(2*c+b*temp)-d)*Cinv[2][0]-b*J*J*Cs[2][0];
   S[2][1]=(J*J*(2*c+b*temp)-d)*Cinv[2][1]-b*J*J*Cs[2][1];
   S[2][2]=2*a+(J*J*(2*c+b*temp)-d)*Cinv[2][2]-b*J*J*Cs[2][2];
-    
+
   //Dijkl = J^2(4c+2b*tr(Cinv))*Cinvij*Cinvkl-2bJ^2(Cinv^2ij*Cinvkl+Cinvij*Cinv^2kl-0.5*(Cinv^2li*Cinvjk+Cinvli*Cinv^2jk+Cinv^2lj*Cinvik+Cinvlj*Cinv^2ik))-(J^2*(4c+2btr(Cinv))-2d)*0.5*(Cinvik*Cinvlj+Cinvli*Cinvjk)
   PetscScalar temp1= J*J*(4*c+2*b*temp);
   PetscScalar temp2=2*b*J*J;
@@ -326,7 +326,7 @@ void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 #undef __FUNCT__
 #define __FUNCT__ "MooneyRivlinModel2"
 void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   PetscReal c1 = user->c1;
@@ -336,29 +336,29 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
   // Interpolate the solution and gradient given U
   PetscScalar u[3];
   PetscScalar grad_u[3][3];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
 
   // F = I + u_{i,j}
-  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2]; 
-  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2]; 
-  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2]; 
+  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2];
+  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2];
+  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2];
 
-  // Finv 
+  // Finv
   PetscScalar Finv[3][3],J,Jinv;
   J  = F[0][0]*(F[1][1]*F[2][2]-F[1][2]*F[2][1]);
   J -= F[0][1]*(F[1][0]*F[2][2]-F[1][2]*F[2][0]);
   J += F[0][2]*(F[1][0]*F[2][1]-F[1][1]*F[2][0]);
   Jinv = 1./J;
-  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv; 
+  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv;
   Finv[1][0] = -(F[1][0]*F[2][2]-F[1][2]*F[2][0])*Jinv;
   Finv[2][0] =  (F[1][0]*F[2][1]-F[2][0]*F[1][1])*Jinv;
   Finv[0][1] = -(F[0][1]*F[2][2]-F[0][2]*F[2][1])*Jinv;
-  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv; 
+  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv;
   Finv[2][1] = -(F[0][0]*F[2][1]-F[2][0]*F[0][1])*Jinv;
   Finv[0][2] =  (F[0][1]*F[1][2]-F[0][2]*F[1][1])*Jinv;
   Finv[1][2] = -(F[0][0]*F[1][2]-F[1][0]*F[0][2])*Jinv;
-  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv; 
+  Finv[2][2] =  (F[0][0]*F[1][1]-F[1][0]*F[0][1])*Jinv;
 
   // C^-1 = (F^T F)^-1 = F^-1 F^-T
   PetscScalar Cinv[3][3];
@@ -392,10 +392,10 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
   trCs += C[2][0]*C[0][2] + C[2][1]*C[1][2] + C[2][2]*C[2][2];
 
   PetscScalar sinva = 0.5*(trC*trC - trCs);
-  
+
   PetscScalar temp = pow(J,-2/3);
   PetscScalar tempD = (c1*trC+2*c2*temp*sinva);
-	
+
   //Sij=2*a*deltaij+(J^2*(2*c+b*tr(Cinv))-d)Cinvij-b*J^2*Csij
   PetscScalar Siso[3][3];
   Siso[0][0]=2*temp*(c1+c2*temp*(trC-C[0][0])-(1/3)*tempD*Cinv[0][0]);
@@ -465,7 +465,7 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
   Dvol[4][4]=temp1*Cinv[1][2]*Cinv[1][2]-temp2*0.5*(Cinv[1][1]*Cinv[2][2]+Cinv[2][1]*Cinv[2][1]);
   Dvol[4][5]=temp1*Cinv[1][2]*Cinv[0][2]-temp2*0.5*(Cinv[1][0]*Cinv[2][2]+Cinv[2][1]*Cinv[2][0]);
   Dvol[5][5]=temp1*Cinv[0][2]*Cinv[0][2]-temp2*0.5*(Cinv[0][0]*Cinv[2][2]+Cinv[2][0]*Cinv[2][0]);
-  
+
 
   //Dijkl = J^2(4c+2b*tr(Cinv))*Cinvij*Cinvkl-2bJ^2(Cinv^2ij*Cinvkl+Cinvij*Cinv^2kl-0.5*(Cinv^2li*Cinvjk+Cinvli*Cinv^2jk+Cinv^2lj*Cinvik+Cinvlj*Cinv^2ik))-(J^2*(4c+2btr(Cinv))-2d)*0.5*(Cinvik*Cinvlj+Cinvli*Cinvjk)
   D[0][0]=Diso[0][0]+Dvol[0][0];
@@ -510,7 +510,7 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 #undef __FUNCT__
 #define __FUNCT__ "GeneralModel"
 void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   PetscReal c1 = user->c1;
@@ -520,25 +520,25 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
   // Interpolate the solution and gradient given U
   PetscScalar u[3];
   PetscScalar grad_u[3][3];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
 
   // F = I + u_{i,j}
-  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2]; 
-  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2]; 
-  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2]; 
+  F[0][0] = 1+grad_u[0][0]; F[0][1] =   grad_u[0][1];  F[0][2] =   grad_u[0][2];
+  F[1][0] =   grad_u[1][0]; F[1][1] = 1+grad_u[1][1];  F[1][2] =   grad_u[1][2];
+  F[2][0] =   grad_u[2][0]; F[2][1] =   grad_u[2][1];  F[2][2] = 1+grad_u[2][2];
 
-  // Finv 
+  // Finv
   PetscScalar Finv[3][3],J,Jinv;
   J  = F[0][0]*(F[1][1]*F[2][2]-F[1][2]*F[2][1]);
   J -= F[0][1]*(F[1][0]*F[2][2]-F[1][2]*F[2][0]);
   J += F[0][2]*(F[1][0]*F[2][1]-F[1][1]*F[2][0]);
   Jinv = 1./J;
-  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv; 
+  Finv[0][0] =  (F[1][1]*F[2][2]-F[2][1]*F[1][2])*Jinv;
   Finv[1][0] = -(F[1][0]*F[2][2]-F[1][2]*F[2][0])*Jinv;
   Finv[2][0] =  (F[1][0]*F[2][1]-F[2][0]*F[1][1])*Jinv;
   Finv[0][1] = -(F[0][1]*F[2][2]-F[0][2]*F[2][1])*Jinv;
-  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv; 
+  Finv[1][1] =  (F[0][0]*F[2][2]-F[0][2]*F[2][0])*Jinv;
   Finv[2][1] = -(F[0][0]*F[2][1]-F[2][0]*F[0][1])*Jinv;
   Finv[0][2] =  (F[0][1]*F[1][2]-F[0][2]*F[1][1])*Jinv;
   Finv[1][2] = -(F[0][0]*F[1][2]-F[1][0]*F[0][2])*Jinv;
@@ -607,7 +607,7 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
   P[5][5] = 2*tempJ*(0.5-(1/3)*Cinv[0][2]*C[0][2]);
 
   PetscScalar trC = C[0][0]+C[1][1]+C[2][2];
-  
+
   PetscScalar Shat[6];
   Shat[0] = 2*(c1+c2*tempJ*(trC-C[0][0])); //Shat[0][0]
   Shat[1] = 2*(c1+c2*tempJ*(trC-C[1][1])); //Shat[1][1]
@@ -623,7 +623,7 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
   Siso[3]=P[3][0]*Shat[0] + P[3][1]*Shat[1] + P[3][2]*Shat[2] + P[3][3]*Shat[3] + P[3][4]*Shat[4] + P[3][5]*Shat[5];
   Siso[4]=P[4][0]*Shat[0] + P[4][1]*Shat[1] + P[4][2]*Shat[2] + P[4][3]*Shat[3] + P[4][4]*Shat[4] + P[4][5]*Shat[5];
   Siso[5]=P[5][0]*Shat[0] + P[5][1]*Shat[1] + P[5][2]*Shat[2] + P[5][3]*Shat[3] + P[5][4]*Shat[4] + P[5][5]*Shat[5];
-	
+
   PetscScalar tempdJ = kappa*(J-1);
   PetscScalar tempd2J2 = kappa;
   PetscScalar Svol[6];
@@ -706,31 +706,31 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
   Dhat[4][3]=Dhat[3][4];
   Dhat[5][3]=Dhat[3][5];
   Dhat[5][4]=Dhat[4][5];
-  
+
 
   PetscScalar Diso[6][6];
-  Diso[0][0] = P[0][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[0][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[0][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[0][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[0][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[0][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]); 
+  Diso[0][0] = P[0][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[0][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[0][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[0][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[0][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[0][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
   Diso[0][1] = P[1][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[1][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[1][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[1][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[1][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[1][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
   Diso[0][2] = P[2][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[2][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[2][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[2][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[2][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[2][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
-  Diso[0][3] = P[3][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[3][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[3][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[3][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[3][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[3][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]); 
-  Diso[0][4] = P[4][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[4][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[4][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[4][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[4][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[4][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]); 
+  Diso[0][3] = P[3][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[3][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[3][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[3][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[3][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[3][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
+  Diso[0][4] = P[4][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[4][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[4][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[4][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[4][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[4][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
   Diso[0][5] = P[5][0]*(Dhat[0][0]*P[0][0] + Dhat[1][0]*P[0][1] + Dhat[2][0]*P[0][2] + Dhat[3][0]*P[0][3] + Dhat[4][0]*P[0][4] + Dhat[5][0]*P[0][5]) + P[5][1]*(Dhat[0][1]*P[0][0] + Dhat[1][1]*P[0][1] + Dhat[2][1]*P[0][2] + Dhat[3][1]*P[0][3] + Dhat[4][1]*P[0][4] + Dhat[5][1]*P[0][5]) + P[5][2]*(Dhat[0][2]*P[0][0] + Dhat[1][2]*P[0][1] + Dhat[2][2]*P[0][2] + Dhat[3][2]*P[0][3] + Dhat[4][2]*P[0][4] + Dhat[5][2]*P[0][5]) + P[5][3]*(Dhat[0][3]*P[0][0] + Dhat[1][3]*P[0][1] + Dhat[2][3]*P[0][2] + Dhat[3][3]*P[0][3] + Dhat[4][3]*P[0][4] + Dhat[5][3]*P[0][5]) + P[5][4]*(Dhat[0][4]*P[0][0] + Dhat[1][4]*P[0][1] + Dhat[2][4]*P[0][2] + Dhat[3][4]*P[0][3] + Dhat[4][4]*P[0][4] + Dhat[5][4]*P[0][5]) + P[5][5]*(Dhat[0][5]*P[0][0] + Dhat[1][5]*P[0][1] + Dhat[2][5]*P[0][2] + Dhat[3][5]*P[0][3] + Dhat[4][5]*P[0][4] + Dhat[5][5]*P[0][5]);
-  Diso[1][1] = P[1][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[1][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[1][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[1][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[1][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[1][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]); 
-  Diso[1][2] = P[2][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[2][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[2][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[2][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[2][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[2][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]); 
-  Diso[1][3] = P[3][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[3][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[3][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[3][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[3][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[3][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]); 
-  Diso[1][4] = P[4][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[4][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[4][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[4][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[4][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[4][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]); 
+  Diso[1][1] = P[1][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[1][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[1][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[1][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[1][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[1][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]);
+  Diso[1][2] = P[2][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[2][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[2][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[2][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[2][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[2][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]);
+  Diso[1][3] = P[3][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[3][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[3][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[3][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[3][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[3][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]);
+  Diso[1][4] = P[4][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[4][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[4][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[4][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[4][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[4][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]);
   Diso[1][5] = P[5][0]*(Dhat[0][0]*P[1][0] + Dhat[1][0]*P[1][1] + Dhat[2][0]*P[1][2] + Dhat[3][0]*P[1][3] + Dhat[4][0]*P[1][4] + Dhat[5][0]*P[1][5]) + P[5][1]*(Dhat[0][1]*P[1][0] + Dhat[1][1]*P[1][1] + Dhat[2][1]*P[1][2] + Dhat[3][1]*P[1][3] + Dhat[4][1]*P[1][4] + Dhat[5][1]*P[1][5]) + P[5][2]*(Dhat[0][2]*P[1][0] + Dhat[1][2]*P[1][1] + Dhat[2][2]*P[1][2] + Dhat[3][2]*P[1][3] + Dhat[4][2]*P[1][4] + Dhat[5][2]*P[1][5]) + P[5][3]*(Dhat[0][3]*P[1][0] + Dhat[1][3]*P[1][1] + Dhat[2][3]*P[1][2] + Dhat[3][3]*P[1][3] + Dhat[4][3]*P[1][4] + Dhat[5][3]*P[1][5]) + P[5][4]*(Dhat[0][4]*P[1][0] + Dhat[1][4]*P[1][1] + Dhat[2][4]*P[1][2] + Dhat[3][4]*P[1][3] + Dhat[4][4]*P[1][4] + Dhat[5][4]*P[1][5]) + P[5][5]*(Dhat[0][5]*P[1][0] + Dhat[1][5]*P[1][1] + Dhat[2][5]*P[1][2] + Dhat[3][5]*P[1][3] + Dhat[4][5]*P[1][4] + Dhat[5][5]*P[1][5]);
-  Diso[2][2] = P[2][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[2][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[2][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[2][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[2][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[2][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]); 
-  Diso[2][3] = P[3][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[3][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[3][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[3][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[3][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[3][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]); 
-  Diso[2][4] = P[4][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[4][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[4][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[4][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[4][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[4][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]); 
+  Diso[2][2] = P[2][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[2][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[2][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[2][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[2][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[2][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]);
+  Diso[2][3] = P[3][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[3][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[3][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[3][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[3][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[3][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]);
+  Diso[2][4] = P[4][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[4][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[4][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[4][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[4][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[4][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]);
   Diso[2][5] = P[5][0]*(Dhat[0][0]*P[2][0] + Dhat[1][0]*P[2][1] + Dhat[2][0]*P[2][2] + Dhat[3][0]*P[2][3] + Dhat[4][0]*P[2][4] + Dhat[5][0]*P[2][5]) + P[5][1]*(Dhat[0][1]*P[2][0] + Dhat[1][1]*P[2][1] + Dhat[2][1]*P[2][2] + Dhat[3][1]*P[2][3] + Dhat[4][1]*P[2][4] + Dhat[5][1]*P[2][5]) + P[5][2]*(Dhat[0][2]*P[2][0] + Dhat[1][2]*P[2][1] + Dhat[2][2]*P[2][2] + Dhat[3][2]*P[2][3] + Dhat[4][2]*P[2][4] + Dhat[5][2]*P[2][5]) + P[5][3]*(Dhat[0][3]*P[2][0] + Dhat[1][3]*P[2][1] + Dhat[2][3]*P[2][2] + Dhat[3][3]*P[2][3] + Dhat[4][3]*P[2][4] + Dhat[5][3]*P[2][5]) + P[5][4]*(Dhat[0][4]*P[2][0] + Dhat[1][4]*P[2][1] + Dhat[2][4]*P[2][2] + Dhat[3][4]*P[2][3] + Dhat[4][4]*P[2][4] + Dhat[5][4]*P[2][5]) + P[5][5]*(Dhat[0][5]*P[2][0] + Dhat[1][5]*P[2][1] + Dhat[2][5]*P[2][2] + Dhat[3][5]*P[2][3] + Dhat[4][5]*P[2][4] + Dhat[5][5]*P[2][5]);
-  Diso[3][3] = P[3][0]*(Dhat[0][0]*P[3][0] + Dhat[1][0]*P[3][1] + Dhat[2][0]*P[3][2] + Dhat[3][0]*P[3][3] + Dhat[4][0]*P[3][4] + Dhat[5][0]*P[3][5]) + P[3][1]*(Dhat[0][1]*P[3][0] + Dhat[1][1]*P[3][1] + Dhat[2][1]*P[3][2] + Dhat[3][1]*P[3][3] + Dhat[4][1]*P[3][4] + Dhat[5][1]*P[3][5]) + P[3][2]*(Dhat[0][2]*P[3][0] + Dhat[1][2]*P[3][1] + Dhat[2][2]*P[3][2] + Dhat[3][2]*P[3][3] + Dhat[4][2]*P[3][4] + Dhat[5][2]*P[3][5]) + P[3][3]*(Dhat[0][3]*P[3][0] + Dhat[1][3]*P[3][1] + Dhat[2][3]*P[3][2] + Dhat[3][3]*P[3][3] + Dhat[4][3]*P[3][4] + Dhat[5][3]*P[3][5]) + P[3][4]*(Dhat[0][4]*P[3][0] + Dhat[1][4]*P[3][1] + Dhat[2][4]*P[3][2] + Dhat[3][4]*P[3][3] + Dhat[4][4]*P[3][4] + Dhat[5][4]*P[3][5]) + P[3][5]*(Dhat[0][5]*P[3][0] + Dhat[1][5]*P[3][1] + Dhat[2][5]*P[3][2] + Dhat[3][5]*P[3][3] + Dhat[4][5]*P[3][4] + Dhat[5][5]*P[3][5]); 
-  Diso[3][4] = P[4][0]*(Dhat[0][0]*P[3][0] + Dhat[1][0]*P[3][1] + Dhat[2][0]*P[3][2] + Dhat[3][0]*P[3][3] + Dhat[4][0]*P[3][4] + Dhat[5][0]*P[3][5]) + P[4][1]*(Dhat[0][1]*P[3][0] + Dhat[1][1]*P[3][1] + Dhat[2][1]*P[3][2] + Dhat[3][1]*P[3][3] + Dhat[4][1]*P[3][4] + Dhat[5][1]*P[3][5]) + P[4][2]*(Dhat[0][2]*P[3][0] + Dhat[1][2]*P[3][1] + Dhat[2][2]*P[3][2] + Dhat[3][2]*P[3][3] + Dhat[4][2]*P[3][4] + Dhat[5][2]*P[3][5]) + P[4][3]*(Dhat[0][3]*P[3][0] + Dhat[1][3]*P[3][1] + Dhat[2][3]*P[3][2] + Dhat[3][3]*P[3][3] + Dhat[4][3]*P[3][4] + Dhat[5][3]*P[3][5]) + P[4][4]*(Dhat[0][4]*P[3][0] + Dhat[1][4]*P[3][1] + Dhat[2][4]*P[3][2] + Dhat[3][4]*P[3][3] + Dhat[4][4]*P[3][4] + Dhat[5][4]*P[3][5]) + P[4][5]*(Dhat[0][5]*P[3][0] + Dhat[1][5]*P[3][1] + Dhat[2][5]*P[3][2] + Dhat[3][5]*P[3][3] + Dhat[4][5]*P[3][4] + Dhat[5][5]*P[3][5]); 
+  Diso[3][3] = P[3][0]*(Dhat[0][0]*P[3][0] + Dhat[1][0]*P[3][1] + Dhat[2][0]*P[3][2] + Dhat[3][0]*P[3][3] + Dhat[4][0]*P[3][4] + Dhat[5][0]*P[3][5]) + P[3][1]*(Dhat[0][1]*P[3][0] + Dhat[1][1]*P[3][1] + Dhat[2][1]*P[3][2] + Dhat[3][1]*P[3][3] + Dhat[4][1]*P[3][4] + Dhat[5][1]*P[3][5]) + P[3][2]*(Dhat[0][2]*P[3][0] + Dhat[1][2]*P[3][1] + Dhat[2][2]*P[3][2] + Dhat[3][2]*P[3][3] + Dhat[4][2]*P[3][4] + Dhat[5][2]*P[3][5]) + P[3][3]*(Dhat[0][3]*P[3][0] + Dhat[1][3]*P[3][1] + Dhat[2][3]*P[3][2] + Dhat[3][3]*P[3][3] + Dhat[4][3]*P[3][4] + Dhat[5][3]*P[3][5]) + P[3][4]*(Dhat[0][4]*P[3][0] + Dhat[1][4]*P[3][1] + Dhat[2][4]*P[3][2] + Dhat[3][4]*P[3][3] + Dhat[4][4]*P[3][4] + Dhat[5][4]*P[3][5]) + P[3][5]*(Dhat[0][5]*P[3][0] + Dhat[1][5]*P[3][1] + Dhat[2][5]*P[3][2] + Dhat[3][5]*P[3][3] + Dhat[4][5]*P[3][4] + Dhat[5][5]*P[3][5]);
+  Diso[3][4] = P[4][0]*(Dhat[0][0]*P[3][0] + Dhat[1][0]*P[3][1] + Dhat[2][0]*P[3][2] + Dhat[3][0]*P[3][3] + Dhat[4][0]*P[3][4] + Dhat[5][0]*P[3][5]) + P[4][1]*(Dhat[0][1]*P[3][0] + Dhat[1][1]*P[3][1] + Dhat[2][1]*P[3][2] + Dhat[3][1]*P[3][3] + Dhat[4][1]*P[3][4] + Dhat[5][1]*P[3][5]) + P[4][2]*(Dhat[0][2]*P[3][0] + Dhat[1][2]*P[3][1] + Dhat[2][2]*P[3][2] + Dhat[3][2]*P[3][3] + Dhat[4][2]*P[3][4] + Dhat[5][2]*P[3][5]) + P[4][3]*(Dhat[0][3]*P[3][0] + Dhat[1][3]*P[3][1] + Dhat[2][3]*P[3][2] + Dhat[3][3]*P[3][3] + Dhat[4][3]*P[3][4] + Dhat[5][3]*P[3][5]) + P[4][4]*(Dhat[0][4]*P[3][0] + Dhat[1][4]*P[3][1] + Dhat[2][4]*P[3][2] + Dhat[3][4]*P[3][3] + Dhat[4][4]*P[3][4] + Dhat[5][4]*P[3][5]) + P[4][5]*(Dhat[0][5]*P[3][0] + Dhat[1][5]*P[3][1] + Dhat[2][5]*P[3][2] + Dhat[3][5]*P[3][3] + Dhat[4][5]*P[3][4] + Dhat[5][5]*P[3][5]);
   Diso[3][5] = P[5][0]*(Dhat[0][0]*P[3][0] + Dhat[1][0]*P[3][1] + Dhat[2][0]*P[3][2] + Dhat[3][0]*P[3][3] + Dhat[4][0]*P[3][4] + Dhat[5][0]*P[3][5]) + P[5][1]*(Dhat[0][1]*P[3][0] + Dhat[1][1]*P[3][1] + Dhat[2][1]*P[3][2] + Dhat[3][1]*P[3][3] + Dhat[4][1]*P[3][4] + Dhat[5][1]*P[3][5]) + P[5][2]*(Dhat[0][2]*P[3][0] + Dhat[1][2]*P[3][1] + Dhat[2][2]*P[3][2] + Dhat[3][2]*P[3][3] + Dhat[4][2]*P[3][4] + Dhat[5][2]*P[3][5]) + P[5][3]*(Dhat[0][3]*P[3][0] + Dhat[1][3]*P[3][1] + Dhat[2][3]*P[3][2] + Dhat[3][3]*P[3][3] + Dhat[4][3]*P[3][4] + Dhat[5][3]*P[3][5]) + P[5][4]*(Dhat[0][4]*P[3][0] + Dhat[1][4]*P[3][1] + Dhat[2][4]*P[3][2] + Dhat[3][4]*P[3][3] + Dhat[4][4]*P[3][4] + Dhat[5][4]*P[3][5]) + P[5][5]*(Dhat[0][5]*P[3][0] + Dhat[1][5]*P[3][1] + Dhat[2][5]*P[3][2] + Dhat[3][5]*P[3][3] + Dhat[4][5]*P[3][4] + Dhat[5][5]*P[3][5]);
-  Diso[4][4] = P[4][0]*(Dhat[0][0]*P[4][0] + Dhat[1][0]*P[4][1] + Dhat[2][0]*P[4][2] + Dhat[3][0]*P[4][3] + Dhat[4][0]*P[4][4] + Dhat[5][0]*P[4][5]) + P[4][1]*(Dhat[0][1]*P[4][0] + Dhat[1][1]*P[4][1] + Dhat[2][1]*P[4][2] + Dhat[3][1]*P[4][3] + Dhat[4][1]*P[4][4] + Dhat[5][1]*P[4][5]) + P[4][2]*(Dhat[0][2]*P[4][0] + Dhat[1][2]*P[4][1] + Dhat[2][2]*P[4][2] + Dhat[3][2]*P[4][3] + Dhat[4][2]*P[4][4] + Dhat[5][2]*P[4][5]) + P[4][3]*(Dhat[0][3]*P[4][0] + Dhat[1][3]*P[4][1] + Dhat[2][3]*P[4][2] + Dhat[3][3]*P[4][3] + Dhat[4][3]*P[4][4] + Dhat[5][3]*P[4][5]) + P[4][4]*(Dhat[0][4]*P[4][0] + Dhat[1][4]*P[4][1] + Dhat[2][4]*P[4][2] + Dhat[3][4]*P[4][3] + Dhat[4][4]*P[4][4] + Dhat[5][4]*P[4][5]) + P[4][5]*(Dhat[0][5]*P[4][0] + Dhat[1][5]*P[4][1] + Dhat[2][5]*P[4][2] + Dhat[3][5]*P[4][3] + Dhat[4][5]*P[4][4] + Dhat[5][5]*P[4][5]); 
+  Diso[4][4] = P[4][0]*(Dhat[0][0]*P[4][0] + Dhat[1][0]*P[4][1] + Dhat[2][0]*P[4][2] + Dhat[3][0]*P[4][3] + Dhat[4][0]*P[4][4] + Dhat[5][0]*P[4][5]) + P[4][1]*(Dhat[0][1]*P[4][0] + Dhat[1][1]*P[4][1] + Dhat[2][1]*P[4][2] + Dhat[3][1]*P[4][3] + Dhat[4][1]*P[4][4] + Dhat[5][1]*P[4][5]) + P[4][2]*(Dhat[0][2]*P[4][0] + Dhat[1][2]*P[4][1] + Dhat[2][2]*P[4][2] + Dhat[3][2]*P[4][3] + Dhat[4][2]*P[4][4] + Dhat[5][2]*P[4][5]) + P[4][3]*(Dhat[0][3]*P[4][0] + Dhat[1][3]*P[4][1] + Dhat[2][3]*P[4][2] + Dhat[3][3]*P[4][3] + Dhat[4][3]*P[4][4] + Dhat[5][3]*P[4][5]) + P[4][4]*(Dhat[0][4]*P[4][0] + Dhat[1][4]*P[4][1] + Dhat[2][4]*P[4][2] + Dhat[3][4]*P[4][3] + Dhat[4][4]*P[4][4] + Dhat[5][4]*P[4][5]) + P[4][5]*(Dhat[0][5]*P[4][0] + Dhat[1][5]*P[4][1] + Dhat[2][5]*P[4][2] + Dhat[3][5]*P[4][3] + Dhat[4][5]*P[4][4] + Dhat[5][5]*P[4][5]);
   Diso[4][5] = P[5][0]*(Dhat[0][0]*P[4][0] + Dhat[1][0]*P[4][1] + Dhat[2][0]*P[4][2] + Dhat[3][0]*P[4][3] + Dhat[4][0]*P[4][4] + Dhat[5][0]*P[4][5]) + P[5][1]*(Dhat[0][1]*P[4][0] + Dhat[1][1]*P[4][1] + Dhat[2][1]*P[4][2] + Dhat[3][1]*P[4][3] + Dhat[4][1]*P[4][4] + Dhat[5][1]*P[4][5]) + P[5][2]*(Dhat[0][2]*P[4][0] + Dhat[1][2]*P[4][1] + Dhat[2][2]*P[4][2] + Dhat[3][2]*P[4][3] + Dhat[4][2]*P[4][4] + Dhat[5][2]*P[4][5]) + P[5][3]*(Dhat[0][3]*P[4][0] + Dhat[1][3]*P[4][1] + Dhat[2][3]*P[4][2] + Dhat[3][3]*P[4][3] + Dhat[4][3]*P[4][4] + Dhat[5][3]*P[4][5]) + P[5][4]*(Dhat[0][4]*P[4][0] + Dhat[1][4]*P[4][1] + Dhat[2][4]*P[4][2] + Dhat[3][4]*P[4][3] + Dhat[4][4]*P[4][4] + Dhat[5][4]*P[4][5]) + P[5][5]*(Dhat[0][5]*P[4][0] + Dhat[1][5]*P[4][1] + Dhat[2][5]*P[4][2] + Dhat[3][5]*P[4][3] + Dhat[4][5]*P[4][4] + Dhat[5][5]*P[4][5]);
   Diso[5][5] = P[5][0]*(Dhat[0][0]*P[5][0] + Dhat[1][0]*P[5][1] + Dhat[2][0]*P[5][2] + Dhat[3][0]*P[5][3] + Dhat[4][0]*P[5][4] + Dhat[5][0]*P[5][5]) + P[5][1]*(Dhat[0][1]*P[5][0] + Dhat[1][1]*P[5][1] + Dhat[2][1]*P[5][2] + Dhat[3][1]*P[5][3] + Dhat[4][1]*P[5][4] + Dhat[5][1]*P[5][5]) + P[5][2]*(Dhat[0][2]*P[5][0] + Dhat[1][2]*P[5][1] + Dhat[2][2]*P[5][2] + Dhat[3][2]*P[5][3] + Dhat[4][2]*P[5][4] + Dhat[5][2]*P[5][5]) + P[5][3]*(Dhat[0][3]*P[5][0] + Dhat[1][3]*P[5][1] + Dhat[2][3]*P[5][2] + Dhat[3][3]*P[5][3] + Dhat[4][3]*P[5][4] + Dhat[5][3]*P[5][5]) + P[5][4]*(Dhat[0][4]*P[5][0] + Dhat[1][4]*P[5][1] + Dhat[2][4]*P[5][2] + Dhat[3][4]*P[5][3] + Dhat[4][4]*P[5][4] + Dhat[5][4]*P[5][5]) + P[5][5]*(Dhat[0][5]*P[5][0] + Dhat[1][5]*P[5][1] + Dhat[2][5]*P[5][2] + Dhat[3][5]*P[5][3] + Dhat[4][5]*P[5][4] + Dhat[5][5]*P[5][5]);
-  
+
   Diso[0][0] += (2/3)*tempX*Pbar[0][0]-(2/3)*(Cinv[0][0]*Siso[0]+Siso[0]*Cinv[0][0]);
   Diso[0][1] += (2/3)*tempX*Pbar[0][1]-(2/3)*(Cinv[0][0]*Siso[1]+Siso[0]*Cinv[1][1]);
   Diso[0][2] += (2/3)*tempX*Pbar[0][2]-(2/3)*(Cinv[0][0]*Siso[2]+Siso[0]*Cinv[2][2]);
@@ -819,25 +819,25 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
 #undef __FUNCT__
 #define __FUNCT__ "DeltaE"
 void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3], PetscScalar (*B)[3])
-{    
-  // Given F and basis values, returns B 
-  B[0][0] = F[0][0]*Nx; 
-  B[0][1] = F[1][0]*Nx; 
+{
+  // Given F and basis values, returns B
+  B[0][0] = F[0][0]*Nx;
+  B[0][1] = F[1][0]*Nx;
   B[0][2] = F[2][0]*Nx;
-  B[1][0] = F[0][1]*Ny; 
-  B[1][1] = F[1][1]*Ny; 
+  B[1][0] = F[0][1]*Ny;
+  B[1][1] = F[1][1]*Ny;
   B[1][2] = F[2][1]*Ny;
-  B[2][0] = F[0][2]*Nz; 
-  B[2][1] = F[1][2]*Nz; 
+  B[2][0] = F[0][2]*Nz;
+  B[2][1] = F[1][2]*Nz;
   B[2][2] = F[2][2]*Nz;
-  B[3][0] = F[0][0]*Ny+F[0][1]*Nx; 
-  B[3][1] = F[1][0]*Ny+F[1][1]*Nx; 
+  B[3][0] = F[0][0]*Ny+F[0][1]*Nx;
+  B[3][1] = F[1][0]*Ny+F[1][1]*Nx;
   B[3][2] = F[2][0]*Ny+F[2][1]*Nx;
-  B[4][0] = F[0][1]*Nz+F[0][2]*Ny; 
-  B[4][1] = F[1][1]*Nz+F[1][2]*Ny; 
+  B[4][0] = F[0][1]*Nz+F[0][2]*Ny;
+  B[4][1] = F[1][1]*Nz+F[1][2]*Ny;
   B[4][2] = F[2][1]*Nz+F[2][2]*Ny;
-  B[5][0] = F[0][0]*Nz+F[0][2]*Nx; 
-  B[5][1] = F[1][0]*Nz+F[1][2]*Nx; 
+  B[5][0] = F[0][0]*Nz+F[0][2]*Nx;
+  B[5][1] = F[1][0]*Nz+F[1][2]*Nx;
   B[5][2] = F[2][0]*Nz+F[2][2]*Nx;
 }
 
@@ -845,7 +845,7 @@ void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3],
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   // call user model
@@ -862,7 +862,7 @@ PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *
     PetscReal Na_y  = N1[a][1];
     PetscReal Na_z  = N1[a][2];
     DeltaE(Na_x,Na_y,Na_z,F,B);
-    R[a][0] = B[0][0]*S[0][0]+B[1][0]*S[1][1]+B[2][0]*S[2][2]+B[3][0]*S[0][1]+B[4][0]*S[1][2]+B[5][0]*S[0][2]; 
+    R[a][0] = B[0][0]*S[0][0]+B[1][0]*S[1][1]+B[2][0]*S[2][2]+B[3][0]*S[0][1]+B[4][0]*S[1][2]+B[5][0]*S[0][2];
     R[a][1] = B[0][1]*S[0][0]+B[1][1]*S[1][1]+B[2][1]*S[2][2]+B[3][1]*S[0][1]+B[4][1]*S[1][2]+B[5][1]*S[0][2];
     R[a][2] = B[0][2]*S[0][0]+B[1][2]*S[1][1]+B[2][2]*S[2][2]+B[3][2]*S[0][1]+B[4][2]*S[1][2]+B[5][2]*S[0][2];
   }
@@ -872,7 +872,7 @@ PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *ctx)
-{    
+{
   AppCtx *user = (AppCtx *)ctx;
 
   // Call user model
@@ -894,7 +894,7 @@ PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *
 
     PetscReal Na_x  = N1[a][0];
     PetscReal Na_y  = N1[a][1];
-    PetscReal Na_z  = N1[a][2];  
+    PetscReal Na_z  = N1[a][2];
     DeltaE(Na_x,Na_y,Na_z,F,Ba);
 
     for (b=0; b<nen; b++) {
@@ -903,88 +903,88 @@ PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *
       PetscReal Nb_y  = N1[b][1];
       PetscReal Nb_z  = N1[b][2];
       DeltaE(Nb_x,Nb_y,Nb_z,F,Bb);
-      
-      Chi[0][0]=Bb[0][0]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) + 
-        Bb[1][0]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) + 
-        Bb[2][0]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) + 
-        Bb[3][0]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) + 
-        Bb[4][0]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) + 
+
+      Chi[0][0]=Bb[0][0]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) +
+        Bb[1][0]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) +
+        Bb[2][0]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) +
+        Bb[3][0]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) +
+        Bb[4][0]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) +
         Bb[5][0]*(Ba[0][0]*D[0][5] + Ba[1][0]*D[1][5] + Ba[2][0]*D[2][5] + Ba[3][0]*D[3][5] + Ba[4][0]*D[4][5] + Ba[5][0]*D[5][5]);
-        
-      Chi[0][1]=Bb[0][1]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) + 
-        Bb[1][1]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) + 
-        Bb[2][1]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) + 
-        Bb[3][1]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) + 
-        Bb[4][1]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) + 
+
+      Chi[0][1]=Bb[0][1]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) +
+        Bb[1][1]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) +
+        Bb[2][1]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) +
+        Bb[3][1]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) +
+        Bb[4][1]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) +
         Bb[5][1]*(Ba[0][0]*D[0][5] + Ba[1][0]*D[1][5] + Ba[2][0]*D[2][5] + Ba[3][0]*D[3][5] + Ba[4][0]*D[4][5] + Ba[5][0]*D[5][5]);
-        
-      Chi[0][2]=Bb[0][2]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) + 
-        Bb[1][2]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) + 
-        Bb[2][2]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) + 
-        Bb[3][2]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) + 
-        Bb[4][2]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) + 
+
+      Chi[0][2]=Bb[0][2]*(Ba[0][0]*D[0][0] + Ba[1][0]*D[1][0] + Ba[2][0]*D[2][0] + Ba[3][0]*D[3][0] + Ba[4][0]*D[4][0] + Ba[5][0]*D[5][0]) +
+        Bb[1][2]*(Ba[0][0]*D[0][1] + Ba[1][0]*D[1][1] + Ba[2][0]*D[2][1] + Ba[3][0]*D[3][1] + Ba[4][0]*D[4][1] + Ba[5][0]*D[5][1]) +
+        Bb[2][2]*(Ba[0][0]*D[0][2] + Ba[1][0]*D[1][2] + Ba[2][0]*D[2][2] + Ba[3][0]*D[3][2] + Ba[4][0]*D[4][2] + Ba[5][0]*D[5][2]) +
+        Bb[3][2]*(Ba[0][0]*D[0][3] + Ba[1][0]*D[1][3] + Ba[2][0]*D[2][3] + Ba[3][0]*D[3][3] + Ba[4][0]*D[4][3] + Ba[5][0]*D[5][3]) +
+        Bb[4][2]*(Ba[0][0]*D[0][4] + Ba[1][0]*D[1][4] + Ba[2][0]*D[2][4] + Ba[3][0]*D[3][4] + Ba[4][0]*D[4][4] + Ba[5][0]*D[5][4]) +
         Bb[5][2]*(Ba[0][0]*D[0][5] + Ba[1][0]*D[1][5] + Ba[2][0]*D[2][5] + Ba[3][0]*D[3][5] + Ba[4][0]*D[4][5] + Ba[5][0]*D[5][5]);
-        
-      Chi[1][0]=Bb[0][0]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) + 
-        Bb[1][0]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) + 
-        Bb[2][0]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) + 
-        Bb[3][0]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) + 
-        Bb[4][0]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) + 
+
+      Chi[1][0]=Bb[0][0]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) +
+        Bb[1][0]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) +
+        Bb[2][0]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) +
+        Bb[3][0]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) +
+        Bb[4][0]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) +
         Bb[5][0]*(Ba[0][1]*D[0][5] + Ba[1][1]*D[1][5] + Ba[2][1]*D[2][5] + Ba[3][1]*D[3][5] + Ba[4][1]*D[4][5] + Ba[5][1]*D[5][5]);
-        
-      Chi[1][1]=Bb[0][1]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) + 
-        Bb[1][1]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) + 
-        Bb[2][1]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) + 
-        Bb[3][1]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) + 
-        Bb[4][1]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) + 
+
+      Chi[1][1]=Bb[0][1]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) +
+        Bb[1][1]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) +
+        Bb[2][1]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) +
+        Bb[3][1]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) +
+        Bb[4][1]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) +
         Bb[5][1]*(Ba[0][1]*D[0][5] + Ba[1][1]*D[1][5] + Ba[2][1]*D[2][5] + Ba[3][1]*D[3][5] + Ba[4][1]*D[4][5] + Ba[5][1]*D[5][5]);
-        
-      Chi[1][2]=Bb[0][2]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) + 
-        Bb[1][2]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) + 
-        Bb[2][2]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) + 
-        Bb[3][2]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) + 
-        Bb[4][2]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) + 
+
+      Chi[1][2]=Bb[0][2]*(Ba[0][1]*D[0][0] + Ba[1][1]*D[1][0] + Ba[2][1]*D[2][0] + Ba[3][1]*D[3][0] + Ba[4][1]*D[4][0] + Ba[5][1]*D[5][0]) +
+        Bb[1][2]*(Ba[0][1]*D[0][1] + Ba[1][1]*D[1][1] + Ba[2][1]*D[2][1] + Ba[3][1]*D[3][1] + Ba[4][1]*D[4][1] + Ba[5][1]*D[5][1]) +
+        Bb[2][2]*(Ba[0][1]*D[0][2] + Ba[1][1]*D[1][2] + Ba[2][1]*D[2][2] + Ba[3][1]*D[3][2] + Ba[4][1]*D[4][2] + Ba[5][1]*D[5][2]) +
+        Bb[3][2]*(Ba[0][1]*D[0][3] + Ba[1][1]*D[1][3] + Ba[2][1]*D[2][3] + Ba[3][1]*D[3][3] + Ba[4][1]*D[4][3] + Ba[5][1]*D[5][3]) +
+        Bb[4][2]*(Ba[0][1]*D[0][4] + Ba[1][1]*D[1][4] + Ba[2][1]*D[2][4] + Ba[3][1]*D[3][4] + Ba[4][1]*D[4][4] + Ba[5][1]*D[5][4]) +
         Bb[5][2]*(Ba[0][1]*D[0][5] + Ba[1][1]*D[1][5] + Ba[2][1]*D[2][5] + Ba[3][1]*D[3][5] + Ba[4][1]*D[4][5] + Ba[5][1]*D[5][5]);
-        
-      Chi[2][0]=Bb[0][0]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) + 
-        Bb[1][0]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) + 
-        Bb[2][0]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) + 
-        Bb[3][0]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) + 
-        Bb[4][0]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) + 
-        Bb[5][0]*(Ba[0][2]*D[0][5] + Ba[1][2]*D[1][5] + Ba[2][2]*D[2][5] + Ba[3][2]*D[3][5] + Ba[4][2]*D[4][5] + Ba[5][2]*D[5][5]); 
-        
-      Chi[2][1]=Bb[0][1]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) + 
-        Bb[1][1]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) + 
-        Bb[2][1]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) + 
-        Bb[3][1]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) + 
-        Bb[4][1]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) + 
-        Bb[5][1]*(Ba[0][2]*D[0][5] + Ba[1][2]*D[1][5] + Ba[2][2]*D[2][5] + Ba[3][2]*D[3][5] + Ba[4][2]*D[4][5] + Ba[5][2]*D[5][5]); 
-        
-      Chi[2][2]=Bb[0][2]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) + 
-        Bb[1][2]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) + 
-        Bb[2][2]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) + 
-        Bb[3][2]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) + 
-        Bb[4][2]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) + 
+
+      Chi[2][0]=Bb[0][0]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) +
+        Bb[1][0]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) +
+        Bb[2][0]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) +
+        Bb[3][0]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) +
+        Bb[4][0]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) +
+        Bb[5][0]*(Ba[0][2]*D[0][5] + Ba[1][2]*D[1][5] + Ba[2][2]*D[2][5] + Ba[3][2]*D[3][5] + Ba[4][2]*D[4][5] + Ba[5][2]*D[5][5]);
+
+      Chi[2][1]=Bb[0][1]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) +
+        Bb[1][1]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) +
+        Bb[2][1]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) +
+        Bb[3][1]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) +
+        Bb[4][1]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) +
+        Bb[5][1]*(Ba[0][2]*D[0][5] + Ba[1][2]*D[1][5] + Ba[2][2]*D[2][5] + Ba[3][2]*D[3][5] + Ba[4][2]*D[4][5] + Ba[5][2]*D[5][5]);
+
+      Chi[2][2]=Bb[0][2]*(Ba[0][2]*D[0][0] + Ba[1][2]*D[1][0] + Ba[2][2]*D[2][0] + Ba[3][2]*D[3][0] + Ba[4][2]*D[4][0] + Ba[5][2]*D[5][0]) +
+        Bb[1][2]*(Ba[0][2]*D[0][1] + Ba[1][2]*D[1][1] + Ba[2][2]*D[2][1] + Ba[3][2]*D[3][1] + Ba[4][2]*D[4][1] + Ba[5][2]*D[5][1]) +
+        Bb[2][2]*(Ba[0][2]*D[0][2] + Ba[1][2]*D[1][2] + Ba[2][2]*D[2][2] + Ba[3][2]*D[3][2] + Ba[4][2]*D[4][2] + Ba[5][2]*D[5][2]) +
+        Bb[3][2]*(Ba[0][2]*D[0][3] + Ba[1][2]*D[1][3] + Ba[2][2]*D[2][3] + Ba[3][2]*D[3][3] + Ba[4][2]*D[4][3] + Ba[5][2]*D[5][3]) +
+        Bb[4][2]*(Ba[0][2]*D[0][4] + Ba[1][2]*D[1][4] + Ba[2][2]*D[2][4] + Ba[3][2]*D[3][4] + Ba[4][2]*D[4][4] + Ba[5][2]*D[5][4]) +
         Bb[5][2]*(Ba[0][2]*D[0][5] + Ba[1][2]*D[1][5] + Ba[2][2]*D[2][5] + Ba[3][2]*D[3][5] + Ba[4][2]*D[4][5] + Ba[5][2]*D[5][5]);
 
       G=Na_x*(S[0][0]*Nb_x + S[0][1]*Nb_y + S[0][2]*Nb_z) +
         Na_y*(S[1][0]*Nb_x + S[1][1]*Nb_y + S[1][2]*Nb_z) +
         Na_z*(S[2][0]*Nb_x + S[2][1]*Nb_y + S[2][2]*Nb_z);
-      
+
       K[a][0][b][0] = G+Chi[0][0];
       K[a][1][b][0] =   Chi[1][0];
       K[a][2][b][0] =   Chi[2][0];
-      
+
       K[a][0][b][1] =   Chi[0][1];
       K[a][1][b][1] = G+Chi[1][1];
       K[a][2][b][1] =   Chi[2][1];
-      
+
       K[a][0][b][2] =   Chi[0][2];
       K[a][1][b][2] =   Chi[1][2];
       K[a][2][b][2] = G+Chi[2][2];
     }
   }
-  
+
   return 0;
 }
 
@@ -1010,15 +1010,15 @@ PetscErrorCode WriteSolution(Vec U, const char pattern[],int number)
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   // Initialization of PETSc
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-  
+
   // Application specific data (defaults to Aluminum)
   AppCtx user;
-  PetscScalar E  = 70.0e9; 
+  PetscScalar E  = 70.0e9;
   PetscScalar nu = 0.35;
   user.model     = GeneralModel;
   PetscBool NeoHook,StVenant,MooneyR1,MooneyR2;
@@ -1031,7 +1031,7 @@ int main(int argc, char *argv[])
   ierr = PetscOptionsBool("-stvenant","Use the StVenant constitutive model",__FILE__,StVenant,&StVenant,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-nsteps","Number of load steps to take",__FILE__,nsteps,&nsteps,PETSC_NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  
+
   user.lambda = E*nu/(1.+nu)/(1.-2.*nu);
   user.mu     = 0.5*E/(1.+nu);
   user.c1     = user.mu*0.5;
@@ -1094,9 +1094,9 @@ int main(int argc, char *argv[])
   // Load stepping
   PetscInt step;
   for(step=0;step<nsteps;step++){
-    
+
     PetscPrintf(PETSC_COMM_WORLD,"%d Load Step\n",step);
-    
+
     // Solve step
     ierr = VecZeroEntries(U);CHKERRQ(ierr);
     ierr = SNESSolve(snes,PETSC_NULL,U);CHKERRQ(ierr);

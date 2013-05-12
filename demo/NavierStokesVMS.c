@@ -96,10 +96,10 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscScalar u_t[4],u[4];
   PetscScalar grad_u[4][3];
   PetscScalar der2_u[4][3][3];
-  IGAPointInterpolate(pnt,0,V,&u_t[0]);
-  IGAPointInterpolate(pnt,0,U,&u[0]);
-  IGAPointInterpolate(pnt,1,U,&grad_u[0][0]);
-  IGAPointInterpolate(pnt,2,U,&der2_u[0][0][0]);
+  IGAPointFormValue(pnt,V,&u_t[0]);
+  IGAPointFormValue(pnt,U,&u[0]);
+  IGAPointFormGrad (pnt,U,&grad_u[0][0]);
+  IGAPointFormHess (pnt,U,&der2_u[0][0][0]);
 
   PetscScalar ux=u[0],ux_t=u_t[0];
   PetscScalar uy=u[1],uy_t=u_t[1];
@@ -186,7 +186,7 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
   PetscReal nu = user->nu;
 
   PetscScalar u[4];
-  IGAPointInterpolate(pnt,0,U,&u[0]);
+  IGAPointFormValue(pnt,U,&u[0]);
   PetscScalar ux=u[0];
   PetscScalar uy=u[1];
   PetscScalar uz=u[2];
