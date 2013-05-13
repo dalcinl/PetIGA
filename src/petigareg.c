@@ -1,10 +1,6 @@
 #include "petiga.h"
 
 PETSC_EXTERN PetscBool     IGARegisterAllCalled;
-PETSC_EXTERN PetscLogEvent IGA_FormScalar;
-PETSC_EXTERN PetscLogEvent IGA_FormSystem;
-PETSC_EXTERN PetscLogEvent IGA_FormFunction;
-PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 
 #if PETSC_VERSION_LE(3,3,0)
 #define PCRegisterAll() PCRegisterAll(0)
@@ -40,6 +36,8 @@ PetscLogEvent IGA_FormScalar = 0;
 PetscLogEvent IGA_FormSystem = 0;
 PetscLogEvent IGA_FormFunction = 0;
 PetscLogEvent IGA_FormJacobian = 0;
+PetscLogEvent IGA_FormIFunction = 0;
+PetscLogEvent IGA_FormIJacobian = 0;
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARegisterAll"
@@ -84,6 +82,8 @@ PetscErrorCode IGAInitializePackage(void)
   ierr = PetscLogEventRegister("IGAFormSystem",IGA_CLASSID,&IGA_FormSystem);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormFunction",IGA_CLASSID,&IGA_FormFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("IGAFormIFunction",IGA_CLASSID,&IGA_FormIFunction);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("IGAFormIJacobian",IGA_CLASSID,&IGA_FormIJacobian);CHKERRQ(ierr);
   /* Additional option handlers */
   ierr = SNESAddOptionsChecker(SNESSetFromOptions_FDColoring);CHKERRQ(ierr);
   /* Register finalization routine */

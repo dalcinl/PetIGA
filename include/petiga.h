@@ -593,6 +593,13 @@ PETSC_EXTERN PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscLogEvent IGA_FormScalar;
+PETSC_EXTERN PetscLogEvent IGA_FormSystem;
+PETSC_EXTERN PetscLogEvent IGA_FormFunction;
+PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
+PETSC_EXTERN PetscLogEvent IGA_FormIFunction;
+PETSC_EXTERN PetscLogEvent IGA_FormIJacobian;
+
 PETSC_EXTERN PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S[],
                                           IGAUserScalar Scalar,void *ctx);
 

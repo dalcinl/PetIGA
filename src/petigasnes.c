@@ -1,8 +1,5 @@
 #include "petiga.h"
 
-PETSC_EXTERN PetscLogEvent IGA_FormFunction;
-PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
-
 PETSC_STATIC_INLINE
 PetscBool IGAElementNextUserFunction(IGAElement element,IGAUserFunction *fun,void **ctx)
 {

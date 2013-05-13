@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-PETSC_EXTERN PetscLogEvent IGA_FormSystem;
-
 PETSC_STATIC_INLINE
 PetscBool IGAElementNextUserSystem(IGAElement element,IGAUserSystem *sys,void **ctx)
 {

@@ -1,12 +1,10 @@
 #include "petiga.h"
 
-PETSC_EXTERN PetscLogEvent IGA_FormScalar;
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormScalar"
 /*@
    IGAFormScalar - Evaluates a linear functional of a given vector
-   
+
    Collective on IGA
 
    Input Parameters:
@@ -25,10 +23,10 @@ $  PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar 
 +  p - point at which to evaluate the functional
 .  U - the vector
 .  n - the number of scalars being computed
-.  S - an array [0:n-1] of scalars 
+.  S - an array [0:n-1] of scalars
 -  ctx - [optional] user-defined context for evaluation routine
 
-   Notes: 
+   Notes:
    This function can be used to evaluate linear functionals of the
    solution. Use this when you wish to compute errors in the energy
    norm or moments of the solution.

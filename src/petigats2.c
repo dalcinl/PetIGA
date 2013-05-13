@@ -1,9 +1,6 @@
 #include "petiga.h"
 #include "petscts2.h"
 
-PETSC_EXTERN PetscLogEvent IGA_FormFunction;
-PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
-
 PETSC_STATIC_INLINE
 PetscBool IGAElementNextUserIFunction(IGAElement element,IGAUserIFunction2 *fun,void **ctx)
 {
@@ -63,7 +60,7 @@ PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
   ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
   ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
-  ierr = PetscLogEventBegin(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
+  ierr = PetscLogEventBegin(IGA_FormIFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
   /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
@@ -91,7 +88,7 @@ PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
   }
   ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
-  ierr = PetscLogEventEnd(IGA_FormFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormIFunction,iga,vecV,vecU,vecF);CHKERRQ(ierr);
 
   /* Restore local vectors V,U and arrays */
   ierr = IGARestoreLocalVecArray(iga,vecA,&localA,&arrayA);CHKERRQ(ierr);
@@ -144,7 +141,7 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
   ierr = IGAGetLocalVecArray(iga,vecV,&localV,&arrayV);CHKERRQ(ierr);
   ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
-  ierr = PetscLogEventBegin(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
+  ierr = PetscLogEventBegin(IGA_FormIJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
   /* Element Loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
@@ -172,7 +169,7 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
   }
   ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
-  ierr = PetscLogEventEnd(IGA_FormJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
+  ierr = PetscLogEventEnd(IGA_FormIJacobian,iga,vecV,vecU,matJ);CHKERRQ(ierr);
 
   /* Restore local vectors A,V,U and arrays */
   ierr = IGARestoreLocalVecArray(iga,vecA,&localA,&arrayA);CHKERRQ(ierr);
