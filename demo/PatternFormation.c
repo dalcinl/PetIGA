@@ -1,6 +1,6 @@
 /*
   This code solves the following system of PDEs
-  
+
      u_t = D_1 \nabla^2 u + f(u,v)
      v_t = D_2 \nabla^2 v + g(u,v)
 
@@ -43,8 +43,7 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
   PetscReal tau1  = user->tau1;
   PetscReal tau2  = user->tau2;
 
-  PetscInt nen;
-  IGAPointGetSizes(p,0,&nen,0);
+  PetscInt nen = p->nen;
   PetscScalar (*R)[2] = (PetscScalar (*)[2])Re;
 
   PetscScalar uv_t[2],uv_0[2],uv_1[2][2];
@@ -62,11 +61,10 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
   PetscReal f = alpha*u*(1-tau1*v*v) + v*(1-tau2*u);
   PetscReal g = beta*v*(1+alpha*tau1/beta*u*v) + u*(gamma+tau2*v);
 
-  const PetscReal *N0,(*N1)[2];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  const PetscReal *N0      = p->shape[0];
+  const PetscReal (*N1)[2] = (const PetscReal(*)[2]) p->shape[1];
 
-  PetscInt  a;
+  PetscInt a;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
     PetscReal Na_x = N1[a][0];
@@ -99,9 +97,8 @@ PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
   PetscReal tau1  = user->tau1;
   PetscReal tau2  = user->tau2;
 
-  PetscInt nen;
-  IGAPointGetSizes(p,0,&nen,0);
-  PetscScalar (*K)[2][nen][2] = (PetscScalar (*)[2][nen][2])Ke;
+  PetscInt nen = p->nen;
+  PetscScalar (*K)[2][nen][2] = (typeof(K)) Ke;
 
   PetscReal f_u=0,f_v=0;
   PetscReal g_u=0,g_v=0;

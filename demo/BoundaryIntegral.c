@@ -29,8 +29,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dim = p->dim;
   PetscInt nen = p->nen;
-  const PetscReal (*N1)[dim]; //*((PetscReal**)&N1) = p->shape[1];
-  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
+  const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
   PetscInt a,b;
   for (a=0; a<nen; a++) {
     for (b=0; b<nen; b++)
@@ -45,7 +44,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
-  const PetscReal *N0 = p->shape[0];
+  const PetscReal *N0 = (typeof(N0)) p->shape[0];
   PetscInt a;
   for (a=0; a<nen; a++)
     F[a] = N0[a] * 1.0;
@@ -66,9 +65,7 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 {
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
-
-  const PetscReal (*N2)[dim][dim]; //*((PetscReal**)&N2) = p->shape[2];
-  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
+  const PetscReal (*N2)[dim][dim] = (typeof(N2)) p->shape[2];
 
   PetscInt a;
   for (a=0; a<nen; a++)
@@ -83,7 +80,8 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 PetscErrorCode DirichletCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
-  const PetscReal *N0 = p->shape[0];
+  const PetscReal *N0 = (typeof(N0)) p->shape[0];
+
   PetscInt a;
   for (a=0; a<nen; a++)
     K[a] = N0[a];
@@ -97,9 +95,8 @@ PetscErrorCode NeumannCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void 
 {
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
-  const PetscReal (*N1)[dim];
-  const PetscReal *normal = p->normal;
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
+  const PetscReal *normal    = p->normal;
   PetscInt a;
   for (a=0; a<nen; a++)
     K[a] = DOT(dim,N1[a],normal);

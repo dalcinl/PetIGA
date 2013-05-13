@@ -15,31 +15,34 @@ typedef struct {
   PetscReal adv[3];
 } AppCtx;
 
+PETSC_STATIC_INLINE
+PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i]*b[i];
+  return s;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
-  PetscInt nen,dim;
-  IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0,0);
-
-  const PetscReal *N0,(*N1)[dim];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  PetscInt nen = p->nen;
+  PetscInt dim = p->dim;
+  const PetscReal *N0        = (typeof(N0)) p->shape[0];
+  const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
 
   PetscInt a,b,i;
   for (a=0; a<nen; a++) {
     for (b=0; b<nen; b++) {
-      PetscScalar diffusion = 0.0;
+      PetscScalar diffusion = DOT(dim,N1[a],N1[b]);
       PetscScalar advection = 0.0;
-      for (i=0; i<dim; i++){
-        diffusion += N1[a][i]*N1[b][i];
-	advection += user->adv[i]*N1[b][i];
-      }
+      for (i=0; i<dim; i++)
+        advection += user->adv[i]*N1[b][i];
       advection *= N0[a];
-      K[a*nen+b] = diffusion + advection; 
+      K[a*nen+b] = diffusion + advection;
     }
     F[a] = 0.0;
   }
@@ -65,7 +68,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-  
+
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   IGABoundary bnd;
   for (i=0; i<dim; i++) {

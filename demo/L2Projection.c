@@ -9,15 +9,13 @@ PetscScalar Function(PetscReal x, PetscReal y, PetscReal z)
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
-  PetscInt nen;
-  IGAPointGetSizes(p,0,&nen,0);
+  PetscInt nen = p->nen;
 
   PetscReal x[3] = {0,0,0};
   IGAPointFormPoint(p,x);
   PetscScalar f = Function(x[0],x[1],x[2]);
 
-  const PetscReal *N;
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N);
+  const PetscReal *N = (typeof(N)) p->shape[0];
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {

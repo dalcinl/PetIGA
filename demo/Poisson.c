@@ -14,10 +14,8 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
 {
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
-
-  const PetscReal *N0,(*N1)[dim];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
+  const PetscReal *N0        = (typeof(N0)) p->shape[0];
+  const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {
@@ -42,9 +40,7 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 {
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
-
-  const PetscReal (*N2)[dim][dim];
-  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
+  const PetscReal (*N2)[dim][dim] = (typeof(N2)) p->shape[2];
 
   PetscInt a;
   for (a=0; a<nen; a++)

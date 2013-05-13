@@ -26,8 +26,9 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscReal x = p->point[0];
   PetscReal y = p->point[1];
+  PetscReal f = Forcing(x,y);
   PetscReal *N0 = p->shape[0];
-  PetscReal (*N1)[2] = (PetscReal (*)[2]) p->shape[1];
+  PetscReal (*N1)[2] = (PetscReal(*)[2]) p->shape[1];
   PetscInt a,b,nen=p->nen;
   for (a=0; a<nen; a++) {
     PetscReal Na   = N0[a];
@@ -38,7 +39,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
       PetscReal Nb_y = N1[b][1];
       K[a*nen+b] = Na_x*Nb_x + Na_y*Nb_y;
     }
-    F[a] = Na * Forcing(x,y);
+    F[a] = Na * f;
   }
   return 0;
 }

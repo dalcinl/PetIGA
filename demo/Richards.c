@@ -3,7 +3,7 @@
 #define SQ(A) ((A)*(A))
 
 typedef struct {
-  PetscScalar m,lambda,kappa,NGr; 
+  PetscScalar m,lambda,kappa,NGr;
   PetscScalar S0,Sin,d0,penalty;
   PetscBool   phase_field;
 } AppCtx;
@@ -13,21 +13,22 @@ typedef struct {
 PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
-  PetscInt a,b,dim,nen;
-  IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,NULL,NULL);
+
+  PetscInt nen = p->nen;
+  PetscInt dim = p->dim;
 
   PetscReal x[dim];
   IGAPointFormPoint(p,x);
-  
+
   PetscScalar f = user->S0;
   PetscScalar d = x[dim-1];
   if(d < user->d0) f += SQ(1.-SQ(d/user->d0))*(user->Sin-user->S0);
 
-  const PetscReal *N;
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N);
+  const PetscReal *N = (typeof(N)) p->shape[0];
+
+  PetscInt a,b;
   for(a=0; a<nen; a++){
-    for(b=0; b<nen; b++)  K[b*nen+a] = N[a]*N[b];
+    for(b=0; b<nen; b++) K[b*nen+a] = N[a]*N[b];
     F[a] = N[a]*f;
   }
   return 0;
@@ -82,15 +83,15 @@ void CapillaryPressure(PetscScalar S,PetscScalar lambda,PetscScalar kappa,PetscS
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,
-			   PetscReal shift,const PetscScalar *V,
-			   PetscReal t,const PetscScalar *U,
-			   PetscScalar *R,void *ctx)
+                           PetscReal shift,const PetscScalar *V,
+                           PetscReal t,const PetscScalar *U,
+                           PetscScalar *R,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
-  PetscInt a,i,nen,dim;
-  IGAPointGetSizes(p,&nen,0,0);
-  IGAPointGetDims(p,&dim,NULL,NULL);
+  PetscInt a,i;
+  PetscInt nen = p->nen;
+  PetscInt dim = p->dim;
 
   PetscScalar S_t,S,delS=0;
   PetscScalar S1[dim],S2[dim][dim];
@@ -101,11 +102,10 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   for(i=0;i<dim;i++) delS += S2[i][i];
 
   S = PetscMax(1000*PETSC_MACHINE_EPSILON,S);
-  
-  const PetscReal *N0,(*N1)[dim],(*N2)[dim][dim];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
-  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
+
+  const PetscReal  *N0            = (typeof(N0)) p->shape[0];
+  const PetscReal (*N1)[dim]      = (typeof(N1)) p->shape[1];
+  const PetscReal (*N2)[dim][dim] = (typeof(N2)) p->shape[2];
 
   PetscScalar kappa     = user->kappa;
   PetscScalar lambda    = user->lambda;
@@ -118,6 +118,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   CapillaryPressure(S,lambda,kappa,NULL,&dJdS);
 
   delS *= rNGr*rNGr*rNGr; // include the NGr^-3 into delS
+
   for (a=0; a<nen; a++) {
     PetscScalar gN_dot_gS=0,delN=0,gkD_dot_gN=0;
     for(i=0;i<dim;i++) {
@@ -136,37 +137,35 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
-			PetscReal shift,const PetscScalar *V,
-			PetscReal t,const PetscScalar *U,
-			PetscScalar *J,void *ctx)
+                        PetscReal shift,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *U,
+                        PetscScalar *J,void *ctx)
 {
-  
+
   return 0;
 }
 
 #undef  __FUNCT__
 #define __FUNCT__ "ZeroFluxResidual"
 PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
-				PetscReal shift,const PetscScalar *V,
-				PetscReal t,const PetscScalar *U,
-				PetscScalar *R,void *ctx)
+                                PetscReal shift,const PetscScalar *V,
+                                PetscReal t,const PetscScalar *U,
+                                PetscScalar *R,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
-  PetscInt a,i,nen,dim;
-  IGAPointGetSizes(p,&nen,0,0);
-  IGAPointGetDims(p,&dim,NULL,NULL);
+  PetscInt nen = p->nen;
+  PetscInt dim = p->dim;
 
-  PetscScalar *n = p->normal;
-  
   PetscScalar S1[dim];
   IGAPointFormGrad(p,U,&S1[0]);
 
-  const PetscReal *N0;
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+  const PetscReal *N0 = (typeof(N0)) p->shape[0];
+  const PetscReal *n = p->normal;
 
+  PetscInt a,i;
   for (a=0; a<nen; a++) {
-    PetscScalar n_gS = 0.;
+    PetscScalar n_gS = 0.0;
     for(i=0;i<dim;i++) n_gS += n[i]*S1[i];
     R[a] = user->penalty*N0[a]*n_gS;
   }
@@ -176,9 +175,9 @@ PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
 #undef  __FUNCT__
 #define __FUNCT__ "ZeroFluxJacobian"
 PetscErrorCode ZeroFluxJacobian(IGAPoint p,PetscReal dt,
-				PetscReal shift,const PetscScalar *V,
-				PetscReal t,const PetscScalar *U,
-				PetscScalar *J,void *ctx)
+                                PetscReal shift,const PetscScalar *V,
+                                PetscReal t,const PetscScalar *U,
+                                PetscScalar *J,void *ctx)
 {
 
   return 0;
@@ -192,7 +191,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   AppCtx user;
-  user.m       = 7; 
+  user.m       = 7;
   user.kappa   = 50;
   user.lambda  = 4;
   user.NGr     = 50;
@@ -223,20 +222,20 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-  
+
   // Boundary conditions
   for(dir=0;dir<dim;dir++)
     for(side=0;side<2;side++){
       ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
       if(dir == dim-1){
-	ierr = IGABoundarySetUserIFunction(bnd,ZeroFluxResidual,&user);CHKERRQ(ierr);
-	ierr = IGABoundarySetUserIJacobian(bnd,ZeroFluxJacobian,&user);CHKERRQ(ierr);
-	if(side == 0){
-	  ierr = IGABoundarySetValue(bnd,0,user.Sin);CHKERRQ(ierr);
-	}
+        ierr = IGABoundarySetUserIFunction(bnd,ZeroFluxResidual,&user);CHKERRQ(ierr);
+        ierr = IGABoundarySetUserIJacobian(bnd,ZeroFluxJacobian,&user);CHKERRQ(ierr);
+        if(side == 0){
+          ierr = IGABoundarySetValue(bnd,0,user.Sin);CHKERRQ(ierr);
+        }
       }
     }
-  
+
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 

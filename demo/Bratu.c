@@ -1,4 +1,4 @@
-/* 
+/*
    This code solves the steady and unsteady Bratu equation. It also
    demonstrates how the user-specified routines, here the Function and
    Jacobian routines, can be implemented in Fortran (see BratuFJ.F90)
@@ -9,7 +9,7 @@
 */
 #include "petiga.h"
 
-typedef struct { 
+typedef struct {
   PetscReal lambda;
 } AppCtx;
 
@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-  
-  
+
+
   PetscBool steady = PETSC_TRUE;
   PetscReal lambda = 6.80;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Bratu Options","IGA");CHKERRQ(ierr);
@@ -46,19 +46,18 @@ int main(int argc, char *argv[]) {
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
-
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
-  IGABoundary bnd;
   PetscInt dir,side;
   for (dir=0; dir<3; dir++) {
     for (side=0; side<2; side++) {
+      IGABoundary bnd;
+      PetscInt    field = 0;
+      PetscScalar value = 0.0;
       ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
     }
   }
-
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-
   PetscInt dim;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if (dim < 1) {ierr = IGASetDim(iga,dim=2);CHKERRQ(ierr);}
