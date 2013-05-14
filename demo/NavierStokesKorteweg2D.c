@@ -304,11 +304,11 @@ int main(int argc, char *argv[]) {
   PetscInt  N=256,p=2,C=1;
   PetscBool output=PETSC_FALSE,monitor=PETSC_TRUE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD, "", "NSK Options", "IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N", "number of elements along one dimension", __FILE__, N, &N, PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p", "polynomial order", __FILE__, p, &p, PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C", "global continuity order", __FILE__, C, &C, PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-nsk_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-nsk_monitor","Monitor the free energy of the solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-N", "number of elements along one dimension", __FILE__, N, &N, NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-p", "polynomial order", __FILE__, p, &p, NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-C", "global continuity order", __FILE__, C, &C, NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-nsk_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-nsk_monitor","Monitor the free energy of the solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   // Compute simulation parameters
@@ -355,15 +355,15 @@ int main(int argc, char *argv[]) {
   ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-  if (monitor) {ierr = TSMonitorSet(ts,NSKMonitor,&user,PETSC_NULL);CHKERRQ(ierr);}
-  if (output)  {ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);}
+  if (monitor) {ierr = TSMonitorSet(ts,NSKMonitor,&user,NULL);CHKERRQ(ierr);}
+  if (output)  {ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);}
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t=0; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(iga,t,U,&user);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

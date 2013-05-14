@@ -98,9 +98,9 @@ int main(int argc, char *argv[]) {
   PetscBool check_error = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Neumann Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -129,19 +129,19 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,SystemGalerkin,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
     ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
   }
 
   {
     MPI_Comm comm;
     MatNullSpace nsp;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-    ierr = MatNullSpaceCreate(comm,PETSC_TRUE,0,PETSC_NULL,&nsp);CHKERRQ(ierr);
+    ierr = MatNullSpaceCreate(comm,PETSC_TRUE,0,NULL,&nsp);CHKERRQ(ierr);
     ierr = KSPSetNullSpace(ksp,nsp);CHKERRQ(ierr);
     ierr = MatNullSpaceDestroy(&nsp);CHKERRQ(ierr);
   }
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
   }
 
   PetscScalar error;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error=%G\n",error);CHKERRQ(ierr);}

@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(iga,U,&user);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

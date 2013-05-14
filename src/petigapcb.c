@@ -374,7 +374,7 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   bbb->overlap[0] = PETSC_DECIDE;
   bbb->overlap[1] = PETSC_DECIDE;
   bbb->overlap[2] = PETSC_DECIDE;
-  bbb->mat        = PETSC_NULL;
+  bbb->mat        = NULL;
 
   pc->ops->setup               = PCSetUp_BBB;
   pc->ops->reset               = PCReset_BBB;

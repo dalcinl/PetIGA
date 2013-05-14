@@ -90,10 +90,10 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2 Projection 2D Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBoolArray("-periodic", "periodicity",    __FILE__,w,&nw,&flg);CHKERRQ(ierr);
   if (flg && nw==0) w[nw++] = PETSC_TRUE;
-  ierr = PetscOptionsIntArray ("-N","number of elements",__FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-p","polynomial order",  __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-C","continuity order",  __FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEList    ("-function","2D function",__FILE__,choicelist,4,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-N","number of elements",__FILE__,N,&nN,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-p","polynomial order",  __FILE__,p,&np,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-C","continuity order",  __FILE__,C,&nC,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEList    ("-function","2D function",__FILE__,choicelist,4,choicelist[choice],&choice,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (nw == 1) w[1] = w[0];
   if (nN == 1) N[1] = N[0];

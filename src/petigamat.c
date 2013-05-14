@@ -353,8 +353,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   }
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
-  ierr = MatGetLocalSize(A,&n,PETSC_NULL);CHKERRQ(ierr);
-  ierr = MatGetSize(A,PETSC_NULL,&N);CHKERRQ(ierr);
+  ierr = MatGetLocalSize(A,&n,NULL);CHKERRQ(ierr);
+  ierr = MatGetSize(A,NULL,&N);CHKERRQ(ierr);
   n /= bs; N /= bs;
 
   maxnnz = 1;

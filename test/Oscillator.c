@@ -162,8 +162,8 @@ int main(int argc, char *argv[]) {
   user.Omega = 1.0;
   user.Xi    = 0.0;
   ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator Options","TS");CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-damping",  "Damping",  __FILE__,user.Xi,   &user.Xi,   PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-damping",  "Damping",  __FILE__,user.Xi,   &user.Xi,   NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-output","Output",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (out && !output[0]) {ierr = PetscStrcpy(output,"Oscillator.out");CHKERRQ(ierr);}
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&R);CHKERRQ(ierr);
   ierr = VecSetUp(R);CHKERRQ(ierr);
-  ierr = MatCreateSeqDense(PETSC_COMM_SELF,1,1,PETSC_NULL,&J);CHKERRQ(ierr);
+  ierr = MatCreateSeqDense(PETSC_COMM_SELF,1,1,NULL,&J);CHKERRQ(ierr);
   ierr = MatSetUp(J);CHKERRQ(ierr);
   if (user.Xi <= 0.0) {
     ierr = TSSetIFunction(ts,R,Residual1,&user);CHKERRQ(ierr);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 
   if (output[0]) {
-    ierr = TSMonitorSet(ts,Monitor,output,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);
   }
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&X);CHKERRQ(ierr);

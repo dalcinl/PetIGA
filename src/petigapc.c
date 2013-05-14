@@ -231,7 +231,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
   IGACheckSetUp(iga,1);
 
-  ierr = PCGetOperators(pc,PETSC_NULL,&mat,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PCGetOperators(pc,NULL,&mat,NULL);CHKERRQ(ierr);
   ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
   ierr = PetscObjectQueryFunction((PetscObject)pc,"PCBDDCSetLocalAdjacencyGraph_C",&f);CHKERRQ(ierr);
@@ -318,7 +318,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
   if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-  ierr = PCGetOperators(pc,PETSC_NULL,&mat,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PCGetOperators(pc,NULL,&mat,NULL);CHKERRQ(ierr);
   if (!mat) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(mat,MAT_CLASSID,1);
   ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
@@ -338,7 +338,7 @@ PetscErrorCode IGASetOptionsHandlerPC(PC pc)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
-  ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

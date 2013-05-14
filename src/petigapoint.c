@@ -727,9 +727,9 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
   point->geometry = element->geometryX;
   point->property = element->propertyA;
   if (!element->geometry)
-    point->geometry = PETSC_NULL;
+    point->geometry = NULL;
   if (!element->property)
-    point->property = PETSC_NULL;
+    point->property = NULL;
 
   point->weight   = element->weight;
   point->detJac   = element->detJac;

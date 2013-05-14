@@ -370,11 +370,11 @@ int main(int argc, char *argv[]) {
   PetscBool monitor = PETSC_FALSE; 
   char initial[PETSC_MAX_PATH_LEN] = {0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard3D Options","CH3D");CHKERRQ(ierr);
-  ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ch_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-ch_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-ch_cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-ch_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-ch_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-ch_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-ch_cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-ch_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -399,16 +399,16 @@ int main(int argc, char *argv[]) {
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
 
-  user.E = PETSC_NULL;
+  user.E = NULL;
   ierr = TSAlphaSetAdapt(ts,CHAdapt,&user);CHKERRQ(ierr); 
 
   if (monitor) {
     user.iga = iga;
     PetscPrintf(PETSC_COMM_WORLD,"#Time        dt           Free Energy            Second moment          Third moment\n");
-    ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,StatsMonitor,&user,NULL);CHKERRQ(ierr);
   }
   if (output) {
-    ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);
   }
 
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
@@ -419,7 +419,7 @@ int main(int argc, char *argv[]) {
   ierr = VecDuplicate(U,&user.X0);CHKERRQ(ierr);
   ierr = VecCopy(U,user.X0);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

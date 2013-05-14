@@ -91,11 +91,11 @@ int main(int argc, char *argv[]) {
   PetscInt  choice=2;
   const char *choicelist[] = {"line", "parabola", "poly3", "poly4", "hill", "sine", 0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2 Projection 1D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool ("-periodic", "periodicity",__FILE__,w,&w,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt  ("-N", "number of elements",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt  ("-p", "polynomial order",  __FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt  ("-C", "continuity order",  __FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEList("-function","1D function", __FILE__,choicelist,6,choicelist[choice],&choice,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool ("-periodic", "periodicity",__FILE__,w,&w,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-N", "number of elements",__FILE__,N,&N,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-p", "polynomial order",  __FILE__,p,&p,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt  ("-C", "continuity order",  __FILE__,C,&C,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEList("-function","1D function", __FILE__,choicelist,6,choicelist[choice],&choice,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (C == PETSC_DECIDE) C = p-1;
   switch (choice) {

@@ -54,7 +54,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
           ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
           ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
-          ierr = MatGetOwnershipRangeColumn(A,&cstart,PETSC_NULL);CHKERRQ(ierr);
+          ierr = MatGetOwnershipRangeColumn(A,&cstart,NULL);CHKERRQ(ierr);
           if (baij || sbaij) cstart /= bs;
 
           ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
@@ -66,9 +66,9 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
 
           ierr = PetscMalloc1(ia[na],PetscInt,&newja);CHKERRQ(ierr);
           for (j=0; j<ia[na]; j++) newja[j] = ja[j] + cstart;
-          if (aij)   {ierr = MatMPIAIJSetPreallocationCSR  (mat,   ia,newja,PETSC_NULL);CHKERRQ(ierr);}
-          if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,PETSC_NULL);CHKERRQ(ierr);}
-          if (sbaij) {ierr = MatMPISBAIJSetPreallocationCSR(mat,bs,ia,newja,PETSC_NULL);CHKERRQ(ierr);}
+          if (aij)   {ierr = MatMPIAIJSetPreallocationCSR  (mat,   ia,newja,NULL);CHKERRQ(ierr);}
+          if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
+          if (sbaij) {ierr = MatMPISBAIJSetPreallocationCSR(mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
           ierr = PetscFree(newja);CHKERRQ(ierr);
           #if PETSC_VERSION_(3,2,0)
           ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
@@ -140,12 +140,12 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ISLocalToGlobalMapping map;
 
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
-    ierr = IGAElementGetSizes(element,PETSC_NULL,&nen,&dof);CHKERRQ(ierr);
+    ierr = IGAElementGetSizes(element,NULL,&nen,&dof);CHKERRQ(ierr);
 
     if (dof == 1) {
-      ierr = MatGetLocalToGlobalMapping(A,&map,PETSC_NULL);CHKERRQ(ierr);
+      ierr = MatGetLocalToGlobalMapping(A,&map,NULL);CHKERRQ(ierr);
     } else {
-      ierr = MatGetLocalToGlobalMappingBlock(A,&map,PETSC_NULL);CHKERRQ(ierr);
+      ierr = MatGetLocalToGlobalMappingBlock(A,&map,NULL);CHKERRQ(ierr);
     }
     ierr = ISLocalToGlobalMappingGetIndices(map,&ltogmap);CHKERRQ(ierr);
     ierr = MatGetOwnershipRange(A,&start,&end);CHKERRQ(ierr);

@@ -216,7 +216,7 @@ PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid g,AO *aob)
   if (!g->aob) {
     PetscInt napp,*iapp;
     ierr = IGA_Grid_LocalIndices(g,1,&napp,&iapp);CHKERRQ(ierr);
-    ierr = AOCreateMemoryScalable(g->comm,napp,iapp,PETSC_NULL,&g->aob);CHKERRQ(ierr);
+    ierr = AOCreateMemoryScalable(g->comm,napp,iapp,NULL,&g->aob);CHKERRQ(ierr);
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *aob = g->aob;
@@ -238,7 +238,7 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
   if (!g->ao) {
     PetscInt napp,*iapp;
     ierr = IGA_Grid_LocalIndices(g,g->dof,&napp,&iapp);CHKERRQ(ierr);
-    ierr = AOCreateMemoryScalable(g->comm,napp,iapp,PETSC_NULL,&g->ao);CHKERRQ(ierr);
+    ierr = AOCreateMemoryScalable(g->comm,napp,iapp,NULL,&g->ao);CHKERRQ(ierr);
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *ao = g->ao;
@@ -384,7 +384,7 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
     ierr = ISLocalToGlobalMappingGetSize(lgmap,&nghost);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetIndices(lgmap,&ighost);CHKERRQ(ierr);
     ierr = ISCreateGeneral(g->comm,nghost,ighost,PETSC_USE_POINTER,&isghost);CHKERRQ(ierr);
-    ierr = VecScatterCreate(gvec,isghost,lvec,PETSC_NULL,&g->g2l);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isghost,lvec,NULL,&g->g2l);CHKERRQ(ierr);
     ierr = ISDestroy(&isghost);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingRestoreIndices(lgmap,&ighost);CHKERRQ(ierr);
   }
@@ -421,7 +421,7 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
     ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(gvec,&start,PETSC_NULL);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(gvec,&start,NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(nlocal*sizeof(PetscInt),&ilocal);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
@@ -456,7 +456,7 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
     ierr = IGA_Grid_GetVecGlobal (g,VECSTANDARD,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecNatural(g,VECSTANDARD,&nvec);CHKERRQ(ierr);
     ierr = IGA_Grid_LocalIndices(g,g->dof,&nlocal,&inatural);CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(gvec,&start,PETSC_NULL);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(gvec,&start,NULL);CHKERRQ(ierr);
     ierr = ISCreateStride(g->comm,nlocal,start,1,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
     ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g->g2n);CHKERRQ(ierr);
@@ -585,7 +585,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* */
     PetscInt c,i,j,k,pos = 0,bs = g->dof;
     ierr = VecGetLocalSize(gvec,&nlocal);CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(gvec,&gstart,PETSC_NULL);CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(gvec,&gstart,NULL);CHKERRQ(ierr);
     ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=klstart; k<klend; k++)
       for (j=jlstart; j<jlend; j++)

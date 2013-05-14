@@ -248,8 +248,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   /* global -> local */
   ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecStrideMin(gvec,nsd,PETSC_NULL,&min_w);CHKERRQ(ierr);
-  ierr = VecStrideMax(gvec,nsd,PETSC_NULL,&max_w);CHKERRQ(ierr);
+  ierr = VecStrideMin(gvec,nsd,NULL,&min_w);CHKERRQ(ierr);
+  ierr = VecStrideMax(gvec,nsd,NULL,&max_w);CHKERRQ(ierr);
 
   iga->rational = ((max_w-min_w)>tol_w) ? PETSC_TRUE : PETSC_FALSE;
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);

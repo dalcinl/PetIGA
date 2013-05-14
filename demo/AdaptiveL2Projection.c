@@ -83,7 +83,7 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -93,7 +93,7 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   PetscReal errors[2];
-  ierr  = IGAFormScalar(iga,x,2,&errors[0],Error,PETSC_NULL);CHKERRQ(ierr);
+  ierr  = IGAFormScalar(iga,x,2,&errors[0],Error,NULL);CHKERRQ(ierr);
   errors[0] = PetscSqrtReal(PetscRealPart(errors[0]));
   errors[1] = PetscSqrtReal(PetscRealPart(errors[1]));
   *error = errors[0]/errors[1];
@@ -157,9 +157,9 @@ int main(int argc, char *argv[]) {
   PetscInt i,j;
   PetscInt dim = 2, p = 2, C = 1;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",       __FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-p","polynomial order",       __FILE__,p,&p,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   // initial breaks (2x2 mesh)
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;

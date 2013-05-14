@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
 
   PetscLogDouble ta1,ta2,ta;
   ierr = PetscGetTime(&ta1);
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   ierr = PetscPrintf(PETSC_COMM_WORLD,

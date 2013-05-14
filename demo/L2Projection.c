@@ -59,11 +59,11 @@ int main(int argc, char *argv[]) {
   PetscInt C[3] = {-1,-1,-1};
   PetscInt n1=3, n2=3, n3=3;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2Projection Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
   n1 = n2 = n3 = dim;
-  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&n1,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&n2,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&n3,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&n1,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&n2,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&n3,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (n1<3) N[2] = N[0]; if (n1<2) N[1] = N[0];
   if (n2<3) p[2] = p[0]; if (n2<2) p[1] = p[0];
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
   PetscBool print_error = PETSC_FALSE;
   ierr = PetscOptionsGetBool(0,"-print_error",&print_error,0);CHKERRQ(ierr);

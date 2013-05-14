@@ -245,7 +245,7 @@ PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);*/
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,NULL);CHKERRQ(ierr);*/
   ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerKSP(ksp);CHKERRQ(ierr);
   PetscFunctionReturn(0);

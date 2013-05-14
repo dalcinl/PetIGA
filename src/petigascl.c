@@ -12,7 +12,7 @@
 .  vecU - the vector to be used in computing the scalars
 .  n - the number of scalars being computed
 .  Scalar - the function which represents the linear functional
--  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+-  ctx - user-defined context for evaluation routine (may be NULL)
 
    Output Parameter:
 .  S - an array [0:n-1] of scalars produced by Scalar

@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   
   KSP ksp;

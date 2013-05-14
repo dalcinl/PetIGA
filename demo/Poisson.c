@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
   PetscBool draw = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-save","Save the solution to file",                        __FILE__,save,&save,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-save","Save the solution to file",                        __FILE__,save,&save,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -87,11 +87,11 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,SystemGalerkin,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_FALSE);CHKERRQ(ierr);
   }
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);

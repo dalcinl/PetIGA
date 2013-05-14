@@ -39,16 +39,16 @@ PetscErrorCode Collocation1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt nen,dim,i;
   IGAPointGetSizes(p,0,&nen,0);
   IGAPointGetDims(p,&dim,0,0);
-  
+
   PetscInt Nb[3] = {0,0,0};
   Nb[0] = p->parent->parent->axis[0]->nnp;
   Nb[1] = p->parent->parent->axis[1]->nnp;
   Nb[2] = p->parent->parent->axis[2]->nnp;
-  
+
   const PetscReal *N0,(*N2)[dim][dim];
   IGAPointGetBasisFuns(p,0,(const PetscReal**)&N0);
   IGAPointGetBasisFuns(p,2,(const PetscReal**)&N2);
-  
+
   PetscInt a;
   PetscBool Dirichlet=PETSC_FALSE;
   for (i=0; i<dim; i++) if (p->parent->ID[i] == 0 || p->parent->ID[i] == Nb[i]-1) Dirichlet=PETSC_TRUE;
@@ -61,7 +61,7 @@ PetscErrorCode Collocation1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   }else{
     for (a=0; a<nen; a++){
       K[a] = N0[a];
-      for (i=0; i<dim; i++) K[a] += -N2[a][i][i]; 
+      for (i=0; i<dim; i++) K[a] += -N2[a][i][i];
     }
     F[0] = (1.+dim*omega2);
     for (i=0; i<dim; i++) F[0] *= sin(omega*p->point[i]);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   // Set boundary conditions
-  PetscInt  dim,i; 
+  PetscInt  dim,i;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if(!iga->collocation){
     for (i=0; i<dim; i++) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
       ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
     }
   }
-  
+
   // Assemble
 
   Mat A;
@@ -122,10 +122,10 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (iga->collocation){
-    ierr = IGASetUserSystem(iga,Collocation1,PETSC_NULL);CHKERRQ(ierr); 
+    ierr = IGASetUserSystem(iga,Collocation1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   }else{
-    ierr = IGASetUserSystem(iga,Galerkin1,PETSC_NULL);CHKERRQ(ierr); 
+    ierr = IGASetUserSystem(iga,Galerkin1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
   }
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
 
   iga->collocation = PETSC_FALSE;
   PetscScalar error[2] = {0,0};
-  ierr = IGAFormScalar(iga,x,2,&error[0],ErrorLaplace,PETSC_NULL);CHKERRQ(ierr);
+  ierr = IGAFormScalar(iga,x,2,&error[0],ErrorLaplace,NULL);CHKERRQ(ierr);
   error[0] = PetscSqrtReal(PetscRealPart(error[0]));
   ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %.16e\n",error[0]);CHKERRQ(ierr);
 

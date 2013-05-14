@@ -177,7 +177,7 @@ PetscErrorCode IGABoundarySetLoad(IGABoundary boundary,PetscInt field,PetscScala
    Input Parameters:
 +  boundary - the IGABoundary context
 .  System - the function which evaluates a(w,u) and L(w)
--  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+-  ctx - user-defined context for evaluation routine (may be NULL)
 
    Details of System:
 $  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);

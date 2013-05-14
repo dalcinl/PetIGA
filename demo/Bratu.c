@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
   PetscBool steady = PETSC_TRUE;
   PetscReal lambda = 6.80;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Bratu Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-lambda","Bratu parameter",__FILE__,lambda,&lambda,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-steady","Steady problem",__FILE__,steady,&steady,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-lambda","Bratu parameter",__FILE__,lambda,&lambda,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-steady","Steady problem",__FILE__,steady,&steady,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     ierr = SNESSetTolerances(snes,PETSC_DEFAULT,1e-5,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
     ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-    ierr = TSSolve(ts,x,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSSolve(ts,x,NULL);CHKERRQ(ierr);
 #else
     ierr = TSSolve(ts,x);CHKERRQ(ierr);
 #endif

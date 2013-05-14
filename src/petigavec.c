@@ -148,7 +148,7 @@ PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
   IGACheckSetUp(iga,1);
   if (iga->nwork > 0) {
     *lvec = iga->vwork[--iga->nwork];
-    iga->vwork[iga->nwork] = PETSC_NULL;
+    iga->vwork[iga->nwork] = NULL;
   } else {
     ierr = IGACreateLocalVec(iga,lvec);CHKERRQ(ierr);
   }

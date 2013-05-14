@@ -30,15 +30,15 @@ static PetscErrorCode MatFDColoringSetOptionsPrefix(MatFDColoring fdc, const cha
 #define __FUNCT__ "SNESSetUpFDColoring"
 PetscErrorCode SNESSetUpFDColoring(SNES snes)
 {
-  const char*    prefix = PETSC_NULL;
-  Vec            f = PETSC_NULL;
-  PetscErrorCode (*fun)(SNES,Vec,Vec,void*) = PETSC_NULL;
-  void*          funP = PETSC_NULL;
-  Mat            A = PETSC_NULL, B = PETSC_NULL;
-  PetscErrorCode (*jac)(SNES,Vec,Mat*,Mat*,MatStructure*,void*) = PETSC_NULL;
-  void*          jacP = PETSC_NULL;
-  ISColoring     iscoloring = PETSC_NULL;
-  MatFDColoring  fdcoloring = PETSC_NULL;
+  const char*    prefix = NULL;
+  Vec            f = NULL;
+  PetscErrorCode (*fun)(SNES,Vec,Vec,void*) = NULL;
+  void*          funP = NULL;
+  Mat            A = NULL, B = NULL;
+  PetscErrorCode (*jac)(SNES,Vec,Mat*,Mat*,MatStructure*,void*) = NULL;
+  void*          jacP = NULL;
+  ISColoring     iscoloring = NULL;
+  MatFDColoring  fdcoloring = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
@@ -79,7 +79,7 @@ PetscErrorCode SNESSetFromOptions_FDColoring(SNES snes)
   PetscBool        opt;
   PetscErrorCode   ierr;
   PetscFunctionBegin;
-  ierr = PetscOptionsBool("-snes_fd_color","Use colored finite differences to compute Jacobian","SNESSetUpFDColoring",fdc,&fdc,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-snes_fd_color","Use colored finite differences to compute Jacobian","SNESSetUpFDColoring",fdc,&fdc,NULL);CHKERRQ(ierr);
   if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
   opt = fdc; fdc = PETSC_FALSE;
   if (opt) {ierr = SNESSetUpFDColoring(snes);CHKERRQ(ierr);}

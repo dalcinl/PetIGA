@@ -116,7 +116,7 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
   PetscScalar uz_xx=der2_u[2][0][0],uz_yy=der2_u[2][1][1],uz_zz=der2_u[2][2][2];
 
   PetscReal InvGradMap[3][3];
-  IGAPointFormGradMap(pnt,PETSC_NULL,&InvGradMap[0][0]);
+  IGAPointFormGradMap(pnt,NULL,&InvGradMap[0][0]);
   PetscScalar tauM,tauC;
   Tau(InvGradMap,dt,u,nu,&tauM,&tauC);
   PetscScalar ux_s,uy_s,uz_s,p_s;
@@ -293,8 +293,8 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
 
   PetscReal v; Vec pert;
   ierr = VecDuplicate(U,&pert);CHKERRQ(ierr);
-  ierr = VecSetRandom(pert,PETSC_NULL);CHKERRQ(ierr);
-  ierr = VecMax(U,PETSC_NULL,&v);CHKERRQ(ierr);
+  ierr = VecSetRandom(pert,NULL);CHKERRQ(ierr);
+  ierr = VecMax(U,NULL,&v);CHKERRQ(ierr);
   ierr = VecAXPY(U,0.05*v,pert);CHKERRQ(ierr);
   ierr = VecStrideSet(U,3,0.0);CHKERRQ(ierr);
   ierr = VecDestroy(&pert);CHKERRQ(ierr);
@@ -360,12 +360,12 @@ int main(int argc, char *argv[]) {
   PetscBool monitor = PETSC_FALSE;
   char initial[PETSC_MAX_PATH_LEN] = {0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","NavierStokesVMS Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-ns_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool  ("-ns_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool  ("-ns_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-ns_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-ns_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-ns_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (nN == 1) N[2] = N[1] = N[0]; if (nN == 2) N[2] = N[0];
   if (np == 1) p[2] = p[1] = p[0]; if (np == 2) p[2] = p[0];
@@ -430,7 +430,7 @@ int main(int argc, char *argv[]) {
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
 
   if (output) {
-    ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);
   }
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
@@ -438,7 +438,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,initial,t,U);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

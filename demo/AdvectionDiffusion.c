@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   PetscInt  i,dim;
   PetscReal Pe = 1.0;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","AdvectionDiffusion Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-Pe","Peclet number",__FILE__,Pe,&Pe,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-Pe","Peclet number",__FILE__,Pe,&Pe,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;

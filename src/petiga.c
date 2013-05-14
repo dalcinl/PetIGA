@@ -26,7 +26,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_iga,2);
-  *_iga = PETSC_NULL;
+  *_iga = NULL;
 #ifndef PETSC_USE_DYNAMIC_LIBRARIES
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 #endif
@@ -41,8 +41,8 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   *_iga = iga;
 
   ierr = PetscNew(struct _IGAUserOps,&iga->userops);CHKERRQ(ierr);
-  iga->vectype = PETSC_NULL;
-  iga->mattype = PETSC_NULL;
+  iga->vectype = NULL;
+  iga->mattype = NULL;
 
   iga->dim = -1;
   iga->dof = -1;
@@ -753,9 +753,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
     } else { /* set axis details */
       ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
-      ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),PETSC_NULL);CHKERRQ(ierr);
-      ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&ulims[0][0],(nl=2*dim,&nl),PETSC_NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&ulims[0][0],(nl=2*dim,&nl),NULL);CHKERRQ(ierr);
       for (nl/=2, i=0; i<dim; i++) {
         IGAAxis axis = iga->axis[i];
         PetscBool  w = axis->periodic;
@@ -800,10 +800,10 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
 
     /* View options, handled in IGASetUp() */
-    ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView",PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView",NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",NULL);CHKERRQ(ierr);
 
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
@@ -885,7 +885,7 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
   PetscInt         procs[3]   = {-1,-1,-1};
   PetscInt         sizes[3]   = { 1, 1, 1};
   PetscInt         width[3]   = { 1, 1, 1};
-  PetscInt         *ranges[3] = {PETSC_NULL, PETSC_NULL, PETSC_NULL};
+  PetscInt         *ranges[3] = {NULL, NULL, NULL};
   DMDABoundaryType btype[3]   = {DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE};
   DMDAStencilType  stype      = stencil_box ? DMDA_STENCIL_BOX : DMDA_STENCIL_STAR;
   PetscInt         swidth     = stencil_width;
@@ -939,7 +939,7 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->elem_sizes,iga->elem_width,
-                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -954,7 +954,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->geom_sizes,iga->geom_lwidth,
-                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -993,7 +993,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidPointer(dm,3);
   IGACheckSetUp(iga,1);
   ierr = IGACreateDM(iga,bs,iga->node_sizes,iga->node_lwidth,
-                     PETSC_NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1317,8 +1317,8 @@ PetscErrorCode IGASetUp_View(IGA iga)
 
   ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view",        "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
-  ierr = PetscOptionsBool(  "-iga_view_info",   "Output more detailed information","IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool(  "-iga_view_detail", "Output more detailed information","IGAView",info,&info,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool(  "-iga_view_info",   "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool(  "-iga_view_detail", "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view_binary", "Save to file in binary format",   "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
@@ -1455,7 +1455,7 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
    Input Parameters:
 +  iga - the IGA context
 .  System - the function which evaluates a(w,u) and L(w)
--  ctx - user-defined context for evaluation routine (may be PETSC_NULL)
+-  ctx - user-defined context for evaluation routine (may be NULL)
 
    Details of System:
 $  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
@@ -1511,7 +1511,7 @@ PetscErrorCode IGASetUserJacobian(IGA iga,IGAUserJacobian Jacobian,void *JacCtx)
    Input Parameter:
 +  iga - the IGA context
 .  IFunction - the function evaluation routine
--  IFunCtx - user-defined context for private data for the function evaluation routine (may be PETSC_NULL)
+-  IFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
@@ -1553,7 +1553,7 @@ PetscErrorCode IGASetUserIFunction(IGA iga,IGAUserIFunction IFunction,void *IFun
    Input Parameter:
 +  iga - the IGA context
 .  IJacobian - the Jacobian evaluation routine
--  IJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be PETSC_NULL)
+-  IJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
@@ -1594,7 +1594,7 @@ PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJac
    Input Parameter:
 +  iga - the IGA context
 .  IFunction - the function evaluation routine
--  IFunCtx - user-defined context for private data for the function evaluation routine (may be PETSC_NULL)
+-  IFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
@@ -1639,7 +1639,7 @@ PetscErrorCode IGASetUserIFunction2(IGA iga,IGAUserIFunction2 IFunction,void *IF
    Input Parameter:
 +  iga       - the IGA context
 .  IJacobian - the Jacobian evaluation routine
--  IJacCtx   - user-defined context for private data for the Jacobian evaluation routine (may be PETSC_NULL)
+-  IJacCtx   - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
@@ -1683,7 +1683,7 @@ PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJacobian,void *IJ
    Input Parameter:
 +  iga - the IGA context
 .  IEFunction - the function evaluation routine
--  IEFunCtx - user-defined context for private data for the function evaluation routine (may be PETSC_NULL)
+-  IEFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
 
    Details of IEFunction:
 $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
@@ -1728,7 +1728,7 @@ PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *I
    Input Parameter:
 +  iga - the IGA context
 .  IEJacobian - the Jacobian evaluation routine
--  IEJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be PETSC_NULL)
+-  IEJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
 
    Details of IEJacobian:
 $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,

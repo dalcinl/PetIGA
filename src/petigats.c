@@ -493,7 +493,7 @@ PetscErrorCode IGASetOptionsHandlerTS(TS ts)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);*/
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,OptHdlDel,NULL);CHKERRQ(ierr);*/
   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);

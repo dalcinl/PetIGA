@@ -138,11 +138,11 @@ int main(int argc, char *argv[]) {
   PetscBool check_error = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt ("-dir", "Neuman BC direction",__FILE__,user.dir, &user.dir, PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt ("-dir", "Neuman BC direction",__FILE__,user.dir, &user.dir, NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -160,20 +160,20 @@ int main(int argc, char *argv[]) {
     ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
     ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
     ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Neumann,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGABoundarySetUserSystem(bnd,Neumann,NULL);CHKERRQ(ierr);
   } else {
     IGABoundary bnd;
     PetscInt dir,side;
     for (dir=0; dir<dim; dir++) {
       for (side=0; side<2; side++) {
         ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-        ierr = IGABoundarySetUserSystem(bnd,Neumann0Collocation,PETSC_NULL);CHKERRQ(ierr);
+        ierr = IGABoundarySetUserSystem(bnd,Neumann0Collocation,NULL);CHKERRQ(ierr);
       }
     }
     ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,DirichletCollocation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGABoundarySetUserSystem(bnd,DirichletCollocation,NULL);CHKERRQ(ierr);
     ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,NeumannCollocation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGABoundarySetUserSystem(bnd,NeumannCollocation,NULL);CHKERRQ(ierr);
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
@@ -183,9 +183,9 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,System,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,PETSC_NULL);CHKERRQ(ierr);
+    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
   }
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 

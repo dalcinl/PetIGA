@@ -325,17 +325,17 @@ int main(int argc, char *argv[]) {
   PetscBool monitor = PETSC_FALSE; 
   char initial[PETSC_MAX_PATH_LEN] = {0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","PhaseFieldCrystal2D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-pfc_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-pfc_output","Enable output files",__FILE__,output,&output,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-pfc_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-pfc_cbar","Initial atomistic density field",__FILE__,user.cbar,&user.cbar,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-pfc_g","Physical parameter",__FILE__,user.g,&user.g,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-pfc_k","Positive number",__FILE__,user.k,&user.k,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-pfc_Eps","Physical parameter",__FILE__,user.Eps,&user.Eps,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-pfc_D","Positive number",__FILE__,user.D,&user.D,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-pfc_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-pfc_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-pfc_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_cbar","Initial atomistic density field",__FILE__,user.cbar,&user.cbar,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_g","Physical parameter",__FILE__,user.g,&user.g,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_k","Positive number",__FILE__,user.k,&user.k,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_Eps","Physical parameter",__FILE__,user.Eps,&user.Eps,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-pfc_D","Positive number",__FILE__,user.D,&user.D,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (C == PETSC_DECIDE) C = p-1;
   
@@ -377,10 +377,10 @@ int main(int argc, char *argv[]) {
   if (monitor) {
     user.iga = iga;
     PetscPrintf(PETSC_COMM_WORLD,"#Time        dt           Free Energy\n");
-    ierr = TSMonitorSet(ts,StatsMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,StatsMonitor,&user,NULL);CHKERRQ(ierr);
   }
   if (output) {
-    ierr = TSMonitorSet(ts,OutputMonitor,&user,PETSC_NULL);CHKERRQ(ierr);
+    ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);
   }
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
@@ -388,7 +388,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,initial,U);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

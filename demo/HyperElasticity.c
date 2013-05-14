@@ -1025,11 +1025,11 @@ int main(int argc, char *argv[])
   NeoHook = StVenant = MooneyR1 = MooneyR2 = PETSC_FALSE;
   PetscInt nsteps = 1;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","HyperElasticity Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-neohook","Use the NeoHookean constitutive model",__FILE__,NeoHook,&NeoHook,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-mooneyr1","Use the MooneyRivlin1 constitutive model",__FILE__,MooneyR1,&MooneyR1,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-mooneyr2","Use the MooneyRivlin2 constitutive model",__FILE__,MooneyR2,&MooneyR2,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-stvenant","Use the StVenant constitutive model",__FILE__,StVenant,&StVenant,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsInt("-nsteps","Number of load steps to take",__FILE__,nsteps,&nsteps,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-neohook","Use the NeoHookean constitutive model",__FILE__,NeoHook,&NeoHook,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-mooneyr1","Use the MooneyRivlin1 constitutive model",__FILE__,MooneyR1,&MooneyR1,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-mooneyr2","Use the MooneyRivlin2 constitutive model",__FILE__,MooneyR2,&MooneyR2,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-stvenant","Use the StVenant constitutive model",__FILE__,StVenant,&StVenant,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt("-nsteps","Number of load steps to take",__FILE__,nsteps,&nsteps,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   user.lambda = E*nu/(1.+nu)/(1.-2.*nu);
@@ -1099,7 +1099,7 @@ int main(int argc, char *argv[])
 
     // Solve step
     ierr = VecZeroEntries(U);CHKERRQ(ierr);
-    ierr = SNESSolve(snes,PETSC_NULL,U);CHKERRQ(ierr);
+    ierr = SNESSolve(snes,NULL,U);CHKERRQ(ierr);
 
     // Store total displacement
     ierr = VecAXPY(Utotal,1.0,U);CHKERRQ(ierr);

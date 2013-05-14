@@ -125,7 +125,7 @@ static PetscErrorCode TSStep_Alpha2(TS ts)
     ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
     /* nonlinear solve R(X,V,A) = 0 */
     ierr = VecCopy(th->X0,th->X1);CHKERRQ(ierr);
-    ierr = SNESSolve(ts->snes,PETSC_NULL,th->X1);CHKERRQ(ierr);
+    ierr = SNESSolve(ts->snes,NULL,th->X1);CHKERRQ(ierr);
     ierr = th->StageVecs(ts,th->X1);CHKERRQ(ierr);
     /* nonlinear solve convergence */
     ierr = SNESGetConvergedReason(ts->snes,&snesreason);CHKERRQ(ierr);
@@ -245,17 +245,17 @@ static PetscErrorCode TSDestroy_Alpha2(TS ts)
   ierr = TSReset_Alpha2(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
   /* */
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
   /* */
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -300,10 +300,10 @@ static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
     PetscReal radius = 1.0;
     ierr = PetscOptionsReal("-ts_alpha_radius", "spectral radius (high-frequency dissipation)","TSAlpha2SetRadius",radius,&radius,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlpha2SetRadius(ts,radius);CHKERRQ(ierr);}
-    ierr = PetscOptionsReal("-ts_alpha_alpha_m","algoritmic parameter alpha_m","TSAlpha2SetParams",th->Alpha_m,&th->Alpha_m,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_alpha_f","algoritmic parameter alpha_f","TSAlpha2SetParams",th->Alpha_f,&th->Alpha_f,PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_gamma",  "algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  PETSC_NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_beta",   "algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   PETSC_NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_alpha_m","algoritmic parameter alpha_m","TSAlpha2SetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_alpha_f","algoritmic parameter alpha_f","TSAlpha2SetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_gamma",  "algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_beta",   "algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   NULL);CHKERRQ(ierr);
     ierr = TSAlpha2SetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma,th->Beta);CHKERRQ(ierr);
   }
   ierr = PetscOptionsTail();CHKERRQ(ierr);
@@ -340,7 +340,7 @@ PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ctx)
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = TSSetIFunction(ts,F,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSetIFunction(ts,F,NULL,NULL);CHKERRQ(ierr);
   if (f)   th->Function = f;
   if (ctx) th->FunCtx   = ctx;
   PetscFunctionReturn(0);
@@ -353,7 +353,7 @@ PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = TSSetIJacobian(ts,J,P,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSetIJacobian(ts,J,P,NULL,NULL);CHKERRQ(ierr);
   if (j)   th->Jacobian = j;
   if (ctx) th->JacCtx   = ctx;
   PetscFunctionReturn(0);
@@ -442,7 +442,7 @@ PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
   PetscFunctionBegin;
   ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
 #if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
-  ierr = TSSolve(ts,X,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,X,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,X);CHKERRQ(ierr);
 #endif
@@ -567,9 +567,9 @@ EXTERN_C_END
 
    Input Parameters:
 +  ts  - the TS context obtained from TSCreate()
-.  F   - vector to hold the residual (or PETSC_NULL to have it created internally)
+.  F   - vector to hold the residual (or NULL to have it created internally)
 .  fun - the function evaluation routine
--  ctx - user-defined context for private data for the function evaluation routine (may be PETSC_NULL)
+-  ctx - user-defined context for private data for the function evaluation routine (may be NULL)
 
    Calling sequence of fun:
 $  fun(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,Vec F,ctx);
@@ -579,7 +579,7 @@ $  fun(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,Vec F,ctx);
 .  U_t  - time derivative of state vector
 .  U_tt - second time derivative of state vector
 .  F    - function vector
--  ctx  - [optional] user-defined context for matrix evaluation routine (may be PETSC_NULL)
+-  ctx  - [optional] user-defined context for matrix evaluation routine (may be NULL)
 
    Level: beginner
 
@@ -610,7 +610,7 @@ PetscErrorCode TSSetIFunction2(TS ts,Vec F,TSIFunction2 fun,void *ctx)
 .  J   - Jacobian matrix
 .  P   - preconditioning matrix for J (may be same as J)
 .  jac - the Jacobian evaluation routine
--  ctx - user-defined context for private data for the Jacobian evaluation routine (may be PETSC_NULL)
+-  ctx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
 
    Calling sequence of jac:
 $  jac(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,PetscReal v,PetscReal a,Mat *J,Mat *P,MatStructure *m,void *ctx);

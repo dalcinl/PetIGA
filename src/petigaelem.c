@@ -338,10 +338,10 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
   PetscValidPointer(*element,2);
   if (PetscUnlikely((*element)->index != -1)) {
     (*element)->index = -1;
-    *element = PETSC_NULL;
+    *element = NULL;
     PetscFunctionReturn(PETSC_ERR_PLIB);
   }
-  *element = PETSC_NULL;
+  *element = NULL;
   PetscFunctionReturn(0);
 }
 
@@ -460,9 +460,9 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->geometry = element->geometryX;
   point->property = element->propertyA;
   if (!element->geometry)
-    point->geometry = PETSC_NULL;
+    point->geometry = NULL;
   if (!element->property)
-    point->property = PETSC_NULL;
+    point->property = NULL;
 
   point->weight   = element->weight;
   point->detJac   = element->detJac;
@@ -511,7 +511,7 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
     (*point)->index = -1;
     PetscFunctionReturn(PETSC_ERR_PLIB);
   }
-  *point = PETSC_NULL;
+  *point = NULL;
   /* XXX */
   if (PetscLikely(!element->collocation)) PetscFunctionReturn(0);
   if (PetscLikely(!element->atboundary))  PetscFunctionReturn(0);
@@ -1215,7 +1215,7 @@ IGABoundary AtBoundary(IGAElement element,PetscInt dir,PetscInt side)
 {
   IGABoundary b = element->parent->boundary[dir][side];
   PetscInt e = side ? element->sizes[dir]-1 : 0;
-  return (element->ID[dir] == e) ? b : PETSC_NULL;
+  return (element->ID[dir] == e) ? b : NULL;
 }
 
 PETSC_STATIC_INLINE

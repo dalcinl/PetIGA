@@ -183,10 +183,10 @@ int main(int argc, char *argv[]) {
   PetscInt  p[2] = { 2, 2}, np = 2;
   PetscInt  C[2] = {-1,-1}, nC = 2;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ShallowWater Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBoolArray("-W","periodicity",            __FILE__,W,&nW,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&nN,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-p","polynomial order",       __FILE__,p,&np,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsIntArray ("-C","global continuity order",__FILE__,C,&nC,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBoolArray("-W","periodicity",            __FILE__,W,&nW,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&nN,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-p","polynomial order",       __FILE__,p,&np,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsIntArray ("-C","global continuity order",__FILE__,C,&nC,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (nW == 1) W[1] = W[0];
   if (nN == 1) N[1] = N[0];
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,t,U);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,PETSC_NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 #endif

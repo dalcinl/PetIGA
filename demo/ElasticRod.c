@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
   user.E   = 1.0;
 
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ElasticRod Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-density","Density",__FILE__,user.rho,&user.rho,PETSC_NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-Young_modulus","Young modulus",__FILE__,user.E,&user.E,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-density","Density",__FILE__,user.rho,&user.rho,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-Young_modulus","Young modulus",__FILE__,user.E,&user.E,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
