@@ -234,6 +234,7 @@ static PetscErrorCode IGA_OptionsHandler_SNES(PetscObject obj,void *ctx)
 
   PetscFunctionReturn(0);
 }
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
 */
 
 #undef  __FUNCT__
@@ -244,7 +245,7 @@ PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);*/
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);*/
   ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerKSP(ksp);CHKERRQ(ierr);
   PetscFunctionReturn(0);

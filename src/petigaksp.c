@@ -143,6 +143,7 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
 
   PetscFunctionReturn(0);
 }
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
 */
 
 #undef  __FUNCT__
@@ -153,7 +154,7 @@ PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);*/
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);*/
   ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerPC(pc);CHKERRQ(ierr);
   PetscFunctionReturn(0);

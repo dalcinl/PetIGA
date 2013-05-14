@@ -305,6 +305,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
 /* ---------------------------------------------------------------- */
 
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_PC"
 static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
@@ -328,6 +329,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
   /* */
   PetscFunctionReturn(0);
 }
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsHandlerPC"
@@ -336,8 +338,9 @@ PetscErrorCode IGASetOptionsHandlerPC(PC pc)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
-  ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);
+  ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 /* ---------------------------------------------------------------- */
+

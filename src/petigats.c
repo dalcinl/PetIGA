@@ -482,6 +482,7 @@ static PetscErrorCode IGA_OptionsHandler_TS(PetscObject obj,void *ctx)
 
   PetscFunctionReturn(0);
 }
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
 */
 
 #undef  __FUNCT__
@@ -492,7 +493,7 @@ PetscErrorCode IGASetOptionsHandlerTS(TS ts)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,PETSC_NULL,PETSC_NULL);CHKERRQ(ierr);*/
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,OptHdlDel,PETSC_NULL);CHKERRQ(ierr);*/
   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
