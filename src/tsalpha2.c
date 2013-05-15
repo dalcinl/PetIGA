@@ -550,7 +550,9 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
 
+#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
   if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
+#endif
 
   PetscFunctionReturn(0);
 }
