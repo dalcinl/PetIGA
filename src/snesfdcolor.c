@@ -16,17 +16,6 @@
 PETSC_EXTERN PetscErrorCode SNESSetUpFDColoring(SNES);
 
 #undef __FUNCT__
-#define __FUNCT__ "MatFDColoringSetOptionsPrefix"
-static PetscErrorCode MatFDColoringSetOptionsPrefix(MatFDColoring fdc, const char prefix[])
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(fdc,MAT_FDCOLORING_CLASSID,1);
-  ierr = PetscObjectSetOptionsPrefix((PetscObject)fdc,prefix);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SNESSetUpFDColoring"
 PetscErrorCode SNESSetUpFDColoring(SNES snes)
 {
@@ -61,7 +50,7 @@ PetscErrorCode SNESSetUpFDColoring(SNES snes)
   ierr = MatFDColoringCreate((B?B:A),iscoloring,&fdcoloring);CHKERRQ(ierr);
   ierr = ISColoringDestroy(&iscoloring);CHKERRQ(ierr);
   ierr = MatFDColoringSetFunction(fdcoloring,(PetscErrorCode (*)(void))fun,funP);
-  ierr = MatFDColoringSetOptionsPrefix(fdcoloring,prefix);CHKERRQ(ierr);
+  ierr = PetscObjectSetOptionsPrefix((PetscObject)fdcoloring,prefix);CHKERRQ(ierr);
   ierr = MatFDColoringSetFromOptions(fdcoloring);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)snes,"fdcoloring",(PetscObject)fdcoloring);CHKERRQ(ierr);
   ierr = SNESSetJacobian(snes,A,B,SNESComputeJacobianDefaultColor,fdcoloring);CHKERRQ(ierr);
