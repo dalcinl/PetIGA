@@ -1,3 +1,7 @@
+#if !defined(PETIGABL_H)
+#define PETIGABL_H
+
+#include <petsc.h>
 #include <petscblaslapack.h>
 #if defined(PETSC_BLASLAPACK_UNDERSCORE)
    #define sgetri_ sgetri_
@@ -55,3 +59,5 @@ PETSC_STATIC_INLINE PetscErrorCode PetscBLASIntCast(PetscInt a,PetscBLASInt *b)
   PetscFunctionReturn(0);
 }
 #endif
+
+#endif/*PETIGABL_H*/
