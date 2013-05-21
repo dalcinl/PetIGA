@@ -22,7 +22,7 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
   ierr = PetscObjectCompose((PetscObject)v,"DM",(PetscObject)dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#else
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "VecDuplicate_IGA"
