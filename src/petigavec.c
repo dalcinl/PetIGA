@@ -1,15 +1,16 @@
 #include "petiga.h"
-#if PETSC_VERSION_(3,2,0)
-#include <private/vecimpl.h>
-#else
 #include <petsc-private/vecimpl.h>
-#endif
 
 #if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_BEGIN
-extern       PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
-extern       PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
+#endif
+PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
+PETSC_EXTERN PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
+#if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_END
+#endif
+
+#if PETSC_VERSION_LE(3,3,0)
 #undef  __FUNCT__
 #define __FUNCT__ "VecSetDM"
 static PetscErrorCode VecSetDM(Vec v,DM dm)
@@ -22,9 +23,6 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
   PetscFunctionReturn(0);
 }
 #else
-PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
-PETSC_EXTERN PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);
-#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "VecDuplicate_IGA"

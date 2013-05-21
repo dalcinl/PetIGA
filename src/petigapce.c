@@ -1,9 +1,5 @@
 #include "petiga.h"
-#if PETSC_VERSION_LE(3,2,0)
-#include <private/pcimpl.h>
-#else
 #include <petsc-private/pcimpl.h>
-#endif
 #include "petigabl.h"
 
 #if PETSC_VERSION_LE(3,3,0)
@@ -60,9 +56,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
           ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
           ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
-          #if PETSC_VERSION_GT(3,2,0)
           ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
-          #endif
 
           ierr = PetscMalloc1(ia[na],PetscInt,&newja);CHKERRQ(ierr);
           for (j=0; j<ia[na]; j++) newja[j] = ja[j] + cstart;
@@ -70,21 +64,12 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
           if (sbaij) {ierr = MatMPISBAIJSetPreallocationCSR(mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
           ierr = PetscFree(newja);CHKERRQ(ierr);
-          #if PETSC_VERSION_(3,2,0)
-          ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
-          #endif
         }
         ierr = MatRestoreRowIJ(Ad,0,PETSC_FALSE,compressed,&na,&ia,&ja,&done);CHKERRQ(ierr);
       }
     }
   }
-  if (!mat) {
-    #if PETSC_VERSION_(3,2,0)
-    ierr = MatDuplicate(A,MAT_DO_NOT_COPY_VALUES,&mat);CHKERRQ(ierr);
-    #else
-    ierr = MatDuplicate(A,MAT_SHARE_NONZERO_PATTERN,&mat);CHKERRQ(ierr);
-    #endif
-  }
+  if (!mat) {ierr = MatDuplicate(A,MAT_SHARE_NONZERO_PATTERN,&mat);CHKERRQ(ierr);}
   ierr = MatSetOption(mat,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   *B = mat;
   PetscFunctionReturn(0);

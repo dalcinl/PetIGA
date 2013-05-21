@@ -45,9 +45,9 @@ extern void LAPACKgetri_(PetscBLASInt*,PetscScalar*,PetscBLASInt*,
                          PetscBLASInt*);
 EXTERN_C_END
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #undef PetscBLASIntCast
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "PetscBLASIntCast"
 PETSC_STATIC_INLINE PetscErrorCode PetscBLASIntCast(PetscInt a,PetscBLASInt *b)
 {

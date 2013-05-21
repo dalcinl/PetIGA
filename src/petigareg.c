@@ -95,7 +95,7 @@ PetscErrorCode IGAInitializePackage(void)
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "PetscDLLibraryRegister_petiga"
-#if PETSC_VERSION_LE(3,3,3)
+#if PETSC_VERSION_LE(3,3,0)
 PetscErrorCode PetscDLLibraryRegister_petiga(const char path[])
 #else
 PetscErrorCode PetscDLLibraryRegister_petiga(void)

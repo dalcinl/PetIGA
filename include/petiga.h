@@ -8,17 +8,8 @@
 */
 
 #include <petsc.h>
-#if PETSC_VERSION_(3,2,0)
-#include <private/petscimpl.h>
-#else
 #include <petsc-private/petscimpl.h>
-#endif
 #include <petscts2.h>
-
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_BEGIN
-#define PETSC_EXTERN extern
-#endif
 
 typedef ISLocalToGlobalMapping LGMap;
 #define LGMap LGMap
@@ -686,23 +677,13 @@ PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
 /* ---------------------------------------------------------------- */
 
 #ifndef PETSC_VERSION_EQ
-#define PETSC_VERSION_EQ(MAJOR,MINOR,SUBMINOR) \
-  (PETSC_VERSION_(MAJOR,MINOR,SUBMINOR))
-#endif
-#ifndef PETSC_VERSION_LT
-#define PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) \
-  (PETSC_VERSION_MAJOR < (MAJOR) ||            \
-   (PETSC_VERSION_MAJOR == (MAJOR) &&          \
-    (PETSC_VERSION_MINOR < (MINOR) ||          \
-     (PETSC_VERSION_MINOR == (MINOR) &&        \
-      (PETSC_VERSION_SUBMINOR < (SUBMINOR))))))
-#define PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR) \
-  (PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) ||   \
-   PETSC_VERSION_EQ(MAJOR,MINOR,SUBMINOR))
+#define PETSC_VERSION_EQ PETSC_VERSION_
 #endif
 #ifndef PETSC_VERSION_GT
 #define PETSC_VERSION_GT(MAJOR,MINOR,SUBMINOR) \
   (!PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR))
+#endif
+#ifndef PETSC_VERSION_GE
 #define PETSC_VERSION_GE(MAJOR,MINOR,SUBMINOR) \
   (!PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
 #endif
@@ -715,14 +696,6 @@ PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
 #define PetscValidRealPointer PetscValidDoublePointer
 #endif
 
-#if PETSC_VERSION_LE(3,2,0)
-#define PetscObjectTypeCompare PetscTypeCompare
-#endif
-
 /* ---------------------------------------------------------------- */
-
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_END
-#endif
 
 #endif/*PETIGA_H*/

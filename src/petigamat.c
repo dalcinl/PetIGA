@@ -1,8 +1,5 @@
 #include "petiga.h"
 #include "petigagrid.h"
-#if PETSC_VERSION_LE(3,2,0)
-#include "private/matimpl.h"
-#endif
 
 #if PETSC_VERSION_LE(3,3,0)
 #undef MatType
@@ -284,14 +281,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     N *= iga->node_sizes[i];
   }
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
-#if PETSC_VERSION_LE(3,2,0)
-  ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
-  ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
-#else
   ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
   ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
   ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
-#endif
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   *mat = A;
@@ -303,11 +295,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   }
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
-#if PETSC_VERSION_LE(3,2,0)
-#else
   ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
   ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
-#endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
@@ -420,21 +409,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   } else {
     ierr = MatSetUp(A);CHKERRQ(ierr);
   }
-
-#if PETSC_VERSION_LE(3,2,0)
-  /* XXX This is a vile hack. Perhaps we should just check for      */
-  /* SeqDense and MPIDense that are the only I care about right now */
-  if ((*mat)->ops->setblocksize) {
-    ierr = MatSetBlockSize(*mat,bs);CHKERRQ(ierr);
-  } else {
-    ierr = PetscLayoutSetBlockSize((*mat)->rmap,bs);CHKERRQ(ierr);
-    ierr = PetscLayoutSetBlockSize((*mat)->cmap,bs);CHKERRQ(ierr);
-  }
-  if (!is) {
-    ierr = MatSetLocalToGlobalMapping(*mat,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
-    ierr = MatSetLocalToGlobalMappingBlock(*mat,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
-  }
-#endif
 
   if (aij || baij || sbaij) {
     PetscInt i,j,k;

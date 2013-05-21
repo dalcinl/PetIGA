@@ -1,10 +1,6 @@
 #include "petiga.h"
 #include "petigagrid.h"
-#if PETSC_VERSION_(3,2,0)
-#include <private/pcimpl.h>
-#else
 #include <petsc-private/pcimpl.h>
-#endif
 #include "petigabl.h"
 
 #if PETSC_VERSION_LE(3,3,0)
@@ -101,14 +97,9 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
   ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
 
   ierr = MatCreate(comm,&mat);CHKERRQ(ierr);
-  #if PETSC_VERSION_(3,2,0)
-  ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
-  ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
-  #else
   ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
   ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
   ierr = MatSetType(mat,mtype);CHKERRQ(ierr);
-  #endif
   ierr = InferMatrixType(mat,&aij,&baij,&sbaij);CHKERRQ(ierr);
 
  if (aij || baij || sbaij) {

@@ -1,20 +1,9 @@
 #include <petscts2.h>
-#if PETSC_VERSION_(3,2,0)
-#include <private/tsimpl.h>                      /*I   "petscts.h"   I*/
-#else
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
-#endif
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #define PetscObjectComposeFunction(o,n,f) \
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
-#endif
-
-#if PETSC_VERSION_(3,2,0)
-#define PetscObjectTypeCompare PetscTypeCompare
-#define TSPreStage(ts,t) (0)
-#define ksp_its  linear_its
-#define snes_its nonlinear_its
 #endif
 
 typedef struct {
@@ -441,7 +430,7 @@ PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
   ierr = TSSolve(ts,X,NULL);CHKERRQ(ierr);
 #else
   ierr = TSSolve(ts,X);CHKERRQ(ierr);
@@ -550,7 +539,7 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
   if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
 #endif
 

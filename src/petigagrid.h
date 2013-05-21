@@ -3,11 +3,6 @@
 
 #include <petsc.h>
 
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_BEGIN
-#define PETSC_EXTERN extern
-#endif
-
 #ifndef LGMap
 #define LGMap ISLocalToGlobalMapping
 #endif
@@ -63,9 +58,5 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
                                                    const PetscInt[],
                                                    const PetscInt[],
                                                    Vec*,VecScatter*,VecScatter*);
-
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_BEGIN
-#endif
 
 #endif/*PETIGAGRID_H*/

@@ -138,23 +138,6 @@ PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
 }
 #endif
 
-#if PETSC_VERSION_LE(3,2,0)
-#undef PetscBTCreate
-#undef  __FUNCT__
-#define __FUNCT__ "PetscBTCreate"
-PETSC_STATIC_INLINE PetscErrorCode PetscBTCreate(PetscInt m,PetscBT *array)
-{
-  return PetscMalloc((m/PETSC_BITS_PER_BYTE+1)*sizeof(char),array) || PetscBTMemzero(m,*array);
-}
-#undef PetscBTDestroy
-#undef  __FUNCT__
-#define __FUNCT__ "PetscBTDestroy"
-PETSC_STATIC_INLINE PetscErrorCode PetscBTDestroy(PetscBT *array)
-{
-  return PetscFree(*array);
-}
-#endif
-
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
 #define __FUNCT__ "ComputeBDDCBoundary"

@@ -1,15 +1,7 @@
 #include <petscsnes.h>
-#if PETSC_VERSION_(3,2,0)
-#include <private/petscimpl.h>
-#else
 #include <petsc-private/petscimpl.h>
-#endif
 
-#if PETSC_VERSION_(3,2,0)
-#define PETSC_EXTERN extern
-#endif
-
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #define SNESComputeJacobianDefaultColor SNESDefaultComputeJacobianColor
 #endif
 

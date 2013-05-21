@@ -2,11 +2,6 @@
 #define __PETSCTS2_H
 #include <petscts.h>
 
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_BEGIN
-#define PETSC_EXTERN extern
-#endif
-
 typedef PetscErrorCode (*TSIFunction2)(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
 typedef PetscErrorCode (*TSIJacobian2)(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,void*);
 PETSC_EXTERN PetscErrorCode TSSetIFunction2(TS,Vec,TSIFunction2,void*);
@@ -21,9 +16,5 @@ PETSC_EXTERN PetscErrorCode TSSolve2(TS,Vec,Vec);
 PETSC_EXTERN PetscErrorCode TSAlpha2SetRadius(TS,PetscReal);
 PETSC_EXTERN PetscErrorCode TSAlpha2SetParams(TS,PetscReal,PetscReal,PetscReal,PetscReal);
 PETSC_EXTERN PetscErrorCode TSAlpha2GetParams(TS,PetscReal*,PetscReal*,PetscReal*,PetscReal*);
-
-#if PETSC_VERSION_(3,2,0)
-PETSC_EXTERN_CXX_END
-#endif
 
 #endif/*__PETSCTS2_H*/
