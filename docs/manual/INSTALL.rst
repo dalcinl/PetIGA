@@ -14,18 +14,17 @@ PETSc
 
 PetIGA works with the release of PETSc as well as PETSc-Dev. For the
 most recent release of PETSc, download the compressed tar file from
-`this <http://www.mcs.anl.gov/petsc/download/>`_ page. You
-may also use the development version of PETSc which can be downloaded
-using `Mercurial <http://mercurial.selenic.com/>`_ and the following
-commands::
+`this <http://www.mcs.anl.gov/petsc/download/>`_ page. You may also
+use the development version of PETSc which can be checked-out using
+`Git <http://git-scm.com/>`_ by the following command::
 
-    hg clone http://petsc.cs.iit.edu/petsc/petsc-dev
-    cd petsc-dev/config
-    hg clone http://petsc.cs.iit.edu/petsc/BuildSystem
+    git clone https://bitbucket.org/petsc/petsc.git petsc-dev
 
-In either case, once you have the library downloaded, enter top-level
-source directory and type::
+In either case, once you have the library source code downloaded,
+enter top-level source directory and run the :file:`configure`
+script::
 
+    cd petsc-dev
     ./configure
 
 Once the configure is complete, the output from the script will guide
@@ -41,6 +40,11 @@ the topic.
 
 PetIGA
 ------
+
+The development version of PetIGA can be checked-out using `Mercurial
+<http://mercurial.selenic.com/>`_ by the following command::
+
+    hg clone https://bitbucket.org/dalcinl/PetIGA
 
 To compile PetIGA, simply enter into the top level directory and type
 :command:`make`. PetIGA will compile a library based on the values of
