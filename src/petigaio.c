@@ -1,8 +1,8 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-extern PetscErrorCode IGASetUp_Basic(IGA);
-static PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
+PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
+static       PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGALoad"

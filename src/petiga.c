@@ -832,6 +832,8 @@ PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char 
   PetscFunctionReturn(0);
 }
 
+PETSC_EXTERN PetscErrorCode IGACreateSubComms1D(IGA,MPI_Comm[]);
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateSubComms1D"
 PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
@@ -1052,7 +1054,7 @@ EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Stage1"
-PetscErrorCode IGASetUp_Stage1(IGA iga)
+static PetscErrorCode IGASetUp_Stage1(IGA iga)
 {
   PetscInt       i,dim;
   PetscInt       grid_sizes[3] = {1,1,1};
@@ -1193,7 +1195,7 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Stage2"
-PetscErrorCode IGASetUp_Stage2(IGA iga)
+static PetscErrorCode IGASetUp_Stage2(IGA iga)
 {
   PetscInt       i;
   PetscErrorCode ierr;
@@ -1289,8 +1291,8 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
   PetscFunctionReturn(0);
 }
 
-extern PetscErrorCode IGASetUp_Basic(IGA);
-extern PetscErrorCode IGASetUp_View(IGA);
+PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
+PETSC_EXTERN PetscErrorCode IGASetUp_View(IGA);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Basic"
