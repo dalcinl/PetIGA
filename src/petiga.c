@@ -1397,8 +1397,10 @@ PetscErrorCode IGASetUp(IGA iga)
   }
 
   for (i=0; i<3; i++)
-    if (!iga->collocation && (i >= iga->dim || iga->rule[i]->nqp < 1))
-      {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
+    if (!iga->collocation) {
+      if (i >= iga->dim || iga->rule[i]->nqp < 1)
+        {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
+    }
     else
       {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
 
