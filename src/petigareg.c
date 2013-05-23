@@ -24,7 +24,7 @@ extern PetscErrorCode TSCreate_Alpha2(TS);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
-extern PetscErrorCode SNESSetFromOptions_FDColoring(SNES);
+extern PetscErrorCode SNESSetFromOptions_FDColor(SNES);
 EXTERN_C_END
 
 static PetscBool IGAPackageInitialized = PETSC_FALSE;
@@ -84,8 +84,10 @@ PetscErrorCode IGAInitializePackage(void)
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIFunction",IGA_CLASSID,&IGA_FormIFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIJacobian",IGA_CLASSID,&IGA_FormIJacobian);CHKERRQ(ierr);
-  /* Additional option handlers */
-  ierr = SNESAddOptionsChecker(SNESSetFromOptions_FDColoring);CHKERRQ(ierr);
+#if PETSC_VERSION_LE(3,3,0)
+  /* Additional SNES option handler to support -snes_fd_color */
+  ierr = SNESAddOptionsChecker(SNESSetFromOptions_FDColor);CHKERRQ(ierr);
+#endif
   /* Register finalization routine */
   ierr = PetscRegisterFinalize(IGAFinalizePackage);CHKERRQ(ierr);
   PetscFunctionReturn(0);

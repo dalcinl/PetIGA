@@ -179,6 +179,10 @@ runex6d_8:
 	-@${MPIEXEC} -n 8 ./Bratu ${OPTS} -iga_dim 2 -steady true -iga_collocation
 runex6d_9:
 	-@${MPIEXEC} -n 9 ./Bratu ${OPTS} -iga_dim 2 -steady true -iga_collocation
+runex6e_1:
+	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -snes_fd_color
+runex6e_4:
+	-@${MPIEXEC} -n 4 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -snes_fd_color
 runex7a_1:
 	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 1
 runex7a_4:
@@ -205,6 +209,7 @@ Bratu   := \
 Bratu.PETSc \
 runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 \
 runex6d_1 runex6d_2 runex6d_4 runex6d_8 runex6d_9 \
+runex6e_1 runex6e_4 \
 Bratu.rm
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
 PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b_4 PatternFormation.rm
