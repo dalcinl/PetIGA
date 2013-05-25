@@ -3,16 +3,21 @@
 PETSC_EXTERN PetscBool     IGARegisterAllCalled;
 
 #if PETSC_VERSION_LE(3,3,0)
-#define PCRegisterAll() PCRegisterAll(0)
-#define TSRegisterAll() TSRegisterAll(0)
-#define PCRegister(s,f) PCRegister(s,0,0,f)
-#define TSRegister(s,f) TSRegister(s,0,0,f)
 #define PetscFunctionList        PetscFList
 #define PetscFunctionListDestroy PetscFListDestroy
 #endif
-
 PETSC_EXTERN PetscFunctionList PCList;
 PETSC_EXTERN PetscFunctionList TSList;
+PETSC_EXTERN PetscFunctionList DMList;
+
+#if PETSC_VERSION_LE(3,3,0)
+#define PCRegisterAll() PCRegisterAll(0)
+#define TSRegisterAll() TSRegisterAll(0)
+#define DMRegisterAll() DMRegisterAll(0)
+#define PCRegister(s,f) PCRegister(s,0,0,f)
+#define TSRegister(s,f) TSRegister(s,0,0,f)
+#define DMRegister(s,f) DMRegister(s,0,0,f)
+#endif
 
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_IGAEBE(PC);
@@ -24,7 +29,7 @@ extern PetscErrorCode TSCreate_Alpha2(TS);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
-extern PetscErrorCode SNESSetFromOptions_FDColor(SNES);
+extern PetscErrorCode DMCreate_IGA(DM);
 EXTERN_C_END
 
 static PetscBool IGAPackageInitialized = PETSC_FALSE;
@@ -51,6 +56,8 @@ PetscErrorCode IGARegisterAll(void)
   ierr = PCRegister(PCIGABBB,PCCreate_IGABBB);CHKERRQ(ierr);
   ierr = TSRegisterAll();CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
+  ierr = DMRegisterAll();CHKERRQ(ierr);
+  ierr = DMRegister(DMIGA,DMCreate_IGA);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -62,8 +69,13 @@ PetscErrorCode IGAFinalizePackage(void)
   PetscFunctionBegin;
   if (PCList) {ierr = PetscFunctionListDestroy(&PCList);CHKERRQ(ierr);}
   if (TSList) {ierr = PetscFunctionListDestroy(&TSList);CHKERRQ(ierr);}
+  if (DMList) {ierr = PetscFunctionListDestroy(&DMList);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
+
+EXTERN_C_BEGIN
+extern PetscErrorCode SNESSetFromOptions_FDColor(SNES);
+EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAInitializePackage"

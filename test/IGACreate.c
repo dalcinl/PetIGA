@@ -94,6 +94,17 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateNodeDM(iga,1,&dm);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
+  ierr = IGACreateWrapperDM(iga,&dm);CHKERRQ(ierr);
+  ierr = DMIGAGetIGA(dm,&iga);CHKERRQ(ierr);
+  ierr = DMIGASetIGA(dm,iga);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(dm,&x);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(dm,&b);CHKERRQ(ierr);
+  ierr = DMCreateMatrix(dm,NULL,&A);CHKERRQ(ierr);
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
+  ierr = VecDestroy(&b);CHKERRQ(ierr);
+  ierr = MatDestroy(&A);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
   if ((xmax-xmin) > 1e-2) {

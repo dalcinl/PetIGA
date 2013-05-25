@@ -374,6 +374,13 @@ PETSC_EXTERN PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJaco
 PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *ctx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *ctx);
 
+#undef  DMIGA
+#define DMIGA "iga"
+PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
+PETSC_EXTERN PetscErrorCode DMIGASetIGA(DM dm,IGA iga);
+PETSC_EXTERN PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga);
+
+
 PETSC_EXTERN PetscErrorCode IGAGetMeshInformation(IGA iga,PetscReal *hmin,PetscReal *hmax,PetscReal *havg,PetscReal *hstd);
 
 /* ---------------------------------------------------------------- */

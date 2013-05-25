@@ -27,6 +27,8 @@ for dim in [1,2,3]:
                                     iga_elements,
                                     iga_degree,
                                     iga_continuity,
+                                    "-malloc_debug",
+                                    "-malloc_dump",
                                     ]
                                 if mat_type == 'is':
                                     options.append('-pc_type jacobi')
