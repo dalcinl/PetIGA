@@ -355,8 +355,12 @@ PETSC_EXTERN PetscErrorCode IGACreateMat(IGA iga,Mat *mat);
 PETSC_EXTERN PetscErrorCode IGACreateLocalVec(IGA iga, Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec);
-PETSC_EXTERN PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv);
-PETSC_EXTERN PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGAGlobalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGAGlobalToLocalEnd  (IGA iga,Vec gvec,Vec lvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGAGlobalToLocal     (IGA iga,Vec gvec,Vec lvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToGlobalEnd  (IGA iga,Vec lvec,Vec gvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToGlobal     (IGA iga,Vec lvec,Vec gvec,InsertMode addv);
 
 PETSC_EXTERN PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec);
 PETSC_EXTERN PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec);

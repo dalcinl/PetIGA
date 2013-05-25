@@ -182,8 +182,8 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAGlobalToLocal"
-PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+#define __FUNCT__ "IGAGlobalToLocalBegin"
+PetscErrorCode IGAGlobalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -192,13 +192,37 @@ PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
   ierr = VecScatterBegin(iga->g2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
-  ierr = VecScatterEnd  (iga->g2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGALocalToGlobal"
-PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
+#define __FUNCT__ "IGAGlobalToLocalEnd"
+PetscErrorCode IGAGlobalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
+  ierr = VecScatterEnd(iga->g2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGlobalToLocal"
+PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = IGAGlobalToLocalBegin(iga,gvec,lvec,addv);CHKERRQ(ierr);
+  ierr = IGAGlobalToLocalEnd  (iga,gvec,lvec,addv);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToGlobalBegin"
+PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -208,11 +232,38 @@ PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   IGACheckSetUp(iga,1);
   if (addv == ADD_VALUES) {
     ierr = VecScatterBegin(iga->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
-    ierr = VecScatterEnd  (iga->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
   } else if (addv == INSERT_VALUES) {
     ierr = VecScatterBegin(iga->l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
-    ierr = VecScatterEnd  (iga->l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   } else SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Not yet implemented");
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToGlobalEnd"
+PetscErrorCode IGALocalToGlobalEnd(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
+  IGACheckSetUp(iga,1);
+  if (addv == ADD_VALUES) {
+    ierr = VecScatterEnd(iga->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
+  } else if (addv == INSERT_VALUES) {
+    ierr = VecScatterEnd(iga->l2g,lvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+  } else SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Not yet implemented");
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToGlobal"
+PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = IGALocalToGlobalBegin(iga,lvec,gvec,addv);CHKERRQ(ierr);
+  ierr = IGALocalToGlobalEnd  (iga,lvec,gvec,addv);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
