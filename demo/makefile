@@ -180,9 +180,9 @@ runex6d_8:
 runex6d_9:
 	-@${MPIEXEC} -n 9 ./Bratu ${OPTS} -iga_dim 2 -steady true -iga_collocation
 runex6e_1:
-	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -snes_fd_color
+	-@${MPIEXEC} -n 1 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color
 runex6e_4:
-	-@${MPIEXEC} -n 4 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -snes_fd_color
+	-@${MPIEXEC} -n 4 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color
 runex7a_1:
 	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 1
 runex7a_4:
