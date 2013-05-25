@@ -121,7 +121,7 @@ static PetscErrorCode DMGlobalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = IGAGlobalToLocal(iga,g,l);CHKERRQ(ierr);
+  ierr = IGAGlobalToLocal(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
@@ -131,7 +131,7 @@ static PetscErrorCode DMGlobalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  if(0){ierr = IGAGlobalToLocal(iga,g,l);CHKERRQ(ierr);}
+  if(0){ierr = IGAGlobalToLocal(iga,g,l,mode);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
