@@ -138,6 +138,7 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
+  ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->natural);CHKERRQ(ierr);
@@ -1240,6 +1241,7 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
   ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
+  ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->natural);CHKERRQ(ierr);
@@ -1266,6 +1268,9 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
     ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
     ierr = IGA_Grid_GetLGMapBlock(grid,&iga->lgmapb);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
+    /* build the layout */
+    ierr = IGA_Grid_GetLayout(grid,&iga->map);CHKERRQ(ierr);
+    ierr = PetscLayoutReference(iga->map,&iga->map);CHKERRQ(ierr);
     /* build global <-> local vector scatters */
     ierr = IGA_Grid_GetScatterG2L(grid,&iga->g2l);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->g2l);CHKERRQ(ierr);

@@ -25,6 +25,23 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
 #endif
 
 #undef  __FUNCT__
+#define __FUNCT__ "VecClearDM"
+static PetscErrorCode VecClearDM(Vec v)
+{
+#if PETSC_VERSION_LE(3,3,0)
+  const char name[] = "DM";
+#else
+  const char name[] = "__PETSc_dm";
+#endif
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
+  ierr = PetscObjectCompose((PetscObject)v,name,NULL);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
+#undef  __FUNCT__
 #define __FUNCT__ "VecDuplicate_IGA"
 static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 {
@@ -33,7 +50,6 @@ static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
   PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject)g,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,gg);CHKERRQ(ierr);
-  ierr = PetscLayoutReference(g->map,&(*gg)->map);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -49,6 +65,7 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecView_MPI_DA(v,viewer);CHKERRQ(ierr);
+  ierr = VecClearDM(v);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
@@ -63,6 +80,7 @@ static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecLoad_Default_DA(v,viewer);CHKERRQ(ierr);
+  ierr = VecClearDM(v);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -90,23 +108,15 @@ PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
 @*/
 PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
 {
-  PetscInt       bs,n,N;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(vec,2);
   IGACheckSetUp(iga,1);
-  /* */
-  bs = iga->dof;
-  N  = Product(iga->node_sizes);
-  n  = Product(iga->node_lwidth);
   ierr = VecCreate(((PetscObject)iga)->comm,vec);CHKERRQ(ierr);
-  ierr = VecSetSizes(*vec,n*bs,N*bs);CHKERRQ(ierr);
-  ierr = VecSetBlockSize(*vec,bs);CHKERRQ(ierr);
+  ierr = VecSetLayout(*vec,iga->map);CHKERRQ(ierr);
   ierr = VecSetType(*vec,iga->vectype);CHKERRQ(ierr);
   ierr = VecSetFromOptions(*vec);CHKERRQ(ierr);
-  ierr = VecSetLocalToGlobalMapping(*vec,iga->lgmap);CHKERRQ(ierr);
-  ierr = VecSetLocalToGlobalMappingBlock(*vec,iga->lgmapb);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_IGA);CHKERRQ(ierr);

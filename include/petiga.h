@@ -270,13 +270,14 @@ struct _p_IGA {
   PetscInt  node_gwidth[3];
   DM        node_dm;
 
-  AO         ao,aob;
-  LGMap      lgmap,lgmapb;
-  VecScatter g2l,l2g;
-  PetscInt   nwork;
-  Vec        vwork[16];
-  Vec        natural;
-  VecScatter n2g,g2n;
+  AO          ao,aob;
+  LGMap       lgmap,lgmapb;
+  PetscLayout map;
+  VecScatter  g2l,l2g;
+  PetscInt    nwork;
+  Vec         vwork[16];
+  Vec         natural;
+  VecScatter  n2g,g2n;
 };
 
 PETSC_EXTERN PetscClassId IGA_CLASSID;

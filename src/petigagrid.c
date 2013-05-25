@@ -297,6 +297,34 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_GetLayout"
+PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidPointer(map,2);
+  if (!g->map) {
+    const PetscInt *sizes = g->sizes;
+    const PetscInt *width = g->local_width;
+    PetscInt bs = g->dof;
+    PetscInt n  = bs*width[0]*width[1]*width[2];
+    PetscInt N  = bs*sizes[0]*sizes[1]*sizes[2];
+    ierr = PetscLayoutCreate(g->comm,&g->map);CHKERRQ(ierr);
+    ierr = PetscLayoutSetBlockSize(g->map,bs);CHKERRQ(ierr);
+    ierr = PetscLayoutSetLocalSize(g->map,n);CHKERRQ(ierr);
+    ierr = PetscLayoutSetSize(g->map,N);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);
+    ierr = PetscLayoutSetISLocalToGlobalMapping(g->map,g->lgmap);CHKERRQ(ierr);
+    ierr = PetscLayoutSetISLocalToGlobalMappingBlock(g->map,g->lgmapb);
+    ierr = PetscLayoutSetUp(g->map);CHKERRQ(ierr);
+  }
+  *map = g->map;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_GetVecLocal"
 PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
 {

@@ -10,17 +10,18 @@
 typedef struct _n_IGA_Grid *IGA_Grid;
 
 struct _n_IGA_Grid {
-  MPI_Comm   comm;
-  PetscInt   dim,dof;
-  PetscInt   sizes[3];
-  PetscInt   local_start[3];
-  PetscInt   local_width[3];
-  PetscInt   ghost_start[3];
-  PetscInt   ghost_width[3];
-  AO         ao,aob;
-  LGMap      lgmap,lgmapb;
-  Vec        lvec,gvec,nvec;
-  VecScatter g2l,l2g,g2n;
+  MPI_Comm    comm;
+  PetscInt    dim,dof;
+  PetscInt    sizes[3];
+  PetscInt    local_start[3];
+  PetscInt    local_width[3];
+  PetscInt    ghost_start[3];
+  PetscInt    ghost_width[3];
+  AO          ao,aob;
+  LGMap       lgmap,lgmapb;
+  PetscLayout map;
+  Vec         lvec,gvec,nvec;
+  VecScatter  g2l,l2g,g2n;
 };
 
 PETSC_EXTERN PetscErrorCode IGA_Grid_Create(MPI_Comm,IGA_Grid*);
@@ -41,6 +42,7 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid,LGMap);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_GetLayout(IGA_Grid,PetscLayout*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecLocal  (IGA_Grid,const VecType,Vec*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecGlobal (IGA_Grid,const VecType,Vec*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid,const VecType,Vec*);
