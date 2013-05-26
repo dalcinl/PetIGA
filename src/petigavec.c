@@ -11,6 +11,18 @@ EXTERN_C_END
 #endif
 
 #if PETSC_VERSION_LE(3,3,0)
+static PetscErrorCode VecSetLayout(Vec v,PetscLayout map)
+{
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
+  ierr = PetscLayoutReference(map,&v->map);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#endif
+
+#if PETSC_VERSION_LE(3,3,0)
 #undef  __FUNCT__
 #define __FUNCT__ "VecSetDM"
 static PetscErrorCode VecSetDM(Vec v,DM dm)
