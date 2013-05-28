@@ -228,6 +228,37 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LE(3,3,0)
+PETSC_EXTERN PetscErrorCode PetscOptionsGetViewer(MPI_Comm,const char[],const char[],PetscViewer*,PetscViewerFormat*,PetscBool*);
+#endif
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAViewFromOptions"
+PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[])
+{
+
+  MPI_Comm          comm;
+  PetscViewer       viewer;
+  PetscViewerFormat format;
+  PetscBool         skipinfo = PETSC_FALSE;
+  PetscBool         flg;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  ierr = PetscOptionsGetBool(NULL,"-viewer_binary_skip_info",&skipinfo,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsSetValue("-viewer_binary_skip_info","");CHKERRQ(ierr);
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  if (!prefix || !prefix[0]) prefix = ((PetscObject)iga)->prefix;
+  ierr = PetscOptionsGetViewer(comm,prefix,option,&viewer,&format,&flg);CHKERRQ(ierr);
+  if (!skipinfo) {ierr = PetscOptionsClearValue("-viewer_binary_skip_info");CHKERRQ(ierr);}
+  if (!flg) PetscFunctionReturn(0);
+  ierr = PetscViewerPushFormat(viewer,format);CHKERRQ(ierr);
+  ierr = IGAView(iga,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetComm"
 PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
@@ -802,6 +833,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* View options, handled in IGASetUp() */
     ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView",NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_ascii", "Information on IGA context",      "IGAView",NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",NULL);CHKERRQ(ierr);
@@ -1297,7 +1329,6 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
 }
 
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
-PETSC_EXTERN PetscErrorCode IGASetUp_View(IGA);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Basic"
@@ -1312,7 +1343,7 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_View"
-PetscErrorCode IGASetUp_View(IGA iga)
+static PetscErrorCode IGASetUp_View(IGA iga)
 {
   PetscBool      flg1,flg2,info=PETSC_FALSE;
   char           filename1[PETSC_MAX_PATH_LEN] = "";
@@ -1323,7 +1354,7 @@ PetscErrorCode IGASetUp_View(IGA iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-iga_view",        "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-iga_view_ascii",  "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
   ierr = PetscOptionsBool(  "-iga_view_info",   "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool(  "-iga_view_detail", "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view_binary", "Save to file in binary format",   "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
@@ -1419,6 +1450,7 @@ PetscErrorCode IGASetUp(IGA iga)
 
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
 
+  ierr = IGAViewFromOptions(iga,NULL,"-iga_view");CHKERRQ(ierr);
   ierr = IGASetUp_View(iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

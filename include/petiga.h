@@ -298,6 +298,7 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[]);
 PETSC_EXTERN PetscErrorCode IGASetFromOptions(IGA iga);
+PETSC_EXTERN PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[]);
 PETSC_EXTERN PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[]);
 
 PETSC_EXTERN PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
