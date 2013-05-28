@@ -30,27 +30,15 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v,VEC_CLASSID,1);
-  PetscValidHeaderSpecific(dm,DM_CLASSID,2);
+  if (dm) PetscValidHeaderSpecific(dm,DM_CLASSID,2);
   ierr = PetscObjectCompose((PetscObject)v,"DM",(PetscObject)dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "VecClearDM"
-static PetscErrorCode VecClearDM(Vec v)
-{
-#if PETSC_VERSION_LE(3,3,0)
-  const char name[] = "DM";
-#else
-  const char name[] = "__PETSc_dm";
+#if PETSC_VERSION_LE(3,4,0)
+#define VecSetDM(vec,dm) ((dm)?VecSetDM((vec),(dm)):0)
 #endif
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
-  ierr = PetscObjectCompose((PetscObject)v,name,NULL);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 
 #undef  __FUNCT__
@@ -77,7 +65,7 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecView_MPI_DA(v,viewer);CHKERRQ(ierr);
-  ierr = VecClearDM(v);CHKERRQ(ierr);
+  ierr = VecSetDM(v,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
@@ -92,7 +80,7 @@ static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecLoad_Default_DA(v,viewer);CHKERRQ(ierr);
-  ierr = VecClearDM(v);CHKERRQ(ierr);
+  ierr = VecSetDM(v,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
