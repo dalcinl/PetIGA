@@ -46,15 +46,15 @@ IGAInputOutput: IGAInputOutput.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 runex2a_1:
-	-@${MPIEXEC} -n 1 ./IGAInputOutput ${OPTS} -dim 1 -periodic
+	-@${MPIEXEC} -n 1 ./IGAInputOutput ${OPTS} -iga_dim 1 -periodic
 runex2a_2:
-	-@${MPIEXEC} -n 2 ./IGAInputOutput ${OPTS} -dim 2 -dof 3 -periodic
+	-@${MPIEXEC} -n 2 ./IGAInputOutput ${OPTS} -iga_dim 2 -iga_dof 3 -periodic
 runex2a_3:
-	-@${MPIEXEC} -n 3 ./IGAInputOutput ${OPTS} -dim 3 -periodic 1,0,1
+	-@${MPIEXEC} -n 3 ./IGAInputOutput ${OPTS} -iga_dim 3 -periodic 1,0,1
 runex2a_4:
-	-@${MPIEXEC} -n 4 ./IGAInputOutput ${OPTS} -dim 2 -N 17,19   -p 3,2
+	-@${MPIEXEC} -n 4 ./IGAInputOutput ${OPTS} -iga_dim 2 -N 17,19   -p 3,2
 runex2a_8:
-	-@${MPIEXEC} -n 8 ./IGAInputOutput ${OPTS} -dim 3 -N 13,11,7 -p 3,2,1
+	-@${MPIEXEC} -n 8 ./IGAInputOutput ${OPTS} -iga_dim 3 -N 13,11,7 -p 3,2,1
 runex2a.rm:
 	-@${RM} -f iga*.dat iga*.dat.info
 IGAInputOutput = IGAInputOutput.PETSc \

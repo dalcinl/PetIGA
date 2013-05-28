@@ -1,7 +1,7 @@
 #include <petsc.h>
 #include <petscts2.h>
 
-#if PETSC_VERSION_(3,3,0) || PETSC_VERSION_(3,2,0)
+#if PETSC_VERSION_LE(3,3,0)
 #define TSRegister(s,f) TSRegister(s,0,0,f)
 #endif
 

@@ -157,16 +157,6 @@ int main(int argc, char *argv[]) {
   ierr = IGAOptionsAlias("-C","-1","-iga_continuity");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-L","-1,+1","-iga_limits");CHKERRQ(ierr);
 
-#if PETSC_VERSION_(3,2,0)
-  {
-    PetscBool same = PETSC_FALSE;
-    char      mtype[256] = "";
-    ierr = PetscOptionsGetString(0,"-iga_mat_type",mtype,sizeof(mtype),0);CHKERRQ(ierr);
-    ierr = PetscStrcmp(mtype,MATIS,&same);CHKERRQ(ierr);
-    if (same) {ierr = PetscFinalize();CHKERRQ(ierr); return 0;}
-  }
-#endif
-
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,2);CHKERRQ(ierr);

@@ -17,13 +17,13 @@ int main(int argc, char *argv[]) {
     PetscInt  dim = 3;
     PetscInt  dof = 1;
     PetscBool b[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE};
-    PetscInt  N[3] = {16,16,16}; 
+    PetscInt  N[3] = {16,16,16};
     PetscInt  p[3] = { 2, 2, 2};
     PetscInt  C[3] = {-1,-1,-1};
     PetscInt  n0=3, n1=3, n2=3, n3=3;
     ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","InputOutput Options","IGA");CHKERRQ(ierr);
-    ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsInt("-dof","dofs/node",__FILE__,dof,&dof,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-iga_dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-iga_dof","dofs/node",__FILE__,dof,&dof,NULL);CHKERRQ(ierr);
     n0 = n1 = n2 = n3 = dim;
     ierr = PetscOptionsBoolArray("-periodic","periodicity",     __FILE__,b,&n0,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&n1,NULL);CHKERRQ(ierr);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-  
+
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr); /* just for testing */
 
@@ -96,18 +96,6 @@ int main(int argc, char *argv[]) {
       SETERRQ(comm,PETSC_ERR_PLIB,"Bad Vec data in file");
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
   }
-
-#if PETSC_VERSION_LE(3,2,0)
-  {
-    PetscMPIInt size;
-    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
-    if (size > 1) {
-      ierr = IGADestroy(&iga);CHKERRQ(ierr);
-      ierr = PetscFinalize();CHKERRQ(ierr);
-      return 0;
-    }
-  }
-#endif
 
   {
     Mat         mat;
