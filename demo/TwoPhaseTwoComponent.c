@@ -10,6 +10,7 @@
 #include "petiga.h"
 
 typedef struct {
+  IGA         iga;
   PetscScalar rholw,porosity,Pr,n,Slr,Sgr,H,Mh,T,mul,mug,Mw,Dlh,k;
 } AppCtx;
 
@@ -53,6 +54,20 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
   return;
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "Permeability"
+PetscScalar Permeability(PetscScalar *p)
+{
+  if(p[0] < 100 && p[1] < 10){
+    return 1e-16;
+  }else if(p[0] >= 100 && p[1] < 10){
+    return 2e-16;
+  }else if(p[0] < 100 && p[1] >= 10){
+    return 3e-16;
+  }
+  return 4e-16;
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,
@@ -68,7 +83,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   PetscScalar Mh  = user->Mh;
   PetscScalar Mw  = user->Mw;
   PetscScalar Dlh = user->Dlh;
-  PetscScalar k   = user->k;
+  PetscScalar k   = user->k; //Permeability(p->point);
 
   PetscInt a,i,nen,dim;
   IGAPointGetSizes(p,&nen,0,0);
@@ -98,7 +113,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   PetscScalar den = rholh/Mh+rholw/Mw;
   PetscScalar jlw[dim],ql[dim],qg[dim],g=0;
   for(i=0;i<dim;i++) {
-    if(i==dim-1) g = 0.;
+    if(i==dim-1) g = 0;
     PetscScalar X_x = (rholh_x[i]/Mh)/den - (rholh/Mh)/(den*den)*(rholh_x[i]/Mh);
     jlw[i] = porosity*Mh*cl*Dlh*X_x;
     ql[i]  = -k*krl/mul*(Pl_x[i]-rholw*g);
@@ -195,7 +210,7 @@ PetscErrorCode GeometricAdaptivity3(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal 
     PetscFunctionReturn(0);
   }
   *ok = PETSC_TRUE;
-  *nextdt = PetscMin(1.01*dt,10000);
+  *nextdt = PetscMin(1.01*dt,1000);
   return 0;
 }
 
@@ -287,11 +302,10 @@ PetscErrorCode Test1()
   ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr); 
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
-  PetscReal t; 
   Vec       U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = ICTest1(iga,U,&user);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
 
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   ierr = IGAWriteVec(iga,U,"sol.dat");CHKERRQ(ierr);
@@ -328,6 +342,64 @@ PetscErrorCode ICTest3(IGA iga,Vec U,AppCtx *user)
   ierr = DMDestroy(&da);;CHKERRQ(ierr); 
   PetscFunctionReturn(0); 
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "Test3Monitor"
+PetscErrorCode Test3Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  AppCtx *user = (AppCtx *)mctx; 
+  IGA iga      = user->iga;
+  
+  // Painful crap needed to interpolate at the left-middle of the domain
+  IGAElement ele;
+  IGAPoint   pnt; 
+  PetscScalar point[3] = {0,10,0};
+  ierr = IGAPointCreate(&pnt);CHKERRQ(ierr);
+  pnt->point = &(point[0]);
+  ierr = IGAElementCreate(&ele);CHKERRQ(ierr);
+  ierr = IGAElementInit(ele,iga);CHKERRQ(ierr);
+  if(IGALocateElement(iga,pnt->point,ele)){
+    ierr = IGAPointInit(pnt,ele);CHKERRQ(ierr);
+    ierr = IGAPointEval(iga,pnt);CHKERRQ(ierr);
+  }else{
+    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,"Point not on IGA.");
+  }
+  Vec                localU;
+  const PetscScalar *arrayU;
+  PetscScalar       *Ul;
+  ierr = IGAGetLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGAElementGetWorkVal(ele,&Ul);CHKERRQ(ierr);
+  ierr = IGAElementGetValues(ele,arrayU,Ul);CHKERRQ(ierr);
+
+  // Pl,Pg,Sg computed at left middle
+  PetscScalar sol[2];
+  ierr = IGAPointFormValue(pnt,Ul,&sol[0]);
+  PetscScalar Pl,Pg,Sg;
+  Pl = sol[0];
+  Pg = sol[1]/(user->Mh*user->H);
+  PetscScalar Pc  = Pg-Pl;
+  PetscScalar Sle = 1;
+  if(Pc > 0.0) {
+    Sle   = pow(pow((Pc/user->Pr),user->n)+1.,-1.+1./user->n);
+  }
+  Sg = 1.-((1.-user->Slr-user->Sgr)*Sle+user->Slr);
+
+  // fluxw,fluxh computed at right middle
+  PetscScalar fluxw=0.,fluxh=0.;
+
+  PetscReal dt;
+  TSGetTimeStep(ts,&dt);
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.6e %.6e %.6e %.6e %.6e\n",t,dt,Pl,Pg,Sg,fluxw,fluxh);
+  
+  ierr = IGARestoreLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = IGAElementDestroy(&ele);CHKERRQ(ierr);
+  ierr = IGAPointDestroy(&pnt);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "Test3"
@@ -369,7 +441,8 @@ PetscErrorCode Test3()
   
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-  
+  user.iga = iga;
+
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
   ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
@@ -388,13 +461,13 @@ PetscErrorCode Test3()
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.75);CHKERRQ(ierr);
   ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity3,NULL);CHKERRQ(ierr); 
+  ierr = TSMonitorSet(ts,Test3Monitor,&user,NULL);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
-  PetscReal t; 
   Vec       U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = ICTest3(iga,U,&user);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U,&t);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
 
   ierr = IGAWrite(iga,"iga_test3.dat");CHKERRQ(ierr);
   ierr = IGAWriteVec(iga,U,"ss_test3.dat");CHKERRQ(ierr);
