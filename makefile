@@ -55,8 +55,10 @@ cmake_cc_clang=-DPETSC_CLANGUAGE_Cxx:STRING='NO'
 cmake_cc_path =-DCMAKE_C_COMPILER:FILEPATH=${CC}
 cmake_cc_flags=-DCMAKE_C_FLAGS:STRING='${PCC_FLAGS} ${CFLAGS} ${PETSCFLAGS} ${CPP_FLAGS} ${CPPFLAGS}'
 endif
+ifneq (${FC},)
 cmake_fc_path =-DCMAKE_Fortran_COMPILER:FILEPATH=${FC}
 cmake_fc_flags=-DCMAKE_Fortran_FLAGS:STRING='${FC_FLAGS} ${FFLAGS} ${PETSCFLAGS} ${FPP_FLAGS} ${FPPFLAGS}'
+endif
 cmake_cc=${cmake_cc_path} ${cmake_cc_flags} ${cmake_cc_clang}
 cmake_fc=${cmake_fc_path} ${cmake_fc_flags}
 ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: CMakeLists.txt ${PETIGA_DIR}/${PETSC_ARCH}/conf
