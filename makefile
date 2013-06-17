@@ -61,15 +61,16 @@ cmake_fc_flags=-DCMAKE_Fortran_FLAGS:STRING='${FC_FLAGS} ${FFLAGS} ${PETSCFLAGS}
 endif
 cmake_cc=${cmake_cc_path} ${cmake_cc_flags} ${cmake_cc_clang}
 cmake_fc=${cmake_fc_path} ${cmake_fc_flags}
-${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: CMakeLists.txt ${PETIGA_DIR}/${PETSC_ARCH}/conf
+${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt: CMakeLists.txt
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/Makefile
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/cmake_install.cmake
-	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc} 2>&1 > ${PETIGA_DIR}/${PETSC_ARCH}/conf/cmake.log
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}
+	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc}
 cmake-boot: ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 cmake-build: cmake-boot
-	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP} 2>&1
+	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP}
 cmake-clean:
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/CMakeFiles
@@ -84,7 +85,7 @@ all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
 	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	-@echo "============================================="
-.PHONY: cmake-boot cmake-build all-cmake
+.PHONY: cmake-boot cmake-build cmake-clean all-cmake
 
 #
 # Check if PETSC_DIR variable specified is valid
