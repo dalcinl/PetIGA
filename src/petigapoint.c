@@ -765,9 +765,9 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
    Input Parameters:
 +  iga - the IGA context
 .  U   - the vector
-.  p   - the parametric location in the IGA (size of iga->dim)
-.  u   - 
--  du  - 
+.  p   - the parametric location in the IGA [iga->dim]
+.  u   - pointer to the interpolated values [iga->dof]
+-  du  - pointer to the gradient of the interpolated values [iga->dof][iga->dim]
 
    Notes: This function is intended to be used in a monitor function
    if a few values of the solution are needed at specific
@@ -785,12 +785,14 @@ PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscS
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   PetscValidRealPointer(p,3);
-  PetscValidScalarPointer(u,4);
+  if(u)  PetscValidScalarPointer(u ,4);
+  if(du) PetscValidScalarPointer(du,5);
   PetscErrorCode     ierr;
   IGAElement         ele;
   IGAPoint           pnt;
   MPI_Comm           comm;
   PetscMPIInt        rank,lroot=0,root=0;
+  PetscMPIInt        lfound=0,found=0;
   Vec                localU;
   const PetscScalar *arrayU;
   PetscScalar       *Ul;
@@ -805,11 +807,13 @@ PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscS
   ierr = IGAElementInit(ele,iga);CHKERRQ(ierr);
   pnt->point = p;
   pnt->dof   = iga->dof;
+  pnt->dim   = iga->dim;
 
   /* if point is on this processor, this rank is root */
   ierr = IGAGetLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
   if(IGALocateElement(iga,pnt->point,ele)){
-    lroot = rank;
+    lroot  = rank;
+    lfound = 1;
     ierr = IGAPointInit(pnt,ele);CHKERRQ(ierr);
     ierr = IGAPointEval(iga,pnt);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVal(ele,&Ul);CHKERRQ(ierr);
@@ -818,6 +822,10 @@ PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscS
     if(du) IGA_GetGrad(pnt->nen,pnt->dof,pnt->dim,pnt->shape[1],Ul,du);
   }
   ierr = IGARestoreLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(&lfound,&found,1,MPI_INT,MPI_SUM,comm);
+  if(found == 0){
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Point not found on any partition of the domain");
+  }
   ierr = MPI_Allreduce(&lroot,&root,1,MPI_INT,MPI_SUM,comm);
 
   /* broadcast result so all processors have same data */

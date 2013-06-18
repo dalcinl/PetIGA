@@ -1,4 +1,5 @@
 #include "petiga.h"
+#include "time.h"
 
 #define SQ(A) ((A)*(A))
 
@@ -63,14 +64,15 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-  
-  PetscScalar pnt[2],sol,gsol[2],err,gerr;
+
+  PetscReal  pnt[2];
+  PetscScalar sol=0,gsol[2],err,gerr;
   srand(time(NULL));
   PetscInt i;
   for(i=0;i<10;i++){
     pnt[0] = rand();
     pnt[1] = rand();
-    pnt[0] /= RAND_MAX; 
+    pnt[0] /= RAND_MAX;
     pnt[1] /= RAND_MAX;
     PetscPrintf(PETSC_COMM_WORLD,"Evaluating solution at x = (%f,%f)\n",pnt[0],pnt[1]);
     ierr = IGAInterpolate(iga,x,pnt,&sol,gsol);
