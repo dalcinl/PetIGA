@@ -380,6 +380,10 @@ PETSC_EXTERN PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJaco
 PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *ctx);
 PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *ctx);
 
+PETSC_EXTERN PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscScalar du[]);
+
 #undef  DMIGA
 #define DMIGA "iga"
 PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
@@ -656,11 +660,6 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerPC(PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerSNES(SNES snes);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
-
-/* ---------------------------------------------------------------- */
-
-PETSC_EXTERN PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
 
 /* ---------------------------------------------------------------- */
 

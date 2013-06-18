@@ -562,7 +562,7 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
 
 .keywords: IGA, locate, point, element
 @*/
-PetscBool IGALocateElement(IGA iga,PetscScalar *pnt,IGAElement element)
+PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element)
 {
   PetscErrorCode ierr;
   PetscInt i,j,e,m,dim=iga->dim,*ID = element->ID;
@@ -630,10 +630,8 @@ EXTERN_C_END
 +  iga - the IGA context
 -  point - the IGAPoint context
 
-   Notes:
-   The point assumes you have already called IGALocateElement and it
-   returned true. This function is intended to be used when
-   integrating on a manifold embedded in the IGA domain.
+   Notes: The point assumes that the point is contained in an element
+   on this processors partition (call IGALocateElement)
 
    Level: devel
 
@@ -755,5 +753,77 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
   }
 
   for(i=0;i<element->dim;i++){ ierr = PetscFree(basis[i]);CHKERRQ(ierr); }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAInterpolate"
+/*@
+   IGAInterpolate - Interpolates a vector given the IGA at the
+   requested point in the domain.
+
+   Input Parameters:
++  iga - the IGA context
+.  U   - the vector
+.  p   - the parametric location in the IGA (size of iga->dim)
+.  u   - 
+-  du  - 
+
+   Notes: This function is intended to be used in a monitor function
+   if a few values of the solution are needed at specific
+   locations. Using it for interpolating a large number of points will
+   be slow as it needs to create and destroy several objects
+   internally.
+
+   Level: normal
+
+.keywords: interpolate
+@*/
+PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscScalar du[])
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(U,VEC_CLASSID,2);
+  PetscValidRealPointer(p,3);
+  PetscValidScalarPointer(u,4);
+  PetscErrorCode     ierr;
+  IGAElement         ele;
+  IGAPoint           pnt;
+  MPI_Comm           comm;
+  PetscMPIInt        rank,lroot=0,root=0;
+  Vec                localU;
+  const PetscScalar *arrayU;
+  PetscScalar       *Ul;
+
+  /* get comm and rank */
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+
+  /* create the IGAPoint and IGAElement */
+  ierr = IGAPointCreate(&pnt);CHKERRQ(ierr);
+  ierr = IGAElementCreate(&ele);CHKERRQ(ierr);
+  ierr = IGAElementInit(ele,iga);CHKERRQ(ierr);
+  pnt->point = p;
+  pnt->dof   = iga->dof;
+
+  /* if point is on this processor, this rank is root */
+  ierr = IGAGetLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
+  if(IGALocateElement(iga,pnt->point,ele)){
+    lroot = rank;
+    ierr = IGAPointInit(pnt,ele);CHKERRQ(ierr);
+    ierr = IGAPointEval(iga,pnt);CHKERRQ(ierr);
+    ierr = IGAElementGetWorkVal(ele,&Ul);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(ele,arrayU,Ul);CHKERRQ(ierr);
+    if(u)  IGA_GetValue(pnt->nen,pnt->dof,pnt->shape[0],Ul,u);
+    if(du) IGA_GetGrad(pnt->nen,pnt->dof,pnt->dim,pnt->shape[1],Ul,du);
+  }
+  ierr = IGARestoreLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(&lroot,&root,1,MPI_INT,MPI_SUM,comm);
+
+  /* broadcast result so all processors have same data */
+  if(u)  { ierr = MPI_Bcast( u,pnt->dof,         MPIU_SCALAR,root,comm);CHKERRQ(ierr); }
+  if(du) { ierr = MPI_Bcast(du,pnt->dof*pnt->dim,MPIU_SCALAR,root,comm);CHKERRQ(ierr); }
+  ierr = IGAElementDestroy(&ele);CHKERRQ(ierr);
+  ierr = IGAPointDestroy(&pnt);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
