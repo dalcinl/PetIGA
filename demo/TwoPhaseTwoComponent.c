@@ -54,20 +54,6 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
   return;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "Permeability"
-PetscScalar Permeability(PetscScalar *p)
-{
-  if(p[0] < 100 && p[1] < 10){
-    return 1e-16;
-  }else if(p[0] >= 100 && p[1] < 10){
-    return 2e-16;
-  }else if(p[0] < 100 && p[1] >= 10){
-    return 3e-16;
-  }
-  return 4e-16;
-}
-
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,
@@ -83,7 +69,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   PetscScalar Mh  = user->Mh;
   PetscScalar Mw  = user->Mw;
   PetscScalar Dlh = user->Dlh;
-  PetscScalar k   = user->k; //Permeability(p->point);
+  PetscScalar k   = user->k; 
 
   PetscInt a,i,nen,dim;
   IGAPointGetSizes(p,&nen,0,0);
@@ -185,18 +171,6 @@ PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
 #define __FUNCT__ "GeometricAdaptivity"
 PetscErrorCode GeometricAdaptivity(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
 {
-  PetscErrorCode ierr;
-  PetscReal      dt;
-  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  *ok = PETSC_TRUE;
-  *nextdt = PetscMin(1.2*dt,833.0);
-  return 0;
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "GeometricAdaptivity3"
-PetscErrorCode GeometricAdaptivity3(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
-{
   PetscErrorCode       ierr;
   PetscReal            dt;
   SNES                 snes;
@@ -214,112 +188,9 @@ PetscErrorCode GeometricAdaptivity3(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal 
   return 0;
 }
 
-
 #undef __FUNCT__
-#define __FUNCT__ "ICTest1"
-PetscErrorCode ICTest1(IGA iga,Vec U,AppCtx *user)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-
-  PetscScalar Mh = user->Mh;
-  PetscScalar H  = user->H;
-
-  DM da;
-  ierr = IGACreateNodeDM(iga,2,&da);CHKERRQ(ierr);
-  Field **u;
-  ierr = DMDAVecGetArray(da,U,&u);CHKERRQ(ierr);
-  DMDALocalInfo info;
-  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
-
-  PetscInt i,j;
-  for(i=info.xs;i<info.xs+info.xm;i++){
-    PetscReal x = (PetscReal)i / ( (PetscReal)(info.mx-1) );
-    for(j=info.ys;j<info.ys+info.ym;j++){
-      u[j][i].Pl = 10.;
-      if(x <= 0.5){
-	u[j][i].rholh = 15*Mh*H; // Pg = rholh/Mh
-      }else{
-	u[j][i].rholh = 25*Mh*H;
-      }
-    }
-  }
-  ierr = DMDAVecRestoreArray(da,U,&u);CHKERRQ(ierr); 
-  ierr = DMDestroy(&da);;CHKERRQ(ierr); 
-  PetscFunctionReturn(0); 
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "Test1"
-PetscErrorCode Test1()
-{
-
-  PetscErrorCode  ierr;
-  AppCtx user;
-  user.rholw    = 1000;
-  user.porosity = 0.3;
-  user.Pr       = 20;
-  user.n        = 1.54;
-  user.Slr      = 0.01;
-  user.Sgr      = 0.;
-  user.T        = 303;
-  user.H        = 0.765; 
-  user.Mw       = 1e-2;
-  user.Mh       = 2e-3;
-  user.mul      = 1e-8;
-  user.mug      = 9e-11;
-  user.Dlh      = 3e-9;
-  user.k        = 1e-16; 
-  PetscInt dim = 2, p = 1, N = 500,L = 1;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"r_","2c2p Options","2c2p");CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
-
-  IGA         iga;
-  IGAAxis     axis;
-  ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
-  ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
-  ierr = IGASetDof(iga,2);CHKERRQ(ierr);
-
-  ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis,N,0.0,L,0);CHKERRQ(ierr);
-  ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
-  ierr = IGAAxisInitUniform(axis,N/10,0.0,0.1*L,0);CHKERRQ(ierr);
-  
-  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-  ierr = IGASetUp(iga);CHKERRQ(ierr);
-  
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
-
-  TS     ts;
-  ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(ts,0.17);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
-  ierr = TSAlphaSetRadius(ts,0.75);CHKERRQ(ierr);
-  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr); 
-  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-
-  Vec       U;
-  ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
-  ierr = ICTest1(iga,U,&user);CHKERRQ(ierr);
-  ierr = TSSolve(ts,U);CHKERRQ(ierr);
-
-  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
-  ierr = IGAWriteVec(iga,U,"sol.dat");CHKERRQ(ierr);
-
-  ierr = VecDestroy(&U);CHKERRQ(ierr);
-  ierr = TSDestroy(&ts);CHKERRQ(ierr);
-  ierr = IGADestroy(&iga);CHKERRQ(ierr);
-
-  return 0;
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "ICTest3"
-PetscErrorCode ICTest3(IGA iga,Vec U,AppCtx *user)
+#define __FUNCT__ "InitialCondition"
+PetscErrorCode InitialCondition(IGA iga,Vec U,AppCtx *user)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -344,38 +215,18 @@ PetscErrorCode ICTest3(IGA iga,Vec U,AppCtx *user)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "Test3Monitor"
-PetscErrorCode Test3Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
+#define __FUNCT__ "Monitor"
+PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx; 
-  IGA iga      = user->iga;
-  
-  // Painful crap needed to interpolate at the left-middle of the domain
-  IGAElement ele;
-  IGAPoint   pnt; 
-  PetscScalar point[3] = {0,10,0};
-  ierr = IGAPointCreate(&pnt);CHKERRQ(ierr);
-  pnt->point = &(point[0]);
-  ierr = IGAElementCreate(&ele);CHKERRQ(ierr);
-  ierr = IGAElementInit(ele,iga);CHKERRQ(ierr);
-  if(IGALocateElement(iga,pnt->point,ele)){
-    ierr = IGAPointInit(pnt,ele);CHKERRQ(ierr);
-    ierr = IGAPointEval(iga,pnt);CHKERRQ(ierr);
-  }else{
-    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,"Point not on IGA.");
-  }
-  Vec                localU;
-  const PetscScalar *arrayU;
-  PetscScalar       *Ul;
-  ierr = IGAGetLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
-  ierr = IGAElementGetWorkVal(ele,&Ul);CHKERRQ(ierr);
-  ierr = IGAElementGetValues(ele,arrayU,Ul);CHKERRQ(ierr);
+  IGA     iga  = user->iga;
 
-  // Pl,Pg,Sg computed at left middle
+  // Pl,Pg,Sg computed at left middle  
+  PetscScalar point[3] = {0,10,0};
   PetscScalar sol[2];
-  ierr = IGAPointFormValue(pnt,Ul,&sol[0]);
+  ierr = IGAInterpolate(iga,U,point,&sol[0],NULL);CHKERRQ(ierr);
   PetscScalar Pl,Pg,Sg;
   Pl = sol[0];
   Pg = sol[1]/(user->Mh*user->H);
@@ -391,21 +242,20 @@ PetscErrorCode Test3Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 
   PetscReal dt;
   TSGetTimeStep(ts,&dt);
+  if(step == 0){
+    PetscPrintf(PETSC_COMM_WORLD,"#%11s %12s %12s %12s %12s %12s %12s\n","Time","dt","Pl(xL)","Pg(xL)","Sg(xL)","fluxw(xR)","fluxh(xR)");
+  }
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.6e %.6e %.6e %.6e %.6e\n",t,dt,Pl,Pg,Sg,fluxw,fluxh);
-  
-  ierr = IGARestoreLocalVecArray(iga,U,&localU,&arrayU);CHKERRQ(ierr);
-  ierr = IGAElementDestroy(&ele);CHKERRQ(ierr);
-  ierr = IGAPointDestroy(&pnt);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
 
-
 #undef __FUNCT__
-#define __FUNCT__ "Test3"
-PetscErrorCode Test3()
-{
+#define __FUNCT__ "main"
+int main(int argc, char *argv[]) {
+
   PetscErrorCode  ierr;
+  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   AppCtx user;
   user.rholw    = 1000;
@@ -459,36 +309,22 @@ PetscErrorCode Test3()
   ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
-  ierr = TSAlphaSetRadius(ts,0.75);CHKERRQ(ierr);
-  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity3,NULL);CHKERRQ(ierr); 
-  ierr = TSMonitorSet(ts,Test3Monitor,&user,NULL);CHKERRQ(ierr);
+  ierr = TSAlphaSetRadius(ts,0.95);CHKERRQ(ierr);
+  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr); 
+  ierr = TSMonitorSet(ts,Monitor,&user,NULL);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   Vec       U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
-  ierr = ICTest3(iga,U,&user);CHKERRQ(ierr);
+  ierr = InitialCondition(iga,U,&user);CHKERRQ(ierr);
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
 
-  ierr = IGAWrite(iga,"iga_test3.dat");CHKERRQ(ierr);
-  ierr = IGAWriteVec(iga,U,"ss_test3.dat");CHKERRQ(ierr);
+  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,U,"ss.dat");CHKERRQ(ierr);
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
-
-  return ierr;
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
-  PetscErrorCode  ierr;
-  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-
-  //Test1();
-  //Test2();
-  ierr = Test3();CHKERRQ(ierr);
 
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
