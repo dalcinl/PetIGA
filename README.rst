@@ -61,7 +61,7 @@ Citation
 ------
 
 If you find PetIGA helpful in conducting research projects, we would
-appreciate a citation to the following article:
+appreciate a citation to the following article::
 
   @Article{PetIGA,
     author = 	 {N. Collier, L. Dalcin, V.M. Calo},
