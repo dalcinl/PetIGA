@@ -45,6 +45,34 @@ the code and build the PetIGA library::
   $ make test
 
 
+Scripting Support
+--------------
+
+PetIGA is designed to be efficient and as such, we do not directly do
+things like output VTK files suitable for viewing the solution. We do
+have routines which output the discretization information and solution
+vectors, but these are in a binary format to minimize I/O time. We
+have written a python package, `igakit
+<https://bitbucket.org/dalcinl/igakit>`_ which handles post-processing
+for visualization as well as geometry generation.
+
+
+Citation
+------
+
+If you find PetIGA helpful in conducting research projects, we would
+appreciate a citation to the following article:
+
+  @Article{PetIGA,
+    author = 	 {N. Collier, L. Dalcin, V.M. Calo},
+    title = 	 {{PetIGA}: High-Performance Isogeometric Analysis},
+    journal = 	 {arxiv},
+    year = 	 {2013},
+    number = 	 {1305.4452},
+    note = 	 {http://arxiv.org/abs/1305.4452}
+  }
+
+
 Acknowledgments
 ---------------
 
