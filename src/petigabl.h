@@ -36,7 +36,7 @@
   #elif defined(PETSC_USE_REAL_DOUBLE)
     #define LAPACKgetri_ zgetri_
   #else /* (PETSC_USE_REAL_QUAD) */
-    #error "LAPACKgetri_ not defined for quad complex"
+    #define LAPACKgetri_ wgetri_
   #endif
 #endif
 EXTERN_C_BEGIN
