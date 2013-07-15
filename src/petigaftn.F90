@@ -108,6 +108,23 @@ module PetIGA
   end interface IGA_InvGradGeomMap
 
 
+  interface IGA_Basis0
+     module procedure IGA_Basis0
+  end interface IGA_Basis0
+
+  interface IGA_Basis1
+     module procedure IGA_Basis1
+  end interface IGA_Basis1
+
+  interface IGA_Basis2
+     module procedure IGA_Basis2
+  end interface IGA_Basis2
+
+  interface IGA_Basis3
+     module procedure IGA_Basis3
+  end interface IGA_Basis3
+
+
   interface IGA_Shape0
      module procedure IGA_Shape0
   end interface IGA_Shape0
@@ -249,6 +266,38 @@ module PetIGA
       real(kind=IGA_REAL_KIND), pointer :: N(:)
       call c2f(p%normal,N,(/p%dim/))
     end function IGA_Normal
+
+    function IGA_Basis0(p) result(N)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: N(:)
+      call c2f(p%basis(0),N,(/p%nen/))
+    end function IGA_Basis0
+
+    function IGA_Basis1(p) result(N)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: N(:,:)
+      call c2f(p%basis(1),N,(/p%dim,p%nen/))
+    end function IGA_Basis1
+
+    function IGA_Basis2(p) result(N)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: N(:,:,:)
+      call c2f(p%basis(2),N,(/p%dim,p%dim,p%nen/))
+    end function IGA_Basis2
+
+    function IGA_Basis3(p) result(N)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: N(:,:,:,:)
+      call c2f(p%basis(3),N,(/p%dim,p%dim,p%dim,p%nen/))
+    end function IGA_Basis3
 
     function IGA_Shape0(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
