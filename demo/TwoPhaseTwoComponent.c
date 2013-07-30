@@ -221,12 +221,17 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx; 
-  IGA     iga  = user->iga;
-
+  IGA      iga = user->iga;
+  PetscInt dim = iga->dim;
+  
+  if(step == 0){
+    PetscPrintf(PETSC_COMM_WORLD,"#%11s %12s %12s %12s %12s %12s %12s\n","Time","dt","Pl(xL)","Pg(xL)","Sg(xL)","fluxw(xR)","fluxh(xR)");
+  }
+  
   // Pl,Pg,Sg computed at left middle  
-  PetscScalar point[3] = {0,10,0};
+  PetscScalar point[2] = {0,10};
   PetscScalar sol[2];
-  ierr = IGAInterpolate(iga,U,point,&sol[0],NULL);CHKERRQ(ierr);
+  ierr = IGAInterpolate(iga,U,point,sol,NULL);CHKERRQ(ierr);
   PetscScalar Pl,Pg,Sg;
   Pl = sol[0];
   Pg = sol[1]/(user->Mh*user->H);
@@ -237,15 +242,32 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   }
   Sg = 1.-((1.-user->Slr-user->Sgr)*Sle+user->Slr);
 
-  // fluxw,fluxh computed at right middle
-  PetscScalar fluxw=0.,fluxh=0.;
-
   PetscReal dt;
   TSGetTimeStep(ts,&dt);
-  if(step == 0){
-    PetscPrintf(PETSC_COMM_WORLD,"#%11s %12s %12s %12s %12s %12s %12s\n","Time","dt","Pl(xL)","Pg(xL)","Sg(xL)","fluxw(xR)","fluxh(xR)");
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.6e %.6e %.6e ",t,dt,Pl,Pg,Sg);
+
+  // fluxw,fluxh computed at right middle
+  point[0] = 200;
+  PetscScalar sol_x[2][2];
+  ierr = IGAInterpolate(iga,U,point,sol,&sol_x[0][0]);CHKERRQ(ierr);
+  Pl = sol[0];
+  PetscScalar *Pl_x    = sol_x[0];
+  Pg = sol[1]/(user->Mh*user->H);
+  Pc  = Pg-Pl;
+  Sle = 1;
+  if(Pc > 0.0) {
+    Sle   = pow(pow((Pc/user->Pr),user->n)+1.,-1.+1./user->n);
   }
-  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.6e %.6e %.6e %.6e %.6e\n",t,dt,Pl,Pg,Sg,fluxw,fluxh);
+  Sg = 1.-((1.-user->Slr-user->Sgr)*Sle+user->Slr);
+  PetscScalar  rholh   = sol[1];
+  PetscScalar *rholh_x = sol_x[1];
+
+  PetscScalar Sl,Sl_t,krl,krg,rhogh,rhogh_t,Pg_x[dim];
+  EquationOfState(dim,Pl,0,rholh,0,rholh_x,&Sl,&Sl_t,&krl,&krg,&rhogh,&rhogh_t,Pg_x,user);
+  PetscScalar fluxw = -user->k*krl/user->mul*(Pl_x[0]);
+  PetscScalar fluxh = -user->k*krg/user->mug*(Pg_x[0]);
+
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e\n",fluxw,fluxh);
 
   PetscFunctionReturn(0);
 }
