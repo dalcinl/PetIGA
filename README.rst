@@ -56,7 +56,7 @@ have written a python package, `igakit
 <https://bitbucket.org/dalcinl/igakit>`_ which handles post-processing
 for visualization as well as geometry generation. A series of
 tutorials in how to use PetIGA and igakit are underway and can be
-found `here <https"//petiga-igakit.readthedocs.org>`_.
+found `here <https://petiga-igakit.readthedocs.org>`_.
 
 
 Citation
