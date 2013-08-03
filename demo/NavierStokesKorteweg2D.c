@@ -344,6 +344,7 @@ int main(int argc, char *argv[]) {
   
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   user.iga = iga;
 
   ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
