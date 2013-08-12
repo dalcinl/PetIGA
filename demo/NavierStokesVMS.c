@@ -265,40 +265,47 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
   PetscFunctionBegin;
   ierr = VecZeroEntries(U);CHKERRQ(ierr);
 
-  DM da;
-  ierr = IGACreateNodeDM(iga,4,&da);CHKERRQ(ierr);
-  DMDALocalInfo info;
-  ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
-  PetscScalar ****u;
-  ierr = DMDAVecGetArrayDOF(da,U,&u);CHKERRQ(ierr);
-
-  PetscScalar H    = 2;//user->Ly;
-  PetscScalar visc = user->nu;
-  PetscScalar dpdx = user->fx;
-  PetscInt  i,j,k;
-  PetscReal jmax = (info.my-1);
-  for(k=info.zs;k<info.zs+info.zm;k++){
-    for(j=info.ys;j<info.ys+info.ym;j++){
-      for(i=info.xs;i<info.xs+info.xm;i++){
-        PetscReal   y = (j/jmax)*H;
-        PetscScalar ux = 1/(2*visc) * dpdx * y*(H-y);
-        u[k][j][i][0] = ux;
+  if (datafile[0] != 0) { /* initial condition from datafile */
+    MPI_Comm comm;
+    PetscViewer viewer;
+    ierr = PetscObjectGetComm((PetscObject)U,&comm);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryOpen(comm,datafile,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    ierr = VecLoad(U,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);
+  } else { 
+    DM da;
+    ierr = IGACreateNodeDM(iga,4,&da);CHKERRQ(ierr);
+    DMDALocalInfo info;
+    ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
+    PetscScalar ****u;
+    ierr = DMDAVecGetArrayDOF(da,U,&u);CHKERRQ(ierr);
+    
+    PetscScalar H    = 2;//user->Ly;
+    PetscScalar visc = user->nu;
+    PetscScalar dpdx = user->fx;
+    PetscInt  i,j,k;
+    PetscReal jmax = (info.my-1);
+    for(k=info.zs;k<info.zs+info.zm;k++){
+      for(j=info.ys;j<info.ys+info.ym;j++){
+	for(i=info.xs;i<info.xs+info.xm;i++){
+	  PetscReal   y = (j/jmax)*H;
+	  PetscScalar ux = 1/(2*visc) * dpdx * y*(H-y);
+	  u[k][j][i][0] = ux;
+	}
       }
     }
+
+    ierr = DMDAVecRestoreArrayDOF(da,U,&u);CHKERRQ(ierr);
+    ierr = DMDestroy(&da);CHKERRQ(ierr);
+
+    PetscReal v; Vec pert;
+    ierr = VecDuplicate(U,&pert);CHKERRQ(ierr);
+    ierr = VecSetRandom(pert,NULL);CHKERRQ(ierr);
+    ierr = VecMax(U,NULL,&v);CHKERRQ(ierr);
+    ierr = VecAXPY(U,0.05*v,pert);CHKERRQ(ierr);
+    ierr = VecStrideSet(U,3,0.0);CHKERRQ(ierr);
+    ierr = VecDestroy(&pert);CHKERRQ(ierr);
   }
-
-  ierr = DMDAVecRestoreArrayDOF(da,U,&u);CHKERRQ(ierr);
-
-  ierr = DMDestroy(&da);CHKERRQ(ierr);
-
-  PetscReal v; Vec pert;
-  ierr = VecDuplicate(U,&pert);CHKERRQ(ierr);
-  ierr = VecSetRandom(pert,NULL);CHKERRQ(ierr);
-  ierr = VecMax(U,NULL,&v);CHKERRQ(ierr);
-  ierr = VecAXPY(U,0.05*v,pert);CHKERRQ(ierr);
-  ierr = VecStrideSet(U,3,0.0);CHKERRQ(ierr);
-  ierr = VecDestroy(&pert);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
