@@ -119,7 +119,8 @@ pure subroutine GeometryMap(&
                        do c = 1,dim
                           E3(d,i,j,k) = - X3(l,c,b,a)*E1(c,i)*E1(b,j)*E1(a,k)*E1(d,l) + E3(d,i,j,k)
                        end do
-                       E3(d,i,j,k) = - X2(l,b,a)*( E1(a,j)*E2(b,i,k) &
+                       E3(d,i,j,k) = - X2(l,b,a)*( &
+                            + E1(a,j)*E2(b,i,k) &
                             + E1(a,k)*E2(b,i,j) &
                             + E1(b,i)*E2(a,j,k) )*E1(d,l) + E3(d,i,j,k)
                     end do
@@ -139,7 +140,8 @@ pure subroutine GeometryMap(&
                     do c = 1,dim
                        R3(i,j,k,idx) = N3(c,b,a,idx)*E1(c,i)*E1(b,j)*E1(a,k) + R3(i,j,k,idx)
                     end do
-                    R3(i,j,k,idx) = N2(b,a,idx)*( E1(a,j)*E2(b,i,k) &
+                    R3(i,j,k,idx) = N2(b,a,idx)*( &
+                         + E1(a,j)*E2(b,i,k) &
                          + E1(a,k)*E2(b,i,j) &
                          + E1(b,i)*E2(a,j,k) ) + R3(i,j,k,idx)
                  end do
