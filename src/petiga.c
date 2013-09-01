@@ -27,9 +27,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   PetscFunctionBegin;
   PetscValidPointer(_iga,2);
   *_iga = NULL;
-#ifndef PETSC_USE_DYNAMIC_LIBRARIES
   ierr = IGAInitializePackage();CHKERRQ(ierr);
-#endif
 #if PETSC_VERSION_LE(3,3,0)
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,
                            "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
