@@ -421,9 +421,8 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   if (order < 0)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Order must be nonnegative, got %D",order);
-  if (iga->order >= 0 && iga->order != order)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change order from %D after it was set to %D",iga->order,order);
+  if (order == iga->order) PetscFunctionReturn(0);
+  if (iga->setup) {iga->setup = PETSC_FALSE; iga->setupstage--;}
   iga->order = order;
   PetscFunctionReturn(0);
 }
