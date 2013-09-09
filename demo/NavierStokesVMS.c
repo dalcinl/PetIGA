@@ -6,6 +6,7 @@ PetscLogEvent NS_Tangent  = 0;
 typedef struct {
   PetscReal nu;
   PetscScalar fx,fy,fz;
+  IGA iga;
 } AppCtx;
 
 #undef __FUNCT__
@@ -310,34 +311,17 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "WriteSolution"
-PetscErrorCode WriteSolution(Vec C, const char pattern[],int number)
-{
-  PetscFunctionBegin;
-  PetscErrorCode  ierr;
-  MPI_Comm        comm;
-  char            filename[256];
-  PetscViewer     viewer;
-
-  PetscFunctionBegin;
-  sprintf(filename,pattern,number);
-  ierr = PetscObjectGetComm((PetscObject)C,&comm);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(comm,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-  ierr = VecView(C,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-#undef __FUNCT__
 #define __FUNCT__ "OutputMonitor"
-PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
+PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *mctx)
 {
-  PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = WriteSolution(U,"nsvms%d.dat",step);CHKERRQ(ierr);
+  PetscErrorCode ierr;
+  AppCtx *user = (AppCtx *)mctx;
+  char           filename[256];
+  sprintf(filename,"./nsvms%d.dat",it_number);
+  ierr = IGAWriteVec(user->iga,U,filename);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -394,6 +378,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,3);CHKERRQ(ierr);
   ierr = IGASetDof(iga,4);CHKERRQ(ierr);
+  user.iga = iga;
 
   IGAAxis axis0;
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
