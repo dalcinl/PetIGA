@@ -298,10 +298,12 @@ PetscErrorCode DMCreate_IGA(DM dm)
   ierr = PetscNewLog(dm,DM_IGA,&dd);CHKERRQ(ierr);
   dm->data = dd;
 
-#if PETSC_VERSION_GT(3,3,0)
+#if PETSC_VERSION_LE(3,3,0)
+#define getlocaltoglobalmapping      createlocaltoglobalmapping
+#define getlocaltoglobalmappingblock createlocaltoglobalmappingblock
+#endif
   dm->ops->getlocaltoglobalmapping      = DMGetLocalToGlobalMapping_IGA;
   dm->ops->getlocaltoglobalmappingblock = DMGetLocalToGlobalMappingBlock_IGA;
-#endif
   dm->ops->globaltolocalbegin           = DMGlobalToLocalBegin_IGA;
   dm->ops->globaltolocalend             = DMGlobalToLocalEnd_IGA;
   dm->ops->localtoglobalbegin           = DMLocalToGlobalBegin_IGA;
