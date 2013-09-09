@@ -243,10 +243,10 @@ PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  if (!prefix) {ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);}
   ierr = PetscOptionsGetBool(NULL,"-viewer_binary_skip_info",&skipinfo,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsSetValue("-viewer_binary_skip_info","");CHKERRQ(ierr);
-  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  if (!prefix || !prefix[0]) prefix = ((PetscObject)iga)->prefix;
   ierr = PetscOptionsGetViewer(comm,prefix,option,&viewer,&format,&flg);CHKERRQ(ierr);
   if (!skipinfo) {ierr = PetscOptionsClearValue("-viewer_binary_skip_info");CHKERRQ(ierr);}
   if (!flg) PetscFunctionReturn(0);
