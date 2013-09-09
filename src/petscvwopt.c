@@ -39,7 +39,7 @@ static PetscErrorCode PetscEnumFind(const char *const *enumlist,const char *str,
   n -= 3;                       /* drop enum name, prefix, and null termination */
   ierr = PetscEListFind(n,enumlist,str,&evalue,&efound);CHKERRQ(ierr);
   if (efound) *value = (PetscEnum)evalue;
-  if (found) *found = efound;
+  if (found ) *found = efound;
   PetscFunctionReturn(0);
 }
 
@@ -130,6 +130,7 @@ PetscErrorCode PetscOptionsGetViewer(MPI_Comm comm,const char pre[],const char n
       if (loc2_fmt && *loc2_fmt) {
         ierr = PetscEnumFind(PetscViewerFormats,loc2_fmt,(PetscEnum*)format,&flag);CHKERRQ(ierr);
         if (!flag) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_SUP,"Unknown viewer format %s",loc2_fmt);CHKERRQ(ierr);
+        if (((int)*format) >= 5) *format = (PetscViewerFormat)(((int)*format)-2); /**/
       }
       ierr = PetscViewerSetUp(*viewer);CHKERRQ(ierr);
       ierr = PetscFree(loc0_vtype);CHKERRQ(ierr);
