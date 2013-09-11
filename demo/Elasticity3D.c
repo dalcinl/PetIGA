@@ -93,13 +93,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
   
   // Dump solution vector
-  MPI_Comm        comm;
-  PetscViewer     viewer;
-  ierr = PetscObjectGetComm((PetscObject)x,&comm);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(comm,"solution.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-  ierr = VecView(x,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,x,"solution.dat");CHKERRQ(ierr);
 
   // Cleanup
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

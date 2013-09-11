@@ -1116,7 +1116,10 @@ int main(int argc, char *argv[])
     }
 
     // Dump solution vector
-    ierr = WriteSolution(Utotal,"disp%d.dat",step);CHKERRQ(ierr);
+    char filename[256];
+    sprintf(filename,"disp%d.dat",step);
+    ierr = IGAWriteVec(iga,Utotal,filename);CHKERRQ(ierr);
+
   }
 
   ierr = PetscFinalize();CHKERRQ(ierr);
