@@ -64,4 +64,4 @@ install (DIRECTORY conf/                  DESTINATION conf    FILES_MATCHING PAT
 install (DIRECTORY include/               DESTINATION include FILES_MATCHING PATTERN "*.h"    )
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.h"    )
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.mod"  )
-install (CODE "execute_process(COMMAND sed -i s/.{PETSC_ARCH}.//g ${CMAKE_INSTALL_PREFIX}/conf/petigavariables)")
+install (CODE "execute_process(COMMAND sed -i -e s/.{PETSC_ARCH}.//g ${CMAKE_INSTALL_PREFIX}/conf/petigavariables)")
