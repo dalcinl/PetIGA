@@ -24,6 +24,17 @@ static PetscErrorCode VecSetLayout(Vec v,PetscLayout map)
 
 #if PETSC_VERSION_LE(3,3,0)
 #undef  __FUNCT__
+#define __FUNCT__ "VecGetDM"
+static PetscErrorCode VecGetDM(Vec v,DM *dm)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
+  PetscValidPointer(dm,2);
+  ierr = PetscObjectQuery((PetscObject)v,"DM",(PetscObject*)dm);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#undef  __FUNCT__
 #define __FUNCT__ "VecSetDM"
 static PetscErrorCode VecSetDM(Vec v,DM dm)
 {
@@ -36,8 +47,8 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
 }
 #endif
 
-#if PETSC_VERSION_LE(3,4,0)
-#define VecSetDM(vec,dm) ((dm)?VecSetDM((vec),(dm)):0)
+#if PETSC_VERSION_(3,4,0)
+#define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
 #endif
 
 
@@ -58,14 +69,17 @@ static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
 {
   IGA            iga;
-  DM             dm;
+  DM             save,dm;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = VecGetDM(v,&save);CHKERRQ(ierr);
+  if (save) {ierr = PetscObjectReference((PetscObject)save);CHKERRQ(ierr);}
   ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecView_MPI_DA(v,viewer);CHKERRQ(ierr);
-  ierr = VecSetDM(v,NULL);CHKERRQ(ierr);
+  ierr = VecSetDM(v,save);CHKERRQ(ierr);
+  ierr = DMDestroy(&save);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
@@ -73,14 +87,17 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
 static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
 {
   IGA            iga;
-  DM             dm;
+  DM             save,dm;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = VecGetDM(v,&save);CHKERRQ(ierr);
+  if (save) {ierr = PetscObjectReference((PetscObject)save);CHKERRQ(ierr);}
   ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecLoad_Default_DA(v,viewer);CHKERRQ(ierr);
-  ierr = VecSetDM(v,NULL);CHKERRQ(ierr);
+  ierr = VecSetDM(v,save);CHKERRQ(ierr);
+  ierr = DMDestroy(&save);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

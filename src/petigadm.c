@@ -1,6 +1,24 @@
 #include <petiga.h>
 #include "petsc-private/dmimpl.h"
 
+#if PETSC_VERSION_LE(3,3,0)
+#undef  __FUNCT__
+#define __FUNCT__ "VecSetDM"
+static PetscErrorCode VecSetDM(Vec v,DM dm)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
+  if (dm) PetscValidHeaderSpecific(dm,DM_CLASSID,2);
+  ierr = PetscObjectCompose((PetscObject)v,"DM",(PetscObject)dm);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#endif
+
+#if PETSC_VERSION_(3,4,0)
+#define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
+#endif
+
 typedef struct {
   IGA iga;
 } DM_IGA;
@@ -174,6 +192,7 @@ static PetscErrorCode DMCreateGlobalVector_IGA(DM dm,Vec *gvec)
   if (vtype) iga->vectype = (char*)vtype;
   ierr = IGACreateVec(iga,gvec);CHKERRQ(ierr);
   if (vtype) iga->vectype = (char*)save;
+  ierr = VecSetDM(*gvec,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -191,6 +210,7 @@ static PetscErrorCode DMCreateLocalVector_IGA(DM dm,Vec *lvec)
   if (vtype) iga->vectype = (char*)vtype;
   ierr = IGACreateLocalVec(iga,lvec);CHKERRQ(ierr);
   if (vtype) iga->vectype = (char*)save;
+  ierr = VecSetDM(*lvec,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
