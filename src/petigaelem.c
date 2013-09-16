@@ -1534,12 +1534,12 @@ EXTERN_C_END
 #define __FUNCT__ "IGAElementCharacteristicSize"
 PetscErrorCode IGAElementCharacteristicSize(IGAElement element,PetscReal *h)
 {
-  PetscFunctionBegin;
   PetscInt       dir,i,m,e,nc=0;
   PetscReal     *U;
   PetscReal      limits[3][2],corners[8][3],g[3]={0,0,0};
   IGAPoint       p;
   PetscErrorCode ierr;
+  PetscFunctionBegin;
   PetscValidPointer(element,1);
 
   /* find parametric element breaks */
