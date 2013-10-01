@@ -787,6 +787,12 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              N[0],N[1],N[2],N[3]); break;
     }
+    {
+      PetscInt nqp = element->nqp;
+      PetscInt dim = element->dim;
+      PetscReal *n = element->normal;
+      (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
+    }
   }
 
   if (element->dim == element->nsd) /* XXX */
@@ -937,7 +943,7 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt di
       PetscInt nqp = element->nqp;
       PetscInt dim = element->dim;
       PetscReal *n = element->normal;
-      PetscMemzero(n,nqp*dim*sizeof(PetscReal));
+      (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
       for (q=0; q<nqp; q++)
         n[q*dim+dir] = side ? 1.0 : -1.0;
     }
