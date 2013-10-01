@@ -458,9 +458,12 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
  start:
 
   point->geometry = element->geometryX;
+  point->rational = element->rationalW;
   point->property = element->propertyA;
   if (!element->geometry)
     point->geometry = NULL;
+  if (!element->rational)
+    point->rational = NULL;
   if (!element->property)
     point->property = NULL;
 

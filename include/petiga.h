@@ -536,6 +536,7 @@ struct _n_IGAPoint {
   PetscInt npd;
 
   PetscReal   *geometry;/*  [nen][nsd] */
+  PetscReal   *rational;/*  [nen]      */
   PetscScalar *property;/*  [nen][npd] */
 
   PetscReal *weight;   /*   [1]   */

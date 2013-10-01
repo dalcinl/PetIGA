@@ -78,6 +78,7 @@ module PetIGA
      integer(kind=IGA_INTEGER_KIND) :: npd
 
      type(C_PTR) :: geometry
+     type(C_PTR) :: rational
      type(C_PTR) :: property
 
      type(C_PTR) :: weight
@@ -205,6 +206,17 @@ module PetIGA
       if (nonnull(p%geometry)) &
       call c2f(p%geometry,X,(/p%nsd,p%nen/))
     end function IGA_Geometry
+
+    function IGA_Rational(p) result(W)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: W(:)
+      nullify(W)
+      if (nonnull(p%rational)) &
+      call c2f(p%rational,W,(/p%nen/))
+    end function IGA_Rational
 
     function IGA_Property(p) result(A)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
