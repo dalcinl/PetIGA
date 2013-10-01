@@ -9,6 +9,42 @@ PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "Vector"
+PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx)
+{
+  PetscInt dof = p->dof;
+  PetscInt nen = p->nen;
+  PetscReal *N = p->shape[0];
+  PetscInt a,i;
+  for (a=0; a<nen; a++) {
+    PetscReal Na = N[a];
+    for (i=0; i<dof; i++)
+      F[a*dof+i] = Na * 1;
+  }
+  return 0;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Matrix"
+PetscErrorCode Matrix(IGAPoint p,PetscScalar *K,void *ctx)
+{
+  PetscInt dof = p->dof;
+  PetscInt nen = p->nen;
+  PetscReal *N = p->shape[0];
+  PetscInt a,b,i,j;
+  for (a=0; a<nen; a++) {
+    PetscReal Na = N[a];
+    for (b=0; b<nen; b++) {
+      PetscReal Nb = N[b];
+      for (i=0; i<dof; i++)
+        for (j=0; j<dof; j++)
+          if (i==j)
+            K[a*dof*nen*dof+i*nen*dof+b*dof+j] = Na*Nb;
+    }
+  }
+  return 0;
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "System"
@@ -70,6 +106,26 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,0);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
+  ierr = VecMin(x,0,&xmin);CHKERRQ(ierr);
+  ierr = VecMax(x,0,&xmax);CHKERRQ(ierr);
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
+  ierr = VecDestroy(&b);CHKERRQ(ierr);
+  ierr = MatDestroy(&A);CHKERRQ(ierr);
+  ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
+
+  ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
+  ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
+  ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
+  ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
+  ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
+  ierr = IGASetUserVector(iga,Vector,0);CHKERRQ(ierr);
+  ierr = IGAComputeVector(iga,b);CHKERRQ(ierr);
+  ierr = IGASetUserMatrix(iga,Matrix,0);CHKERRQ(ierr);
+  ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
   ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);

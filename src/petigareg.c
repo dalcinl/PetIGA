@@ -38,6 +38,8 @@ PetscBool        IGARegisterAllCalled  = PETSC_FALSE;
 PetscClassId  IGA_CLASSID = 0;
 
 PetscLogEvent IGA_FormScalar = 0;
+PetscLogEvent IGA_FormVector = 0;
+PetscLogEvent IGA_FormMatrix = 0;
 PetscLogEvent IGA_FormSystem = 0;
 PetscLogEvent IGA_FormFunction = 0;
 PetscLogEvent IGA_FormJacobian = 0;
@@ -91,6 +93,8 @@ PetscErrorCode IGAInitializePackage(void)
   ierr = IGARegisterAll();CHKERRQ(ierr);
   /* Register Events */
   ierr = PetscLogEventRegister("IGAFormScalar",IGA_CLASSID,&IGA_FormScalar);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("IGAFormVector",IGA_CLASSID,&IGA_FormVector);CHKERRQ(ierr);
+  ierr = PetscLogEventRegister("IGAFormMatrix",IGA_CLASSID,&IGA_FormMatrix);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormSystem",IGA_CLASSID,&IGA_FormSystem);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormFunction",IGA_CLASSID,&IGA_FormFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);

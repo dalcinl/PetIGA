@@ -115,6 +115,8 @@ PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,
 /* ---------------------------------------------------------------- */
 
 typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
+typedef PetscErrorCode (*IGAUserVector)    (IGAPoint point,PetscScalar *F,void *ctx);
+typedef PetscErrorCode (*IGAUserMatrix)    (IGAPoint point,PetscScalar *K,void *ctx);
 typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
 typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
@@ -150,6 +152,10 @@ typedef PetscErrorCode (*IGAUserIEJacobian)(IGAPoint point,PetscReal dt,
 typedef struct _IGAUserOps *IGAUserOps;
 struct _IGAUserOps {
   /**/
+  IGAUserVector     Vector;
+  void              *VecCtx;
+  IGAUserMatrix     Matrix;
+  void              *MatCtx;
   IGAUserSystem     System;
   void              *SysCtx;
   /**/
@@ -197,6 +203,8 @@ PETSC_EXTERN PetscErrorCode IGABoundaryClear(IGABoundary boundary);
 PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
 PETSC_EXTERN PetscErrorCode IGABoundarySetLoad (IGABoundary boundary,PetscInt field,PetscScalar value);
 
+PETSC_EXTERN PetscErrorCode IGABoundarySetUserVector    (IGABoundary boundary,IGAUserVector     Vector,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGABoundarySetUserMatrix    (IGABoundary boundary,IGAUserMatrix     Matrix,    void *ctx);
 PETSC_EXTERN PetscErrorCode IGABoundarySetUserSystem    (IGABoundary boundary,IGAUserSystem     System,    void *ctx);
 PETSC_EXTERN PetscErrorCode IGABoundarySetUserFunction  (IGABoundary boundary,IGAUserFunction   Function,  void *ctx);
 PETSC_EXTERN PetscErrorCode IGABoundarySetUserJacobian  (IGABoundary boundary,IGAUserJacobian   Jacobian,  void *ctx);
@@ -371,6 +379,8 @@ PETSC_EXTERN PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec);
 PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 
+PETSC_EXTERN PetscErrorCode IGASetUserVector    (IGA iga,IGAUserVector     Vector,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetUserMatrix    (IGA iga,IGAUserMatrix     Matrix,    void *ctx);
 PETSC_EXTERN PetscErrorCode IGASetUserSystem    (IGA iga,IGAUserSystem     System,    void *ctx);
 PETSC_EXTERN PetscErrorCode IGASetUserFunction  (IGA iga,IGAUserFunction   Function,  void *ctx);
 PETSC_EXTERN PetscErrorCode IGASetUserJacobian  (IGA iga,IGAUserJacobian   Jacobian,  void *ctx);
@@ -604,6 +614,8 @@ PETSC_EXTERN PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],
 /* ---------------------------------------------------------------- */
 
 PETSC_EXTERN PetscLogEvent IGA_FormScalar;
+PETSC_EXTERN PetscLogEvent IGA_FormVector;
+PETSC_EXTERN PetscLogEvent IGA_FormMatrix;
 PETSC_EXTERN PetscLogEvent IGA_FormSystem;
 PETSC_EXTERN PetscLogEvent IGA_FormFunction;
 PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
@@ -617,6 +629,8 @@ PETSC_EXTERN PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S
 #define PCIGABBB "igabbb"
 
 PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
+PETSC_EXTERN PetscErrorCode IGAComputeVector(IGA iga,Vec B);
+PETSC_EXTERN PetscErrorCode IGAComputeMatrix(IGA iga,Mat A);
 PETSC_EXTERN PetscErrorCode IGAComputeSystem(IGA iga,Mat A,Vec B);
 
 PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);

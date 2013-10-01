@@ -1,6 +1,28 @@
 #include "petiga.h"
 
 PETSC_STATIC_INLINE
+PetscBool IGAElementNextUserVector(IGAElement element,IGAUserVector *vec,void **ctx)
+{
+  IGAUserOps ops;
+  while (IGAElementNextUserOps(element,&ops) && !ops->Vector);
+  if (!ops) return PETSC_FALSE;
+  *vec = ops->Vector;
+  *ctx = ops->VecCtx;
+  return PETSC_TRUE;
+}
+
+PETSC_STATIC_INLINE
+PetscBool IGAElementNextUserMatrix(IGAElement element,IGAUserMatrix *mat,void **ctx)
+{
+  IGAUserOps ops;
+  while (IGAElementNextUserOps(element,&ops) && !ops->Matrix);
+  if (!ops) return PETSC_FALSE;
+  *mat = ops->Matrix;
+  *ctx = ops->MatCtx;
+  return PETSC_TRUE;
+}
+
+PETSC_STATIC_INLINE
 PetscBool IGAElementNextUserSystem(IGAElement element,IGAUserSystem *sys,void **ctx)
 {
   IGAUserOps ops;
@@ -10,6 +32,103 @@ PetscBool IGAElementNextUserSystem(IGAElement element,IGAUserSystem *sys,void **
   *ctx = ops->SysCtx;
   return PETSC_TRUE;
 }
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAComputeVector"
+PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
+{
+  IGAElement     element;
+  IGAPoint       point;
+  IGAUserVector  Vector;
+  void           *ctx;
+  PetscScalar    *B;
+  PetscScalar    *F;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vecB,VEC_CLASSID,2);
+  IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,Vector);
+
+  ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_FormVector,iga,vecB,0,0);CHKERRQ(ierr);
+
+  /* Element loop */
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
+    ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
+    /* UserVector loop */
+    while (IGAElementNextUserVector(element,&Vector,&ctx)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = IGAPointGetWorkVec(point,&F);CHKERRQ(ierr);
+        ierr = Vector(point,F,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddVec(point,F,B);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    }
+    ierr = IGAElementAssembleVec(element,B,vecB);CHKERRQ(ierr);
+  }
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
+  ierr = PetscLogEventEnd(IGA_FormVector,iga,vecB,0,0);CHKERRQ(ierr);
+
+  ierr = VecAssemblyBegin(vecB);CHKERRQ(ierr);
+  ierr = VecAssemblyEnd  (vecB);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAComputeMatrix"
+PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
+{
+  IGAElement     element;
+  IGAPoint       point;
+  IGAUserMatrix  Matrix;
+  void           *ctx;
+  PetscScalar    *A;
+  PetscScalar    *K;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
+  IGACheckSetUp(iga,1);
+  IGACheckUserOp(iga,1,Matrix);
+
+  ierr = MatZeroEntries(matA);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_FormMatrix,iga,matA,0,0);CHKERRQ(ierr);
+
+  /* Element loop */
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
+    ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
+    /* UserMatrix loop */
+    while (IGAElementNextUserMatrix(element,&Matrix,&ctx)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
+        ierr = Matrix(point,K,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddMat(point,K,A);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    }
+    ierr = IGAElementAssembleMat(element,A,matA);CHKERRQ(ierr);
+  }
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
+  ierr = PetscLogEventEnd(IGA_FormMatrix,iga,matA,0,0);CHKERRQ(ierr);
+
+  ierr = MatAssemblyBegin(matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (matA,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAComputeSystem"

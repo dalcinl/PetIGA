@@ -164,6 +164,29 @@ PetscErrorCode IGABoundarySetLoad(IGABoundary boundary,PetscInt field,PetscScala
     if (!(boundary)->userops) {_ierr = PetscNew(struct _IGAUserOps,&(boundary)->userops);CHKERRQ(_ierr);} \
   } while (0)
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserVector"
+PetscErrorCode IGABoundarySetUserVector(IGABoundary boundary,IGAUserVector Vector,void *VecCtx)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(boundary,1);
+  IGABoundaryEnsureUserOps(boundary);
+  if (Vector) boundary->userops->Vector = Vector;
+  if (VecCtx) boundary->userops->VecCtx = VecCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGABoundarySetUserMatrix"
+PetscErrorCode IGABoundarySetUserMatrix(IGABoundary boundary,IGAUserMatrix Matrix,void *MatCtx)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(boundary,1);
+  IGABoundaryEnsureUserOps(boundary);
+  if (Matrix) boundary->userops->Matrix = Matrix;
+  if (MatCtx) boundary->userops->MatCtx = MatCtx;
+  PetscFunctionReturn(0);
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABoundarySetUserSystem"

@@ -1501,6 +1501,72 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetUserVector"
+/*@
+   IGASetUserSystem - Set the user callback to form the vector
+   which represents the discretized L(w).
+
+   Logically collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+.  Vector - the function which evaluates L(w)
+-  ctx - user-defined context for evaluation routine (may be NULL)
+
+   Details of Vector:
+$  PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx);
+
++  p - point at which to evaluate L(w)
+.  F - contribution to L(w)
+-  ctx - user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, setup linear system, vector assembly
+@*/
+PetscErrorCode IGASetUserVector(IGA iga,IGAUserVector Vector,void *VecCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (Vector) iga->userops->Vector = Vector;
+  if (VecCtx) iga->userops->VecCtx = VecCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetUserMatrix"
+/*@
+   IGASetUserSystem - Set the user callback to form the matrix and vector
+   which represents the discretized a(w,u).
+
+   Logically collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+.  Matrix - the function which evaluates a(w,u)
+-  ctx - user-defined context for evaluation routine (may be NULL)
+
+   Details of System:
+$  PetscErrorCode System(IGAPoint p,PetscScalar *K,void *ctx);
+
++  p - point at which to evaluate a(w,u)
+.  K - contribution to a(w,u)
+-  ctx - user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, setup linear system, matrix assembly
+@*/
+PetscErrorCode IGASetUserMatrix(IGA iga,IGAUserMatrix Matrix,void *MatCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (Matrix) iga->userops->Matrix = Matrix;
+  if (MatCtx) iga->userops->MatCtx = MatCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetUserSystem"
 /*@
    IGASetUserSystem - Set the user callback to form the matrix and vector
