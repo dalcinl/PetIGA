@@ -8,7 +8,6 @@ include ${PETIGA_DIR}/conf/petigarules
 include ${PETIGA_DIR}/conf/petigatest
 
 all:
-	@${OMAKE} chk_petigadir PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	@if [ -f ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt ]; then \
 	${OMAKE} all-cmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
 	${OMAKE} all-legacy PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
