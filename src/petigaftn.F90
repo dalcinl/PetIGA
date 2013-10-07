@@ -77,18 +77,19 @@ module PetIGA
      integer(kind=IGA_INTEGER_KIND) :: nsd
      integer(kind=IGA_INTEGER_KIND) :: npd
 
-     type(C_PTR) :: geometry
      type(C_PTR) :: rational
+     type(C_PTR) :: geometry
      type(C_PTR) :: property
 
+     type(C_PTR) :: point
      type(C_PTR) :: weight
      type(C_PTR) :: detJac
-     type(C_PTR) :: point
      type(C_PTR) :: basis(0:3)
      type(C_PTR) :: detX
      type(C_PTR) :: gradX(0:1)
-     type(C_PTR) :: shape(0:3)
+     type(C_PTR) :: detS
      type(C_PTR) :: normal
+     type(C_PTR) :: shape(0:3)
   end type IGAPoint
 
 
@@ -196,17 +197,6 @@ module PetIGA
 
   contains
 
-    function IGA_Geometry(p) result(X)
-      use ISO_C_BINDING, only: c2f => C_F_POINTER
-      use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
-      implicit none
-      type(IGAPoint), intent(in) :: p
-      real(kind=IGA_REAL_KIND), pointer :: X(:)
-      nullify(X)
-      if (nonnull(p%geometry)) &
-      call c2f(p%geometry,X,(/p%nsd,p%nen/))
-    end function IGA_Geometry
-
     function IGA_Rational(p) result(W)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
@@ -217,6 +207,17 @@ module PetIGA
       if (nonnull(p%rational)) &
       call c2f(p%rational,W,(/p%nen/))
     end function IGA_Rational
+
+    function IGA_Geometry(p) result(X)
+      use ISO_C_BINDING, only: c2f => C_F_POINTER
+      use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      real(kind=IGA_REAL_KIND), pointer :: X(:)
+      nullify(X)
+      if (nonnull(p%geometry)) &
+      call c2f(p%geometry,X,(/p%nsd,p%nen/))
+    end function IGA_Geometry
 
     function IGA_Property(p) result(A)
       use ISO_C_BINDING, only: c2f => C_F_POINTER

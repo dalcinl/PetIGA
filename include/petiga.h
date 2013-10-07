@@ -249,11 +249,11 @@ struct _p_IGA {
 
   IGAElement  iterator;
 
-  PetscInt    geometry;
   PetscBool   rational;
+  PetscInt    geometry;
   PetscInt    property;
-  PetscReal   *geometryX;
   PetscReal   *rationalW;
+  PetscReal   *geometryX;
   PetscScalar *propertyA;
 
   PetscInt  proc_sizes[3];
@@ -429,17 +429,17 @@ struct _n_IGAElement {
   PetscInt npd;
 
   PetscInt    *mapping;   /*[nen]      */
-  PetscBool   geometry;
-  PetscReal   *geometryX; /*[nen][nsd] */
   PetscBool   rational;
   PetscReal   *rationalW; /*[nen]      */
+  PetscBool   geometry;
+  PetscReal   *geometryX; /*[nen][nsd] */
   PetscBool   property;
   PetscScalar *propertyA; /*[nen][npd] */
 
+  PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
 
-  PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *basis[4]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
@@ -448,13 +448,13 @@ struct _n_IGAElement {
   PetscReal *detX;     /*   [nqp]                     */
   PetscReal *gradX[2]; /*0: [nqp][nsd][dim]           */
                        /*1: [nqp][dim][nsd]           */
+  PetscReal *detS;     /*   [nqp]                     */
+  PetscReal *normal;   /*   [nqp][dim]                */
+
   PetscReal *shape[4]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][nsd]           */
                        /*2: [nqp][nen][nsd][nsd]      */
                        /*3: [nqp][nen][nsd][nsd][nsd] */
-
-  PetscReal *normal;   /*   [nqp][dim]                */
-
 
   IGA      parent;
   IGAPoint iterator;
@@ -545,14 +545,14 @@ struct _n_IGAPoint {
   PetscInt nsd;
   PetscInt npd;
 
-  PetscReal   *geometry;/*  [nen][nsd] */
   PetscReal   *rational;/*  [nen]      */
+  PetscReal   *geometry;/*  [nen][nsd] */
   PetscScalar *property;/*  [nen][npd] */
 
+  PetscReal *point;    /*   [dim] */
   PetscReal *weight;   /*   [1]   */
   PetscReal *detJac;   /*   [1]   */
 
-  PetscReal *point;    /*   [dim] */
   PetscReal *basis[4]; /*0: [nen] */
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
@@ -561,12 +561,13 @@ struct _n_IGAPoint {
   PetscReal *detX;     /*   [1] */
   PetscReal *gradX[2]; /*0: [nsd][dim] */
                        /*1: [dim][nsd] */
+  PetscReal *detS;     /*   [1] */
+  PetscReal *normal;   /*   [dim] */
+
   PetscReal *shape[4]; /*0: [nen]  */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
-
-  PetscReal *normal;   /*   [dim] */
 
   IGAElement parent;
 
