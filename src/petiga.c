@@ -791,7 +791,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
 
     /* Geometry */
-    ierr = PetscOptionsString("-iga_geometry","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsString("-iga_load","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
+    if (!flg) {ierr = PetscOptionsString("-iga_geometry","deprecated, use -iga_load","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);}
     if (flg) { /* load from file */
       ierr = IGAOptionsReject(prefix,"-iga_elements"  );CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_degree"    );CHKERRQ(ierr);

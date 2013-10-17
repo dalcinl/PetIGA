@@ -11,7 +11,7 @@
 
   2) On a geometry
 
-    If a geometry file is specified (-iga_geometry), the
+    If a geometry file is specified (-iga_load), the
     discretization will be what is read in from the geometry and is
     not editable from the command line.
 
