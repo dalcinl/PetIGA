@@ -66,8 +66,8 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
      end select
   case (2)
      select case (axis)
-     case (0); N = normal2(F(2,:))
-     case (1); N = normal2(F(1,:))
+     case (0); N = +normal2(F(2,:))
+     case (1); N = -normal2(F(1,:))
      end select
   case (1)
      select case (axis)
@@ -94,7 +94,7 @@ function normal3(s,t) result(n)
   real(kind=IGA_REAL_KIND)             :: n(3)
   real(kind=IGA_REAL_KIND), intent(in) :: s(3)
   real(kind=IGA_REAL_KIND), intent(in) :: t(3)
-  ! n_i = eps_ijk s_j tj
+  ! n_i = eps_ijk s_j t_k
   n(1) = s(2) * t(3) - s(3) * t(2)
   n(2) = s(3) * t(1) - s(1) * t(3)
   n(3) = s(1) * t(2) - s(2) * t(1)
