@@ -181,9 +181,10 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
              "Number of space dimensions must be in range [1,3], got %D",dim);
   if (iga->geometry > 0 && iga->geometry != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA spatial dim to %D after it was set to %D",dim,iga->geometry);
-  if (iga->geometry == 0) iga->setup = PETSC_FALSE;
+             "Cannot change IGA geometry dim to %D after it was set to %D",dim,iga->geometry);
+  if (iga->geometry == dim) PetscFunctionReturn(0);
   iga->geometry = dim;
+  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -381,8 +382,9 @@ PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
   if (iga->property > 0 && iga->property != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change IGA property dim to %D after it was set to %D",dim,iga->property);
-  if (iga->property == 0) iga->setup = PETSC_FALSE;
+  if (iga->property == dim) PetscFunctionReturn(0);
   iga->property = dim;
+  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 

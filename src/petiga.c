@@ -421,9 +421,9 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   if (order < 0)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Order must be nonnegative, got %D",order);
-  if (order == iga->order) PetscFunctionReturn(0);
-  if (iga->setup) {iga->setup = PETSC_FALSE; iga->setupstage--;}
+  if (iga->order == order) PetscFunctionReturn(0);
   iga->order = order;
+  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -451,8 +451,8 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   if (q == PETSC_DECIDE && iga->axis[i]->p > 0) q = iga->axis[i]->p + 1;
   if (q <= 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
   if (q == rule->nqp) PetscFunctionReturn(0);
-  if (iga->setup) {iga->setup = PETSC_FALSE; iga->setupstage--;}
   ierr = IGARuleInit(rule,q);CHKERRQ(ierr);
+  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
