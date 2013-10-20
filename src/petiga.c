@@ -439,6 +439,23 @@ PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetBasisType"
+PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
+{
+  IGABasis       basis;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,i,2);
+  PetscValidLogicalCollectiveInt(iga,(PetscInt)type,3);
+  ierr = IGAGetBasis(iga,i,&basis);CHKERRQ(ierr);
+  if (basis->type == type) PetscFunctionReturn(0);
+  ierr = IGABasisSetType(basis,type);CHKERRQ(ierr);
+  iga->setup = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetQuadrature"
 PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
 {
@@ -620,7 +637,6 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(basis,3);
-  IGACheckSetUp(iga,1);
   if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
   if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   *basis = iga->basis[i];
@@ -785,14 +801,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
       }
 
-    /* Basis */
-    ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGABasisSetType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
-    if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
-    if (flg) for (i=0; i<dim; i++) {
-        ierr = IGABasisSetType(iga->basis[i],btype[i]);CHKERRQ(ierr);
-      }
-    for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
-
     /* Geometry */
     ierr = PetscOptionsString("-iga_load","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (!flg) {ierr = PetscOptionsString("-iga_geometry","deprecated, use -iga_load","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);}
@@ -803,6 +811,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = IGAOptionsReject(prefix,"-iga_limits"    );CHKERRQ(ierr);
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
     } else { /* set axis details */
+      ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
+      if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
+      for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
       ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),NULL);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),NULL);CHKERRQ(ierr);
@@ -837,6 +848,13 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
         if (q > 0) {ierr = IGASetQuadrature(iga,i,q);CHKERRQ(ierr);}
+      }
+
+    /* Basis Type */
+    ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
+    if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
+    if (flg) for (i=0; i<dim; i++) {
+        ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
       }
 
   setupcalled:
