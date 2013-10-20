@@ -446,7 +446,8 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidLogicalCollectiveInt(iga,q,2);
+  PetscValidLogicalCollectiveInt(iga,i,2);
+  PetscValidLogicalCollectiveInt(iga,q,3);
   ierr = IGAGetRule(iga,i,&rule);CHKERRQ(ierr);
   if (q == PETSC_DECIDE && iga->axis[i]->p > 0) q = iga->axis[i]->p + 1;
   if (q <= 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
@@ -465,6 +466,8 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,i,2);
+  PetscValidLogicalCollectiveInt(iga,processors,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
   if (iga->setup) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot call after IGASetUp()");
   if (i < 0)      SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
