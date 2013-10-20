@@ -770,7 +770,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
 
     /* If setup has been called, then many options are not available so skip them. */
-    if (iga->setup) goto setupcalled;
+    if (iga->setupstage) goto setupcalled;
 
     ierr = PetscOptionsInt("-iga_dim","Number of dimensions","IGASetDim",iga->dim,&dim,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetDim(iga,dim);CHKERRQ(ierr);}
@@ -836,6 +836,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
     }
 
+  setupcalled:
+
     /* Order */
     if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
     order = PetscMax(order,1); order = PetscMin(order,3);
@@ -856,8 +858,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) for (i=0; i<dim; i++) {
         ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
       }
-
-  setupcalled:
 
     /* Matrix and Vector type */
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
