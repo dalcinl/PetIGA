@@ -836,7 +836,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
-        if (q > 0) {ierr = IGARuleInit(iga->rule[i],q);CHKERRQ(ierr);}
+        if (q > 0) {ierr = IGASetQuadrature(iga,i,q);CHKERRQ(ierr);}
       }
 
   setupcalled:
