@@ -451,7 +451,7 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   ierr = IGAGetRule(iga,i,&rule);CHKERRQ(ierr);
   if (q == PETSC_DECIDE && iga->axis[i]->p > 0) q = iga->axis[i]->p + 1;
   if (q <= 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
-  if (q == rule->nqp) PetscFunctionReturn(0);
+  if (rule->nqp == q) PetscFunctionReturn(0);
   ierr = IGARuleInit(rule,q);CHKERRQ(ierr);
   iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
@@ -833,7 +833,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Quadrature */
     for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
-    ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGARuleInit",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGASetQuadrature",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
         if (q > 0) {ierr = IGASetQuadrature(iga,i,q);CHKERRQ(ierr);}
