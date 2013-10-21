@@ -65,6 +65,18 @@ IGAInputOutput = IGAInputOutput.PETSc \
 		 runex2a.rm IGAInputOutput.rm
 
 
+GeometryMap: GeometryMap.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex3a_2:
+	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 2
+runex3a_3:
+	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 3
+GeometryMap = GeometryMap.PETSc \
+	      runex3a_2 runex3a_3 \
+	      GeometryMap.rm
+
+
 Test_SNES_2D: Test_SNES_2D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -130,6 +142,7 @@ ConvTest: ConvTest.o chkopts
 
 TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAInputOutput) \
+		 $(GeometryMap) \
 		 $(Test_SNES_2D) \
 		 $(Oscillator)
 TESTEXAMPLES_FORTRAN =
