@@ -610,15 +610,15 @@ extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
 extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,PetscInt,const PetscReal[],
 			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
 			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-			     PetscReal[],PetscReal[],PetscReal[]);
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
 			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
 			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-			     PetscReal[],PetscReal[],PetscReal[]);
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
 			     const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
 			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-			     PetscReal[],PetscReal[],PetscReal[]);
+			     PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -690,25 +690,26 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
       PetscReal **N = element->shape;
       PetscReal *dX = element->detX;
       PetscReal **gX = element->gradX;
+      PetscReal **hX = element->hessX;
       switch (element->dim) {
       case 3: IGA_ShapeFuns_3D(order,
 			       1,element->nen,
 			       element->geometryX,
 			       M[0],M[1],M[2],M[3],
 			       N[0],N[1],N[2],N[3],
-			       dX,gX[0],gX[1]); break;
+			       dX,gX[0],gX[1],hX[0],hX[1]); break;
       case 2: IGA_ShapeFuns_2D(order,
 			       1,element->nen,
 			       element->geometryX,
 			       M[0],M[1],M[2],M[3],
 			       N[0],N[1],N[2],N[3],
-			       dX,gX[0],gX[1]); break;
+			       dX,gX[0],gX[1],hX[0],hX[1]); break;
       case 1: IGA_ShapeFuns_1D(order,
 			       1,element->nen,
 			       element->geometryX,
 			       M[0],M[1],M[2],M[3],
 			       N[0],N[1],N[2],N[3],
-			       dX,gX[0],gX[1]); break;
+			       dX,gX[0],gX[1],hX[0],hX[1]); break;
       }
     }
 
@@ -741,6 +742,8 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
     point->detX     = element->detX;
     point->gradX[0] = element->gradX[0];
     point->gradX[1] = element->gradX[1];
+    point->hessX[0] = element->hessX[0];
+    point->hessX[1] = element->hessX[1];
     point->shape[0] = element->shape[0];
     point->shape[1] = element->shape[1];
     point->shape[2] = element->shape[2];

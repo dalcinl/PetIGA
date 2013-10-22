@@ -88,22 +88,11 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
     AssertEQUAL(F[2][2], 2.0);
   }
   if (dim==2) {
-    PetscInt i,j,k;
-    PetscInt nen = p->nen;
+    PetscInt  i,j,k;
     PetscReal G[2][2];
     PetscReal H[2][2][2];
-    ierr = PetscMemcpy(&G[0][0],p->gradX[0],sizeof(G));CHKERRQ(ierr);
-    {
-      PetscInt  a;
-      PetscReal (*C)[2]    = (PetscReal(*)[2])    p->geometry;
-      PetscReal (*N)[2][2] = (PetscReal(*)[2][2]) p->basis[2];
-      ierr = PetscMemzero(&H[0][0][0],sizeof(H));CHKERRQ(ierr);
-      for (a=0;a<nen;a++)
-        for (k=0;k<dim;k++)
-          for (i=0;i<dim;i++)
-            for (j=0;j<dim;j++)
-              H[k][i][j] += C[a][k]*N[a][i][j];
-    }
+    ierr = PetscMemcpy(&G[0][0],   p->gradX[0],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&H[0][0][0],p->hessX[0],sizeof(H));CHKERRQ(ierr);
     for (k=0;k<dim;k++)
       for (i=0;i<dim;i++)
         for (j=0;j<dim;j++)
@@ -124,21 +113,10 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   }
   if (dim==3) {
     PetscInt i,j,k;
-    PetscInt nen = p->nen;
     PetscReal G[3][3];
     PetscReal H[3][3][3];
-    ierr = PetscMemcpy(&G[0][0],p->gradX[0],sizeof(G));CHKERRQ(ierr);
-    {
-      PetscInt  a;
-      PetscReal (*C)[3]    = (PetscReal(*)[3])    p->geometry;
-      PetscReal (*N)[3][3] = (PetscReal(*)[3][3]) p->basis[2];
-      ierr = PetscMemzero(&H[0][0][0],sizeof(H));CHKERRQ(ierr);
-      for (a=0;a<nen;a++)
-        for (k=0;k<dim;k++)
-          for (i=0;i<dim;i++)
-            for (j=0;j<dim;j++)
-              H[k][i][j] += C[a][k]*N[a][i][j];
-    }
+    ierr = PetscMemcpy(&G[0][0],   p->gradX[0],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&H[0][0][0],p->hessX[0],sizeof(H));CHKERRQ(ierr);
     for (k=0;k<dim;k++)
       for (i=0;i<dim;i++)
         for (j=0;j<dim;j++)
@@ -161,6 +139,62 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
       PetscReal kappa  = (x1*y2-y1*x2)/pow(x1*x1+y1*y1,3./2);
       AssertEQUAL(kappa, 1/radius);
     }
+  }
+  if (dim==2) {
+    PetscInt  nen = p->nen;
+    PetscInt  a,k,i,j;
+    PetscReal (*C)[2] = (PetscReal(*)[2])    p->geometry;
+    PetscReal (*N1)[2] = (PetscReal(*)[2]) p->shape[1];
+    PetscReal (*N2)[2][2] = (PetscReal(*)[2][2]) p->shape[2];
+    PetscReal G[2][2],H[2][2][2];
+    ierr = PetscMemzero(&G[0][0],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemzero(&H[0][0][0],sizeof(H));CHKERRQ(ierr);
+    for (a=0;a<nen;a++)
+      for (k=0;k<dim;k++)
+        for (i=0;i<dim;i++)
+          G[k][i] += C[a][k]*N1[a][i];
+    for (a=0;a<nen;a++)
+      for (k=0;k<dim;k++)
+        for (i=0;i<dim;i++)
+          for (j=0;j<dim;j++)
+            H[k][i][j] += C[a][k]*N2[a][i][j];
+    for (i=0;i<dim;i++)
+      for (j=0;j<dim;j++)
+        if (i==j)
+          AssertEQUAL(G[i][j], 1.0);
+        else
+          AssertEQUAL(G[i][j], 0.0);
+    for (i=0;i<dim;i++)
+      for (j=0;j<dim;j++)
+        for (k=0;k<dim;k++)
+          AssertEQUAL(H[i][j][k], 0.0);
+  }
+  if (dim==3) {
+    PetscInt  nen = p->nen;
+    PetscInt  a,k,i,j;
+    PetscReal (*C)[3] = (PetscReal(*)[3])    p->geometry;
+    PetscReal (*N1)[3] = (PetscReal(*)[3]) p->shape[1];
+    PetscReal (*N2)[3][3] = (PetscReal(*)[3][3]) p->shape[2];
+    PetscReal G[3][3],H[3][3][3];
+    ierr = PetscMemzero(&G[0][0],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemzero(&H[0][0][0],sizeof(H));CHKERRQ(ierr);
+    for (a=0;a<nen;a++)
+      for (k=0;k<dim;k++)
+        for (i=0;i<dim;i++)
+          G[k][i] += C[a][k]*N1[a][i];
+    for (k=0;k<dim;k++)
+      for (i=0;i<dim;i++)
+        if (k==i) AssertEQUAL(G[k][i], 1.0);
+        else      AssertEQUAL(G[k][i], 0.0);
+    for (a=0;a<nen;a++)
+      for (k=0;k<dim;k++)
+        for (i=0;i<dim;i++)
+          for (j=0;j<dim;j++)
+            H[k][i][j] += C[a][k]*N2[a][i][j];
+    for (k=0;k<dim;k++)
+      for (i=0;i<dim;i++)
+        for (j=0;j<dim;j++)
+          AssertEQUAL(H[k][i][j], 0.0);
   }
   PetscFunctionReturn(0);
 }

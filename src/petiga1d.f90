@@ -106,7 +106,7 @@ pure subroutine IGA_ShapeFuns_1D(&
      nqp,nen,X,                  &
      M0,M1,M2,M3,                &
      N0,N1,N2,N3,                &
-     DetF,F,G)                   &
+     dX,G0,G1,H0,H1)             &
   bind(C, name="IGA_ShapeFuns_1D")
   use PetIGA
   implicit none
@@ -123,9 +123,11 @@ pure subroutine IGA_ShapeFuns_1D(&
   real   (kind=IGA_REAL_KIND   ), intent(out)   :: N1(dim,   nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out)   :: N2(dim**2,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out)   :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out)   :: DetF(nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out)   :: F(dim,dim,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out)   :: G(dim,dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: dX(nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: G0(dim,dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: G1(dim,dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: H0(dim,dim,dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out)   :: H1(dim,dim,dim,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call GeometryMap(&
@@ -133,7 +135,7 @@ pure subroutine IGA_ShapeFuns_1D(&
           nen,X,&
           M0(:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
           N0(:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),&
-          DetF(q),F(:,:,q),G(:,:,q))
+          dX(q),G0(:,:,q),G1(:,:,q),H0(:,:,:,q),H1(:,:,:,q))
   end do
 contains
 include 'petigageo.f90.in'

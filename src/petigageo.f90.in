@@ -5,7 +5,7 @@ pure subroutine GeometryMap(&
      nen,X,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3,&
-     DetG,Grad,InvG)
+     dX,X1,E1,X2,E2)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
@@ -20,36 +20,33 @@ pure subroutine GeometryMap(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R1(        dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R2(    dim,dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R3(dim,dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: DetG
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: Grad(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: InvG(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: dX
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim,dim,dim)
 
-  integer(kind=IGA_INTEGER_KIND)  :: idx
+  real   (kind=IGA_REAL_KIND   )  :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   )  :: E3(dim,dim,dim,dim)
+  integer(kind=IGA_INTEGER_KIND)  :: node
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
   integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
-  real   (kind=IGA_REAL_KIND   )  :: X1(dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: X2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: E1(dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: E2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: E3(dim,dim,dim,dim)
 
   ! gradient of the mapping
-  Grad = matmul(N1,transpose(X))
-  DetG = Determinant(dim,Grad)
-  InvG = Inverse(dim,DetG,Grad)
+  X1 = matmul(N1,transpose(X))
+  dX = Determinant(dim,X1)
+  E1 = Inverse(dim,dX,X1)
 
   ! 0th derivatives
   R0 = N0
 
   ! 1st derivatives
-  X1 = transpose(Grad)
-  E1 = transpose(InvG)
-  R1 = 0
-  do idx = 1,nen
+  if (order < 1) return
+  R1 = 0 ! matmul(E1,N1)
+  do node = 1,nen
      do i = 1,dim
         do a = 1,dim
-           R1(i,idx) = N1(a,idx)*E1(a,i) +  R1(i,idx)
+           R1(i,node) = R1(i,node) + N1(a,node)*E1(i,a)
         end do
      end do
   end do
@@ -57,23 +54,23 @@ pure subroutine GeometryMap(&
   ! 2nd derivatives
   if (order < 2) return
   X2 = 0
-  do b = 1,dim
-     do a = 1,dim
-        do i = 1,dim
-           do idx = 1,nen
-              X2(i,a,b) = X(i,idx)*N2(a,b,idx) + X2(i,a,b)
+  do node = 1,nen
+     do i = 1,dim
+        do a = 1,dim
+           do b = 1,dim
+              X2(b,a,i) = X2(b,a,i) + X(i,node)*N2(b,a,node)
            end do
         end do
      end do
   end do
   E2 = 0
-  do j = 1,dim
-     do i = 1,dim
-        do c = 1,dim
-           do b = 1,dim
-              do a = 1,dim
-                 do k = 1,dim
-                    E2(c,i,j) = - X2(k,a,b)*E1(a,i)*E1(b,j)*E1(c,k) + E2(c,i,j)
+  do i = 1,dim
+     do j = 1,dim
+        do k = 1,dim
+           do a = 1,dim
+              do b = 1,dim
+                 do c = 1,dim
+                    E2(j,i,c) = E2(j,i,c) - X2(b,a,k)*E1(i,a)*E1(j,b)*E1(k,c)
                  end do
               end do
            end do
@@ -81,14 +78,14 @@ pure subroutine GeometryMap(&
      end do
   end do
   R2 = 0
-  do idx = 1,nen
-     do j = 1,dim
-        do i = 1,dim
-           do b = 1,dim
-              do a = 1,dim
-                 R2(i,j,idx) = N2(a,b,idx)*E1(a,i)*E1(b,j) + R2(i,j,idx)
+  do node = 1,nen
+     do i = 1,dim
+        do j = 1,dim
+           do a = 1,dim
+              do b = 1,dim
+                 R2(j,i,node) = R2(j,i,node) + N2(b,a,node)*E1(i,a)*E1(j,b)
               end do
-              R2(i,j,idx) = N1(b,idx)*E2(b,i,j) + R2(i,j,idx)
+              R2(j,i,node) = R2(j,i,node) + N1(a,node)*E2(j,i,a)
            end do
         end do
      end do
@@ -97,32 +94,35 @@ pure subroutine GeometryMap(&
   ! 3rd derivatives
   if (order < 3) return
   X3 = 0
-  do c = 1,dim
-     do b = 1,dim
+  do node = 1,nen
+     do i = 1,dim
         do a = 1,dim
-           do i = 1,dim
-              do idx = 1,nen
-                 X3(i,a,b,c) = X(i,idx)*N3(a,b,c,idx) + X3(i,a,b,c)
+           do b = 1,dim
+              do c = 1,dim
+                 X3(c,b,a,i) = X3(c,b,a,i) &
+                      +X(i,node)*N3(c,b,a,node)
               end do
            end do
         end do
      end do
   end do
   E3 = 0
-  do k = 1,dim
-     do j = 1,dim
-        do i = 1,dim
-           do d = 1,dim
+  do d = 1,dim
+     do i = 1,dim
+        do j = 1,dim
+           do k = 1,dim
               do a = 1,dim
                  do b = 1,dim
                     do l = 1,dim
                        do c = 1,dim
-                          E3(d,i,j,k) = - X3(l,c,b,a)*E1(c,i)*E1(b,j)*E1(a,k)*E1(d,l) + E3(d,i,j,k)
+                          E3(k,j,i,d) = E3(k,j,i,d) &
+                               -X3(c,b,a,l)*E1(i,a)*E1(j,b)*E1(k,c)*E1(l,d)
                        end do
-                       E3(d,i,j,k) = - X2(l,b,a)*( &
-                            + E1(a,j)*E2(b,i,k) &
-                            + E1(a,k)*E2(b,i,j) &
-                            + E1(b,i)*E2(a,j,k) )*E1(d,l) + E3(d,i,j,k)
+                       E3(k,j,i,d) = E3(k,j,i,d) &
+                            -X2(b,a,l)*( &
+                            +E1(i,a)*E2(k,j,b) &
+                            +E1(j,b)*E2(k,i,a) &
+                            +E1(k,b)*E2(j,i,a))*E1(l,d)
                     end do
                  end do
               end do
@@ -131,21 +131,24 @@ pure subroutine GeometryMap(&
      end do
   end do
   R3 = 0
-  do idx = 1,nen
-     do k = 1,dim
+  do node = 1,nen
+     do i = 1,dim
         do j = 1,dim
-           do i = 1,dim
+           do k = 1,dim
               do a = 1,dim
                  do b = 1,dim
                     do c = 1,dim
-                       R3(i,j,k,idx) = N3(c,b,a,idx)*E1(c,i)*E1(b,j)*E1(a,k) + R3(i,j,k,idx)
+                       R3(k,j,i,node) = R3(k,j,i,node) &
+                            +N3(c,b,a,node)*E1(i,a)*E1(j,b)*E1(k,c)
                     end do
-                    R3(i,j,k,idx) = N2(b,a,idx)*( &
-                         + E1(a,j)*E2(b,i,k) &
-                         + E1(a,k)*E2(b,i,j) &
-                         + E1(b,i)*E2(a,j,k) ) + R3(i,j,k,idx)
+                    R3(k,j,i,node) = R3(k,j,i,node) &
+                         +N2(b,a,node)*( &
+                         +E1(i,a)*E2(k,j,b) &
+                         +E1(j,b)*E2(k,i,a) &
+                         +E1(k,b)*E2(j,i,a))
                  end do
-                 R3(i,j,k,idx) = N1(a,idx)*E3(a,i,j,k) + R3(i,j,k,idx)
+                 R3(k,j,i,node) = R3(k,j,i,node) &
+                      +N1(a,node)*E3(k,j,i,a)
               end do
            end do
         end do
