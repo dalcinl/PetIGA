@@ -11,16 +11,19 @@
       SETERRQ2(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
   } while(0)
 
-static PetscReal PX[2][3] = {
-  { 1., 1., 0. },
-  { 2., 2., 0. },
+static PetscReal PX[3][3] = {
+  { 1.0, 1.0, 0.0 },
+  { 1.5, 1.5, 0.0 },
+  { 2.0, 2.0, 0.0 },
 };
-static PetscReal PY[2][3] = {
-  { 0., 1., 1. },
-  { 0., 2., 2. },
+static PetscReal PY[3][3] = {
+  { 0.0, 1.0, 1.0 },
+  { 0.0, 1.5, 1.5 },
+  { 0.0, 2.0, 2.0 },
 };
-static PetscReal PW[2][3] = {
+static PetscReal PW[3][3] = {
 #define sqrt2 1.4142135623730951
+  { 1., sqrt2/2., 1. },
   { 1., sqrt2/2., 1. },
   { 1., sqrt2/2., 1. },
 #undef  sqrt2
@@ -358,7 +361,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
 
   ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
-  ierr = IGAAxisSetDegree(axis,1);CHKERRQ(ierr);
+  ierr = IGAAxisSetDegree(axis,2);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis,1,0.0,1.0,0);CHKERRQ(ierr);
   ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
   ierr = IGAAxisSetDegree(axis,2);CHKERRQ(ierr);
@@ -376,8 +379,8 @@ int main(int argc, char *argv[]) {
 
   iga->rational = PETSC_TRUE;
   ierr = IGASetGeometryDim(iga,dim);CHKERRQ(ierr);
-  ierr = PetscMalloc1(2*3*(dim-1),    PetscReal,&iga->rationalW);CHKERRQ(ierr);
-  ierr = PetscMalloc1(2*3*(dim-1)*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscMalloc1(3*3*(dim-1),    PetscReal,&iga->rationalW);CHKERRQ(ierr);
+  ierr = PetscMalloc1(3*3*(dim-1)*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
   {
     PetscInt i,j,k,m=dim-1;
     PetscInt posx=0,posw=0;
@@ -385,7 +388,7 @@ int main(int argc, char *argv[]) {
     PetscReal *X = iga->geometryX;
     for (k=0;k<m;k++) {
       for (j=0;j<3;j++) {
-        for (i=0;i<2;i++) {
+        for (i=0;i<3;i++) {
           W[posw++] = PW[i][j];
           X[posx++] = PX[i][j];
           X[posx++] = PY[i][j];
