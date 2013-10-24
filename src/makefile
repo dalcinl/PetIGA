@@ -16,11 +16,9 @@ ALL: lib
 
 SOURCEH  = ../include/petiga.h petigabl.h petigagrid.h petigapart.h
 SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigapc.c petigaksp.c petigasnes.c petigats.c petigadm.c petigats2.c petigaio.c petigagrid.c petigapart.c petscvwopt.c snesfdcolor.c tsalpha2.c
-SOURCEF1 = petigaftn.F90 petigaval.F90
-SOURCEF2 = petigabsp.f90 petigaqdr.f90 petiga1d.f90 petiga2d.f90 petiga3d.f90
-SOURCEF  = ${SOURCEF1} ${SOURCEF2}
+SOURCEF = petigaftn.F90 petigaval.F90 petigabsp.F90 petigaqdr.F90 petiga1d.F90 petiga2d.F90 petiga3d.F90
 OBJSC    = ${SOURCEC:.c=.o}
-OBJSF    = ${SOURCEF1:.F90=.o} ${SOURCEF2:.f90=.o}
+OBJSF    = ${SOURCEF:.F90=.o}
 
 LIBBASE  = libpetiga
 DIRS     =
@@ -30,6 +28,3 @@ MANSEC   = IGA
 include ${PETIGA_DIR}/conf/petigavariables
 include ${PETIGA_DIR}/conf/petigarules
 include ${PETIGA_DIR}/conf/petigatest
-
-OBJSC    = ${SOURCEC:.c=.o}
-OBJSF    = ${SOURCEF1:.F90=.o} ${SOURCEF2:.f90=.o}
