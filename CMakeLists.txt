@@ -12,8 +12,6 @@ else ()
   find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "include" NO_DEFAULT_PATH)
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
   set (PETSC_INCLUDES ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR} CACHE PATH "PETSc include paths" FORCE)
-  set (PETSC_DEFINITIONS "-D__INSDIR__=" CACHE STRING "PETSc preprocesor definitions" FORCE)
-  mark_as_advanced (PETSC_DEFINITIONS)
   find_library (PETSC_LIBRARIES NAMES petsc HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/lib" "lib" NO_DEFAULT_PATH)
   include (${PETSC_DIR}/${PETSC_ARCH}/conf/PETScConfig.cmake)
   mark_as_advanced (PETSC_CLANGUAGE_Cxx)
@@ -27,7 +25,6 @@ enable_language (Fortran)
 include_directories (${PETSC_INCLUDES} ${PETSC_PACKAGE_INCLUDES}
                     "${PetIGA_SOURCE_DIR}/${PETSC_ARCH}/include"
                     "${PetIGA_SOURCE_DIR}/include")
-add_definitions (${PETSC_DEFINITIONS})
 
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PetIGA_BINARY_DIR}/lib"     CACHE PATH "Output directory for PetIGA archives")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PetIGA_BINARY_DIR}/lib"     CACHE PATH "Output directory for PetIGA libraries")
