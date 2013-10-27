@@ -133,7 +133,6 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   ierr = VecCreate(((PetscObject)iga)->comm,vec);CHKERRQ(ierr);
   ierr = VecSetLayout(*vec,iga->map);CHKERRQ(ierr);
   ierr = VecSetType(*vec,iga->vectype);CHKERRQ(ierr);
-  ierr = VecSetFromOptions(*vec);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)*vec,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_DUPLICATE,(void(*)(void))VecDuplicate_IGA);CHKERRQ(ierr);
   ierr = VecSetOperation(*vec,VECOP_VIEW,(void(*)(void))VecView_IGA);CHKERRQ(ierr);
@@ -158,7 +157,6 @@ PetscErrorCode IGACreateLocalVec(IGA iga, Vec *vec)
   ierr = VecSetSizes(*vec,n*bs,n*bs);CHKERRQ(ierr);
   ierr = VecSetBlockSize(*vec,bs);CHKERRQ(ierr);
   ierr = VecSetType(*vec,iga->vectype);CHKERRQ(ierr);
-  ierr = VecSetFromOptions(*vec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
