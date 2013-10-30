@@ -143,7 +143,7 @@ static PetscErrorCode DMGlobalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
-#define __FUNCT__ "DMGlobalToLocalBegin_IGA"
+#define __FUNCT__ "DMGlobalToLocalEnd_IGA"
 static PetscErrorCode DMGlobalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
