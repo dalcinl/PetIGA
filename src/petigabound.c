@@ -229,7 +229,7 @@ PetscErrorCode IGABoundarySetUserSystem(IGABoundary boundary,IGAUserSystem Syste
 PetscErrorCode IGABoundarySetUserFunction(IGABoundary boundary,IGAUserFunction Function,void *FunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(boundary->userops,0);
+  PetscValidPointer(boundary,0);
   IGABoundaryEnsureUserOps(boundary);
   if (Function) boundary->userops->Function = Function;
   if (FunCtx)   boundary->userops->FunCtx   = FunCtx;
