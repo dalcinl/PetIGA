@@ -48,15 +48,19 @@ PETSC_COMPILE.F   = $(call quiet,FC) -c $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_
 langs := c cxx F90
 concatlangs = $(foreach lang, $(langs), $(srcs-$(1).$(lang):%.$(lang)=$(OBJDIR)/%.o))
 srcs.o := $(foreach pkg, $(pkgs), $(call concatlangs,$(pkg)))
+.SECONDARY: $(srcs.o)
 
-$(libpetiga_shared) : $(srcs.o) | $$(@D)/.DIR
-	$(call quiet,CLINKER) -shared -o $@ $^ $(PETSC_LIB)
+$(libpetiga_shared) : objs := $(srcs.o)
+$(libpetiga_shared) : libs := $(PETSC_LIB)
+$(libpetiga_static) : objs := $(srcs.o)
+
+%.$(SL_LINKER_SUFFIX) : $$(objs) | $$(@D)/.DIR
+	$(call quiet,CLINKER) -shared -o $@ $^ $(libs)
 ifneq ($(DSYMUTIL),true)
 	$(call quiet,DSYMUTIL) $@
 endif
 
-$(libpetiga_static) : obj := $(srcs.o)
-%.$(AR_LIB_SUFFIX) : $$(obj) | $$(@D)/.DIR
+%.$(AR_LIB_SUFFIX) : $$(objs) | $$(@D)/.DIR
 ifeq ($(findstring win32fe lib,$(AR)),)
 	@$(RM) $@
 	$(call quiet,AR) $(AR_FLAGS) $@ $^

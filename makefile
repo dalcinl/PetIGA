@@ -42,7 +42,7 @@ gmake-clean:
 	@cd ${PETIGA_DIR} && ${GMAKE} -f gmakefile clean
 all-gmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
-	-@echo "Building PetIGA (GNU Make build)"
+	-@echo "Building PetIGA (GNU Make - ${MAKE_NP} build threads)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
@@ -91,7 +91,7 @@ cmake-clean:
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} clean
 all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
-	-@echo "Building PetIGA (CMake build)"
+	-@echo "Building PetIGA (CMake - ${MAKE_NP} build threads)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
