@@ -700,6 +700,10 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+#define PetscOptionsFList PetscOptionsList
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetFromOptions"
 /*@
@@ -863,9 +867,9 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (iga->dof == 1) {ierr = PetscStrcpy(mtype,MATAIJ);CHKERRQ(ierr);}
     if (iga->vectype)  {ierr = PetscStrncpy(vtype,iga->vectype,sizeof(vtype));CHKERRQ(ierr);}
     if (iga->mattype)  {ierr = PetscStrncpy(mtype,iga->mattype,sizeof(mtype));CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_vec_type","Vector type","IGASetVecType",VecList,vtype,vtype,sizeof(vtype),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsFList("-iga_vec_type","Vector type","IGASetVecType",VecList,vtype,vtype,sizeof(vtype),&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);}
-    ierr = PetscOptionsList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof(mtype),&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsFList("-iga_mat_type","Matrix type","IGASetMatType",MatList,mtype,mtype,sizeof(mtype),&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
 
     /* View options, handled in IGASetUp() */
