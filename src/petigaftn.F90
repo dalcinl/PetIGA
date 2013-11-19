@@ -68,6 +68,9 @@ module PetIGA
   type, bind(C) :: IGAPoint
      integer(kind=IGA_INTEGER_KIND) :: private_refct
 
+     integer(kind=IGA_LOGICAL_KIND) :: atboundary
+     integer(kind=IGA_INTEGER_KIND) :: boundary_id
+
      integer(kind=IGA_INTEGER_KIND) :: count
      integer(kind=IGA_INTEGER_KIND) :: index
      integer(kind=IGA_INTEGER_KIND) :: neq

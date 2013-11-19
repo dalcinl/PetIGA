@@ -420,6 +420,9 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *_point)
   point->index = -1;
   point->count = element->nqp;
 
+  point->atboundary  = element->atboundary;
+  point->boundary_id = element->boundary_id;
+
   point->neq = element->neq;
   point->nen = element->nen;
   point->dof = element->dof;

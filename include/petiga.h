@@ -538,6 +538,9 @@ PETSC_EXTERN PetscErrorCode IGAElementCharacteristicSize(IGAElement element,Pets
 struct _n_IGAPoint {
   PetscInt refct;
   /**/
+  PetscBool atboundary;
+  PetscInt  boundary_id;
+  /**/
   PetscInt count;
   PetscInt index;
   /**/
