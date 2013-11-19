@@ -978,15 +978,13 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt di
     }
     {
       PetscInt q;
-      PetscInt nqp = element->nqp;
+      PetscInt nqp = element->nqp / element->BD[dir]->nqp;
       PetscInt dim = element->dim;
       PetscReal *S = element->detS;
       PetscReal *n = element->normal;
+      for (q=0; q<nqp; q++) S[q] = 1.0;
       (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
-      for (q=0; q<nqp; q++) {
-        S[q] = 1.0;
-        n[q*dim+dir] = side ? 1.0 : -1.0;
-      }
+      for (q=0; q<nqp; q++) n[q*dim+dir] = side ? 1.0 : -1.0;
     }
   }
 
@@ -995,7 +993,7 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt di
     PetscInt q;
     PetscInt dim  = element->dim;
     PetscInt ord  = element->parent->order;
-    PetscInt nqp  = element->nqp;
+    PetscInt nqp  = element->nqp / element->BD[dir]->nqp;
     PetscInt nen  = element->nen;
     PetscReal *X  = element->geometryX;
     PetscReal **M = element->basis;
