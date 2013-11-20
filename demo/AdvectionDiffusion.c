@@ -12,7 +12,7 @@
 #include "petiga.h"
 
 typedef struct {
-  PetscReal adv[3];
+  PetscReal wind[3];
 } AppCtx;
 
 PETSC_STATIC_INLINE
@@ -28,20 +28,18 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
+  PetscReal *w = user->wind;
 
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
   const PetscReal *N0        = (typeof(N0)) p->shape[0];
   const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
 
-  PetscInt a,b,i;
+  PetscInt a,b;
   for (a=0; a<nen; a++) {
     for (b=0; b<nen; b++) {
       PetscScalar diffusion = DOT(dim,N1[a],N1[b]);
-      PetscScalar advection = 0.0;
-      for (i=0; i<dim; i++)
-        advection += user->adv[i]*N1[b][i];
-      advection *= N0[a];
+      PetscScalar advection = N0[a]*DOT(dim,w,N1[b]);
       K[a*nen+b] = diffusion + advection;
     }
     F[a] = 0.0;
@@ -62,6 +60,8 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","AdvectionDiffusion Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsReal("-Pe","Peclet number",__FILE__,Pe,&Pe,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  // advection is skew to the mesh
+  for (i=0; i<dim; i++) user.wind[i] = Pe*sqrt(dim)/dim;
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -78,9 +78,6 @@ int main(int argc, char *argv[]) {
     ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
   }
 
-  // advection is skew to the mesh
-  for (i=0; i<dim; i++) user.adv[i] = Pe*sqrt(dim)/dim;
-
   Mat A;
   Vec x,b;
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
@@ -88,7 +85,6 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
@@ -98,7 +94,7 @@ int main(int argc, char *argv[]) {
 
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
-  if (draw && dim <= 2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+  if (draw&&dim<=2) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
