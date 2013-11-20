@@ -10,7 +10,7 @@ include ${PETIGA_DIR}/conf/petigatest
 all:
 	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
 	${OMAKE} all-gmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
-	elif [ -f ${PETIGA_DIR}/${PETSC_ARCH}/CMakeCache.txt ]; then \
+	elif [ "${PETSC_BUILD_USING_CMAKE}" != "" ]; then \
 	${OMAKE} all-cmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
 	${OMAKE} all-legacy PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
 .PHONY: all
@@ -31,6 +31,9 @@ arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/conf \
 #
 # GNU Make build
 #
+ifndef MAKE_IS_GNUMAKE
+MAKE_IS_GNUMAKE = $(if $(findstring GNU Make,$(shell $(OMAKE) --version 2>/dev/null)),1,)
+endif
 ifdef OMAKE_PRINTDIR
 GMAKE = ${OMAKE_PRINTDIR}
 else
@@ -88,7 +91,8 @@ cmake-build: cmake-boot
 	-@if [ "${DSYMUTIL}" != "true" ]; then \
         ${DSYMUTIL} ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX}; fi
 cmake-clean:
-	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} clean
+	@if [ -f ${PETIGA_DIR}/${PETSC_ARCH}/Makefile ]; then \
+	cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} clean; fi;
 all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
 	-@echo "Building PetIGA (CMake - ${MAKE_NP} build threads)"
@@ -98,13 +102,15 @@ all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
 	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	-@echo "============================================="
-.PHONY: cmake-boot cmake-build cmake-down cmake-clean all-cmake
+.PHONY: cmake-boot cmake-down cmake-build cmake-clean all-cmake
 
 
 #
 # Legacy build
 #
 legacy-build: arch-tree deletelibs deletemods build
+legacy-clean: deletemods deletelibs
+	-@${OMAKE} tree ACTION=clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "============================================="
 	-@echo "Building PetIGA (legacy build)"
@@ -116,7 +122,7 @@ all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
 	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
 	-@echo "Completed building PetIGA library"
 	-@echo "============================================="
-.PHONY: legacy-build all-legacy
+.PHONY: legacy-build legacy-clean all-legacy
 
 #
 # Check if PETSC_DIR variable specified is valid
@@ -154,26 +160,28 @@ shlibs:
 		   | (${GREP} -vE "==========================" || true)
 	-@if [ "${DSYMUTIL}" != "true" ]; then \
         ${DSYMUTIL} ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX}; fi
-
 .PHONY: build compile ranlib shlibs
 
 # Delete PetIGA library
+deletelogs:
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/conf/*.log
 deletemods:
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/include/petiga*.mod
 deletestaticlibs:
 	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${AR_LIB_SUFFIX}
 deletesharedlibs:
 	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.${SL_LINKER_SUFFIX}*
-deletelibs:
-	-@${RM} -r ${PETIGA_LIB_DIR}/libpetiga*.*
-.PHONY: deletemods deletestaticlibs deletesharedlibs deletelibs
+deletelibs: deletestaticlibs deletesharedlibs
+.PHONY: deletelogs deletemods deletestaticlibs deletesharedlibs deletelibs
 
 # Clean up build
-srcclean:
-	-@${OMAKE} tree ACTION=clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
-allclean: deletelibs deletemods srcclean
-	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/conf/*.log
-.PHONY: srcclean allclean
+allclean:
+	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
+	${OMAKE} gmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
+	elif [ "${PETSC_BUILD_USING_CMAKE}" != "" ]; then \
+	${OMAKE} cmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
+	${OMAKE} legacy-clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
+.PHONY: allclean
 
 # Run test examples
 testexamples:
