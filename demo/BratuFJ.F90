@@ -10,9 +10,11 @@ module BratuFJ
 use PetIGA
 implicit none
 
-type, bind(C) :: IGAUser
+type, bind(C) :: AppCtx
    real(kind=IGA_REAL_KIND) lambda
-end type IGAUser
+end type AppCtx
+
+integer, parameter :: rk = IGA_REAL_KIND
 
 contains
 
@@ -24,7 +26,7 @@ bind(C, name="Bratu_Function")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
-  type(IGAUser),  intent(in) :: ctx
+  type(AppCtx),   intent(in) :: ctx
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out) :: FF(p%neq)
   real   (kind=IGA_REAL_KIND   ), pointer :: N(:), grad_N(:,:), hess_N(:,:,:)
@@ -45,12 +47,12 @@ bind(C, name="Bratu_Function")
 
   if (p%neq == 1) then
      ! collocation
-     FF(1) = - del2_u - ctx%lambda * exp(real(u))
+     FF(1) = - del2_u - ctx%lambda * exp(real(u,rk))
   else
      ! galerkin
      do a = 1, p%nen
-        FF(a) = dot_product(grad_N(:,a),real(grad_u)) - &
-             N(a) * ctx%lambda * exp(real(u))
+        FF(a) = + dot_product(grad_N(:,a),real(grad_u,rk)) &
+                - N(a) * ctx%lambda * exp(real(u,rk))
      end do
   end if
 
@@ -63,7 +65,7 @@ bind(C, name="Bratu_Jacobian")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
-  type(IGAUser),  intent(in) :: ctx
+  type(AppCtx),   intent(in) :: ctx
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out) :: JJ(p%nen,p%neq)
   real   (kind=IGA_REAL_KIND   ), pointer :: N(:), grad_N(:,:), hess_N(:,:,:)
@@ -89,14 +91,14 @@ bind(C, name="Bratu_Jacobian")
         do i = 1, p%dim
            del2_N = del2_N + hess_N(i,i,a)
         end do
-        JJ(a,1) = - del2_N - N(a) * ctx%lambda * exp(real(u))
+        JJ(a,1) = - del2_N - N(a) * ctx%lambda * exp(real(u,rk))
      end do
   else
      ! galerkin
      do a = 1, p%nen
         do b = 1, p%nen
-           JJ(b,a) = dot_product(grad_N(:,a),grad_N(:,b)) - &
-                N(a) * N(b) * ctx%lambda * exp(real(u))
+           JJ(b,a) = + dot_product(grad_N(:,a),grad_N(:,b)) &
+                     - N(a) * N(b) * ctx%lambda * exp(real(u,rk))
         end do
      end do
   end if
@@ -112,7 +114,7 @@ bind(C, name="Bratu_IFunction")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
-  type(IGAUser),  intent(in) :: ctx
+  type(AppCtx),   intent(in) :: ctx
   real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shift, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
@@ -130,9 +132,9 @@ bind(C, name="Bratu_IFunction")
   grad_u = IGA_Eval(grad_N,UU)
 
   do a = 1, p%nen
-     FF(a) = N(a) * real(v) + &
-             dot_product(grad_N(:,a),real(grad_u)) - &
-             N(a) * ctx%lambda * exp(real(u))
+     FF(a) = + N(a) * real(v,rk) &
+             + dot_product(grad_N(:,a),real(grad_u,rk)) &
+             - N(a) * ctx%lambda * exp(real(u,rk))
   end do
 
   ierr = 0
@@ -144,7 +146,7 @@ bind(C, name="Bratu_IJacobian")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
-  type(IGAUser),  intent(in) :: ctx
+  type(AppCtx),   intent(in) :: ctx
   real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shift, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
@@ -163,9 +165,9 @@ bind(C, name="Bratu_IJacobian")
 
   do a = 1, p%nen
      do b = 1, p%nen
-        JJ(b,a) = shift * N(a) * N(b) + &
-                  dot_product(grad_N(:,a),grad_N(:,b)) - &
-                  N(a) * N(b) * ctx%lambda  * exp(real(u))
+        JJ(b,a) = + shift * N(a) * N(b) &
+                  + dot_product(grad_N(:,a),grad_N(:,b)) &
+                  - N(a) * N(b) * ctx%lambda  * exp(real(u,rk))
      end do
   end do
 
