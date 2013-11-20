@@ -64,6 +64,11 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   return 0;
 }
 
+#if PETSC_VERSION_LT(3,4,0)
+#undef  PetscTime
+#define PetscTime PetscGetTime
+#endif
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
@@ -72,7 +77,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   PetscLogDouble tic,toc;
-  ierr = PetscGetTime(&tic);
+  ierr = PetscTime(&tic);
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -99,9 +104,9 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
 
   PetscLogDouble ta1,ta2,ta;
-  ierr = PetscGetTime(&ta1);
+  ierr = PetscTime(&ta1);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  ierr = PetscGetTime(&ta2);
+  ierr = PetscTime(&ta2);
   ta = ta2-ta1;
 
   KSP ksp;
@@ -110,12 +115,12 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
 
   PetscLogDouble ts1,ts2,ts;
-  ierr = PetscGetTime(&ts1);
+  ierr = PetscTime(&ts1);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-  ierr = PetscGetTime(&ts2);
+  ierr = PetscTime(&ts2);
   ts = ts2-ts1;
 
-  ierr = PetscGetTime(&toc);
+  ierr = PetscTime(&toc);
   PetscLogDouble tt = toc-tic;
 
   Vec r;
