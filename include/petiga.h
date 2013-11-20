@@ -33,7 +33,7 @@ struct _n_IGAAxis {
   PetscReal *U; /* knot vector         */
   /**/
   PetscBool  periodic; /* periodicity  */
-  PetscInt   nnp,nel;  /* spans, bases */
+  PetscInt   nnp,nel;  /* bases, spans */
   PetscInt   *span;    /* span indices */
 };
 PETSC_EXTERN PetscErrorCode IGAAxisCreate(IGAAxis *axis);
