@@ -47,6 +47,18 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "ComputeWind"
+PetscErrorCode ComputeWind(PetscInt dim,PetscReal Pe,const PetscReal dir[],PetscReal wind[])
+{
+  PetscInt  i;
+  PetscReal norm = 0;
+  for (i=0; i<dim; i++) norm += dir[i]*dir[i];
+  norm = PetscSqrtReal(norm); if (norm<1e-2) norm = 1.0;
+  for (i=0; i<dim; i++) wind[i] = Pe*dir[i]/norm;
+  return 0;
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
@@ -54,28 +66,33 @@ int main(int argc, char *argv[]) {
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  AppCtx    user;
-  PetscInt  i,dim;
+  PetscInt  i,dim,n=3;
   PetscReal Pe = 1.0;
+  PetscReal dir[3] = {1.0,1.0,1.0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","AdvectionDiffusion Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsReal("-Pe","Peclet number",__FILE__,Pe,&Pe,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsRealArray("-dir","Direction",__FILE__,dir,&n,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  // advection is skew to the mesh
-  for (i=0; i<dim; i++) user.wind[i] = Pe*sqrt(dim)/dim;
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  if (dim<1) {ierr = IGASetDim(iga,dim=2);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  AppCtx user;
+  ierr = ComputeWind(dim,Pe,dir,user.wind);CHKERRQ(ierr);
+
   IGABoundary bnd;
+  PetscReal ul=1.0, ur=0.0;
   for (i=0; i<dim; i++) {
+    if (dir[i] == 0.0) continue;
     ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
+    ierr = IGABoundarySetValue(bnd,0,ul);CHKERRQ(ierr);
     ierr = IGAGetBoundary(iga,i,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+    ierr = IGABoundarySetValue(bnd,0,ur);CHKERRQ(ierr);
   }
 
   Mat A;
