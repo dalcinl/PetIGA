@@ -35,22 +35,17 @@ else			# Show the full command line
   quiet = $($1)
 endif
 
-ifeq ($(PETSC_LANGUAGE),CXXONLY)
-  pcc := CXX
-else
-  pcc := CC
-endif
-
 ifndef C_DEPFLAGS
-C_DEPFLAGS   = $(if $(shell $(pcc) --version 2>/dev/null | grep "GCC\|clang\|ICC"),-MMD -MP,)
+C_DEPFLAGS   = $(if $(shell $(PCC) --version 2>/dev/null | grep "GCC\|clang\|ICC"),-MMD -MP)
 endif
 ifndef CXX_DEPFLAGS
-CXX_DEPFLAGS = $(if $(shell $(CXX) --version 2>/dev/null | grep "GCC\|clang\|ICC"),-MMD -MP,)
+CXX_DEPFLAGS = $(if $(shell $(CXX) --version 2>/dev/null | grep "GCC\|clang\|ICC"),-MMD -MP)
 endif
 ifndef FC_DEPFLAGS
-FC_DEPFLAGS  = $(if $(shell $(FC)  --version 2>/dev/null | grep "GNU\|IFORT"),-MMD -MP,)
+FC_DEPFLAGS  = $(if $(shell $(FC)  --version 2>/dev/null | grep "GNU\|IFORT"),-MMD -MP)
 endif
 
+pcc = $(if $(findstring CONLY,$(PETSC_LANGUAGE)),CC,CXX)
 PETSC_COMPILE.c   = $(call quiet,$(pcc)) -c $(PCC_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(C_DEPFLAGS)
 PETSC_COMPILE.cxx = $(call quiet,CXX) -c $(PCC_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(CXX_DEPFLAGS)
 PETSC_COMPILE.F   = $(call quiet,FC) -c $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS)
