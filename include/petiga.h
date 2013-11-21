@@ -450,7 +450,9 @@ struct _n_IGAElement {
   PetscReal *gradX[2]; /*0: [nqp][nsd][dim]           */
                        /*1: [nqp][dim][nsd]           */
   PetscReal *hessX[2]; /*0: [nqp][nsd][dim][dim]      */
-                       /*1: [nqp][dim][nsd][nsd       */
+                       /*1: [nqp][dim][nsd][nsd]      */
+  PetscReal *der3X[2]; /*0: [nqp][nsd][dim][dim][dim] */
+                       /*1: [nqp][dim][nsd][nsd][nsd] */
   PetscReal *detS;     /*   [nqp]                     */
   PetscReal *normal;   /*   [nqp][dim]                */
 
@@ -569,6 +571,8 @@ struct _n_IGAPoint {
                        /*1: [dim][nsd] */
   PetscReal *hessX[2]; /*0: [nsd][dim][dim] */
                        /*1: [dim][nsd][nsd] */
+  PetscReal *der3X[2]; /*0: [nsd][dim][dim][dim] */
+                       /*1: [dim][nsd][nsd][nsd] */
   PetscReal *detS;     /*   [1] */
   PetscReal *normal;   /*   [dim] */
 

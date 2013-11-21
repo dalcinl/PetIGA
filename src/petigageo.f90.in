@@ -5,7 +5,7 @@ pure subroutine GeometryMap(&
      nen,X,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3,&
-     dX,X1,E1,X2,E2)
+     dX,X1,E1,X2,E2,X3,E3)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
@@ -25,9 +25,9 @@ pure subroutine GeometryMap(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim,dim,dim,dim)
 
-  real   (kind=IGA_REAL_KIND   )  :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: E3(dim,dim,dim,dim)
   integer(kind=IGA_INTEGER_KIND)  :: node
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
   integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
