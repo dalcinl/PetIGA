@@ -566,7 +566,7 @@ PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element)
 {
   PetscErrorCode ierr;
   PetscInt i,j,e,m,dim=iga->dim,*ID = element->ID;
-  PetscScalar *U;
+  PetscReal *U;
   element->nen = 1;
   for(i=0;i<dim;i++){
     element->nen *= (iga->axis[i]->p+1);

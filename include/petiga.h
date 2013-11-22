@@ -402,9 +402,6 @@ PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode DMIGASetIGA(DM dm,IGA iga);
 PETSC_EXTERN PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga);
 
-
-PETSC_EXTERN PetscErrorCode IGAGetMeshInformation(IGA iga,PetscReal *hmin,PetscReal *hmax,PetscReal *havg,PetscReal *hstd);
-
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAElement {
@@ -532,8 +529,6 @@ PETSC_EXTERN PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar
 
 PETSC_EXTERN PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec);
 PETSC_EXTERN PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat);
-
-PETSC_EXTERN PetscErrorCode IGAElementCharacteristicSize(IGAElement element,PetscReal *h);
 
 /* ---------------------------------------------------------------- */
 
