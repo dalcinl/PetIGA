@@ -14,11 +14,50 @@ ALL: lib
 #FFLAGS_STD = ${FFLAGS_STD_F03}
 #FFLAGS = ${FFLAGS_STD} -pedantic -Wall -Wextra -Wimplicit-interface -g3 -fcheck=all -fbacktrace
 
-SOURCEH  = ../include/petiga.h petigabl.h petigagrid.h petigapart.h
-SOURCEC  = petiga.c petigareg.c petigaaxis.c petigarule.c petigabasis.c petigabound.c petigaelem.c petigapoint.c petigavec.c petigamat.c petigascl.c petigapcb.c petigapce.c petigapc.c petigaksp.c petigasnes.c petigats.c petigadm.c petigats2.c petigaio.c petigagrid.c petigapart.c petscvwopt.c snesfdcolor.c tsalpha2.c
-SOURCEF = petigaftn.F90 petigaval.F90 petigabsp.F90 petigaqdr.F90 petiga1d.F90 petiga2d.F90 petiga3d.F90
-OBJSC    = ${SOURCEC:.c=.o}
-OBJSF    = ${SOURCEF:.F90=.o}
+SOURCEH = \
+../include/petiga.h \
+petigabl.h \
+petigagrid.h \
+petigapart.h \
+
+SOURCEC = \
+petiga.c \
+petigareg.c \
+petigapart.c \
+petigagrid.c \
+petigaio.c \
+petigaaxis.c \
+petigarule.c \
+petigabasis.c \
+petigabound.c \
+petigaelem.c \
+petigapoint.c \
+petigavec.c \
+petigamat.c \
+petigadm.c \
+petigascl.c \
+petigapcb.c \
+petigapce.c \
+petigapc.c \
+petigaksp.c \
+petigasnes.c \
+petigats.c \
+petigats2.c \
+tsalpha2.c \
+petscvwopt.c \
+snesfdcolor.c \
+
+SOURCEF = \
+petigaftn.F90 \
+petigaval.F90 \
+petigabsp.F90 \
+petigaqdr.F90 \
+petiga1d.F90 \
+petiga2d.F90 \
+petiga3d.F90 \
+
+OBJSC = ${SOURCEC:.c=.o}
+OBJSF = ${SOURCEF:.F90=.o}
 
 LIBBASE  = libpetiga
 DIRS     =
