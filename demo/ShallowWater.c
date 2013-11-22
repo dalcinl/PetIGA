@@ -6,7 +6,7 @@ typedef struct {
   PetscReal viscosity;
 } AppCtx;
 
-PetscReal Tau(PetscReal dt, PetscScalar u0, PetscScalar u1, PetscInt nen, const PetscScalar (*N1)[2])
+PetscReal Tau(PetscReal dt, PetscScalar u0, PetscScalar u1, PetscInt nen, const PetscReal (*N1)[2])
 {
   PetscInt a,i;
   PetscScalar u[2] = {0};
@@ -84,17 +84,17 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
     Rhu = Na * res[1];
     Rhv = Na * res[2];
 
-    PetscScalar W0[3];
+    PetscReal W0[3];
     W0[0] = 0; 
     W0[1] = (-u*u+g*h) * Na_x + (-u*v)     * Na_y; 
     W0[2] = (-u*v)     * Na_x + (-v*v+g*h) * Na_y; 
 
-    PetscScalar W1[3];
+    PetscReal W1[3];
     W1[0] = (1)   * Na_x; 
     W1[1] = (2*u) * Na_x + (v) * Na_y; 
     W1[2] = (v)   * Na_x; 
 
-    PetscScalar W2[3];
+    PetscReal W2[3];
     W2[0] =                (1) * Na_y; 
     W2[1] =                (u) * Na_y;
     W2[2] = (u) * Na_x + (2*v) * Na_y; 

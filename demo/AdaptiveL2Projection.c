@@ -92,10 +92,11 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
+  PetscScalar scalar[2];
+  ierr  = IGAFormScalar(iga,x,2,&scalar[0],Error,NULL);CHKERRQ(ierr);
   PetscReal errors[2];
-  ierr  = IGAFormScalar(iga,x,2,&errors[0],Error,NULL);CHKERRQ(ierr);
-  errors[0] = PetscSqrtReal(PetscRealPart(errors[0]));
-  errors[1] = PetscSqrtReal(PetscRealPart(errors[1]));
+  errors[0] = PetscSqrtReal(PetscRealPart(scalar[0]));
+  errors[1] = PetscSqrtReal(PetscRealPart(scalar[1]));
   *error = errors[0]/errors[1];
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

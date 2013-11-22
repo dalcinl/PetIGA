@@ -5,7 +5,7 @@ typedef struct {
   PetscReal theta,cbar,alpha;
   PetscReal L0,lambda,tau;
   Vec X0,E;
-  PetscScalar energy[3],time[3];
+  PetscReal energy[3],time[3];
 } AppCtx;
 
 #undef  __FUNCT__
@@ -237,7 +237,7 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   AppCtx *user = (AppCtx *)mctx;
   if (!user->E) PetscFunctionReturn(0);
 
-  PetscScalar dt;
+  PetscReal dt;
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,user->energy[0]);
   
@@ -269,7 +269,9 @@ PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,Petsc
 
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   th->time[0]=t-dt;
-  ierr = IGAFormScalar(th->iga,X,1,&th->energy[0],Stats,ctx);CHKERRQ(ierr);
+  PetscScalar energy;
+  ierr = IGAFormScalar(th->iga,X,1,&energy,Stats,ctx);CHKERRQ(ierr);
+  th->energy[0] = PetscRealPart(energy);
 
   if (!th->E){
     th->energy[1] = 1.01*th->energy[0];
@@ -278,13 +280,13 @@ PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,Petsc
     th->time[2] = -2.0*dt;
   }
 
-  PetscScalar scale_min = 0.5;
-  PetscScalar scale_max = 1.5;
-  PetscScalar    dt_min = 1.0e-15;
-  PetscScalar    dt_max = 1.0e+10;
-  PetscScalar      rtol = 1.0e-3;
-  PetscScalar      atol = 1.0e-3;
-  PetscScalar       rho = 0.9;
+  PetscReal scale_min = 0.5;
+  PetscReal scale_max = 1.5;
+  PetscReal    dt_min = 1.0e-15;
+  PetscReal    dt_max = 1.0e+10;
+  PetscReal      rtol = 1.0e-3;
+  PetscReal      atol = 1.0e-3;
+  PetscReal       rho = 0.9;
   //PetscScalar       dE2 = EstimateSecondDerivative(*th);
   
   /* If the SNES fails, reject the step and reduce the step by the

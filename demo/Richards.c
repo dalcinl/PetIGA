@@ -3,9 +3,9 @@
 #define SQ(A) ((A)*(A))
 
 typedef struct {
-  PetscScalar m,lambda,kappa,NGr;
-  PetscScalar S0,Sin,d0,penalty;
-  PetscBool   phase_field;
+  PetscReal m,lambda,kappa,NGr;
+  PetscReal S0,Sin,d0,penalty;
+  PetscBool phase_field;
 } AppCtx;
 
 #undef  __FUNCT__
@@ -20,8 +20,8 @@ PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscReal x[dim];
   IGAPointFormPoint(p,x);
 
-  PetscScalar f = user->S0;
-  PetscScalar d = x[dim-1];
+  PetscReal f = user->S0;
+  PetscReal d = x[dim-1];
   if(d < user->d0) f += SQ(1.-SQ(d/user->d0))*(user->Sin-user->S0);
 
   const PetscReal *N = (typeof(N)) p->shape[0];
@@ -101,7 +101,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   IGAPointFormHess (p,U,&S2[0][0]);
   for(i=0;i<dim;i++) delS += S2[i][i];
 
-  S = PetscMax(1000*PETSC_MACHINE_EPSILON,S);
+  S = PetscMax(1000*PETSC_MACHINE_EPSILON,PetscRealPart(S));
 
   const PetscReal  *N0            = (typeof(N0)) p->shape[0];
   const PetscReal (*N1)[dim]      = (typeof(N1)) p->shape[1];

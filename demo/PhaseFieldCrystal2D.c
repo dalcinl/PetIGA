@@ -49,15 +49,16 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx;
 
-  PetscScalar stats[1] = {0};
-  ierr = IGAFormScalar(user->iga,U,1,&stats[0],Stats,mctx);CHKERRQ(ierr);
+  PetscScalar scalar = 0.0;
+  ierr = IGAFormScalar(user->iga,U,1,&scalar,Stats,mctx);CHKERRQ(ierr);
+  PetscReal stats = PetscRealPart(scalar);
 
-  PetscScalar dt;
+  PetscReal dt;
   TSGetTimeStep(ts,&dt);
-  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,stats[0]);
+  PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,stats);
 
-  if(stats[0] > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: free energy increased!\n");
-  user->Sprev[0] = stats[0];
+  if(stats > user->Sprev[0]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: free energy increased!\n");
+  user->Sprev[0] = stats;
 
   PetscFunctionReturn(0);
 }

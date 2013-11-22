@@ -265,8 +265,9 @@ PetscErrorCode NSKMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx;
 
-  PetscScalar energy = 0.;
-  ierr = IGAFormScalar(user->iga,U,1,&energy,Energy,mctx);CHKERRQ(ierr);
+  PetscScalar scalar = 0.;
+  ierr = IGAFormScalar(user->iga,U,1,&scalar,Energy,mctx);CHKERRQ(ierr);
+  PetscReal energy = PetscRealPart(scalar);
 
   PetscReal dt;
   TSGetTimeStep(ts,&dt);

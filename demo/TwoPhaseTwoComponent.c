@@ -11,11 +11,11 @@
 
 typedef struct {
   IGA         iga;
-  PetscScalar rholw,porosity,Pr,n,Slr,Sgr,H,Mh,T,mul,mug,Mw,Dlh,k;
+  PetscReal rholw,porosity,Pr,n,Slr,Sgr,H,Mh,T,mul,mug,Mw,Dlh,k;
 } AppCtx;
 
 typedef struct {
-  PetscScalar Pl,rholh;
+  PetscReal Pl,rholh;
 } Field;
 
 PetscReal SEC_PER_YEAR = 365.0*24.0*3600.0;
@@ -39,7 +39,7 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
   PetscScalar Pc_t  = rholh_t/(H*Mh)-Pl_t;
   PetscScalar Sle   = 1;
   PetscScalar Sle_t = 0;
-  if(rholh/H/Mh-Pl > 0.0) {
+  if(PetscRealPart(rholh/H/Mh-Pl) > 0.0) {
     Sle   = pow(pow((Pc/Pr),n)+1.,-m);
     Sle_t = -m*n/Pr*pow(pow((Pc/Pr),n)+1.,-m-1.)*pow(Pc/Pr,n-1.)*Pc_t;
   }
@@ -229,7 +229,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   }
   
   // Pl,Pg,Sg computed at left middle  
-  PetscScalar point[2] = {0,10};
+  PetscReal   point[2] = {0,10};
   PetscScalar sol[2];
   ierr = IGAInterpolate(iga,U,point,sol,NULL);CHKERRQ(ierr);
   PetscScalar Pl,Pg,Sg;
@@ -237,7 +237,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   Pg = sol[1]/(user->Mh*user->H);
   PetscScalar Pc  = Pg-Pl;
   PetscScalar Sle = 1;
-  if(Pc > 0.0) {
+  if(PetscRealPart(Pc) > 0.0) {
     Sle   = pow(pow((Pc/user->Pr),user->n)+1.,-1.+1./user->n);
   }
   Sg = 1.-((1.-user->Slr-user->Sgr)*Sle+user->Slr);
@@ -255,7 +255,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   Pg = sol[1]/(user->Mh*user->H);
   Pc  = Pg-Pl;
   Sle = 1;
-  if(Pc > 0.0) {
+  if(PetscRealPart(Pc) > 0.0) {
     Sle   = pow(pow((Pc/user->Pr),user->n)+1.,-1.+1./user->n);
   }
   Sg = 1.-((1.-user->Slr-user->Sgr)*Sle+user->Slr);
