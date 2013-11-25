@@ -266,7 +266,7 @@ PetscErrorCode NSKMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   AppCtx *user = (AppCtx *)mctx;
 
   PetscScalar scalar = 0.;
-  ierr = IGAFormScalar(user->iga,U,1,&scalar,Energy,mctx);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(user->iga,U,1,&scalar,Energy,mctx);CHKERRQ(ierr);
   PetscReal energy = PetscRealPart(scalar);
 
   PetscReal dt;
@@ -348,8 +348,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
   user.iga = iga;
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

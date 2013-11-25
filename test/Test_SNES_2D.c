@@ -147,6 +147,8 @@ PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
+  IGA             iga;
+  IGAForm         form;
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
@@ -157,7 +159,6 @@ int main(int argc, char *argv[]) {
   ierr = IGAOptionsAlias("-C","-1","-iga_continuity");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-L","-1,+1","-iga_limits");CHKERRQ(ierr);
 
-  IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,2);CHKERRQ(ierr);
   ierr = IGASetDof(iga,4);CHKERRQ(ierr);
@@ -167,44 +168,37 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFieldName(iga,2,"ReactionDiffusion");CHKERRQ(ierr);
   ierr = IGASetFieldName(iga,3,"Bratu");CHKERRQ(ierr);
 
-  IGABoundary bnd;
+  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  ierr = IGAGetForm(iga,&form);CHKERRQ(ierr);
+  if (!iga->collocation) {
+    ierr = IGAFormSetFunction(form,Function,0);CHKERRQ(ierr);
+    ierr = IGAFormSetJacobian(form,Jacobian,0);CHKERRQ(ierr);
+  } else {
+    ierr = IGAFormSetFunction(form,FunctionCollocation,0);CHKERRQ(ierr);
+    ierr = IGAFormSetJacobian(form,JacobianCollocation,0);CHKERRQ(ierr);
+  }
   PetscInt dir,side;
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
       PetscScalar field = 1;
       PetscScalar value = 1.0;
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
+      ierr = IGAFormSetBoundaryValue(form,dir,side,field,value);CHKERRQ(ierr);
     }
   }
   for (dir=0; dir<2; dir++) {
     PetscScalar field = 2;
     PetscScalar value = 0.0;
-    /*PetscScalar load  = 0.0;*/
-    ierr = IGAGetBoundary(iga,dir,side=0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,dir,side=1,&bnd);CHKERRQ(ierr);
-    /*ierr = IGABoundarySetLoad(bnd,field,load);CHKERRQ(ierr);*/
-    ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
+    ierr = IGAFormSetBoundaryValue(form,dir,side=0,field,value);CHKERRQ(ierr);
+    ierr = IGAFormSetBoundaryValue(form,dir,side=1,field,value);CHKERRQ(ierr);
   }
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
       PetscScalar field = 3;
       PetscScalar value = 0.0;
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
+      ierr = IGAFormSetBoundaryValue(form,dir,side,field,value);CHKERRQ(ierr);
     }
-  }
-
-  ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-  ierr = IGASetUp(iga);CHKERRQ(ierr);
-
-  if (!iga->collocation) {
-    ierr = IGASetUserFunction(iga,Function,0);CHKERRQ(ierr);
-    ierr = IGASetUserJacobian(iga,Jacobian,0);CHKERRQ(ierr);
-  } else {
-    ierr = IGASetUserFunction(iga,FunctionCollocation,0);CHKERRQ(ierr);
-    ierr = IGASetUserJacobian(iga,JacobianCollocation,0);CHKERRQ(ierr);
   }
 
   Vec x;

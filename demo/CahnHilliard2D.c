@@ -52,7 +52,7 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   AppCtx *user = (AppCtx *)mctx;
 
   PetscScalar stats[3] = {0,0,0};
-  ierr = IGAFormScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(user->iga,U,3,&stats[0],Stats,mctx);CHKERRQ(ierr);
 
   PetscReal dt;
   TSGetTimeStep(ts,&dt);
@@ -301,8 +301,8 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
 
 
   TS ts;

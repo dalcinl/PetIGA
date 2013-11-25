@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
-  ierr = IGAFormScalar(iga,x,1,&s,Scalar,0);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&s,Scalar,0);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,0);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,0);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
@@ -122,9 +122,9 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
-  ierr = IGASetUserVector(iga,Vector,0);CHKERRQ(ierr);
+  ierr = IGASetFormVector(iga,Vector,0);CHKERRQ(ierr);
   ierr = IGAComputeVector(iga,b);CHKERRQ(ierr);
-  ierr = IGASetUserMatrix(iga,Matrix,0);CHKERRQ(ierr);
+  ierr = IGASetFormMatrix(iga,Matrix,0);CHKERRQ(ierr);
   ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);

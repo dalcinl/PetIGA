@@ -270,7 +270,7 @@ PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,Petsc
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   th->time[0]=t-dt;
   PetscScalar energy;
-  ierr = IGAFormScalar(th->iga,X,1,&energy,Stats,ctx);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(th->iga,X,1,&energy,Stats,ctx);CHKERRQ(ierr);
   th->energy[0] = PetscRealPart(energy);
 
   if (!th->E){
@@ -375,8 +375,8 @@ int main(int argc, char *argv[]) {
 			 iga->elem_sizes[2]*iga->elem_sizes[2]);
   user.lambda = user.tau*h*h; /* mesh size parameter */
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

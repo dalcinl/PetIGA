@@ -85,14 +85,11 @@ int main(int argc, char *argv[]) {
   AppCtx user;
   ierr = ComputeWind(dim,Pe,dir,user.wind);CHKERRQ(ierr);
 
-  IGABoundary bnd;
   PetscReal ul=1.0, ur=0.0;
   for (i=0; i<dim; i++) {
     if (dir[i] == 0.0) continue;
-    ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,ul);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,i,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,ur);CHKERRQ(ierr);
+    ierr = IGASetBoundaryValue(iga,i,0,0,ul);CHKERRQ(ierr);
+    ierr = IGASetBoundaryValue(iga,i,1,0,ur);CHKERRQ(ierr);
   }
 
   Mat A;
@@ -100,7 +97,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;

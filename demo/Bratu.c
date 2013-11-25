@@ -54,11 +54,9 @@ int main(int argc, char *argv[]) {
   PetscInt dim,dir,side;
   for (dir=0; dir<3; dir++) {
     for (side=0; side<2; side++) {
-      IGABoundary bnd;
       PetscInt    field = 0;
       PetscScalar value = 0.0;
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,field,value);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,dir,side,field,value);CHKERRQ(ierr);
     }
   }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
@@ -69,11 +67,11 @@ int main(int argc, char *argv[]) {
   AppCtx ctx;
   ctx.lambda = lambda;
   if (steady) {
-    ierr = IGASetUserFunction(iga,Bratu_Function,&ctx);CHKERRQ(ierr);
-    ierr = IGASetUserJacobian(iga,Bratu_Jacobian,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormFunction(iga,Bratu_Function,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormJacobian(iga,Bratu_Jacobian,&ctx);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserIFunction(iga,Bratu_IFunction,&ctx);CHKERRQ(ierr);
-    ierr = IGASetUserIJacobian(iga,Bratu_IJacobian,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormIFunction(iga,Bratu_IFunction,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormIJacobian(iga,Bratu_IJacobian,&ctx);CHKERRQ(ierr);
   }
 
   Vec x;

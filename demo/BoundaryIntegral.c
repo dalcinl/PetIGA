@@ -11,7 +11,7 @@
 #include "petiga.h"
 
 typedef struct {
-  PetscInt dir;
+  PetscInt axis;
   PetscInt side;
 } AppCtx;
 
@@ -24,8 +24,8 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "System"
-PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+#define __FUNCT__ "Laplace"
+PetscErrorCode Laplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dim = p->dim;
   PetscInt nen = p->nen;
@@ -51,6 +51,17 @@ PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "System"
+PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
+  if (!p->atboundary)
+    return Laplace(p,K,F,ctx);
+  else
+    return Neumann(p,K,F,ctx);
+}
+
+
 PETSC_STATIC_INLINE
 PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
 {
@@ -60,8 +71,8 @@ PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "SystemCollocation"
-PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+#define __FUNCT__ "LaplaceCollocation"
+PetscErrorCode LaplaceCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
   PetscInt dim = p->dim;
@@ -81,7 +92,6 @@ PetscErrorCode DirichletCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,voi
 {
   PetscInt nen = p->nen;
   const PetscReal *N0 = (typeof(N0)) p->shape[0];
-
   PetscInt a;
   for (a=0; a<nen; a++)
     K[a] = N0[a];
@@ -106,6 +116,25 @@ PetscErrorCode NeumannCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void 
 PetscErrorCode Neumann0Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {(void)NeumannCollocation(p,K,F,ctx); F[0] = 0.0; return 0;}
 
+
+#undef  __FUNCT__
+#define __FUNCT__ "SystemCollocation"
+PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
+  if (!p->atboundary) return LaplaceCollocation(p,K,F,ctx);
+
+  AppCtx *user = (AppCtx *)ctx;
+  PetscInt axis,side;
+  IGAPointAtBoundary(p,&axis,&side);
+  if (axis == user->axis) {
+    if (side == user->side)
+      return NeumannCollocation(p,K,F,ctx);
+    else
+      return DirichletCollocation(p,K,F,ctx);
+  } else
+    return Neumann0Collocation(p,K,F,ctx);
+}
+
 #undef  __FUNCT__
 #define __FUNCT__ "Error"
 PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
@@ -115,9 +144,9 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   IGAPointFormValue(p,U,&u);
   PetscReal x;
   if (user->side == 0)
-    x = 1 - p->point[user->dir] + 1;
+    x = 1 - p->point[user->axis] + 1;
   else
-    x = p->point[user->dir] + 1;
+    x = p->point[user->axis] + 1;
   PetscReal e = u - x;
   S[0] = e*e;
   return 0;
@@ -131,14 +160,14 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
   AppCtx user;
-  user.dir  = 0;
+  user.axis = 0;
   user.side = 1;
 
   PetscBool print_error = PETSC_FALSE;
   PetscBool check_error = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsInt ("-dir", "Neuman BC direction",__FILE__,user.dir, &user.dir, NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsInt ("-axis","Neuman BC direction",__FILE__,user.axis,&user.axis,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
@@ -153,27 +182,21 @@ int main(int argc, char *argv[]) {
 
   PetscInt dim;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  PetscInt d =  !user.side;
-  PetscInt n = !!user.side;
+
+  IGAForm form;
+  ierr = IGAGetForm(iga,&form);CHKERRQ(ierr);
   if (!iga->collocation) {
-    IGABoundary bnd;
-    ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Neumann,NULL);CHKERRQ(ierr);
+    PetscInt d = !user.side;
+    PetscInt n = !d;
+    ierr = IGAFormSetSystem(form,System,&user);CHKERRQ(ierr);
+    ierr = IGAFormSetBoundaryValue(form,user.axis,d,0,1.0);CHKERRQ(ierr);
+    ierr = IGAFormSetBoundaryForm (form,user.axis,n,PETSC_TRUE);CHKERRQ(ierr);
   } else {
-    IGABoundary bnd;
-    PetscInt dir,side;
-    for (dir=0; dir<dim; dir++) {
-      for (side=0; side<2; side++) {
-        ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-        ierr = IGABoundarySetUserSystem(bnd,Neumann0Collocation,NULL);CHKERRQ(ierr);
-      }
-    }
-    ierr = IGAGetBoundary(iga,user.dir,d,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,DirichletCollocation,NULL);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,user.dir,n,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,NeumannCollocation,NULL);CHKERRQ(ierr);
+    PetscInt i,s;
+    ierr = IGAFormSetSystem(form,SystemCollocation,&user);CHKERRQ(ierr);
+    for (i=0; i<dim; i++)
+      for (s=0; s<2; s++)
+        {ierr = IGAFormSetBoundaryForm(form,i,s,PETSC_TRUE);CHKERRQ(ierr);}
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
@@ -182,11 +205,6 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
-  } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
-  }
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -196,7 +214,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}

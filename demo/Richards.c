@@ -12,6 +12,8 @@ typedef struct {
 #define __FUNCT__ "L2Projection"
 PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
+  if (p->atboundary) return 0;
+
   AppCtx *user = (AppCtx *)ctx;
 
   PetscInt nen = p->nen;
@@ -45,7 +47,7 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
   Vec b;
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,L2Projection,user);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,L2Projection,user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -81,12 +83,42 @@ void CapillaryPressure(PetscScalar S,PetscScalar lambda,PetscScalar kappa,PetscS
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "ZeroFluxResidual"
+PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
+                                PetscReal shift,const PetscScalar *V,
+                                PetscReal t,const PetscScalar *U,
+                                PetscScalar *R,void *ctx)
+{
+  AppCtx *user = (AppCtx *)ctx;
+
+  PetscInt nen = p->nen;
+  PetscInt dim = p->dim;
+
+  PetscScalar S1[dim];
+  IGAPointFormGrad(p,U,&S1[0]);
+
+  const PetscReal *N0 = (typeof(N0)) p->shape[0];
+  const PetscReal *n = p->normal;
+
+  PetscInt a,i;
+  for (a=0; a<nen; a++) {
+    PetscScalar n_gS = 0.0;
+    for(i=0;i<dim;i++) n_gS += n[i]*S1[i];
+    R[a] = user->penalty*N0[a]*n_gS;
+  }
+  return 0;
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,
-                           PetscReal shift,const PetscScalar *V,
-                           PetscReal t,const PetscScalar *U,
-                           PetscScalar *R,void *ctx)
+                        PetscReal shift,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *U,
+                        PetscScalar *R,void *ctx)
 {
+  if (p->atboundary)
+    return ZeroFluxResidual(p,dt,shift,V,t,U,R,ctx);
+
   AppCtx *user = (AppCtx *)ctx;
 
   PetscInt a,i;
@@ -135,53 +167,27 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
-                        PetscReal shift,const PetscScalar *V,
-                        PetscReal t,const PetscScalar *U,
-                        PetscScalar *J,void *ctx)
-{
-
-  return 0;
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "ZeroFluxResidual"
-PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
-                                PetscReal shift,const PetscScalar *V,
-                                PetscReal t,const PetscScalar *U,
-                                PetscScalar *R,void *ctx)
-{
-  AppCtx *user = (AppCtx *)ctx;
-
-  PetscInt nen = p->nen;
-  PetscInt dim = p->dim;
-
-  PetscScalar S1[dim];
-  IGAPointFormGrad(p,U,&S1[0]);
-
-  const PetscReal *N0 = (typeof(N0)) p->shape[0];
-  const PetscReal *n = p->normal;
-
-  PetscInt a,i;
-  for (a=0; a<nen; a++) {
-    PetscScalar n_gS = 0.0;
-    for(i=0;i<dim;i++) n_gS += n[i]*S1[i];
-    R[a] = user->penalty*N0[a]*n_gS;
-  }
-  return 0;
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "ZeroFluxJacobian"
 PetscErrorCode ZeroFluxJacobian(IGAPoint p,PetscReal dt,
                                 PetscReal shift,const PetscScalar *V,
                                 PetscReal t,const PetscScalar *U,
                                 PetscScalar *J,void *ctx)
 {
-
   return 0;
 }
+
+#undef  __FUNCT__
+#define __FUNCT__ "Jacobian"
+PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+                        PetscReal shift,const PetscScalar *V,
+                        PetscReal t,const PetscScalar *U,
+                        PetscScalar *J,void *ctx)
+{
+  if (p->atboundary)
+    return ZeroFluxJacobian(p,dt,shift,V,t,U,J,ctx);
+  return 0;
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
@@ -202,12 +208,11 @@ int main(int argc, char *argv[]) {
   user.phase_field = PETSC_TRUE;
 
   PetscInt dim = 2, p = 2, k = 1, N = 256, L = 2;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"r_","Richard's Equation Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Richard's Equation Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA         iga;
   IGAAxis     axis;
-  IGABoundary bnd;
   PetscInt    dir,side;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
@@ -226,18 +231,17 @@ int main(int argc, char *argv[]) {
   // Boundary conditions
   for(dir=0;dir<dim;dir++)
     for(side=0;side<2;side++){
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
       if(dir == dim-1){
-        ierr = IGABoundarySetUserIFunction(bnd,ZeroFluxResidual,&user);CHKERRQ(ierr);
-        ierr = IGABoundarySetUserIJacobian(bnd,ZeroFluxJacobian,&user);CHKERRQ(ierr);
+        ierr = IGASetBoundaryForm(iga,dir,side,PETSC_TRUE);CHKERRQ(ierr);
+        ierr = IGASetBoundaryForm(iga,dir,side,PETSC_TRUE);CHKERRQ(ierr);
         if(side == 0){
-          ierr = IGABoundarySetValue(bnd,0,user.Sin);CHKERRQ(ierr);
+          ierr = IGASetBoundaryValue(iga,dir,side,0,user.Sin);CHKERRQ(ierr);
         }
       }
     }
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
   TS     ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

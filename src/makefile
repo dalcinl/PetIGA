@@ -29,13 +29,13 @@ petigaio.c \
 petigaaxis.c \
 petigarule.c \
 petigabasis.c \
-petigabound.c \
+petigaform.c \
 petigaelem.c \
 petigapoint.c \
 petigavec.c \
 petigamat.c \
 petigadm.c \
-petigascl.c \
+petigacomp.c \
 petigapcb.c \
 petigapce.c \
 petigapc.c \

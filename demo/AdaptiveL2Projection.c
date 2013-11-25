@@ -83,7 +83,7 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -93,7 +93,7 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   PetscScalar scalar[2];
-  ierr  = IGAFormScalar(iga,x,2,&scalar[0],Error,NULL);CHKERRQ(ierr);
+  ierr  = IGAComputeScalar(iga,x,2,&scalar[0],Error,NULL);CHKERRQ(ierr);
   PetscReal errors[2];
   errors[0] = PetscSqrtReal(PetscRealPart(scalar[0]));
   errors[1] = PetscSqrtReal(PetscRealPart(scalar[1]));
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;

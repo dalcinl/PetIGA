@@ -55,12 +55,39 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "LeftInjectionResidual"
+PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
+				     PetscReal shift,const PetscScalar *V,
+				     PetscReal t,const PetscScalar *U,
+				     PetscScalar *R,void *ctx)
+{
+  PetscInt a,nen;
+  IGAPointGetSizes(p,&nen,0,0);
+
+  const PetscReal *N0;
+  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
+
+  PetscScalar Qh = 0;
+  if(t <= 5e5) Qh = -5.57e-6; // inflow
+
+  PetscScalar (*Re)[2] = (PetscScalar (*)[2])R;
+  for (a=0; a<nen; a++) {
+    Re[a][0] = 0.0;
+    Re[a][1] = N0[a]*Qh;
+  }
+  return 0;
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 			PetscReal shift,const PetscScalar *V,
 			PetscReal t,const PetscScalar *U,
 			PetscScalar *R,void *ctx)
 {
+  if (p->atboundary)
+    return LeftInjectionResidual(p,dt,shift,V,t,U,R,ctx);
+
   AppCtx *user = (AppCtx *)ctx;
   PetscScalar rholw = user->rholw; 
   PetscScalar porosity = user->porosity; 
@@ -122,17 +149,6 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
-			PetscReal shift,const PetscScalar *V,
-			PetscReal t,const PetscScalar *U,
-			PetscScalar *J,void *ctx)
-{
-  // for now use the option -snes_fd_color for the Jacobian
-  return 0;
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "LeftInjectionJacobian"
 PetscErrorCode LeftInjectionJacobian(IGAPoint p,PetscReal dt,
 				     PetscReal shift,const PetscScalar *V,
@@ -144,26 +160,15 @@ PetscErrorCode LeftInjectionJacobian(IGAPoint p,PetscReal dt,
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "LeftInjectionResidual"
-PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
-				     PetscReal shift,const PetscScalar *V,
-				     PetscReal t,const PetscScalar *U,
-				     PetscScalar *R,void *ctx)
+#define __FUNCT__ "Jacobian"
+PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+			PetscReal shift,const PetscScalar *V,
+			PetscReal t,const PetscScalar *U,
+			PetscScalar *J,void *ctx)
 {
-  PetscInt a,nen;
-  IGAPointGetSizes(p,&nen,0,0);
-
-  const PetscReal *N0;
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-
-  PetscScalar Qh = 0;
-  if(t <= 5e5) Qh = -5.57e-6; // inflow
-
-  PetscScalar (*Re)[2] = (PetscScalar (*)[2])R;
-  for (a=0; a<nen; a++) {
-    Re[a][0] = 0.0;
-    Re[a][1] = N0[a]*Qh;
-  }
+  if (p->atboundary)
+    return LeftInjectionJacobian(p,dt,shift,V,t,U,J,ctx);
+  // for now use the option -snes_fd_color for the Jacobian
   return 0;
 }
 
@@ -315,16 +320,14 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   user.iga = iga;
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
-  IGABoundary bnd;
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetUserIFunction(bnd,LeftInjectionResidual,&user);CHKERRQ(ierr);
-  ierr = IGABoundarySetUserIJacobian(bnd,LeftInjectionJacobian,&user);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,10.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1, 0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryForm(iga,0,0,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGASetBoundaryForm(iga,0,0,PETSC_TRUE);CHKERRQ(ierr);
+
+  ierr = IGASetBoundaryValue(iga,0,1,0,10.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,1, 0.0);CHKERRQ(ierr);
 
   TS     ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

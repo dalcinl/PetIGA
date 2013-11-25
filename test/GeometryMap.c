@@ -320,7 +320,9 @@ PetscErrorCode Boundary_01(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 #define __FUNCT__ "Boundary_10"
 PetscErrorCode Boundary_10(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
     PetscInt dim = p->dim;
     PetscReal dS = p->detS[0];
@@ -338,7 +340,9 @@ PetscErrorCode Boundary_10(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 #define __FUNCT__ "Boundary_11"
 PetscErrorCode Boundary_11(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
     PetscInt dim = p->dim;
     PetscReal dS = p->detS[0];
@@ -356,7 +360,9 @@ PetscErrorCode Boundary_11(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 #define __FUNCT__ "Boundary_20"
 PetscErrorCode Boundary_20(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
     PetscInt dim = p->dim;
     PetscReal dV = p->detX[0];
@@ -374,7 +380,9 @@ PetscErrorCode Boundary_20(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 #define __FUNCT__ "Boundary_21"
 PetscErrorCode Boundary_21(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
     PetscInt dim = p->dim;
     PetscReal dV = p->detX[0];
@@ -387,6 +395,31 @@ PetscErrorCode Boundary_21(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   }
   PetscFunctionReturn(0);
 }
+
+#undef  __FUNCT__
+#define __FUNCT__ "Boundary"
+PetscErrorCode Boundary(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
+{
+  static PetscErrorCode (*boundary[3][2])(IGAPoint,PetscScalar*,PetscScalar*,void*)
+    = {{Boundary_00, Boundary_01},
+       {Boundary_10, Boundary_11},
+       {Boundary_20, Boundary_21}};
+  PetscInt d,s;
+  d = p->boundary_id / 2; 
+  s = p->boundary_id % 2;
+  return boundary[d][s](p,A,b,ctx);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "System"
+PetscErrorCode System(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
+{
+  if (p->atboundary)
+    return Boundary(p,A,b,ctx);
+  else
+    return Domain(p,A,b,ctx);
+}
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "Error"
@@ -404,7 +437,7 @@ int main(int argc, char *argv[]) {
   PetscInt        dim = 3;
   IGA             iga;
   IGAAxis         axis;
-  IGABoundary     bnd;
+  IGAForm         form;
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
@@ -457,25 +490,14 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGASetUserSystem(iga,Domain,NULL);CHKERRQ(ierr);
-  {
-    ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_00,NULL);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_01,NULL);CHKERRQ(ierr);
-  }
-  {
-    ierr = IGAGetBoundary(iga,1,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_10,NULL);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,1,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_11,NULL);CHKERRQ(ierr);
-  }
-  if (dim >= 3) {
-    ierr = IGAGetBoundary(iga,2,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_20,NULL);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,2,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetUserSystem(bnd,Boundary_21,NULL);CHKERRQ(ierr);
-  }
+  ierr = IGAGetForm(iga,&form);CHKERRQ(ierr);
+  ierr = IGAFormSetSystem(form,System,NULL);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,0,0,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,1,0,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,2,0,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,0,1,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,1,1,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = IGAFormSetBoundaryForm(form,2,1,PETSC_TRUE);CHKERRQ(ierr);
 
   {
     Mat A;
@@ -495,7 +517,7 @@ int main(int argc, char *argv[]) {
     PetscScalar vol;
     Vec x;
     ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
-    ierr = IGAFormScalar(iga,x,1,&vol,Error,NULL);CHKERRQ(ierr);
+    ierr = IGAComputeScalar(iga,x,1,&vol,Error,NULL);CHKERRQ(ierr);
     ierr = VecDestroy(&x);CHKERRQ(ierr);
     AssertEQUAL(V, PetscRealPart(vol));
   }

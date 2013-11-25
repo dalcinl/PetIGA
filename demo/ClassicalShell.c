@@ -188,24 +188,19 @@ int main(int argc, char *argv[]) {
   ierr = IGARead(iga,filename);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  IGABoundary bnd;
   // Boundary conditions on u = 0, v = [0:1]
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,2,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,1,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,2,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,4,0.0);CHKERRQ(ierr);
   // Boundary conditions on u = 1, v = [0:1]
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,3,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,0,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,3,0.0);CHKERRQ(ierr);
   // Boundary conditions on u = [0:1], v = 0
-  ierr = IGAGetBoundary(iga,1,0,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,1,0,1,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,1,0,4,0.0);CHKERRQ(ierr);
   // Boundary conditions on u = [0:1], v = 1
-  ierr = IGAGetBoundary(iga,1,1,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,4,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,1,1,1,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,1,1,4,0.0);CHKERRQ(ierr);
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -215,7 +210,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   //MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);
   //PetscBool symm=1;

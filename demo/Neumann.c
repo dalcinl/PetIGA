@@ -112,10 +112,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   for (dir=0; dir<dim; dir++) {
     for (side=0; side<2; side++) {
-      IGABoundary bnd;
       PetscScalar load = Flux(dir,side);
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetLoad(bnd,0,load);CHKERRQ(ierr);
+      ierr = IGASetBoundaryLoad(iga,dir,side,0,load);CHKERRQ(ierr);
     }
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -129,12 +127,12 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
     ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
   }
 
   {
@@ -156,7 +154,7 @@ int main(int argc, char *argv[]) {
   }
 
   PetscScalar error;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error=%G\n",error);CHKERRQ(ierr);}

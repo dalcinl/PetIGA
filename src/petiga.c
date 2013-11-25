@@ -38,7 +38,6 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
 
   *_iga = iga;
 
-  ierr = PetscNew(struct _IGAUserOps,&iga->userops);CHKERRQ(ierr);
   iga->vectype = NULL;
   iga->mattype = NULL;
 
@@ -46,14 +45,15 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
   iga->dof = -1;
   iga->order = -1;
 
+  for (i=0; i<3; i++)
+    iga->proc_sizes[i] = -1;
+
   for (i=0; i<3; i++) {
     ierr = IGAAxisCreate(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCreate(&iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisCreate(&iga->basis[i]);CHKERRQ(ierr);
-    ierr = IGABoundaryCreate(&iga->boundary[i][0]);CHKERRQ(ierr);
-    ierr = IGABoundaryCreate(&iga->boundary[i][1]);CHKERRQ(ierr);
-    iga->proc_sizes[i] = -1;
   }
+  ierr = IGAFormCreate(&iga->form);CHKERRQ(ierr);
   ierr = IGAElementCreate(&iga->iterator);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
@@ -85,7 +85,6 @@ PetscErrorCode IGADestroy(IGA *_iga)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);
 
-  ierr = PetscFree(iga->userops);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
   if (iga->fieldname) {
@@ -99,9 +98,8 @@ PetscErrorCode IGADestroy(IGA *_iga)
     ierr = IGAAxisDestroy(&iga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleDestroy(&iga->rule[i]);CHKERRQ(ierr);
     ierr = IGABasisDestroy(&iga->basis[i]);CHKERRQ(ierr);
-    ierr = IGABoundaryDestroy(&iga->boundary[i][0]);CHKERRQ(ierr);
-    ierr = IGABoundaryDestroy(&iga->boundary[i][1]);CHKERRQ(ierr);
   }
+  ierr = IGAFormDestroy(&iga->form);CHKERRQ(ierr);
   ierr = IGAElementDestroy(&iga->iterator);CHKERRQ(ierr);
 
   ierr = IGAReset(iga);CHKERRQ(ierr);
@@ -581,52 +579,6 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
   if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
   if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
   *rule = iga->rule[i];
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetBoundary"
-/*@
-   IGAGetBoundary - Returns a pointer to a specific side of the i^th
-   boundary associated with the IGA.
-
-   Not Collective
-
-   Input Parameters:
-+  iga - the IGA context
-.  i - the boundary index
--  side - the side index: 0 (left) or 1 (right)
-
-   Output Parameter:
-.  boundary - the boundary context
-
-   Notes:
-   A side marker of 0 corresponds to the boundary associated to the
-   minimum knot value of the i^th axis. A side marker of 1 corresponds
-   to the boundary associated to the maximum knot value of the i^th
-   axis.
-
-   Level: normal
-
-.keywords: IGA, boundary
-@*/
-PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary)
-{
-  PetscInt       dim;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(boundary,4);
-  dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
-  if (iga->dof <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
-  if (side < 0) side = 0; /* XXX error ?*/
-  if (side > 1) side = 1; /* XXX error ?*/
-  if (iga->boundary[i][side]->dof != iga->dof) {
-    ierr = IGABoundaryInit(iga->boundary[i][side],iga->dof);CHKERRQ(ierr);
-  }
-  *boundary = iga->boundary[i][side];
   PetscFunctionReturn(0);
 }
 
@@ -1458,11 +1410,6 @@ PetscErrorCode IGASetUp(IGA iga)
   /* --- Stage 3 --- */
   iga->setupstage = 3;
 
-  for (i=iga->dim; i<3; i++) {
-    ierr = IGABoundaryReset(iga->boundary[i][0]);CHKERRQ(ierr);
-    ierr = IGABoundaryReset(iga->boundary[i][1]);CHKERRQ(ierr);
-  }
-
   if (iga->order < 0)
     for (i=0; i<iga->dim; i++)
       iga->order = PetscMax(iga->order,iga->axis[i]->p);
@@ -1523,388 +1470,5 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
   ierr = PetscStrallocpy(mattype,&mtype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
   iga->mattype = mtype;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserVector"
-/*@
-   IGASetUserSystem - Set the user callback to form the vector
-   which represents the discretized L(w).
-
-   Logically collective on IGA
-
-   Input Parameters:
-+  iga - the IGA context
-.  Vector - the function which evaluates L(w)
--  ctx - user-defined context for evaluation routine (may be NULL)
-
-   Details of Vector:
-$  PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx);
-
-+  p - point at which to evaluate L(w)
-.  F - contribution to L(w)
--  ctx - user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, setup linear system, vector assembly
-@*/
-PetscErrorCode IGASetUserVector(IGA iga,IGAUserVector Vector,void *VecCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (Vector) iga->userops->Vector = Vector;
-  if (VecCtx) iga->userops->VecCtx = VecCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserMatrix"
-/*@
-   IGASetUserSystem - Set the user callback to form the matrix and vector
-   which represents the discretized a(w,u).
-
-   Logically collective on IGA
-
-   Input Parameters:
-+  iga - the IGA context
-.  Matrix - the function which evaluates a(w,u)
--  ctx - user-defined context for evaluation routine (may be NULL)
-
-   Details of System:
-$  PetscErrorCode System(IGAPoint p,PetscScalar *K,void *ctx);
-
-+  p - point at which to evaluate a(w,u)
-.  K - contribution to a(w,u)
--  ctx - user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, setup linear system, matrix assembly
-@*/
-PetscErrorCode IGASetUserMatrix(IGA iga,IGAUserMatrix Matrix,void *MatCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (Matrix) iga->userops->Matrix = Matrix;
-  if (MatCtx) iga->userops->MatCtx = MatCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserSystem"
-/*@
-   IGASetUserSystem - Set the user callback to form the matrix and vector
-   which represents the discretized a(w,u) = L(w).
-
-   Logically collective on IGA
-
-   Input Parameters:
-+  iga - the IGA context
-.  System - the function which evaluates a(w,u) and L(w)
--  ctx - user-defined context for evaluation routine (may be NULL)
-
-   Details of System:
-$  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
-
-+  p - point at which to evaluate a(w,u)=L(w)
-.  K - contribution to a(w,u)
-.  F - contribution to L(w)
--  ctx - user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, setup linear system, matrix assembly, vector assembly
-@*/
-PetscErrorCode IGASetUserSystem(IGA iga,IGAUserSystem System,void *SysCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (System) iga->userops->System = System;
-  if (SysCtx) iga->userops->SysCtx = SysCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserFunction"
-PetscErrorCode IGASetUserFunction(IGA iga,IGAUserFunction Function,void *FunCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (Function) iga->userops->Function = Function;
-  if (FunCtx)   iga->userops->FunCtx   = FunCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserJacobian"
-PetscErrorCode IGASetUserJacobian(IGA iga,IGAUserJacobian Jacobian,void *JacCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (Jacobian) iga->userops->Jacobian = Jacobian;
-  if (JacCtx)   iga->userops->JacCtx   = JacCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIFunction"
-/*@
-   IGASetUserIFunction - Set the function which computes the residual
-   R(u)=0 for use with implicit time stepping routines.
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga - the IGA context
-.  IFunction - the function evaluation routine
--  IFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
-
-   Details of IFunction:
-$  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-                            PetscReal shift,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *R,void *ctx);
-
-+  p - point at which to compute the residual
-.  dt - time step size
-.  shift - positive parameter which depends on the time integration method (XXX Should this be here?)
-.  V - time derivative of the state vector
-.  t - time at step/stage being solved
-.  U - state vector
-.  R - function vector
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIFunction(IGA iga,IGAUserIFunction IFunction,void *IFunCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IFunction) iga->userops->IFunction = IFunction;
-  if (IFunCtx)   iga->userops->IFunCtx   = IFunCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIJacobian"
-/*@
-   IGASetUserIJacobian - Set the function to compute the matrix dF/dU
-   + shift*dF/dU_t where F(t,U,U_t) is the function you provided with
-   IGASetUserIFunction().
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga - the IGA context
-.  IJacobian - the Jacobian evaluation routine
--  IJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
-
-   Details of IJacobian:
-$  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-                            PetscReal shift,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *J,void *ctx);
-
-+  p - point at which to compute the Jacobian
-.  dt - time step size
-.  shift - positive parameter which depends on the time integration method
-.  V - time derivative of the state vector
-.  t - time at step/stage being solved
-.  U - state vector
-.  J - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIJacobian(IGA iga,IGAUserIJacobian IJacobian,void *IJacCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IJacobian) iga->userops->IJacobian = IJacobian;
-  if (IJacCtx)   iga->userops->IJacCtx   = IJacCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIFunction2"
-/*@
-   IGASetUserIFunction - Set the function which computes the residual
-       F(t,U_tt,U_t,U)=0 for use with implicit time stepping routines.
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga - the IGA context
-.  IFunction - the function evaluation routine
--  IFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
-
-   Details of IFunction:
-$  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *A,
-                            PetscReal v,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *F,void *ctx);
-
-+  p - point at which to compute the residual
-.  dt - time step size
-.  a - positive parameter which depends on the time integration method
-.  A - second time derivative of the state vector
-.  v - positive parameter which depends on the time integration method
-.  V - time derivative of the state vector
-.  t - time at step/stage being solved
-.  U - state vector
-.  F - function vector
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIFunction2(IGA iga,IGAUserIFunction2 IFunction,void *IFunCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IFunction) iga->userops->IFunction2 = IFunction;
-  if (IFunCtx)   iga->userops->IFunCtx    = IFunCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIJacobian2"
-/*@
-   IGASetUserIJacobian2 - Set the function to compute the matrix
-       J = a*dF/dU_tt + v*dF/dU_t + dF/dU  where F(t,U_tt,U_t,U) is
-       the function you provided with IGASetUserIFunction2().
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga       - the IGA context
-.  IJacobian - the Jacobian evaluation routine
--  IJacCtx   - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
-
-   Details of IJacobian:
-$  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *A,
-                            PetscReal v,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *J,void *ctx);
-
-+  p   - point at which to compute the Jacobian
-.  dt  - time step size
-.  a   - positive parameter which depends on the time integration method
-.  A   - second time derivative of the state vector
-.  v   - positive parameter which depends on the time integration method
-.  V   - time derivative of the state vector
-.  t   - time at step/stage being solved
-.  U   - state vector
-.  J   - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJacobian,void *IJacCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IJacobian) iga->userops->IJacobian2 = IJacobian;
-  if (IJacCtx)   iga->userops->IJacCtx    = IJacCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIEFunction"
-/*@
-   IGASetUserIEFunction - Set the function which computes the residual
-   R(u)=0 for use with explicit or implicit time stepping routines.
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga - the IGA context
-.  IEFunction - the function evaluation routine
--  IEFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
-
-   Details of IEFunction:
-$  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
-                             PetscReal shift,const PetscScalar *V0,
-                             PetscReal t1,const PetscScalar *U1,
-                             PetscReal t0,const PetscScalar *U0,
-                             PetscScalar *R,void *ctx);
-
-+  p - point at which to compute the residual
-.  dt - time step size
-.  shift - positive parameter which depends on the time integration method (XXX Should this be here?)
-.  V0 - time derivative of the state vector at t0
-.  t1 - time at step/stage being solved
-.  U1 - state vector at t1
-.  t0 - time at current step
-.  U0 - state vector at t0
-.  R - function vector
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *IEFunCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IEFunction) iga->userops->IEFunction = IEFunction;
-  if (IEFunCtx)   iga->userops->IEFunCtx   = IEFunCtx;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUserIEJacobian"
-/*@
-   IGASetUserIEJacobian - Set the function to compute the matrix dF/dU
-   + shift*dF/dU_t where F(t,U,U_t) is the function you provided with
-   IGASetUserIEFunction(). For use with implicit or explicit TS methods.
-
-   Logically Collective on TS
-
-   Input Parameter:
-+  iga - the IGA context
-.  IEJacobian - the Jacobian evaluation routine
--  IEJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
-
-   Details of IEJacobian:
-$  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
-                             PetscReal shift,const PetscScalar *V0,
-                             PetscReal t1,const PetscScalar *U1,
-                             PetscReal t0,const PetscScalar *U0,
-                             PetscScalar *J,void *ctx);
-
-+  p - point at which to compute the Jacobian
-.  dt - time step size
-.  shift - positive parameter which depends on the time integration method
-.  V0 - time derivative of the state vector at t0
-.  t1 - time at step/stage being solved
-.  U1 - state vector at t1
-.  t0 - time at current step
-.  U0 - state vector at t0
-.  J - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
-
-   Level: normal
-
-.keywords: IGA, options
-@*/
-PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *IEJacCtx)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (IEJacobian) iga->userops->IEJacobian = IEJacobian;
-  if (IEJacCtx)   iga->userops->IEJacCtx   = IEJacCtx;
   PetscFunctionReturn(0);
 }

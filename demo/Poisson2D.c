@@ -36,13 +36,11 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   
-  IGABoundary bnd;
   PetscInt dir,side;
   PetscScalar value = 1.0;
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,0,value);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,dir,side,0,value);CHKERRQ(ierr);
     }
   }
 
@@ -51,7 +49,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   
   KSP ksp;

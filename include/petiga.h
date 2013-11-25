@@ -16,10 +16,11 @@ typedef ISLocalToGlobalMapping LGMap;
 
 /* ---------------------------------------------------------------- */
 
+typedef struct _p_IGA         *IGA;
 typedef struct _n_IGAAxis     *IGAAxis;
-typedef struct _n_IGABoundary *IGABoundary;
 typedef struct _n_IGARule     *IGARule;
 typedef struct _n_IGABasis    *IGABasis;
+typedef struct _n_IGAForm     *IGAForm;
 typedef struct _n_IGAElement  *IGAElement;
 typedef struct _n_IGAPoint    *IGAPoint;
 
@@ -104,6 +105,7 @@ struct _n_IGABasis {
   PetscReal  bnd_point[2];
   PetscReal *bnd_value[2]; /* [nen][d+1] */
 };
+
 PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisReset(IGABasis basis);
@@ -114,109 +116,128 @@ PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,
 
 /* ---------------------------------------------------------------- */
 
-typedef PetscErrorCode (*IGAUserScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
-typedef PetscErrorCode (*IGAUserVector)    (IGAPoint point,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserMatrix)    (IGAPoint point,PetscScalar *K,void *ctx);
-typedef PetscErrorCode (*IGAUserSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
-typedef PetscErrorCode (*IGAUserIFunction) (IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormScalar)    (IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
+typedef PetscErrorCode (*IGAFormVector)    (IGAPoint point,PetscScalar *F,void *ctx);
+typedef PetscErrorCode (*IGAFormMatrix)    (IGAPoint point,PetscScalar *K,void *ctx);
+typedef PetscErrorCode (*IGAFormSystem)    (IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
+typedef PetscErrorCode (*IGAFormFunction)  (IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
+typedef PetscErrorCode (*IGAFormJacobian)  (IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
+typedef PetscErrorCode (*IGAFormIFunction) (IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserIJacobian) (IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIJacobian) (IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscScalar *J,void *ctx);
-typedef PetscErrorCode (*IGAUserIFunction2)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIFunction2)(IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *A,
                                             PetscReal v,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserIJacobian2)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIJacobian2)(IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *A,
                                             PetscReal v,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscScalar *J,void *ctx);
-typedef PetscErrorCode (*IGAUserIEFunction)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIEFunction)(IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscReal t0,const PetscScalar *U0,
                                             PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAUserIEJacobian)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIEJacobian)(IGAPoint point,PetscReal dt,
                                             PetscReal a,const PetscScalar *V,
                                             PetscReal t,const PetscScalar *U,
                                             PetscReal t0,const PetscScalar *U0,
                                             PetscScalar *J,void *ctx);
 
-typedef struct _IGAUserOps *IGAUserOps;
-struct _IGAUserOps {
+typedef struct _IGAFormBC *IGAFormBC;
+struct _IGAFormBC {
+  PetscInt    count;
+  PetscInt    field[64];
+  PetscScalar value[64];
+};
+
+typedef struct _IGAFormOps *IGAFormOps;
+struct _IGAFormOps {
   /**/
-  IGAUserVector     Vector;
+  IGAFormVector     Vector;
   void              *VecCtx;
-  IGAUserMatrix     Matrix;
+  IGAFormMatrix     Matrix;
   void              *MatCtx;
-  IGAUserSystem     System;
+  IGAFormSystem     System;
   void              *SysCtx;
   /**/
-  IGAUserFunction   Function;
+  IGAFormFunction   Function;
   void              *FunCtx;
-  IGAUserJacobian   Jacobian;
+  IGAFormJacobian   Jacobian;
   void              *JacCtx;
   /**/
-  IGAUserIFunction  IFunction;
-  IGAUserIFunction2 IFunction2;
+  IGAFormIFunction  IFunction;
+  IGAFormIFunction2 IFunction2;
   void              *IFunCtx;
-  IGAUserIJacobian  IJacobian;
-  IGAUserIJacobian2 IJacobian2;
+  IGAFormIJacobian  IJacobian;
+  IGAFormIJacobian2 IJacobian2;
   void              *IJacCtx;
   /**/
-  IGAUserIEFunction IEFunction;
+  IGAFormIEFunction IEFunction;
   void              *IEFunCtx;
-  IGAUserIEJacobian IEJacobian;
+  IGAFormIEJacobian IEJacobian;
   void              *IEJacCtx;
 };
 
-/* ---------------------------------------------------------------- */
-
-struct _n_IGABoundary {
+struct _n_IGAForm {
   PetscInt refct;
   /**/
-  PetscInt    dof;
-  /**/
-  PetscInt    count;
-  PetscInt    *field;
-  PetscScalar *value;
-  /**/
-  PetscInt    nload;
-  PetscInt    *iload;
-  PetscScalar *vload;
-  /**/
-  IGAUserOps userops;
+  IGAFormOps ops;
+  PetscInt   dof;
+  IGAFormBC  value[3][2];
+  IGAFormBC  load [3][2];
+  PetscBool  visit[3][2];
 };
-PETSC_EXTERN PetscErrorCode IGABoundaryCreate(IGABoundary *boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryDestroy(IGABoundary *boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryReset(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryReference(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundaryInit(IGABoundary boundary,PetscInt dof);
-PETSC_EXTERN PetscErrorCode IGABoundaryClear(IGABoundary boundary);
-PETSC_EXTERN PetscErrorCode IGABoundarySetValue(IGABoundary boundary,PetscInt field,PetscScalar value);
-PETSC_EXTERN PetscErrorCode IGABoundarySetLoad (IGABoundary boundary,PetscInt field,PetscScalar value);
 
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserVector    (IGABoundary boundary,IGAUserVector     Vector,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserMatrix    (IGABoundary boundary,IGAUserMatrix     Matrix,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserSystem    (IGABoundary boundary,IGAUserSystem     System,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserFunction  (IGABoundary boundary,IGAUserFunction   Function,  void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserJacobian  (IGABoundary boundary,IGAUserJacobian   Jacobian,  void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIFunction (IGABoundary boundary,IGAUserIFunction  IFunction, void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIJacobian (IGABoundary boundary,IGAUserIJacobian  IJacobian, void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIFunction2(IGABoundary boundary,IGAUserIFunction2 IFunction, void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIJacobian2(IGABoundary boundary,IGAUserIJacobian2 IJacobian, void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIEFunction(IGABoundary boundary,IGAUserIEFunction IEFunction,void *ctx);
-PETSC_EXTERN PetscErrorCode IGABoundarySetUserIEJacobian(IGABoundary boundary,IGAUserIEJacobian IEJacobian,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAGetForm(IGA iga,IGAForm *form);
+PETSC_EXTERN PetscErrorCode IGASetForm(IGA iga,IGAForm form);
 
+PETSC_EXTERN PetscErrorCode IGAFormCreate(IGAForm *form);
+PETSC_EXTERN PetscErrorCode IGAFormDestroy(IGAForm *form);
+PETSC_EXTERN PetscErrorCode IGAFormReset(IGAForm form);
+PETSC_EXTERN PetscErrorCode IGAFormReference(IGAForm form);
 
-typedef struct _p_IGA *IGA;
+PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryValue(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryLoad (IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryForm (IGAForm form,PetscInt axis,PetscInt side,PetscBool flag);
+PETSC_EXTERN PetscErrorCode IGAFormClearBoundary   (IGAForm form,PetscInt axis,PetscInt side);
+
+PETSC_EXTERN PetscErrorCode IGAFormSetVector    (IGAForm form,IGAFormVector     Vector,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetMatrix    (IGAForm form,IGAFormMatrix     Matrix,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetSystem    (IGAForm form,IGAFormSystem     System,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetFunction  (IGAForm form,IGAFormFunction   Function,  void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetJacobian  (IGAForm form,IGAFormJacobian   Jacobian,  void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIFunction (IGAForm form,IGAFormIFunction  IFunction, void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIJacobian (IGAForm form,IGAFormIJacobian  IJacobian, void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIFunction2(IGAForm form,IGAFormIFunction2 IFunction, void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIJacobian2(IGAForm form,IGAFormIJacobian2 IJacobian, void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,void *ctx);
+
+PETSC_EXTERN PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGASetBoundaryLoad (IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
+PETSC_EXTERN PetscErrorCode IGASetBoundaryForm (IGA iga,PetscInt axis,PetscInt side,PetscBool flag);
+
+PETSC_EXTERN PetscErrorCode IGASetFormVector    (IGA iga,IGAFormVector     Vector,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormMatrix    (IGA iga,IGAFormMatrix     Matrix,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormSystem    (IGA iga,IGAFormSystem     System,    void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormFunction  (IGA iga,IGAFormFunction   Function,  void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormJacobian  (IGA iga,IGAFormJacobian   Jacobian,  void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIFunction (IGA iga,IGAFormIFunction  IFunction, void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIJacobian (IGA iga,IGAFormIJacobian  IJacobian, void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIFunction2(IGA iga,IGAFormIFunction2 IFunction, void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIJacobian2(IGA iga,IGAFormIJacobian2 IJacobian, void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIEFunction(IGA iga,IGAFormIEFunction IEFunction,void *ctx);
+PETSC_EXTERN PetscErrorCode IGASetFormIEJacobian(IGA iga,IGAFormIEJacobian IEJacobian,void *ctx);
+
+/* ---------------------------------------------------------------- */
 
 typedef struct _IGAOps *IGAOps;
 struct _IGAOps {
@@ -233,7 +254,6 @@ struct _p_IGA {
   PetscInt   setupstage;
   PetscBool  collocation;
 
-  IGAUserOps userops;
   VecType    vectype;
   MatType    mattype;
   char       **fieldname;
@@ -244,8 +264,8 @@ struct _p_IGA {
 
   IGAAxis     axis[3];
   IGARule     rule[3];
-  IGABoundary boundary[3][2];
   IGABasis    basis[3];
+  IGAForm     form;
 
   IGAElement  iterator;
 
@@ -345,7 +365,6 @@ PETSC_EXTERN PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation);
 PETSC_EXTERN PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis);
 PETSC_EXTERN PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);
 PETSC_EXTERN PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis);
-PETSC_EXTERN PetscErrorCode IGAGetBoundary(IGA iga,PetscInt i,PetscInt side,IGABoundary *boundary);
 
 PETSC_EXTERN PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 
@@ -380,27 +399,16 @@ PETSC_EXTERN PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec);
 PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 
-PETSC_EXTERN PetscErrorCode IGASetUserVector    (IGA iga,IGAUserVector     Vector,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserMatrix    (IGA iga,IGAUserMatrix     Matrix,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserSystem    (IGA iga,IGAUserSystem     System,    void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserFunction  (IGA iga,IGAUserFunction   Function,  void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserJacobian  (IGA iga,IGAUserJacobian   Jacobian,  void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIFunction (IGA iga,IGAUserIFunction  IFunction, void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIJacobian (IGA iga,IGAUserIJacobian  IJacobian, void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIFunction2(IGA iga,IGAUserIFunction2 IFunction, void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIJacobian2(IGA iga,IGAUserIJacobian2 IJacobian, void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIEFunction(IGA iga,IGAUserIEFunction IEFunction,void *ctx);
-PETSC_EXTERN PetscErrorCode IGASetUserIEJacobian(IGA iga,IGAUserIEJacobian IEJacobian,void *ctx);
-
-PETSC_EXTERN PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
-PETSC_EXTERN PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscScalar du[]);
-
 #undef  DMIGA
 #define DMIGA "iga"
 PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode DMIGASetIGA(DM dm,IGA iga);
 PETSC_EXTERN PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga);
+
+
+PETSC_EXTERN PetscBool      IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
+PETSC_EXTERN PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscScalar du[]);
 
 /* ---------------------------------------------------------------- */
 
@@ -411,7 +419,7 @@ struct _n_IGAElement {
   PetscInt  width[3];
   PetscInt  sizes[3];
   PetscInt  ID[3];
-  IGABasis  BD[3];
+  /**/
   PetscBool atboundary;
   PetscInt  boundary_id;
   /**/
@@ -494,7 +502,7 @@ PETSC_EXTERN PetscErrorCode IGAGetElement(IGA iga,IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGABeginElement(IGA iga,IGAElement *element);
 PETSC_EXTERN PetscBool      IGANextElement(IGA iga,IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAEndElement(IGA iga,IGAElement *element);
-PETSC_EXTERN PetscBool      IGAElementNextUserOps(IGAElement element,IGAUserOps *userops);
+PETSC_EXTERN PetscBool      IGAElementNextForm(IGAElement element,PetscBool visit[][2]);
 PETSC_EXTERN PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *point);
 PETSC_EXTERN PetscBool      IGAElementNextPoint(IGAElement element,IGAPoint point);
@@ -592,6 +600,7 @@ PETSC_EXTERN PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element);
 PETSC_EXTERN PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count);
+PETSC_EXTERN PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side);
 PETSC_EXTERN PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof);
 PETSC_EXTERN PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscInt *npd);
 PETSC_EXTERN PetscErrorCode IGAPointGetQuadrature(IGAPoint point,PetscReal *weigth,PetscReal *detJac);
@@ -630,8 +639,9 @@ PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 PETSC_EXTERN PetscLogEvent IGA_FormIFunction;
 PETSC_EXTERN PetscLogEvent IGA_FormIJacobian;
 
-PETSC_EXTERN PetscErrorCode IGAFormScalar(IGA iga,Vec U,PetscInt n,PetscScalar S[],
-                                          IGAUserScalar Scalar,void *ctx);
+PETSC_EXTERN PetscErrorCode IGAComputeScalar(IGA iga,Vec U,
+                                             PetscInt n,PetscScalar S[],
+                                             IGAFormScalar Scalar,void *ctx);
 
 #define PCIGAEBE "igaebe"
 #define PCIGABBB "igabbb"
@@ -699,15 +709,15 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 #endif
 
 #if defined(PETSC_USE_DEBUG)
-#define IGACheckUserOp(iga,arg,UserOp) do {             \
-    if (!iga->userops->UserOp)                          \
+#define IGACheckFormOp(iga,arg,FormOp) do {             \
+    if (!iga->form->ops->FormOp)                        \
       SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_USER, \
-               "Must call IGASetUser%s() "              \
+               "Must call IGASetForm%s() "              \
                "on argument %D \"%s\" before %s()",     \
-               #UserOp,(arg),#iga,PETSC_FUNCTION_NAME); \
+               #FormOp,(arg),#iga,PETSC_FUNCTION_NAME); \
     } while (0)
 #else
-#define IGACheckUserOp(iga,arg,UserOp) do {} while (0)
+#define IGACheckFormOp(iga,arg,FormOp) do {} while (0)
 #endif
 
 /* ---------------------------------------------------------------- */

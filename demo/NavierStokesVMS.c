@@ -398,20 +398,18 @@ int main(int argc, char *argv[]) {
   //ierr = IGAAxisInitUniform(axis2,N,-0.5*Lz,0.5*Lz);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis2,N[2],0.0,Lz,C[2]);CHKERRQ(ierr);
 
-  IGABoundary bnd;
   PetscInt dir=1,side,field;
   for (side=0;side<2;side++) {
-    ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
     for (field=0;field<3;field++) {
-      ierr = IGABoundarySetValue(bnd,field,0.0);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,dir,side,field,0.0);CHKERRQ(ierr);
     }
   }
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

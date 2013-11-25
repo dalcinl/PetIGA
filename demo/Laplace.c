@@ -112,21 +112,18 @@ int main(int argc, char *argv[]) {
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
   if (collocation) {ierr = IGASetUseCollocation(iga,PETSC_TRUE);CHKERRQ(ierr);}
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-  if (iga->dim < 1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
+  if (iga->dim<1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   // Set boundary conditions
 
-  PetscInt dim,dir;
+  PetscInt dim,dir,side;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   for (dir=0; dir<dim; dir++) {
-    IGABoundary bnd;
     PetscScalar value = 1.0;
     PetscScalar load  = 0.0;
-    ierr = IGAGetBoundary(iga,dir,0,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,value);CHKERRQ(ierr);
-    ierr = IGAGetBoundary(iga,dir,1,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetLoad(bnd,0,load);CHKERRQ(ierr);
+    ierr = IGASetBoundaryValue(iga,dir,side=0,0,value);CHKERRQ(ierr);
+    ierr = IGASetBoundaryLoad (iga,dir,side=1,0,load );CHKERRQ(ierr);
   }
 
   // Assemble
@@ -137,11 +134,11 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_FALSE);CHKERRQ(ierr);
   }
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
@@ -157,7 +154,7 @@ int main(int argc, char *argv[]) {
   // Various post-processing options
 
   PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}

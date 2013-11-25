@@ -206,7 +206,6 @@ int main(int argc, char *argv[]) {
 
   PetscInt i,j;
   IGAAxis axis;
-  IGABoundary bnd;
   for (i=0; i<2; i++) {
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
@@ -214,17 +213,16 @@ int main(int argc, char *argv[]) {
     ierr = IGAAxisInitUniform(axis,N[i],0.0,1.0,C[i]);CHKERRQ(ierr);
     if (W[i]) continue;
     for (j=0; j<2; j++) {
-      IGAGetBoundary(iga,i,j,&bnd);
-      IGABoundarySetValue(bnd,1,0.0);
-      IGABoundarySetValue(bnd,2,0.0);
+      IGASetBoundaryValue(iga,i,j,1,0.0);
+      IGASetBoundaryValue(iga,i,j,2,0.0);
     }
   }
 
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGASetUserIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);

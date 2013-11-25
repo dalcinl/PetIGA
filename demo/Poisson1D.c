@@ -37,12 +37,10 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  IGABoundary bnd;
   PetscInt dir=0,side;
   PetscScalar value = 1.0;
   for (side=0; side<2; side++) {
-    ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-    ierr = IGABoundarySetValue(bnd,0,value);CHKERRQ(ierr);    
+    ierr = IGASetBoundaryValue(iga,dir,side,0,value);CHKERRQ(ierr);
   }
 
   Mat A;
@@ -50,9 +48,9 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  
+
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
@@ -60,7 +58,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  
+
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);

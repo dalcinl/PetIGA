@@ -1,24 +1,22 @@
 #include "petiga.h"
 
 PETSC_STATIC_INLINE
-PetscBool IGAElementNextUserFunction(IGAElement element,IGAUserFunction *fun,void **ctx)
+PetscBool IGAElementNextFormFunction(IGAElement element,IGAFormFunction *fun,void **ctx)
 {
-  IGAUserOps ops;
-  while (IGAElementNextUserOps(element,&ops) && !ops->Function);
-  if (!ops) return PETSC_FALSE;
-  *fun = ops->Function;
-  *ctx = ops->FunCtx;
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *fun = form->ops->Function;
+  *ctx = form->ops->FunCtx;
   return PETSC_TRUE;
 }
 
 PETSC_STATIC_INLINE
-PetscBool IGAElementNextUserJacobian(IGAElement element,IGAUserJacobian *jac,void **ctx)
+PetscBool IGAElementNextFormJacobian(IGAElement element,IGAFormJacobian *jac,void **ctx)
 {
-  IGAUserOps ops;
-  while (IGAElementNextUserOps(element,&ops) && !ops->Jacobian);
-  if (!ops) return PETSC_FALSE;
-  *jac = ops->Jacobian;
-  *ctx = ops->JacCtx;
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *jac = form->ops->Jacobian;
+  *ctx = form->ops->JacCtx;
   return PETSC_TRUE;
 }
 
@@ -30,7 +28,7 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
-  IGAUserFunction   Function;
+  IGAFormFunction   Function;
   void              *ctx;
   PetscScalar       *U,*F,*R;
   PetscErrorCode    ierr;
@@ -39,7 +37,7 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
   PetscValidHeaderSpecific(vecF,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
-  IGACheckUserOp(iga,1,Function);
+  IGACheckFormOp(iga,1,Function);
 
   /* Clear global vector F*/
   ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
@@ -56,8 +54,8 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
     ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
-    /* UserFunction loop */
-    while (IGAElementNextUserFunction(element,&Function,&ctx)) {
+    /* FormFunction loop */
+    while (IGAElementNextFormFunction(element,&Function,&ctx)) {
       /* Quadrature loop */
       ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
       while (IGAElementNextPoint(element,point)) {
@@ -92,7 +90,7 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   const PetscScalar *arrayU;
   IGAElement        element;
   IGAPoint          point;
-  IGAUserJacobian   Jacobian;
+  IGAFormJacobian   Jacobian;
   void              *ctx;
   PetscScalar       *U,*J,*K;
   PetscErrorCode    ierr;
@@ -101,7 +99,7 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
   PetscValidHeaderSpecific(matJ,MAT_CLASSID,3);
   IGACheckSetUp(iga,1);
-  IGACheckUserOp(iga,1,Jacobian);
+  IGACheckFormOp(iga,1,Jacobian);
 
   /* Clear global matrix J */
   ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
@@ -118,8 +116,8 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
     ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
-    /* UserJacobian loop */
-    while (IGAElementNextUserJacobian(element,&Jacobian,&ctx)) {
+    /* FormJacobian loop */
+    while (IGAElementNextFormJacobian(element,&Jacobian,&ctx)) {
       /* Quadrature loop */
       ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
       while (IGAElementNextPoint(element,point)) {

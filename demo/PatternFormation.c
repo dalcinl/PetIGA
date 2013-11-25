@@ -195,8 +195,8 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGASetUserIEFunction(iga,Function,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIEJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIEFunction(iga,Function,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIEJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
 
   PetscReal h  = PetscMin(2.0/N[0],2.0/N[1]);
   PetscReal dt = h/user.delta/15.0;

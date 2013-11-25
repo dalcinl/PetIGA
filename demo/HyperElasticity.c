@@ -1071,20 +1071,18 @@ int main(int argc, char *argv[])
   }
 
   // Set boundary conditions
-  IGABoundary bnd;
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr); // u = [0,0,0] @ x = [0,:,:]
-  ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,2,0.0);CHKERRQ(ierr);
-
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr); // ux = 1 @ x = [1,:,:]
-  ierr = IGABoundarySetValue(bnd,0,0.1/((PetscScalar)nsteps));CHKERRQ(ierr);
+  //   u = [0,0,0] @ x = [0,:,:]
+  ierr = IGASetBoundaryValue(iga,0,0,0,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,1,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,2,0.0);CHKERRQ(ierr);
+  //   ux = 1 @ x = [1,:,:]
+  ierr = IGASetBoundaryValue(iga,0,1,0,0.1/((PetscScalar)nsteps));CHKERRQ(ierr);
 
   // Setup the nonlinear solver
   SNES snes;
   Vec U,Utotal;
-  ierr = IGASetUserFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetUserJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormFunction(iga,Residual,&user);CHKERRQ(ierr);
+  ierr = IGASetFormJacobian(iga,Jacobian,&user);CHKERRQ(ierr);
   ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
   ierr = SNESSetFromOptions(snes);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);

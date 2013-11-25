@@ -1,9 +1,9 @@
 #include "petiga.h"
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAFormScalar"
+#define __FUNCT__ "IGAComputeScalar"
 /*@
-   IGAFormScalar - Evaluates a linear functional of a given vector
+   IGAComputeScalar - Evaluates a linear functional of a given vector
 
    Collective on IGA
 
@@ -35,8 +35,9 @@ $  PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar 
 
 .keywords: IGA, evaluating linear functional
 @*/
-PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
-                             IGAUserScalar Scalar,void *ctx)
+PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
+                                PetscInt n,PetscScalar S[],
+                                IGAFormScalar Scalar,void *ctx)
 {
   MPI_Comm          comm;
   Vec               localU;
@@ -44,6 +45,7 @@ PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
   PetscScalar       *localS,*workS;
   IGAElement        element;
   IGAPoint          point;
+  PetscScalar       *U;
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -57,11 +59,11 @@ PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
   /* Get local vector U and array */
   ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
 
-  /* Element loop */
   ierr = PetscLogEventBegin(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
+
+  /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    PetscScalar *U;
     ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
     /* Quadrature loop */
@@ -74,6 +76,7 @@ PetscErrorCode IGAFormScalar(IGA iga,Vec vecU,PetscInt n,PetscScalar S[],
     ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
   }
   ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
   ierr = PetscLogEventEnd(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
 
   /* Restore local vector U and array */

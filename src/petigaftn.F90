@@ -285,6 +285,22 @@ module PetIGA
       call c2f(p%normal,N,(/p%dim/))
     end function IGA_Normal
 
+    function IGA_AtBoundary(p,axis,side) result (atboundary)
+      implicit none
+      type(IGAPoint), intent(in) :: p
+      integer(kind=IGA_INTEGER_KIND), intent(out), optional :: axis
+      integer(kind=IGA_INTEGER_KIND), intent(out), optional :: side
+      logical :: atboundary
+      atboundary = (p%atboundary /= 0)
+      if (atboundary) then
+         if (present(axis)) axis = p%boundary_id / 2
+         if (present(side)) side = mod(p%boundary_id,2)
+      else
+         if (present(axis)) axis = -1
+         if (present(side)) side = -1
+      end if
+    end function IGA_AtBoundary
+
     function IGA_Basis0(p) result(N)
       use ISO_C_BINDING, only: c2f => C_F_POINTER
       implicit none

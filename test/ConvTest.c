@@ -106,11 +106,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if(!iga->collocation){
     for (i=0; i<dim; i++) {
-      IGABoundary bnd;
-      ierr = IGAGetBoundary(iga,i,0,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-      ierr = IGAGetBoundary(iga,i,1,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,i,0,0,0.0);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,i,1,0,0.0);CHKERRQ(ierr);
     }
   }
 
@@ -122,10 +119,10 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (iga->collocation){
-    ierr = IGASetUserSystem(iga,Collocation1,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,Collocation1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   }else{
-    ierr = IGASetUserSystem(iga,Galerkin1,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,Galerkin1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
   }
@@ -142,7 +139,7 @@ int main(int argc, char *argv[]) {
 
   iga->collocation = PETSC_FALSE;
   PetscScalar error[2] = {0,0};
-  ierr = IGAFormScalar(iga,x,2,&error[0],ErrorLaplace,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,2,&error[0],ErrorLaplace,NULL);CHKERRQ(ierr);
   error[0] = PetscSqrtReal(PetscRealPart(error[0]));
   ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %.16e\n",error[0]);CHKERRQ(ierr);
 

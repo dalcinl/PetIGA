@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,NULL);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
 
   KSP ksp;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   PetscScalar error = 0;
-  ierr = IGAFormScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
   PetscBool print_error = PETSC_FALSE;
   ierr = PetscOptionsGetBool(0,"-print_error",&print_error,0);CHKERRQ(ierr);

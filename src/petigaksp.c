@@ -1,35 +1,32 @@
 #include "petiga.h"
 
 PETSC_STATIC_INLINE
-PetscBool IGAElementNextUserVector(IGAElement element,IGAUserVector *vec,void **ctx)
+PetscBool IGAElementNextFormVector(IGAElement element,IGAFormVector *vec,void **ctx)
 {
-  IGAUserOps ops;
-  while (IGAElementNextUserOps(element,&ops) && !ops->Vector);
-  if (!ops) return PETSC_FALSE;
-  *vec = ops->Vector;
-  *ctx = ops->VecCtx;
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *vec = form->ops->Vector;
+  *ctx = form->ops->VecCtx;
   return PETSC_TRUE;
 }
 
 PETSC_STATIC_INLINE
-PetscBool IGAElementNextUserMatrix(IGAElement element,IGAUserMatrix *mat,void **ctx)
+PetscBool IGAElementNextFormMatrix(IGAElement element,IGAFormMatrix *mat,void **ctx)
 {
-  IGAUserOps ops;
-  while (IGAElementNextUserOps(element,&ops) && !ops->Matrix);
-  if (!ops) return PETSC_FALSE;
-  *mat = ops->Matrix;
-  *ctx = ops->MatCtx;
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *mat = form->ops->Matrix;
+  *ctx = form->ops->MatCtx;
   return PETSC_TRUE;
 }
 
 PETSC_STATIC_INLINE
-PetscBool IGAElementNextUserSystem(IGAElement element,IGAUserSystem *sys,void **ctx)
+PetscBool IGAElementNextFormSystem(IGAElement element,IGAFormSystem *sys,void **ctx)
 {
-  IGAUserOps ops;
-  while (IGAElementNextUserOps(element,&ops) && !ops->System);
-  if (!ops) return PETSC_FALSE;
-  *sys = ops->System;
-  *ctx = ops->SysCtx;
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *sys = form->ops->System;
+  *ctx = form->ops->SysCtx;
   return PETSC_TRUE;
 }
 
@@ -39,7 +36,7 @@ PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
 {
   IGAElement     element;
   IGAPoint       point;
-  IGAUserVector  Vector;
+  IGAFormVector  Vector;
   void           *ctx;
   PetscScalar    *B;
   PetscScalar    *F;
@@ -48,7 +45,7 @@ PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,2);
   IGACheckSetUp(iga,1);
-  IGACheckUserOp(iga,1,Vector);
+  IGACheckFormOp(iga,1,Vector);
 
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
 
@@ -58,8 +55,8 @@ PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
     ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
-    /* UserVector loop */
-    while (IGAElementNextUserVector(element,&Vector,&ctx)) {
+    /* FormVector loop */
+    while (IGAElementNextFormVector(element,&Vector,&ctx)) {
       /* Quadrature loop */
       ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
       while (IGAElementNextPoint(element,point)) {
@@ -87,7 +84,7 @@ PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
 {
   IGAElement     element;
   IGAPoint       point;
-  IGAUserMatrix  Matrix;
+  IGAFormMatrix  Matrix;
   void           *ctx;
   PetscScalar    *A;
   PetscScalar    *K;
@@ -96,7 +93,7 @@ PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   IGACheckSetUp(iga,1);
-  IGACheckUserOp(iga,1,Matrix);
+  IGACheckFormOp(iga,1,Matrix);
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
 
@@ -106,8 +103,8 @@ PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
     ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
-    /* UserMatrix loop */
-    while (IGAElementNextUserMatrix(element,&Matrix,&ctx)) {
+    /* FormMatrix loop */
+    while (IGAElementNextFormMatrix(element,&Matrix,&ctx)) {
       /* Quadrature loop */
       ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
       while (IGAElementNextPoint(element,point)) {
@@ -147,7 +144,7 @@ PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
 
    Notes:
    This routine is used to solve a steady, linear problem. It performs
-   matrix/vector assembly standard in FEM. The user provides a routine
+   matrix/vector assembly standard in FEM. The form provides a routine
    which evaluates the bilinear and linear forms at a point.
 
    Level: normal
@@ -158,7 +155,7 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
 {
   IGAElement     element;
   IGAPoint       point;
-  IGAUserSystem  System;
+  IGAFormSystem  System;
   void           *ctx;
   PetscScalar    *A,*B;
   PetscScalar    *K,*F;
@@ -168,7 +165,7 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
   PetscValidHeaderSpecific(matA,MAT_CLASSID,2);
   PetscValidHeaderSpecific(vecB,VEC_CLASSID,3);
   IGACheckSetUp(iga,1);
-  IGACheckUserOp(iga,1,System);
+  IGACheckFormOp(iga,1,System);
 
   ierr = MatZeroEntries(matA);CHKERRQ(ierr);
   ierr = VecZeroEntries(vecB);CHKERRQ(ierr);
@@ -180,8 +177,8 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
   while (IGANextElement(iga,element)) {
     ierr = IGAElementGetWorkMat(element,&A);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&B);CHKERRQ(ierr);
-    /* UserSystem loop */
-    while (IGAElementNextUserSystem(element,&System,&ctx)) {
+    /* FormSystem loop */
+    while (IGAElementNextFormSystem(element,&System,&ctx)) {
       /* Quadrature loop */
       ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
       while (IGAElementNextPoint(element,point)) {

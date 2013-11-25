@@ -61,6 +61,8 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
   PetscFunctionBegin;
   PetscValidPointer(base,1);
   PetscValidPointer(rule,2);
+  if (base == rule) PetscFunctionReturn(0);
+
   rule->nqp = base->nqp;
   ierr = PetscFree(rule->point);CHKERRQ(ierr);
   if (base->point && base->nqp > 0) {

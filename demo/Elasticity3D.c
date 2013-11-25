@@ -68,13 +68,10 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   // Set boundary conditions
-  IGABoundary bnd;
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,1,0.0);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,2,0.0);CHKERRQ(ierr);
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,1.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,0,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,1,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,2,0.0);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,0,1.0);CHKERRQ(ierr);
 
   // Create linear system
   Mat A;
@@ -82,7 +79,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetUserSystem(iga,System,&user);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   
   // Solve

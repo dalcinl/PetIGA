@@ -53,18 +53,15 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   /* Boundary conditions, U[left] = U[right] = 0 */
-  IGABoundary bnd;
   PetscScalar U_left = 0.0, U_right = 0.0;
   /* left,  (dir=0, side=0) */
-  ierr = IGAGetBoundary(iga,0,0,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,U_left);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,0,0,U_left);CHKERRQ(ierr);
   /* right  (dir=0, side=1) */
-  ierr = IGAGetBoundary(iga,0,1,&bnd);CHKERRQ(ierr);
-  ierr = IGABoundarySetValue(bnd,0,U_right);CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,0,U_right);CHKERRQ(ierr);
 
   /* Residual and Tangent user routines */
-  ierr = IGASetUserIFunction2(iga,ElasticRod_IFunction,&user);CHKERRQ(ierr);
-  ierr = IGASetUserIJacobian2(iga,ElasticRod_IJacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIFunction2(iga,ElasticRod_IFunction,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian2(iga,ElasticRod_IJacobian,&user);CHKERRQ(ierr);
 
   /* Timestepper, t_final=5.0, delta_t = 0.01 */
   TS ts;

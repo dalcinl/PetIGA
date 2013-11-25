@@ -124,6 +124,19 @@ PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAPointAtBoundary"
+PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(point,1);
+  if (axis) PetscValidIntPointer(axis,2);
+  if (side) PetscValidIntPointer(side,3);
+  if (axis) *axis = point->atboundary ? point->boundary_id / 2 : -1;
+  if (side) *side = point->atboundary ? point->boundary_id % 2 : -1;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetSizes"
 PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
@@ -218,7 +231,7 @@ static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
     PetscInt i;
     PetscInt dim = p->dim;
     PetscInt *ID = p->parent->ID;
-    IGABasis *BD = p->parent->BD;
+    IGABasis *BD = p->parent->parent->basis;
     for (i=0; i<dim; i++)
       L[i] = BD[i]->detJ[ID[i]];
   }

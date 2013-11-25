@@ -109,7 +109,7 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
   PetscFunctionBegin;
   PetscValidPointer(base,1);
   PetscValidPointer(axis,2);
-  if(base == axis) PetscFunctionReturn(0);
+  if (base == axis) PetscFunctionReturn(0);
 
   axis->periodic = base->periodic;
 

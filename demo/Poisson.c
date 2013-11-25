@@ -74,10 +74,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   for (dir=0; dir<dim; dir++) {
     for (side=0; side<2; side++) {
-      IGABoundary bnd;
       PetscScalar value = 1.0;
-      ierr = IGAGetBoundary(iga,dir,side,&bnd);CHKERRQ(ierr);
-      ierr = IGABoundarySetValue(bnd,0,value);CHKERRQ(ierr);
+      ierr = IGASetBoundaryValue(iga,dir,side,0,value);CHKERRQ(ierr);
     }
   }
 
@@ -87,11 +85,11 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   if (!iga->collocation) {
-    ierr = IGASetUserSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
   } else {
-    ierr = IGASetUserSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,SystemCollocation,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_FALSE);CHKERRQ(ierr);
   }
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
