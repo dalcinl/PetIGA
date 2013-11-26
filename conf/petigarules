@@ -1,13 +1,2 @@
 # -*- makefile -*-
 include ${PETSC_DIR}/conf/rules
-
-chk_petigadir:
-	@mypwd=`pwd`; cd ${PETIGA_DIR} 2>&1 > /dev/null; true_PETIGA_DIR=`pwd`; cd $${mypwd} 2>&1 >/dev/null; \
-        newpwd=`echo $${mypwd} | sed "s+$${true_PETIGA_DIR}+DUMMY+g"`;\
-        haspetiga=`echo $${mypwd} | sed "s+petiga-+DUMMY+g"`;\
-        if [ $${mypwd} = $${newpwd} -a $${haspetiga} != $${mypwd} ]; then \
-          echo "**********************Warning*************************" ; \
-          echo "Your PETIGA_DIR may not match the directory you are in";\
-          echo "PETIGA_DIR " $${true_PETIGA_DIR} "Current directory" $${mypwd};\
-          echo "******************************************************" ; \
-        fi
