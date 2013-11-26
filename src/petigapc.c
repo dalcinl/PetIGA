@@ -267,8 +267,8 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
         for (s=0; s<=1; s++)
           if (iga->proc_ranks[i] == (!s?0:iga->proc_sizes[i]-1)) {
             atbnd[i][s] = PETSC_TRUE;
-            count[i][s] = iga->boundary[i][s]->count;
-            field[i][s] = iga->boundary[i][s]->field;
+            count[i][s] = iga->form->value[i][s]->count;
+            field[i][s] = iga->form->value[i][s]->field;
           }
     }
     ierr = ComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
