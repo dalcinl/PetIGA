@@ -670,8 +670,8 @@ PETSC_EXTERN PetscErrorCode IGAComputeIEFunction(IGA iga,PetscReal dt,
                                                  PetscReal t0,Vec U0,
                                                  Vec F);
 PETSC_EXTERN PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
-                                                 PetscReal a,Vec V,
-                                                 PetscReal t,Vec U,
+                                                 PetscReal a, Vec V,
+                                                 PetscReal t, Vec U,
                                                  PetscReal t0,Vec U0,
                                                  Mat J);
 

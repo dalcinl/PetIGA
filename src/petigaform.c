@@ -515,13 +515,13 @@ PetscErrorCode IGASetFormJacobian(IGA iga,IGAFormJacobian Jacobian,void *JacCtx)
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-                            PetscReal shift,const PetscScalar *V,
+                            PetscReal a,const PetscScalar *V,
                             PetscReal t,const PetscScalar *U,
                             PetscScalar *R,void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method (XXX Should this be here?)
+.  a - positive parameter which depends on the time integration method (XXX Should this be here?)
 .  V - time derivative of the state vector
 .  t - time at step/stage being solved
 .  U - state vector
@@ -545,7 +545,7 @@ PetscErrorCode IGASetFormIFunction(IGA iga,IGAFormIFunction IFunction,void *IFun
 #define __FUNCT__ "IGASetFormIJacobian"
 /*@
    IGASetFormIJacobian - Set the function to compute the Jacobian matrix
-   J = shift*dF/dU_t + dF/dU where F(t,U_t,U) is the residual function
+   J = a*dF/dU_t + dF/dU where F(t,U_t,U) is the residual function
    you provided with IGASetFormIFunction().
 
    Logically Collective on IGA
@@ -557,13 +557,13 @@ PetscErrorCode IGASetFormIFunction(IGA iga,IGAFormIFunction IFunction,void *IFun
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-                            PetscReal shift,const PetscScalar *V,
+                            PetscReal a,const PetscScalar *V,
                             PetscReal t,const PetscScalar *U,
                             PetscScalar *J,void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method
+.  a - positive parameter which depends on the time integration method
 .  V - time derivative of the state vector
 .  t - time at step/stage being solved
 .  U - state vector
@@ -687,17 +687,17 @@ PetscErrorCode IGASetFormIJacobian2(IGA iga,IGAFormIJacobian2 IJacobian,void *IJ
 
    Details of IEFunction:
 $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
-                             PetscReal shift,const PetscScalar *V0,
-                             PetscReal t1,const PetscScalar *U1,
+                             PetscReal a, const PetscScalar *V,
+                             PetscReal t, const PetscScalar *U,
                              PetscReal t0,const PetscScalar *U0,
                              PetscScalar *R,void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method (XXX Should this be here?)
-.  V0 - time derivative of the state vector at t0
-.  t1 - time at step/stage being solved
-.  U1 - state vector at t1
+.  a - positive parameter which depends on the time integration method (XXX Should this be here?)
+.  V - time derivative of the state vector at t0
+.  t - time at step/stage being solved
+.  U - state vector at t
 .  t0 - time at current step
 .  U0 - state vector at t0
 .  R - function vector
@@ -720,7 +720,7 @@ PetscErrorCode IGASetFormIEFunction(IGA iga,IGAFormIEFunction IEFunction,void *I
 #define __FUNCT__ "IGASetFormIEJacobian"
 /*@
    IGASetFormIEJacobian - Set the function to compute the Jacobian matrix
-   J = shift*dF/dU_t + dF/dU where F(t,U_t,U,U0) is the function you provided with
+   J = a*dF/dU_t + dF/dU where F(t,U_t,U,U0) is the function you provided with
    IGASetFormIEFunction(). For use with implicit+explicit TS methods.
 
    Logically Collective on IGA
@@ -732,17 +732,17 @@ PetscErrorCode IGASetFormIEFunction(IGA iga,IGAFormIEFunction IEFunction,void *I
 
    Details of IEJacobian:
 $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
-                             PetscReal shift,const PetscScalar *V0,
-                             PetscReal t1,const PetscScalar *U1,
+                             PetscReal a, const PetscScalar *V,
+                             PetscReal t, const PetscScalar *U,
                              PetscReal t0,const PetscScalar *U0,
                              PetscScalar *J,void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
-.  shift - positive parameter which depends on the time integration method
-.  V0 - time derivative of the state vector at t0
-.  t1 - time at step/stage being solved
-.  U1 - state vector at t1
+.  a - positive parameter which depends on the time integration method
+.  V - time derivative of the state vector at t0
+.  t - time at step/stage being solved
+.  U - state vector at t
 .  t0 - time at current step
 .  U0 - state vector at t0
 .  J - Jacobian matrix
