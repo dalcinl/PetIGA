@@ -208,19 +208,20 @@ test-build:
 	-@echo "Completed test"
 .PHONY: test test-build
 
+SRCDIR=${PETIGA_DIR}/src
+DOCDIR=${PETIGA_DIR}/docs/html
 doc:
-	@if [ ! -d docs/html ]; then \
-	  ${MKDIR} docs/html; \
-	fi
-	-@${RM} docs/html/*.html
-	@${PETSC_DIR}/${PETSC_ARCH}/bin/doctext -mpath docs/html -html src/*.c
-	@#! /bin/sh
-	@echo '<TITLE>PetIGA Documentation</TITLE>' > docs/html/index.html
-	@echo '<H1>PetIGA Documentation</H1>' >> docs/html/index.html
-	@echo '<MENU>' >> docs/html/index.html
-	@ls -1 docs/html | grep .html | grep -v index.html | sed -e 's%^\(.*\).html$$%<LI><A HREF="\1.html">\1</A>%g' >> docs/html/index.html
-	@echo '</MENU>' >> docs/html/index.html
-.PHONY: doc
+	@if [ ! -d ${DOCDIR} ]; then ${MKDIR} ${DOCDIR}; fi
+	-@${RM} ${DOCDIR}/*.html
+	@${PETSC_DIR}/${PETSC_ARCH}/bin/doctext -mpath ${DOCDIR} -html ${SRCDIR}/*.c
+	@echo '<TITLE>PetIGA Documentation</TITLE>' > ${DOCDIR}/index.html
+	@echo '<H1>PetIGA Documentation</H1>' >> ${DOCDIR}/index.html
+	@echo '<MENU>' >> ${DOCDIR}/index.html
+	@ls -1 ${DOCDIR} | grep .html | grep -v index.html | sed -e 's%^\(.*\).html$$%<LI><A HREF="\1.html">\1</A>%g' >> ${DOCDIR}/index.html
+	@echo '</MENU>' >> ${DOCDIR}/index.html
+deletedoc:
+	-@${RM} ${DOCDIR}/*.html
+.PHONY: doc deletedoc
 
 alletags:
 	-@${PYTHON} ${PETSC_DIR}/bin/maint/generateetags.py
