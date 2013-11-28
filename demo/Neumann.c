@@ -4,17 +4,17 @@
 
 PetscReal Exact(PetscReal x[3])
 {
-  return sin(pi*x[0]) + sin(pi*x[1]) + sin(pi*x[2]);
+  return sin(2*pi*x[0]) + sin(2*pi*x[1]) + sin(2*pi*x[2]);
 }
 
 PetscReal Forcing(PetscReal x[3])
 {
-  return pi*pi * Exact(x);
+  return 4*pi*pi * Exact(x);
 }
 
 PetscReal Flux(PetscInt dir,PetscInt side)
 {
-  return -pi;
+  return (side?+1:-1) * 2*pi;
 }
 
 PETSC_STATIC_INLINE
@@ -75,6 +75,16 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "MassVector"
+PetscErrorCode MassVector(IGAPoint p,PetscScalar *V,void *ctx)
+{
+  PetscInt a,nen = p->nen;
+  const PetscReal *N0 = (typeof(N0)) p->shape[0];
+  for (a=0; a<nen; a++) V[a] = N0[a];
+  return 0;
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "Error"
 PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
@@ -82,7 +92,7 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   IGAPointFormPoint(p,x);
   PetscScalar u;
   IGAPointFormValue(p,U,&u);
-  PetscReal e = PetscAbsScalar(u) -  Exact(x);
+  PetscScalar e = u -  Exact(x);
   S[0] = e*e;
   return 0;
 }
@@ -147,11 +157,14 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-  {
-    PetscReal vmin; /* this is a hack */
-    ierr = VecMin(x,0,&vmin);CHKERRQ(ierr);
-    ierr = VecShift(x,-vmin);CHKERRQ(ierr);
-  }
+
+  Vec Q;
+  ierr = IGACreateVec(iga,&Q);CHKERRQ(ierr);
+  ierr = IGASetFormVector(iga,MassVector,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeVector(iga,Q);CHKERRQ(ierr);
+  PetscScalar mean;
+  ierr = VecDot(Q,x,&mean);CHKERRQ(ierr);
+  ierr = VecShift(x,-mean);CHKERRQ(ierr);
 
   PetscScalar error;
   ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
