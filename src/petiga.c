@@ -411,6 +411,25 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOrder"
+/*@
+   IGASetOrder - Sets the maximum available derivative order
+   for basis and shape functions.
+
+   Logically Collective on IGA
+
+   Input Parameters:
++  iga - the IGA context
+-  order - the maximum available derivative order
+
+   Notes:
+   Currently, the maximum derivative order to compute is at least one
+   and at most three. The default value is determined as the maximum
+   polynomial degree over the parametric directions.
+
+   Level: normal
+
+.keywords: IGA, order
+@*/
 PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
 {
   PetscFunctionBegin;
