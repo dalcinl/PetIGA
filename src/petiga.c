@@ -797,7 +797,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Order */
     if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
     order = PetscMax(order,1); order = PetscMin(order,3);
-    ierr = PetscOptionsInt("-iga_order","Order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsInt("-iga_order","Maximum available derivative order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
     /* Quadrature */
