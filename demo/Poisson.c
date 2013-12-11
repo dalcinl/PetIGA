@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
   PetscBool draw = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Poisson Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-save","Save the solution to file",                        __FILE__,save,&save,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
