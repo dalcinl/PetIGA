@@ -165,6 +165,7 @@ int main(int argc, char *argv[]) {
   PetscScalar mean;
   ierr = VecDot(Q,x,&mean);CHKERRQ(ierr);
   ierr = VecShift(x,-mean);CHKERRQ(ierr);
+  ierr = VecDestroy(&Q);CHKERRQ(ierr);
 
   PetscScalar error;
   ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
