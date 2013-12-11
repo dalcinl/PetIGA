@@ -11,7 +11,8 @@ PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
   PetscFunctionBegin;
   PetscValidPointer(grid,9);
 
-  ierr = PetscNew(struct _n_IGA_Grid,grid);CHKERRQ(ierr);
+  ierr = PetscMalloc(sizeof(**grid),grid);CHKERRQ(ierr);
+  ierr = PetscMemzero(*grid,sizeof(**grid));CHKERRQ(ierr);
   g = *grid;
 
   g->comm = comm;

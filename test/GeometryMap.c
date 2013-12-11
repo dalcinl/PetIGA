@@ -469,8 +469,8 @@ int main(int argc, char *argv[]) {
 
   iga->rational = PETSC_TRUE;
   ierr = IGASetGeometryDim(iga,dim);CHKERRQ(ierr);
-  ierr = PetscMalloc1(3*3*(dim-1),    PetscReal,&iga->rationalW);CHKERRQ(ierr);
-  ierr = PetscMalloc1(3*3*(dim-1)*dim,PetscReal,&iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscMalloc(3*3*(dim-1)*sizeof(PetscReal),&iga->rationalW);CHKERRQ(ierr);
+  ierr = PetscMalloc(3*3*(dim-1)*dim*sizeof(PetscReal),&iga->geometryX);CHKERRQ(ierr);
   {
     PetscInt i,j,k,m=dim-1;
     PetscInt posx=0,posw=0;

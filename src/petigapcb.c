@@ -219,12 +219,13 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     for (n=dof, i=0; i<dim; n *= (2*overlap[i++] + 1));
 
     ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
-    ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
-    ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,&indices);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n*n,&values);CHKERRQ(ierr);
+    ierr = PetscMalloc1(m,&ipiv);CHKERRQ(ierr);
     lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
-    ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
+    ierr = PetscMalloc1(lwork,&work);CHKERRQ(ierr);
 
     for (k=start[2]; k<start[2]+width[2]; k++)
       for (j=start[1]; j<start[1]+width[1]; j++)
@@ -359,7 +360,11 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   PC_BBB         *bbb = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+#if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(pc,PC_BBB,&bbb);CHKERRQ(ierr);
+#else
+  ierr = PetscNewLog(pc,&bbb);CHKERRQ(ierr);
+#endif
   pc->data = (void*)bbb;
 
   bbb->overlap[0] = PETSC_DECIDE;

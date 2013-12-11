@@ -58,7 +58,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
           ierr = MatSetSizes(mat,m,n,M,N);CHKERRQ(ierr);
           ierr = MatSetBlockSize(mat,bs);CHKERRQ(ierr);
 
-          ierr = PetscMalloc1(ia[na],PetscInt,&newja);CHKERRQ(ierr);
+          ierr = PetscMalloc1(ia[na],&newja);CHKERRQ(ierr);
           for (j=0; j<ia[na]; j++) newja[j] = ja[j] + cstart;
           if (aij)   {ierr = MatMPIAIJSetPreallocationCSR  (mat,   ia,newja,NULL);CHKERRQ(ierr);}
           if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
@@ -138,12 +138,13 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
 
     n = nen*dof;
     ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
-    ierr = PetscMalloc2(n,PetscInt,&indices,n*n,PetscScalar,&values);CHKERRQ(ierr);
-    ierr = PetscMalloc1(m,PetscBLASInt,&ipiv);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,&indices);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n*n,&values);CHKERRQ(ierr);
+    ierr = PetscMalloc1(m,&ipiv);CHKERRQ(ierr);
     lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
-    ierr = PetscMalloc1(lwork,PetscScalar,&work);CHKERRQ(ierr);
+    ierr = PetscMalloc1(lwork,&work);CHKERRQ(ierr);
 
     ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
     while (IGANextElement(iga,element)) {
@@ -262,7 +263,11 @@ PetscErrorCode PCCreate_IGAEBE(PC pc)
   PC_EBE         *ebe = 0;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+#if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(pc,PC_EBE,&ebe);CHKERRQ(ierr);
+#else
+  ierr = PetscNewLog(pc,&ebe);CHKERRQ(ierr);
+#endif
   pc->data = (void*)ebe;
 
   pc->ops->setup               = PCSetUp_EBE;

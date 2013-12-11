@@ -34,15 +34,15 @@ PetscErrorCode IGAFormCreate(IGAForm *_form)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_form,1);
-  ierr = PetscNew(struct _n_IGAForm,_form);CHKERRQ(ierr);
+  ierr = PetscCalloc1(1,_form);CHKERRQ(ierr);
   (*_form)->refct = 1; form = *_form;
   /* */
   form->dof = -1;
-  ierr = PetscNew(struct _IGAFormOps,&form->ops);CHKERRQ(ierr);
+  ierr = PetscCalloc1(1,&form->ops);CHKERRQ(ierr);
   for (a=0; a<3; a++)
     for (s=0; s<2; s++) {
-      ierr = PetscNew(struct _IGAFormBC,&form->value[a][s]);CHKERRQ(ierr);
-      ierr = PetscNew(struct _IGAFormBC,&form->load [a][s]);CHKERRQ(ierr);
+      ierr = PetscCalloc1(1,&form->value[a][s]);CHKERRQ(ierr);
+      ierr = PetscCalloc1(1,&form->load [a][s]);CHKERRQ(ierr);
     }
   PetscFunctionReturn(0);
 }

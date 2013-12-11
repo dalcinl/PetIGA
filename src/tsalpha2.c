@@ -1,7 +1,7 @@
 #include <petscts2.h>
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
 
-#if PETSC_VERSION_LE(3,3,0)
+#if PETSC_VERSION_LT(3,4,0)
 #define PetscObjectComposeFunction(o,n,f) \
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
 #endif
@@ -527,7 +527,11 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha2);CHKERRQ(ierr);
 
+#if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(ts,TS_Alpha2,&th);CHKERRQ(ierr);
+#else
+  ierr = PetscNewLog(ts,&th);CHKERRQ(ierr);
+#endif
   ts->data = (void*)th;
   th->Alpha_m = 0.5;
   th->Alpha_f = 0.5;

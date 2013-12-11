@@ -8,7 +8,7 @@ PetscErrorCode IGAPointCreate(IGAPoint *_point)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_point,3);
-  ierr = PetscNew(struct _n_IGAPoint,_point);CHKERRQ(ierr);
+  ierr = PetscCalloc1(1,_point);CHKERRQ(ierr);
   point = *_point;
   point->refct =  1;
   point->index = -1;
@@ -471,7 +471,7 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
     if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     if (PetscUnlikely(!point->wvec[point->nvec])) {
-      ierr = PetscMalloc1(n,PetscScalar,&point->wvec[point->nvec]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(n,&point->wvec[point->nvec]);CHKERRQ(ierr);
     }
     *V = point->wvec[point->nvec++];
     ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
@@ -496,7 +496,7 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
     if (PetscUnlikely(point->nmat >= (PetscInt)MAX_WORK_MAT))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
     if (PetscUnlikely(!point->wmat[point->nmat])) {
-      ierr = PetscMalloc1(n*n,PetscScalar,&point->wmat[point->nmat]);CHKERRQ(ierr);
+      ierr = PetscMalloc1(n*n,&point->wmat[point->nmat]);CHKERRQ(ierr);
     }
     *M = point->wmat[point->nmat++];
     ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
@@ -667,7 +667,7 @@ PetscErrorCode IGAPointEval(IGA iga,IGAPoint point)
   PetscReal *basis[3];
   for(i=0;i<element->dim;i++){
     nen[i] = element->parent->axis[i]->p + 1;
-    ierr = PetscMalloc1(nen[i]*(order+1),PetscReal,&basis[i]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nen[i]*(order+1),&basis[i]);CHKERRQ(ierr);
     IGA_Basis_BSpline(element->parent->axis[i]->span[element->ID[i]],
 		      point->point[i],
 		      element->parent->axis[i]->p,

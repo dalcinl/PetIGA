@@ -358,8 +358,12 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     {
       PetscInt i,j,k;
       PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;
-      ierr = PetscMalloc1(nnz,PetscInt,&indices);CHKERRQ(ierr);
+      ierr = PetscMalloc1(nnz,&indices);CHKERRQ(ierr);
+      #if PETSC_VERSION_LT(3,5,0)
       ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+      #else
+      ierr = PetscMalloc2(bs,&ubrows,nnz*bs,&ubcols);CHKERRQ(ierr);
+      #endif
       for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
         for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
           for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
@@ -413,8 +417,13 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   if (aij || baij || sbaij) {
     PetscInt i,j,k;
     PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;PetscScalar *values=0;
+    #if PETSC_VERSION_LT(3,5,0)
     ierr = PetscMalloc2(nnz,PetscInt,&indices,nnz*bs*nnz*bs,PetscScalar,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+    #else
+    ierr = PetscMalloc2(nnz,&indices,nnz*bs*nnz*bs,&values);CHKERRQ(ierr);
+    ierr = PetscMalloc2(bs,&ubrows,nnz*bs,&ubcols);CHKERRQ(ierr);
+    #endif
     ierr = PetscMemzero(values,nnz*bs*nnz*bs*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
       for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)

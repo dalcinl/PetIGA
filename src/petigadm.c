@@ -329,7 +329,11 @@ PetscErrorCode DMCreate_IGA(DM dm)
   PetscFunctionBegin;
   PetscValidPointer(dm,1);
 
+#if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(dm,DM_IGA,&dd);CHKERRQ(ierr);
+#else
+  ierr = PetscNewLog(dm,&dd);CHKERRQ(ierr);
+#endif
   dm->data = dd;
 
 #if PETSC_VERSION_LE(3,3,0)

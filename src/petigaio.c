@@ -45,7 +45,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       PetscReal *U;
       ierr = PetscViewerBinaryRead(viewer,&p,1,PETSC_INT);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,&m,1,PETSC_INT);CHKERRQ(ierr);
-      ierr = PetscMalloc1(m,PetscReal,&U);CHKERRQ(ierr);
+      ierr = PetscMalloc1(m,&U);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisInit(axis,p,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
@@ -261,8 +261,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     const PetscScalar *Xw;
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
     n /= (nsd+1);
-    ierr = PetscMalloc1(n*nsd,PetscReal,&iga->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,    PetscReal,&iga->rationalW);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n*nsd,&iga->geometryX);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,    &iga->rationalW);CHKERRQ(ierr);
     X = iga->geometryX; W = iga->rationalW;
     ierr = VecGetArrayRead(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
@@ -453,7 +453,7 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
   {
     PetscInt n; const PetscScalar *A;
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,PetscScalar,&iga->propertyA);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,&iga->propertyA);CHKERRQ(ierr);
     ierr = VecGetArrayRead(lvec,&A);CHKERRQ(ierr);
     ierr = PetscMemcpy(iga->propertyA,A,n*sizeof(PetscScalar));CHKERRQ(ierr);
     ierr = VecRestoreArrayRead(lvec,&A);CHKERRQ(ierr);

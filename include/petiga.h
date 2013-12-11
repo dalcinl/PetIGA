@@ -737,12 +737,18 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
   (!PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
 #endif
 
-#ifndef PetscMalloc1
-#define PetscMalloc1(m1,t1,r1) (PetscMalloc((m1)*sizeof(t1),(r1)))
-#endif
-
 #ifndef PetscValidRealPointer
 #define PetscValidRealPointer PetscValidDoublePointer
+#endif
+
+#ifndef PetscMalloc1
+#define PetscMalloc1(m1,r1) \
+  PetscMalloc((m1)*sizeof(**(r1)),r1)
+#endif
+
+#ifndef PetscCalloc1
+#define PetscCalloc1(m1,r1) \
+  (PetscMalloc1((m1),r1) || PetscMemzero(*(r1),(m1)*sizeof(**(r1))))
 #endif
 
 /* ---------------------------------------------------------------- */
