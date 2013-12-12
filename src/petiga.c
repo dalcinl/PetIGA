@@ -609,11 +609,13 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
 #define __FUNCT__ "IGAGetBasis"
 PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
 {
+  PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(basis,3);
-  if (i < 0)         SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= iga->dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
+  dim = (iga->dim > 0) ? iga->dim : 3;
+  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   *basis = iga->basis[i];
   PetscFunctionReturn(0);
 }
