@@ -64,6 +64,31 @@ IGAInputOutput = IGAInputOutput.PETSc \
 		 runex2a_1 runex2a_2 runex2a_3 runex2a_4 runex2a_8 \
 		 runex2a.rm IGAInputOutput.rm
 
+FixTable: FixTable.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex4a_1:
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 1 -pc_type lu -check_error 1e-6
+runex4a_2:
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 2 -pc_type lu -check_error 1e-6
+runex4a_3:
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 4
+runex4b_1:
+	-@${MPIEXEC} -n 2 ./FixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 3 ./FixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
+runex4b_2:
+	-@${MPIEXEC} -n 4 ./FixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 9 ./FixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
+runex4b_3:
+	-@${MPIEXEC} -n  8 ./FixTable ${OPTS} -iga_dim 3 -iga_elements  8,8,8 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 12 ./FixTable ${OPTS} -iga_dim 3 -iga_elements 12,8,8 -ksp_rtol 1e-7 -check_error 1e-6
+FixTable = FixTable.PETSc \
+           runex4a_1 runex4a_2 runex4a_3 \
+           runex4b_1 runex4b_2 runex4b_3 \
+           FixTable.rm
 
 GeometryMap: GeometryMap.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
@@ -142,6 +167,7 @@ ConvTest: ConvTest.o chkopts
 
 TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAInputOutput) \
+		 $(FixTable) \
 		 $(GeometryMap) \
 		 $(Test_SNES_2D) \
 		 $(Oscillator)

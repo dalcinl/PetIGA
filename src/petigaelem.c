@@ -1201,14 +1201,17 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
 static void AddFixa(IGAElement element,IGAFormBC bc,PetscInt a)
 {
   if (bc->count) {
+    IGA iga = element->parent;
     PetscInt dof = element->dof;
     PetscInt count = element->nfix;
     PetscInt *index = element->ifix;
     PetscScalar *value = element->vfix;
     PetscInt j,k,n = bc->count;
     for (k=0; k<n; k++) {
-      PetscInt idx = a*dof + bc->field[k];
+      PetscInt c = bc->field[k];
+      PetscInt idx = a*dof + c;
       PetscScalar val = bc->value[k];
+      if (iga->fixtable) val = iga->fixtableU[c + element->mapping[a]*dof];
       for (j=0; j<count; j++)
         if (index[j] == idx) break;
       if (j == count) count++;

@@ -221,6 +221,7 @@ PETSC_EXTERN PetscErrorCode IGAFormSetIJacobian2(IGAForm form,IGAFormIJacobian2 
 PETSC_EXTERN PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,void *ctx);
 PETSC_EXTERN PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,void *ctx);
 
+PETSC_EXTERN PetscErrorCode IGASetFixTable(IGA iga,Vec table);
 PETSC_EXTERN PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
 PETSC_EXTERN PetscErrorCode IGASetBoundaryLoad (IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
 PETSC_EXTERN PetscErrorCode IGASetBoundaryForm (IGA iga,PetscInt axis,PetscInt side,PetscBool flag);
@@ -272,9 +273,11 @@ struct _p_IGA {
   PetscBool   rational;
   PetscInt    geometry;
   PetscInt    property;
+  PetscBool   fixtable;
   PetscReal   *rationalW;
   PetscReal   *geometryX;
   PetscScalar *propertyA;
+  PetscScalar *fixtableU;
 
   PetscInt  proc_sizes[3];
   PetscInt  proc_ranks[3];

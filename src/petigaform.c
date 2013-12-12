@@ -295,6 +295,33 @@ PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,vo
 /* --------------------------------------------------------------- */
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetFixTable"
+PetscErrorCode IGASetFixTable(IGA iga,Vec U)
+{
+  Vec               local;
+  PetscInt          nlocal;
+  const PetscScalar *vlocal;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (iga->setupstage < 2) IGACheckSetUp(iga,1);
+
+  iga->fixtable = PETSC_FALSE;
+  ierr = PetscFree(iga->fixtableU);
+  if (!U) PetscFunctionReturn(0);
+
+  PetscValidHeaderSpecific(U,VEC_CLASSID,2);
+  ierr = IGAGetLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
+  ierr = VecGetSize(local,&nlocal);CHKERRQ(ierr);
+  iga->fixtable = PETSC_TRUE;
+  ierr = PetscMalloc1(nlocal,&iga->fixtableU);
+  ierr = PetscMemcpy(iga->fixtableU,vlocal,nlocal*sizeof(PetscScalar));CHKERRQ(ierr);
+  ierr = IGARestoreLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetBoundaryValue"
 PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)
 {

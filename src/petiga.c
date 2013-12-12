@@ -125,9 +125,11 @@ PetscErrorCode IGAReset(IGA iga)
   iga->rational = PETSC_FALSE;
   iga->geometry = 0;
   iga->property = 0;
+  iga->fixtable = PETSC_FALSE;
   ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
+  ierr = PetscFree(iga->fixtableU);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
   /* node */
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
@@ -1230,9 +1232,11 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
   iga->rational = PETSC_FALSE;
   iga->geometry = 0;
   iga->property = 0;
+  iga->fixtable = PETSC_FALSE;
   ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
+  ierr = PetscFree(iga->fixtableU);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
