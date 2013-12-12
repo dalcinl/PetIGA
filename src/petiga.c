@@ -787,6 +787,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = IGAOptionsReject(prefix,"-iga_continuity");CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_limits"    );CHKERRQ(ierr);
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
+      ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     } else { /* set axis details */
       ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
       if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
