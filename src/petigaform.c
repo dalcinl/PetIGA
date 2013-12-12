@@ -328,6 +328,10 @@ PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt 
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,axis,2);
+  PetscValidLogicalCollectiveInt(iga,side,3);
+  PetscValidLogicalCollectiveInt(iga,field,4);
+  PetscValidLogicalCollectiveScalar(iga,value,5);
   if (iga->dim > 0) IGAFormCheckArg(axis,iga->dim);
   if (iga->dof > 0) IGAFormCheckArg(field,iga->dof);
   ierr = IGAFormSetBoundaryValue(iga->form,axis,side,field,value);CHKERRQ(ierr);
@@ -341,6 +345,10 @@ PetscErrorCode IGASetBoundaryLoad(IGA iga,PetscInt axis,PetscInt side,PetscInt f
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,axis,2);
+  PetscValidLogicalCollectiveInt(iga,side,3);
+  PetscValidLogicalCollectiveInt(iga,field,4);
+  PetscValidLogicalCollectiveScalar(iga,value,5);
   if (iga->dim > 0) IGAFormCheckArg(axis,iga->dim);
   if (iga->dof > 0) IGAFormCheckArg(field,iga->dof);
   ierr = IGAFormSetBoundaryLoad(iga->form,axis,side,field,value);CHKERRQ(ierr);
@@ -354,6 +362,9 @@ PetscErrorCode IGASetBoundaryForm(IGA iga,PetscInt axis,PetscInt side,PetscBool 
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,axis,2);
+  PetscValidLogicalCollectiveInt(iga,side,3);
+  PetscValidLogicalCollectiveBool(iga,flag,4);
   if (iga->dim > 0) IGAFormCheckArg(axis,iga->dim);
   ierr = IGAFormSetBoundaryForm(iga->form,axis,side,flag);CHKERRQ(ierr);
   PetscFunctionReturn(0);
