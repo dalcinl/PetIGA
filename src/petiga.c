@@ -468,7 +468,7 @@ PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,i,2);
-  PetscValidLogicalCollectiveInt(iga,(PetscInt)type,3);
+  PetscValidLogicalCollectiveEnum(iga,type,3);
   ierr = IGAGetBasis(iga,i,&basis);CHKERRQ(ierr);
   if (basis->type == type) PetscFunctionReturn(0);
   ierr = IGABasisSetType(basis,type);CHKERRQ(ierr);
