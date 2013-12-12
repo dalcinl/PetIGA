@@ -118,18 +118,6 @@ void IGAFormBCSetEntry(IGAFormBC bc,PetscInt field,PetscScalar value)
   if (k == bc->count) bc->count++;
   bc->field[k] = field;
   bc->value[k] = value;
-  bc->property[k] = -1; /* do not use property vector */
-}
-
-PETSC_STATIC_INLINE
-void IGAFormBCSetProperty(IGAFormBC bc,PetscInt field,PetscInt property_field)
-{
-  PetscInt k;
-  for (k=0; k<bc->count; k++)
-    if (bc->field[k] == field) break;
-  if (k == bc->count) bc->count++;
-  bc->field[k]    = field;
-  bc->property[k] = property_field;
 }
 
 #undef  __FUNCT__
@@ -142,19 +130,6 @@ PetscErrorCode IGAFormSetBoundaryValue(IGAForm form,PetscInt axis,PetscInt side,
   IGAFormCheckArg(field,64);
   IGAFormUpdateDof(form,field);
   IGAFormBCSetEntry(form->value[axis][side],field,value);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetBoundaryByProperty"
-PetscErrorCode IGAFormSetBoundaryByProperty(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscInt property_field)
-{
-  PetscFunctionBegin;
-  IGAFormCheckArg(axis,3);
-  IGAFormCheckArg(side,2);
-  IGAFormCheckArg(field,64);
-  IGAFormUpdateDof(form,field);
-  IGAFormBCSetProperty(form->value[axis][side],field,property_field);
   PetscFunctionReturn(0);
 }
 
@@ -329,19 +304,6 @@ PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt 
   if (iga->dim > 0) IGAFormCheckArg(axis,iga->dim);
   if (iga->dof > 0) IGAFormCheckArg(field,iga->dof);
   ierr = IGAFormSetBoundaryValue(iga->form,axis,side,field,value);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetBoundaryByProperty"
-PetscErrorCode IGASetBoundaryByProperty(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscInt property_field)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (iga->dim > 0) IGAFormCheckArg(axis,iga->dim);
-  if (iga->dof > 0) IGAFormCheckArg(field,iga->dof);
-  ierr = IGAFormSetBoundaryByProperty(iga->form,axis,side,field,property_field);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

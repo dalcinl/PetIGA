@@ -156,7 +156,6 @@ struct _IGAFormBC {
   PetscInt    count;
   PetscInt    field[64];
   PetscScalar value[64];
-  PetscInt    property[64];
 };
 
 typedef struct _IGAFormOps *IGAFormOps;
@@ -206,7 +205,6 @@ PETSC_EXTERN PetscErrorCode IGAFormReset(IGAForm form);
 PETSC_EXTERN PetscErrorCode IGAFormReference(IGAForm form);
 
 PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryValue(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
-PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryByProperty(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscInt property_field);
 PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryLoad (IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
 PETSC_EXTERN PetscErrorCode IGAFormSetBoundaryForm (IGAForm form,PetscInt axis,PetscInt side,PetscBool flag);
 PETSC_EXTERN PetscErrorCode IGAFormClearBoundary   (IGAForm form,PetscInt axis,PetscInt side);
@@ -224,7 +222,6 @@ PETSC_EXTERN PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction 
 PETSC_EXTERN PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,void *ctx);
 
 PETSC_EXTERN PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
-PETSC_EXTERN PetscErrorCode IGASetBoundaryByProperty(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscInt property_field);
 PETSC_EXTERN PetscErrorCode IGASetBoundaryLoad (IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value);
 PETSC_EXTERN PetscErrorCode IGASetBoundaryForm (IGA iga,PetscInt axis,PetscInt side,PetscBool flag);
 

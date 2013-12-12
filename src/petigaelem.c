@@ -1208,9 +1208,7 @@ static void AddFixa(IGAElement element,IGAFormBC bc,PetscInt a)
     PetscInt j,k,n = bc->count;
     for (k=0; k<n; k++) {
       PetscInt idx = a*dof + bc->field[k];
-      PetscInt ipr = bc->property[k];
       PetscScalar val = bc->value[k];
-      if (ipr > -1) val = element->propertyA[a*element->npd+ipr];
       for (j=0; j<count; j++)
         if (index[j] == idx) break;
       if (j == count) count++;
