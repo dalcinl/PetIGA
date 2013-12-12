@@ -440,6 +440,8 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   if (order < 0)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Order must be nonnegative, got %D",order);
+  order = PetscMax(order,1);
+  order = PetscMin(order,3);
   if (iga->order == order) PetscFunctionReturn(0);
   iga->order = order;
   iga->setup = PETSC_FALSE;
