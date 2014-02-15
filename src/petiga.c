@@ -923,6 +923,12 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+#define DMBoundaryType       DMDABoundaryType
+#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
+#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateDM"
 static
@@ -934,17 +940,17 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
                            PetscInt  stencil_width,
                            DM *dm_)
 {
-  PetscInt         i,dim;
-  MPI_Comm         subcomms[3];
-  PetscInt         procs[3]   = {-1,-1,-1};
-  PetscInt         sizes[3]   = { 1, 1, 1};
-  PetscInt         width[3]   = { 1, 1, 1};
-  PetscInt         *ranges[3] = {NULL, NULL, NULL};
-  DMDABoundaryType btype[3]   = {DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE,DMDA_BOUNDARY_NONE};
-  DMDAStencilType  stype      = stencil_box ? DMDA_STENCIL_BOX : DMDA_STENCIL_STAR;
-  PetscInt         swidth     = stencil_width;
-  DM               dm;
-  PetscErrorCode   ierr;
+  PetscInt        i,dim;
+  MPI_Comm        subcomms[3];
+  PetscInt        procs[3]   = {-1,-1,-1};
+  PetscInt        sizes[3]   = { 1, 1, 1};
+  PetscInt        width[3]   = { 1, 1, 1};
+  PetscInt        *ranges[3] = {NULL, NULL, NULL};
+  DMBoundaryType  btype[3]   = {DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE};
+  DMDAStencilType stype      = stencil_box ? DMDA_STENCIL_BOX : DMDA_STENCIL_STAR;
+  PetscInt        swidth     = stencil_width;
+  DM              dm;
+  PetscErrorCode  ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
@@ -958,7 +964,7 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
   for (i=0; i<dim; i++) {
     sizes[i] = gsizes[i];
     width[i] = lsizes[i];
-    btype[i] = (periodic && periodic[i]) ? DMDA_BOUNDARY_PERIODIC : DMDA_BOUNDARY_NONE;
+    btype[i] = (periodic && periodic[i]) ? DM_BOUNDARY_PERIODIC : DM_BOUNDARY_NONE;
     procs[i] = iga->proc_sizes[i];
   }
   ierr = IGACreateSubComms1D(iga,subcomms);CHKERRQ(ierr);
