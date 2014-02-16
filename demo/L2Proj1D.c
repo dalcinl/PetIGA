@@ -31,6 +31,11 @@ PetscScalar Sine(PetscReal x)
   return sin(M_PI*x);
 }
 
+PetscScalar Step(PetscReal x)
+{
+  return (x<0.0)?-1.0:+1.0;
+}
+
 
 typedef struct {
   PetscScalar (*Function)(PetscReal x);
@@ -89,13 +94,13 @@ int main(int argc, char *argv[]) {
   PetscInt  p=2;
   PetscInt  C=PETSC_DECIDE;
   PetscInt  choice=2;
-  const char *choicelist[] = {"line", "parabola", "poly3", "poly4", "hill", "sine", 0};
+  const char *choicelist[] = {"line", "parabola", "poly3", "poly4", "hill", "sine", "step", 0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2 Projection 1D Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool ("-periodic", "periodicity",__FILE__,w,&w,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt  ("-N", "number of elements",__FILE__,N,&N,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt  ("-p", "polynomial order",  __FILE__,p,&p,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt  ("-C", "continuity order",  __FILE__,C,&C,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEList("-function","1D function", __FILE__,choicelist,6,choicelist[choice],&choice,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEList("-function","1D function", __FILE__,choicelist,7,choicelist[choice],&choice,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (C == PETSC_DECIDE) C = p-1;
   switch (choice) {
@@ -105,6 +110,7 @@ int main(int argc, char *argv[]) {
   case 3: user.Function = Poly4;    break;
   case 4: user.Function = Hill;     break;
   case 5: user.Function = Sine;     break;
+  case 6: user.Function = Step;     break;
   }
 
   IGA iga;
