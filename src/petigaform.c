@@ -56,7 +56,7 @@ PetscErrorCode IGAFormDestroy(IGAForm *_form)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_form,1);
-  form = *_form; *_form = 0;
+  form = *_form; *_form = NULL;
   if (!form) PetscFunctionReturn(0);
   if (--form->refct > 0) PetscFunctionReturn(0);
   /* */

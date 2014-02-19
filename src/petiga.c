@@ -80,7 +80,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_iga,1);
-  iga = *_iga; *_iga = 0;
+  iga = *_iga; *_iga = NULL;
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (--((PetscObject)iga)->refct > 0) PetscFunctionReturn(0);
@@ -407,7 +407,7 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
   if (iga->fieldname)
     *name = iga->fieldname[field];
   else
-    *name = 0;
+    *name = NULL;
   PetscFunctionReturn(0);
 }
 
@@ -705,7 +705,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   {
     PetscBool flg;
     PetscInt  i,nw,nl;
-    const char *prefix = 0;
+    const char *prefix = NULL;
     PetscBool collocation = iga->collocation;
     IGABasisType btype[3] = {IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE};
     PetscBool    wraps[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE };

@@ -271,7 +271,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscValidPointer(mat,2);
   IGACheckSetUp(iga,1);
 
-  ierr = PetscObjectGetComm((PetscObject)iga,&comm);CHKERRQ(ierr);
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
 
@@ -353,11 +353,11 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   if (aij || baij || sbaij) {
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
     PetscInt Nbs = (baij||sbaij) ? N : N*bs;
-    PetscInt *dnz = 0, *onz = 0;
+    PetscInt *dnz = NULL, *onz = NULL;
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
       PetscInt i,j,k;
-      PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;
+      PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;
       ierr = PetscMalloc1(nnz,&indices);CHKERRQ(ierr);
       #if PETSC_VERSION_LT(3,5,0)
       ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
@@ -416,7 +416,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (aij || baij || sbaij) {
     PetscInt i,j,k;
-    PetscInt nnz = maxnnz,*indices=0,*ubrows=0,*ubcols=0;PetscScalar *values=0;
+    PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;PetscScalar *values=NULL;
     #if PETSC_VERSION_LT(3,5,0)
     ierr = PetscMalloc2(nnz,PetscInt,&indices,nnz*bs*nnz*bs,PetscScalar,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);

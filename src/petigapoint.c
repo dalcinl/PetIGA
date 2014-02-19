@@ -23,7 +23,7 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_point,1);
-  point = *_point; *_point = 0;
+  point = *_point; *_point = NULL;
   if (!point) PetscFunctionReturn(0);
   if (--point->refct > 0) PetscFunctionReturn(0);
   ierr = IGAPointReset(point);CHKERRQ(ierr);

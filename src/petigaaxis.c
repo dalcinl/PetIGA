@@ -36,7 +36,7 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_axis,1);
-  axis = *_axis; *_axis = 0;
+  axis = *_axis; *_axis = NULL;
   if (!axis) PetscFunctionReturn(0);
   if (--axis->refct > 0) PetscFunctionReturn(0);
   ierr = PetscFree(axis->U);CHKERRQ(ierr);

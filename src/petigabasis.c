@@ -28,7 +28,7 @@ PetscErrorCode IGABasisDestroy(IGABasis *_basis)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_basis,1);
-  basis = *_basis; *_basis = 0;
+  basis = *_basis; *_basis = NULL;
   if (!basis) PetscFunctionReturn(0);
   if (--basis->refct > 0) PetscFunctionReturn(0);
   ierr = IGABasisReset(basis);CHKERRQ(ierr);

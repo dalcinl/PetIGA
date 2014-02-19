@@ -260,7 +260,7 @@ EXTERN_C_BEGIN
 #define __FUNCT__ "PCCreate_IGAEBE"
 PetscErrorCode PCCreate_IGAEBE(PC pc)
 {
-  PC_EBE         *ebe = 0;
+  PC_EBE         *ebe = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
 #if PETSC_VERSION_LT(3,5,0)

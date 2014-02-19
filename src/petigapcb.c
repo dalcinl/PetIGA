@@ -357,7 +357,7 @@ EXTERN_C_BEGIN
 #define __FUNCT__ "PCCreate_IGABBB"
 PetscErrorCode PCCreate_IGABBB(PC pc)
 {
-  PC_BBB         *bbb = 0;
+  PC_BBB         *bbb = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
 #if PETSC_VERSION_LT(3,5,0)

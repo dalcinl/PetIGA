@@ -99,7 +99,7 @@ PetscErrorCode IGA_Grid_Destroy(IGA_Grid *grid)
   if (!grid) PetscFunctionReturn(0);
   PetscValidPointer(grid,1);
   PetscValidPointer(*grid,1);
-  g = *grid; *grid = 0;
+  g = *grid; *grid = NULL;
   ierr = IGA_Grid_Reset(g);CHKERRQ(ierr);
   ierr = PetscFree(g);CHKERRQ(ierr);
   PetscFunctionReturn(0);

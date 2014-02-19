@@ -20,7 +20,7 @@ PetscErrorCode IGARuleDestroy(IGARule *_rule)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_rule,1);
-  rule = *_rule; *_rule = 0;
+  rule = *_rule; *_rule = NULL;
   if (!rule) PetscFunctionReturn(0);
   if (--rule->refct > 0) PetscFunctionReturn(0);
   ierr = PetscFree(rule->point);CHKERRQ(ierr);

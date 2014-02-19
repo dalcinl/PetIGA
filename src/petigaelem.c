@@ -24,7 +24,7 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_element,1);
-  element = *_element; *_element = 0;
+  element = *_element; *_element = NULL;
   if (!element) PetscFunctionReturn(0);
   if (--element->refct > 0) PetscFunctionReturn(0);
   ierr = IGAPointDestroy(&element->iterator);CHKERRQ(ierr);

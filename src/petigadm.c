@@ -324,7 +324,7 @@ EXTERN_C_BEGIN
 #define __FUNCT__ "DMCreate_IGA"
 PetscErrorCode DMCreate_IGA(DM dm)
 {
-  DM_IGA         *dd = 0;
+  DM_IGA         *dd = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(dm,1);
