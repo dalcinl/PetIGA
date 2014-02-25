@@ -87,6 +87,21 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
   PetscValidPointer(element,2);
   ierr = IGAPointReset(point);CHKERRQ(ierr);
   point->parent = element;
+  point->neq = element->neq;
+  point->nen = element->nen;
+  point->dof = element->dof;
+  point->dim = element->dim;
+  point->nsd = element->nsd;
+  point->npd = element->npd;
+  { /* */
+    size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
+    size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
+    size_t i, n = point->nen * point->dof;
+    for (i=0; i<MAX_WORK_VEC; i++)
+      {ierr = PetscMalloc1(n,&point->wvec[i]);CHKERRQ(ierr);}
+    for (i=0; i<MAX_WORK_MAT; i++)
+      {ierr = PetscMalloc1(n*n,&point->wmat[i]);CHKERRQ(ierr);}
+  }
   PetscFunctionReturn(0);
 }
 
@@ -466,13 +481,9 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-    PetscInt m = point->neq * point->dof;
-    PetscInt n = point->nen * point->dof;
+    size_t m = (size_t)(point->neq * point->dof);
     if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
-    if (PetscUnlikely(!point->wvec[point->nvec])) {
-      ierr = PetscMalloc1(n,&point->wvec[point->nvec]);CHKERRQ(ierr);
-    }
     *V = point->wvec[point->nvec++];
     ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
@@ -491,13 +502,10 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   {
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-    PetscInt m = point->neq * point->dof;
-    PetscInt n = point->nen * point->dof;
+    size_t m = (size_t)(point->neq * point->dof);
+    size_t n = (size_t)(point->nen * point->dof);
     if (PetscUnlikely(point->nmat >= (PetscInt)MAX_WORK_MAT))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
-    if (PetscUnlikely(!point->wmat[point->nmat])) {
-      ierr = PetscMalloc1(n*n,&point->wmat[point->nmat]);CHKERRQ(ierr);
-    }
     *M = point->wmat[point->nmat++];
     ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
