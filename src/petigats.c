@@ -57,11 +57,9 @@ PetscErrorCode IGAComputeIFunction(IGA iga,PetscReal dt,
   /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&V);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* FormIFunction loop */
     while (IGAElementNextFormIFunction(element,&IFunction,&ctx)) {
@@ -129,11 +127,9 @@ PetscErrorCode IGAComputeIJacobian(IGA iga,PetscReal dt,
   /* Element Loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&V);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* FormIJacobian loop */
     while (IGAElementNextFormIJacobian(element,&IJacobian,&ctx)) {
@@ -227,15 +223,12 @@ PetscErrorCode IGAComputeIEFunction(IGA iga,PetscReal dt,
   /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&V);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U0);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU0,U0);CHKERRQ(ierr);
-    ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
+    ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU0,&U0);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
+    ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
     /* FormIEFunction loop */
     while (IGAElementNextFormIEFunction(element,&IEFunction,&ctx)) {
       /* Quadrature loop */
@@ -308,15 +301,12 @@ PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
   /* Element Loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&V);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(element,&U0);CHKERRQ(ierr);
     ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayV,V);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU0,U0);CHKERRQ(ierr);
-    ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
+    ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU0,&U0);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
+    ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
     /* FormIEJacobian loop */
     while (IGAElementNextFormIEJacobian(element,&IEJacobian,&ctx)) {
       /* Quadrature loop */

@@ -46,20 +46,20 @@ PetscErrorCode IGAPointReference(IGAPoint point)
 static
 PetscErrorCode IGAPointFreeWork(IGAPoint point)
 {
-  size_t i;
-  size_t MAX_WORK_VEC;
-  size_t MAX_WORK_MAT;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_VEC; i++)
-    {ierr = PetscFree(point->wvec[i]);CHKERRQ(ierr);}
-  point->nvec = 0;
-  MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_MAT; i++)
-    {ierr = PetscFree(point->wmat[i]);CHKERRQ(ierr);}
-  point->nmat = 0;
+  {
+    size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
+    size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
+    size_t i;
+    for (i=0; i<MAX_WORK_VEC; i++)
+      {ierr = PetscFree(point->wvec[i]);CHKERRQ(ierr);}
+    point->nvec = 0;
+    for (i=0; i<MAX_WORK_MAT; i++)
+      {ierr = PetscFree(point->wmat[i]);CHKERRQ(ierr);}
+    point->nmat = 0;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -479,11 +479,10 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
   PetscValidPointer(V,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  {
-    size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
-    size_t m = (size_t)(point->neq * point->dof);
-    if (PetscUnlikely(point->nvec >= (PetscInt)MAX_WORK_VEC))
+  if (PetscUnlikely(point->nvec >= sizeof(point->wvec)/sizeof(PetscScalar*)))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
+  {
+    size_t m = (size_t)(point->neq * point->dof);
     *V = point->wvec[point->nvec++];
     ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
@@ -500,12 +499,11 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
   PetscValidPointer(M,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
+  if (PetscUnlikely(point->nmat >= sizeof(point->wmat)/sizeof(PetscScalar*)))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
   {
-    size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
     size_t m = (size_t)(point->neq * point->dof);
     size_t n = (size_t)(point->nen * point->dof);
-    if (PetscUnlikely(point->nmat >= (PetscInt)MAX_WORK_MAT))
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
     *M = point->wmat[point->nmat++];
     ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
@@ -840,8 +838,7 @@ PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscS
     lfound = 1;
     ierr = IGAPointInit(pnt,ele);CHKERRQ(ierr);
     ierr = IGAPointEval(iga,pnt);CHKERRQ(ierr);
-    ierr = IGAElementGetWorkVal(ele,&Ul);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(ele,arrayU,Ul);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(ele,arrayU,&Ul);CHKERRQ(ierr);
     if(u)  IGA_GetValue(pnt->nen,pnt->dof,pnt->shape[0],Ul,u);
     if(du) IGA_GetGrad(pnt->nen,pnt->dof,pnt->dim,pnt->shape[1],Ul,du);
   }

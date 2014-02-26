@@ -50,9 +50,8 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* FormFunction loop */
     while (IGAElementNextFormFunction(element,&Function,&ctx)) {
@@ -112,9 +111,8 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   /* Element Loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
     ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     /* FormJacobian loop */
     while (IGAElementNextFormJacobian(element,&Jacobian,&ctx)) {

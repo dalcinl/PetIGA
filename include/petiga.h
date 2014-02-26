@@ -526,11 +526,9 @@ PETSC_EXTERN PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *coun
 PETSC_EXTERN PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen,PetscInt *dof);
 PETSC_EXTERN PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const PetscInt *mapping[]);
 
-PETSC_EXTERN PetscErrorCode IGAElementGetWorkVal(IGAElement element,PetscScalar *U[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[]);
 PETSC_EXTERN PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[]);
-
-PETSC_EXTERN PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar *U[]);
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildFix(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[]);

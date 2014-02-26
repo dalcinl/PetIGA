@@ -64,8 +64,7 @@ PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
   /* Element loop */
   ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
   while (IGANextElement(iga,element)) {
-    ierr = IGAElementGetWorkVal(element,&U);CHKERRQ(ierr);
-    ierr = IGAElementGetValues(element,arrayU,U);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     /* Quadrature loop */
     ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
     while (IGAElementNextPoint(element,point)) {

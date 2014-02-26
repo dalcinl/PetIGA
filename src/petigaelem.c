@@ -48,25 +48,24 @@ PetscErrorCode IGAElementReference(IGAElement element)
 static
 PetscErrorCode IGAElementFreeWork(IGAElement element)
 {
-  size_t i;
-  size_t MAX_WORK_VAL;
-  size_t MAX_WORK_VEC;
-  size_t MAX_WORK_MAT;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_VAL; i++)
-    {ierr = PetscFree(element->wval[i]);CHKERRQ(ierr);}
-  element->nval = 0;
-  MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_VEC; i++)
-    {ierr = PetscFree(element->wvec[i]);CHKERRQ(ierr);}
-  element->nvec = 0;
-  MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
-  for (i=0; i<MAX_WORK_MAT; i++)
-    {ierr = PetscFree(element->wmat[i]);CHKERRQ(ierr);}
-  element->nmat = 0;
+  {
+    size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
+    size_t MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
+    size_t MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
+    size_t i;
+    for (i=0; i<MAX_WORK_VAL; i++)
+      {ierr = PetscFree(element->wval[i]);CHKERRQ(ierr);}
+    element->nval = 0;
+    for (i=0; i<MAX_WORK_VEC; i++)
+      {ierr = PetscFree(element->wvec[i]);CHKERRQ(ierr);}
+    element->nvec = 0;
+    for (i=0; i<MAX_WORK_MAT; i++)
+      {ierr = PetscFree(element->wmat[i]);CHKERRQ(ierr);}
+    element->nmat = 0;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -1051,27 +1050,6 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt di
 /* -------------------------------------------------------------------------- */
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetWorkVal"
-PetscErrorCode IGAElementGetWorkVal(IGAElement element,PetscScalar *U[])
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(U,2);
-  if (PetscUnlikely(element->index < 0))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  {
-    size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
-    size_t n = (size_t)(element->nen * element->dof);
-    if (PetscUnlikely(element->nval >= (PetscInt)MAX_WORK_VAL))
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work values requested");
-    *U = element->wval[element->nval++];
-    ierr = PetscMemzero(*U,n*sizeof(PetscScalar));CHKERRQ(ierr);
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "IGAElementGetWorkVec"
 PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
 {
@@ -1081,11 +1059,10 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
   PetscValidPointer(V,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  if (PetscUnlikely(element->nvec >= sizeof(element->wvec)/sizeof(PetscScalar*)))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
   {
-    size_t MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
     size_t m = (size_t)(element->neq * element->dof);
-    if (PetscUnlikely(element->nvec >= (PetscInt)MAX_WORK_VEC))
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
     *V = element->wvec[element->nvec++];
     ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
@@ -1102,38 +1079,44 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
   PetscValidPointer(M,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  if (PetscUnlikely(element->nmat >= sizeof(element->wmat)/sizeof(PetscScalar*)))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
   {
-    size_t MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
     size_t m = (size_t)(element->neq * element->dof);
     size_t n = (size_t)(element->nen * element->dof);
-    if (PetscUnlikely(element->nmat >= (PetscInt)MAX_WORK_MAT))
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
     *M = element->wmat[element->nmat++];
     ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
 
-/* -------------------------------------------------------------------------- */
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementGetValues"
-PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar U[])
+PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar *_U[])
 {
+  PetscScalar    *U;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  PetscValidScalarPointer(arrayU,2);
-  PetscValidScalarPointer(U,3);
-  {
-    PetscInt nen = element->nen;
-    PetscInt dof = element->dof;
-    PetscInt *mapping = element->mapping;
-    PetscInt a,i,pos=0;
+  if (arrayU) PetscValidScalarPointer(arrayU,2);
+  PetscValidScalarPointer(_U,3);
+  if (PetscUnlikely(element->index < 0))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  if (PetscUnlikely((size_t)element->nval >= sizeof(element->wval)/sizeof(PetscScalar*)))
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work values requested");
+  U = *_U = element->wval[element->nval++];
+  if (PetscLikely(arrayU)) {
+    PetscInt a, nen = element->nen;
+    PetscInt i, dof = element->dof;
+    PetscInt pos = 0, *map = element->mapping;
     for (a=0; a<nen; a++) {
-      const PetscScalar *u = arrayU + mapping[a]*dof;
+      const PetscScalar *u = arrayU + map[a]*dof;
       for (i=0; i<dof; i++)
         U[pos++] = u[i]; /* XXX Use PetscMemcpy() ?? */
     }
+  } else {
+    size_t n = (size_t)(element->nen * element->dof);
+    ierr = PetscMemzero(U,n*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
