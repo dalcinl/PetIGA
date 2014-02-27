@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,5,0)
+#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
+#endif
+
 #define SQ(A) ((A)*(A))
 
 typedef struct {
@@ -52,7 +56,7 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
 
   ierr = KSPSetOptionsPrefix(ksp,"l2p_");CHKERRQ(ierr);

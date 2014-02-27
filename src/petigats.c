@@ -338,7 +338,7 @@ PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
 }
 
 PETSC_EXTERN PetscErrorCode IGATSFormIFunction(TS,PetscReal,Vec,Vec,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian(TS,PetscReal,Vec,Vec,PetscReal,Mat,Mat,void*);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGATSFormIFunction"
@@ -368,7 +368,7 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGATSFormIJacobian"
-PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
+PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat J,Mat P,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   PetscReal      dt,a=shift;
@@ -379,27 +379,30 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,3);
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
-  PetscValidPointer(J,6);
-  PetscValidHeaderSpecific(*J,MAT_CLASSID,6);
-  PetscValidPointer(P,7);
-  PetscValidHeaderSpecific(*P,MAT_CLASSID,7);
-  PetscValidPointer(m,8);
+  PetscValidHeaderSpecific(J,MAT_CLASSID,6);
+  PetscValidHeaderSpecific(P,MAT_CLASSID,7);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,9);
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   if (iga->form->ops->IEJacobian) {
     ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
-    ierr = IGAComputeIEJacobian(iga,dt,a,V,t,U,t0,U0,*P);CHKERRQ(ierr);
+    ierr = IGAComputeIEJacobian(iga,dt,a,V,t,U,t0,U0,P);CHKERRQ(ierr);
   } else {
-    ierr = IGAComputeIJacobian(iga,dt,a,V,t,U,*P);CHKERRQ(ierr);
+    ierr = IGAComputeIJacobian(iga,dt,a,V,t,U,P);CHKERRQ(ierr);
   }
-  if (*J != * P) {
-    ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (J != P) {
+    ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-  *m = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
+
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+PetscErrorCode IGATSFormIJacobian_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN; return IGATSFormIJacobian(ts,t,U,V,shift,*J,*P,ctx);}
+#define IGATSFormIJacobian IGATSFormIJacobian_Legacy
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateTS"
@@ -419,7 +422,7 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
 
 .keywords: IGA, create, TS
 @*/
-PetscErrorCode IGACreateTS(IGA iga, TS *ts)
+PetscErrorCode IGACreateTS(IGA iga,TS *ts)
 {
   MPI_Comm       comm;
   Vec            U;

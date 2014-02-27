@@ -14,6 +14,10 @@ on Google+. The challenge:
 */
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,5,0)
+#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
+#endif
+
 PetscReal Forcing(PetscReal x, PetscReal y)
 {
   PetscReal pi = M_PI;
@@ -107,7 +111,7 @@ int main(int argc, char *argv[]) {
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
 
   PetscLogDouble ts1,ts2,ts;

@@ -3,11 +3,11 @@
 #include <petscts.h>
 
 typedef PetscErrorCode (*TSIFunction2)(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
-typedef PetscErrorCode (*TSIJacobian2)(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,void*);
+typedef PetscErrorCode (*TSIJacobian2)(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,void*);
 PETSC_EXTERN PetscErrorCode TSSetIFunction2(TS,Vec,TSIFunction2,void*);
 PETSC_EXTERN PetscErrorCode TSSetIJacobian2(TS,Mat,Mat,TSIJacobian2,void*);
 PETSC_EXTERN PetscErrorCode TSComputeIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,PetscBool);
-PETSC_EXTERN PetscErrorCode TSComputeIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,PetscBool);
+PETSC_EXTERN PetscErrorCode TSComputeIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,PetscBool);
 PETSC_EXTERN PetscErrorCode TSSetSolution2(TS,Vec,Vec);
 PETSC_EXTERN PetscErrorCode TSGetSolution2(TS,Vec*,Vec*);
 PETSC_EXTERN PetscErrorCode TSSolve2(TS,Vec,Vec);

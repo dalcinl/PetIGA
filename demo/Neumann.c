@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,5,0)
+#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
+#endif
+
 #define pi M_PI
 
 PetscReal Exact(PetscReal x[3])
@@ -135,7 +139,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   if (!iga->collocation) {
     ierr = IGASetFormSystem(iga,SystemGalerkin,NULL);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);

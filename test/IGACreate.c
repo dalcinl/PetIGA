@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,5,0)
+#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "Scalar"
 PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx)
@@ -106,7 +110,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
   ierr = IGASetFormSystem(iga,System,0);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
   ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
@@ -126,7 +130,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeVector(iga,b);CHKERRQ(ierr);
   ierr = IGASetFormMatrix(iga,Matrix,0);CHKERRQ(ierr);
   ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
-  ierr = KSPSetOperators(ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
+  ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
   ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);

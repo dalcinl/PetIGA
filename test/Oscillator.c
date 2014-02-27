@@ -38,7 +38,7 @@ PetscErrorCode Residual1(TS ts,PetscReal t,Vec X,Vec A,Vec R,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent1"
-PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat *J,Mat *P,MatStructure *m,void *ctx)
+PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
   UserParams *user = (UserParams *)ctx;
   PetscReal Omega = user->Omega;
@@ -48,17 +48,21 @@ PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat *J,Ma
 
   T = shiftA + (Omega*Omega);
 
-  ierr = MatSetValue(*P,0,0,T,INSERT_VALUES);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(*P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd  (*P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  if (*J != * P) {
-    ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatSetValue(P,0,0,T,INSERT_VALUES);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (J != P) {
+    ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-  *m = SAME_NONZERO_PATTERN;
 
   PetscFunctionReturn(0);
 }
+#if PETSC_VERSION_LT(3,5,0)
+PetscErrorCode Tangent1_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN; return Tangent1(ts,t,U,V,shift,*J,*P,ctx);}
+#define Tangent1 Tangent1_Legacy
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual2"
@@ -90,7 +94,7 @@ PetscErrorCode Residual2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec R,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent2"
-PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat *J,Mat *P,MatStructure *m,void *ctx)
+PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
   UserParams *user = (UserParams *)ctx;
   PetscReal Omega = user->Omega, Xi = user->Xi;
@@ -100,14 +104,13 @@ PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,Pet
 
   T = shiftA + shiftV * (2*Xi*Omega) + (Omega*Omega);
 
-  ierr = MatSetValue(*P,0,0,T,INSERT_VALUES);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(*P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd  (*P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  if (*J != * P) {
-    ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatSetValue(P,0,0,T,INSERT_VALUES);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (P,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  if (J != P) {
+    ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-  *m = SAME_NONZERO_PATTERN;
 
   PetscFunctionReturn(0);
 }

@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,5,0)
+#define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
+#endif
+
 /* ---------------------------------------------------------------- */
 
 PETSC_STATIC_INLINE
@@ -214,7 +218,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
   IGACheckSetUp(iga,1);
 
-  ierr = PCGetOperators(pc,NULL,&mat,NULL);CHKERRQ(ierr);
+  ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
   ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
   ierr = PetscObjectQueryFunction((PetscObject)pc,"PCBDDCSetLocalAdjacencyGraph_C",&f);CHKERRQ(ierr);
@@ -301,7 +305,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
   if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-  ierr = PCGetOperators(pc,NULL,&mat,NULL);CHKERRQ(ierr);
+  ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
   if (!mat) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(mat,MAT_CLASSID,1);
   ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);

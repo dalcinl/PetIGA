@@ -143,7 +143,7 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
 }
 
 PETSC_EXTERN PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat,Mat,void*);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASNESFormFunction"
@@ -162,31 +162,34 @@ PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASNESFormJacobian"
-PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat *J, Mat *P,MatStructure *m,void *ctx)
+PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,2);
-  PetscValidPointer(J,3);
-  PetscValidHeaderSpecific(*J,MAT_CLASSID,3);
-  PetscValidPointer(P,4);
-  PetscValidHeaderSpecific(*P,MAT_CLASSID,4);
-  PetscValidPointer(m,5);
+  PetscValidHeaderSpecific(J,MAT_CLASSID,3);
+  PetscValidHeaderSpecific(P,MAT_CLASSID,4);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
-  ierr = IGAComputeJacobian(iga,U,*P);CHKERRQ(ierr);
-  if (*J != * P) {
-    ierr = MatAssemblyBegin(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(*J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = IGAComputeJacobian(iga,U,P);CHKERRQ(ierr);
+  if (J != P) {
+    ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-  *m = SAME_NONZERO_PATTERN;
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN;return IGASNESFormJacobian(snes,U,*J,*P,ctx);}
+#define IGASNESFormJacobian IGASNESFormJacobian_Legacy
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateSNES"
-PetscErrorCode IGACreateSNES(IGA iga, SNES *snes)
+PetscErrorCode IGACreateSNES(IGA iga,SNES *snes)
 {
   MPI_Comm       comm;
   Vec            F;

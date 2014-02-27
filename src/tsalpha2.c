@@ -61,11 +61,16 @@ static PetscErrorCode SNESTSFormFunction_Alpha2(SNES snes,Vec X,Vec F,TS ts)
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormJacobian_Alpha2"
-static PetscErrorCode SNESTSFormJacobian_Alpha2(SNES snes,Vec X,Mat *J,Mat *P,MatStructure *str,TS ts)
+static PetscErrorCode SNESTSFormJacobian_Alpha2(SNES snes,Vec X,
+#if PETSC_VERSION_LT(3,5,0)
+                                                Mat *J,Mat *P,MatStructure *m,
+#else
+                                                Mat J,Mat P,
+#endif
+                                                TS ts)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
-
   PetscFunctionBegin;
   ierr = th->StageVecs(ts,X);CHKERRQ(ierr);
   if (th->Jacobian) {
@@ -73,16 +78,23 @@ static PetscErrorCode SNESTSFormJacobian_Alpha2(SNES snes,Vec X,Mat *J,Mat *P,Ma
     PetscReal ta = th->stage_time;
     Vec       Xa = th->Xa, Va = th->Va, Aa = th->Aa;
     PetscReal dVdX = th->shift_V, dAdX = th->shift_A;
-    ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P,str,PETSC_FALSE);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
+    *m = SAME_NONZERO_PATTERN;
+    ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P,PETSC_FALSE);CHKERRQ(ierr);
+#else
+    ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
+#endif
   } else {
     /* J,P = Jacobian(ta,Xa,Aa) */
     PetscReal ta = th->stage_time;
     Vec       Xa = th->Xa, Aa = th->Aa;
     PetscReal dAdX = th->shift_A;
-    ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,str,PETSC_FALSE);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
+#else
+    ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
+#endif
   }
-  PetscValidHeaderSpecific(*J,MAT_CLASSID,3);
-  PetscValidHeaderSpecific(*P,MAT_CLASSID,4);
   PetscFunctionReturn(0);
 }
 
@@ -367,21 +379,18 @@ PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Ve
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIJacobian2_Alpha2"
-PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat *J,Mat *P,MatStructure *str,PetscBool imex)
+PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PetscBool imex)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   if (!th->Jacobian) SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call TSSetIJacobian2()");
-  *str = DIFFERENT_NONZERO_PATTERN;
-  ierr = PetscLogEventBegin(TS_JacobianEval,ts,X,V,*J);CHKERRQ(ierr);
+  ierr = PetscLogEventBegin(TS_JacobianEval,ts,X,V,J);CHKERRQ(ierr);
   PetscStackPush("TS user implicit Jacobian");
-  ierr = (*th->Jacobian)(ts,t,X,V,A,shiftV,shiftA,J,P,str,th->JacCtx);CHKERRQ(ierr);
+  ierr = (*th->Jacobian)(ts,t,X,V,A,shiftV,shiftA,J,P,th->JacCtx);CHKERRQ(ierr);
   PetscStackPop;
-  ierr = PetscLogEventEnd(TS_JacobianEval,ts,X,V,*J);CHKERRQ(ierr);
-  PetscValidHeaderSpecific(*J,MAT_CLASSID,8);
-  PetscValidHeaderSpecific(*P,MAT_CLASSID,9);
+  ierr = PetscLogEventEnd(TS_JacobianEval,ts,X,V,J);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -667,7 +676,7 @@ PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,Pet
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIJacobian2"
-PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat *J,Mat *P,MatStructure *str,PetscBool imex)
+PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PetscBool imex)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -675,14 +684,11 @@ PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
   PetscValidHeaderSpecific(X,VEC_CLASSID,3);
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
   PetscValidHeaderSpecific(A,VEC_CLASSID,5);
-  PetscValidPointer(J,8);
-  PetscValidHeaderSpecific(*J,MAT_CLASSID,8);
-  PetscValidPointer(P,9);
-  PetscValidHeaderSpecific(*P,MAT_CLASSID,9);
-  PetscValidPointer(str,10);
+  PetscValidHeaderSpecific(J,MAT_CLASSID,8);
+  PetscValidHeaderSpecific(P,MAT_CLASSID,9);
   ierr = PetscUseMethod(ts,"TSComputeIJacobian2_C",
-                        (TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat*,Mat*,MatStructure*,PetscBool),
-                        (ts,t,X,V,A,shiftV,shiftA,J,P,str,imex));CHKERRQ(ierr);
+                        (TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,PetscBool),
+                        (ts,t,X,V,A,shiftV,shiftA,J,P,imex));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
