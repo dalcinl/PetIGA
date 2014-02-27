@@ -604,9 +604,7 @@ PetscBool IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element)
   element->index = 0;
 #undef  CHKERRRETURN
 #define CHKERRRETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
-  ierr = IGAElementBuildMapping(element);  CHKERRRETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildGeometry(element); CHKERRRETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildProperty(element); CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildClosure(element);  CHKERRRETURN(ierr,PETSC_FALSE);
   ierr = IGAElementBuildFix(element);      CHKERRRETURN(ierr,PETSC_FALSE);
 #undef  CHKERRRETURN
   return PETSC_TRUE;

@@ -429,7 +429,6 @@ struct _n_IGAElement {
   PetscInt count;
   PetscInt index;
   /**/
-  PetscInt nqp;
   PetscInt neq;
   PetscInt nen;
   PetscInt dof;
@@ -438,12 +437,16 @@ struct _n_IGAElement {
   PetscInt npd;
 
   PetscInt    *mapping;   /*[nen]      */
+  PetscInt    *rowmap;    /*[neq]      */
+  PetscInt    *colmap;    /*[nen]      */
   PetscBool   rational;
   PetscReal   *rationalW; /*[nen]      */
   PetscBool   geometry;
   PetscReal   *geometryX; /*[nen][nsd] */
   PetscBool   property;
   PetscScalar *propertyA; /*[nen][npd] */
+
+  PetscInt  nqp;
 
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */
@@ -473,9 +476,6 @@ struct _n_IGAElement {
   IGAPoint iterator;
 
   PetscBool   collocation;
-
-  PetscInt    *rowmap;
-  PetscInt    *colmap;
 
   PetscInt     nfix;
   PetscInt    *ifix;
@@ -511,9 +511,7 @@ PETSC_EXTERN PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *po
 PETSC_EXTERN PetscBool      IGAElementNextPoint(IGAElement element,IGAPoint point);
 PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point);
 
-PETSC_EXTERN PetscErrorCode IGAElementBuildMapping(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildGeometry(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildProperty(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementBuildClosure(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadratureAtBoundary(IGAElement element,PetscInt dir,PetscInt side);

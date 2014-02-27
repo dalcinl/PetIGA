@@ -265,6 +265,13 @@ PetscErrorCode Domain(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = TestGeometryMap(p);CHKERRQ(ierr);
+  {
+    PetscInt i,dim = p->dim;
+    PetscReal dS = p->detS[0];
+    PetscReal *n = p->normal;
+    AssertEQUAL(dS, 0.0);
+    for (i=0;i<dim;i++) AssertEQUAL(n[i], 0.0);
+  }
   PetscFunctionReturn(0);
 }
 
@@ -405,7 +412,7 @@ PetscErrorCode Boundary(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
        {Boundary_10, Boundary_11},
        {Boundary_20, Boundary_21}};
   PetscInt d,s;
-  d = p->boundary_id / 2; 
+  d = p->boundary_id / 2;
   s = p->boundary_id % 2;
   return boundary[d][s](p,A,b,ctx);
 }
