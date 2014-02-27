@@ -191,7 +191,6 @@ test-build: Test_SNES_2D.PETSc
 	      ${MPIEXEC} -n 2 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	      ${MPIEXEC} -n 3 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	      ${MPIEXEC} -n 4 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
-	      ${MPIEXEC} -n 9 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	    fi; \
 	    ${OMAKE} Test_SNES_2D.rm PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
 	   fi
