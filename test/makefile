@@ -64,6 +64,17 @@ IGAInputOutput = IGAInputOutput.PETSc \
 		 runex2a_1 runex2a_2 runex2a_3 runex2a_4 runex2a_8 \
 		 runex2a.rm IGAInputOutput.rm
 
+GeometryMap: GeometryMap.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex3a_2:
+	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 2
+runex3a_3:
+	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 3
+GeometryMap = GeometryMap.PETSc \
+	      runex3a_2 runex3a_3 \
+	      GeometryMap.rm
+
 FixTable: FixTable.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -90,16 +101,21 @@ FixTable = FixTable.PETSc \
            runex4b_1 runex4b_2 runex4b_3 \
            FixTable.rm
 
-GeometryMap: GeometryMap.o chkopts
+IGAProbe: IGAProbe.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
-runex3a_2:
-	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 2
-runex3a_3:
-	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 3
-GeometryMap = GeometryMap.PETSc \
-	      runex3a_2 runex3a_3 \
-	      GeometryMap.rm
+runex5a_1:
+	-@${MPIEXEC} -n 1 ./IGAProbe ${OPTS} -iga_dim 1
+	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 1 -collective 1
+	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 1 -collective 0
+runex5a_2:
+	-@${MPIEXEC} -n 1 ./IGAProbe ${OPTS} -iga_dim 2
+	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 2
+runex5a_3:
+	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 3 -iga_elements 8
+IGAProbe = IGAProbe.PETSc \
+	   runex5a_1 runex5a_2 runex5a_3 \
+	   IGAProbe.rm
 
 
 Test_SNES_2D: Test_SNES_2D.o chkopts
@@ -169,6 +185,7 @@ TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAInputOutput) \
 		 $(FixTable) \
 		 $(GeometryMap) \
+		 $(IGAProbe) \
 		 $(Test_SNES_2D) \
 		 $(Oscillator)
 TESTEXAMPLES_FORTRAN =

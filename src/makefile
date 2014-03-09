@@ -16,6 +16,8 @@ ALL: lib
 
 SOURCEH = \
 ../include/petiga.h \
+../include/petigaprobe.h \
+../include/petscts2.h \
 petigabl.h \
 petigagrid.h \
 petigapart.h \
@@ -43,6 +45,7 @@ petigaksp.c \
 petigasnes.c \
 petigats.c \
 petigats2.c \
+petigaprobe.c \
 tsalpha2.c \
 petscvwopt.c \
 snesfdcolor.c \

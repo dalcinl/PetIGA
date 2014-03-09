@@ -1,6 +1,6 @@
 CFLAGS   =
 FFLAGS   =
-SOURCEH  = petiga.h petscts2.h
+SOURCEH  = petiga.h petigaprobe.h petscts2.h
 SOURCEC  =
 SOURCEF  =
 OBJSC    =
