@@ -285,6 +285,9 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   element->atboundary  = PETSC_FALSE;
   element->boundary_id = -1;
 
+  if (iga->rational && !iga->rationalW) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
+  if (iga->geometry && !iga->geometryX) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
+  if (iga->property && !iga->propertyA) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No property set");
   element->rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
   element->geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
   element->property = iga->property ? PETSC_TRUE : PETSC_FALSE;

@@ -180,15 +180,11 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
   if (dim < 1 || dim > 3)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Number of space dimensions must be in range [1,3], got %D",dim);
-  if (iga->geometry > 0 && iga->geometry != dim)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA geometry dim to %D after it was set to %D",dim,iga->geometry);
   if (iga->geometry == dim) PetscFunctionReturn(0);
+  iga->geometry = dim;
+  iga->rational = PETSC_FALSE;
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
-  iga->rational = PETSC_FALSE;
-  iga->geometry = dim;
-  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -253,10 +249,11 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   /* global -> local */
   ierr = VecScatterBegin(g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2l,gvec,lvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
+
   ierr = VecStrideMin(gvec,nsd,NULL,&min_w);CHKERRQ(ierr);
   ierr = VecStrideMax(gvec,nsd,NULL,&max_w);CHKERRQ(ierr);
-
   iga->rational = ((max_w-min_w)>tol_w) ? PETSC_TRUE : PETSC_FALSE;
+
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
   {
@@ -381,16 +378,11 @@ PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
-  if (dim < 1)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Number of properties must be greater than 0, got %D",dim);
-  if (iga->property > 0 && iga->property != dim)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA property dim to %D after it was set to %D",dim,iga->property);
+  if (dim < 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+                        "Number of properties must be nonnegative, got %D",dim);
   if (iga->property == dim) PetscFunctionReturn(0);
-  ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   iga->property = dim;
-  iga->setup = PETSC_FALSE;
+  ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
