@@ -173,6 +173,7 @@ static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
 @*/
 PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
@@ -183,6 +184,9 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change IGA geometry dim to %D after it was set to %D",dim,iga->geometry);
   if (iga->geometry == dim) PetscFunctionReturn(0);
+  ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
+  iga->rational = PETSC_FALSE;
   iga->geometry = dim;
   iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
@@ -373,6 +377,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
 @*/
 PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
 {
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
@@ -383,6 +388,7 @@ PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Cannot change IGA property dim to %D after it was set to %D",dim,iga->property);
   if (iga->property == dim) PetscFunctionReturn(0);
+  ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   iga->property = dim;
   iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);

@@ -73,6 +73,9 @@ PetscErrorCode IGAPointReset(IGAPoint point)
   PetscValidPointer(point,1);
   point->count =  0;
   point->index = -1;
+  point->rational = NULL;
+  point->geometry = NULL;
+  point->property = NULL;
   ierr = IGAPointFreeWork(point);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -93,14 +96,17 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
   point->dim = element->dim;
   point->nsd = element->nsd;
   point->npd = element->npd;
+  point->rational = element->rational ? element->rationalW : NULL;
+  point->geometry = element->geometry ? element->geometryX : NULL;
+  point->property = element->property ? element->propertyA : NULL;
   { /* */
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-    size_t i, n = point->nen * point->dof;
+    size_t i, nv = element->nen * element->dof, nm = nv*nv;
     for (i=0; i<MAX_WORK_VEC; i++)
-      {ierr = PetscMalloc1(n,&point->wvec[i]);CHKERRQ(ierr);}
+      {ierr = PetscMalloc1(nv,&point->wvec[i]);CHKERRQ(ierr);}
     for (i=0; i<MAX_WORK_MAT; i++)
-      {ierr = PetscMalloc1(n*n,&point->wmat[i]);CHKERRQ(ierr);}
+      {ierr = PetscMalloc1(nm,&point->wmat[i]);CHKERRQ(ierr);}
   }
   PetscFunctionReturn(0);
 }

@@ -285,10 +285,26 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   element->atboundary  = PETSC_FALSE;
   element->boundary_id = -1;
 
+  element->rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
+  element->geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
+  element->property = iga->property ? PETSC_TRUE : PETSC_FALSE;
   { /* */
-    element->rational = iga->rational ? PETSC_TRUE : PETSC_FALSE;
-    element->geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
-    element->property = iga->property ? PETSC_TRUE : PETSC_FALSE;
+    PetscInt nen = element->nen;
+    PetscInt nsd = iga->geometry ? iga->geometry : iga->dim;
+    PetscInt npd = iga->property;
+    if (element->nsd != nsd) {
+      element->nsd = nsd;
+      ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
+      ierr = PetscMalloc1(nen*nsd,&element->geometryX);CHKERRQ(ierr);
+    }
+    if (element->npd != npd) {
+      element->npd = npd;
+      ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
+      ierr = PetscMalloc1(nen*npd,&element->propertyA);CHKERRQ(ierr);
+    }
+    ierr = PetscMemzero(element->rationalW,sizeof(PetscReal)*nen);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->geometryX,sizeof(PetscReal)*nen*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->propertyA,sizeof(PetscReal)*nen*npd);CHKERRQ(ierr);
   }
   { /* */
     PetscInt q,i;
@@ -336,6 +352,9 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     point->dim = element->dim;
     point->nsd = element->nsd;
     point->npd = element->npd;
+    point->rational = element->rational ? element->rationalW : NULL;
+    point->geometry = element->geometry ? element->geometryX : NULL;
+    point->property = element->property ? element->propertyA : NULL;
   }
   PetscFunctionReturn(0);
 }
@@ -462,7 +481,6 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *_point)
 PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
 {
   PetscInt nen = point->nen;
-  PetscInt nsd = point->nsd;
   PetscInt dim = point->dim;
   PetscInt dim2 = dim*dim;
   PetscInt dim3 = dim*dim2;
@@ -504,13 +522,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
 
  start:
 
-  point->rational = element->rationalW;
-  point->geometry = element->geometryX;
-  point->property = element->propertyA;
-  if (!element->rational) point->rational = NULL;
-  if (!element->geometry) point->geometry = NULL;
-  if (!element->property) point->property = NULL;
-
   point->point    = element->point;
   point->weight   = element->weight;
   point->detJac   = element->detJac;
@@ -530,7 +541,7 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->detS     = element->detS;
   point->normal   = element->normal;
 
-  if (element->geometry && dim == nsd) { /* XXX */
+  if (element->geometry && dim == point->nsd) { /* XXX */
     point->shape[0] = element->shape[0];
     point->shape[1] = element->shape[1];
     point->shape[2] = element->shape[2];
