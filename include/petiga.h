@@ -513,14 +513,13 @@ PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *poin
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildClosure(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns (IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildQuadratureAtBoundary(IGAElement element,PetscInt dir,PetscInt side);
-PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFunsAtBoundary (IGAElement element,PetscInt dir,PetscInt side);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent);
 PETSC_EXTERN PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index);
 PETSC_EXTERN PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count);
-
 PETSC_EXTERN PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen,PetscInt *dof);
 PETSC_EXTERN PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const PetscInt *mapping[]);
 
@@ -590,6 +589,7 @@ struct _n_IGAPoint {
   PetscInt    nmat;
   PetscScalar *wmat[4];
 };
+
 PETSC_EXTERN PetscErrorCode IGAPointCreate(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointDestroy(IGAPoint *point);
 PETSC_EXTERN PetscErrorCode IGAPointReference(IGAPoint point);
@@ -607,10 +607,8 @@ PETSC_EXTERN PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,con
 PETSC_EXTERN PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[]);
 
 PETSC_EXTERN PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
-PETSC_EXTERN PetscErrorCode IGAPointFormPoint    (IGAPoint p,PetscReal x[]);
-PETSC_EXTERN PetscErrorCode IGAPointFormGradMap  (IGAPoint p,PetscReal map[],PetscReal inv[]);
-PETSC_EXTERN PetscErrorCode IGAPointFormShapeFuns(IGAPoint p,PetscInt der,PetscReal N[]);
 
+PETSC_EXTERN PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[]);

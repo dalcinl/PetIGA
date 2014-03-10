@@ -28,12 +28,8 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
   PetscScalar PETSC_UNUSED w = u0[2], w_x = u1[2][0], w_y = u1[2][1];
   PetscScalar PETSC_UNUSED r = u0[3], r_x = u1[3][0], r_y = u1[3][1];
 
-  /*const PetscReal *N0, (*N1)[2];
-  IGAPointGetShapeFuns(p,0,(const PetscReal **)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);*/
-  PetscReal N0[nen], N1[nen][2];
-  IGAPointFormShapeFuns(p,0,&N0[0]);
-  IGAPointFormShapeFuns(p,1,&N1[0][0]);
+  PetscReal *N0 = p->shape[0];
+  PetscReal (*N1)[2] = (PetscReal(*)[2])p->shape[1];
 
   PetscInt a;
   for (a=0; a<nen; a++) {
@@ -58,9 +54,8 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
   IGAPointFormValue(p,Ue,&u0[0]);
   PetscScalar PETSC_UNUSED r = u0[3];
 
-  const PetscReal *N0, (*N1)[2];
-  IGAPointGetShapeFuns(p,0,(const PetscReal **)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal **)&N1);
+  PetscReal *N0 = p->shape[0];
+  PetscReal (*N1)[2] = (PetscReal(*)[2])p->shape[1];
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {
@@ -126,9 +121,8 @@ PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
   IGAPointFormValue(p,Ue,&u0[0]);
   PetscScalar r = u0[3];
 
-  PetscReal N0[nen],N2[nen][2][2];
-  IGAPointFormShapeFuns(p,0,&N0[0]);
-  IGAPointFormShapeFuns(p,2,&N2[0][0][0]);
+  PetscReal *N0 = p->shape[0];
+  PetscReal (*N2)[2][2] = (PetscReal(*)[2][2])p->shape[2];
 
   PetscInt a;
   for (a=0; a<nen; a++) {

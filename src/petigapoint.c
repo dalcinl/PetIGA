@@ -355,36 +355,6 @@ PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[])
 { return IGAPointFormGeomMap(p,x); }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormGradMap"
-PetscErrorCode IGAPointFormGradMap(IGAPoint p,PetscReal map[],PetscReal inv[])
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  if(map) {ierr = IGAPointFormGradGeomMap(p,map);CHKERRQ(ierr);}
-  if(inv) {ierr = IGAPointFormInvGradGeomMap(p,inv);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormShapeFuns"
-PetscErrorCode IGAPointFormShapeFuns(IGAPoint point,PetscInt der,PetscReal N[])
-{
-  PetscInt       i,n;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidRealPointer(N,3);
-  if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-	     "Requested derivative must be in range [0,%d], got %D",
-	     (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
-  for (i=0,n=point->nen; i<der; i++) n *= point->dim;
-  ierr = PetscMemcpy(N,point->shape[der],n*sizeof(PetscReal));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
 #define __FUNCT__ "IGAPointFormValue"
 PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
