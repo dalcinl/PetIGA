@@ -216,7 +216,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
   ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);

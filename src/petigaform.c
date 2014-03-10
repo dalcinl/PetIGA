@@ -304,7 +304,7 @@ PetscErrorCode IGASetFixTable(IGA iga,Vec U)
   PetscErrorCode    ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (iga->setupstage < 2) IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   iga->fixtable = PETSC_FALSE;
   ierr = PetscFree(iga->fixtableU);

@@ -701,9 +701,15 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
                "Must call IGASetUp() on argument %D \"%s\" before %s()", \
                (arg),#iga,PETSC_FUNCTION_NAME);                          \
     } while (0)
+#define IGACheckSetUpStage(iga,arg,stg) do {                             \
+    if (PetscUnlikely((iga)->setupstage<(stg))) IGACheckSetUp(iga,arg);  \
+    } while (0)
 #else
-#define IGACheckSetUp(iga,arg) do {} while (0)
+#define IGACheckSetUp(iga,arg)          do {} while (0)
+#define IGACheckSetUpStage(iga,arg,stg) do {} while (0)
 #endif
+#define IGACheckSetUpStage1(iga,arg) IGACheckSetUpStage(iga,arg,1)
+#define IGACheckSetUpStage2(iga,arg) IGACheckSetUpStage(iga,arg,2)
 
 #if defined(PETSC_USE_DEBUG)
 #define IGACheckFormOp(iga,arg,FormOp) do {             \

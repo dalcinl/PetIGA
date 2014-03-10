@@ -129,7 +129,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(vec,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecCreate(((PetscObject)iga)->comm,vec);CHKERRQ(ierr);
   ierr = VecSetLayout(*vec,iga->map);CHKERRQ(ierr);
   ierr = VecSetType(*vec,iga->vectype);CHKERRQ(ierr);
@@ -149,7 +149,7 @@ PetscErrorCode IGACreateLocalVec(IGA iga, Vec *vec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(vec,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   /* */
   bs = iga->dof;
   n  = Product(iga->node_gwidth);
@@ -168,7 +168,7 @@ PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(lvec,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   if (iga->nwork > 0) {
     *lvec = iga->vwork[--iga->nwork];
     iga->vwork[iga->nwork] = NULL;
@@ -187,7 +187,7 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(lvec,2);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   if (iga->nwork < (PetscInt)(sizeof(iga->vwork)/sizeof(Vec))) {
     iga->vwork[iga->nwork++] = *lvec; *lvec = NULL;
   } else {
@@ -205,7 +205,7 @@ PetscErrorCode IGAGlobalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecScatterBegin(iga->g2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -219,7 +219,7 @@ PetscErrorCode IGAGlobalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecScatterEnd(iga->g2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -244,7 +244,7 @@ PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   if (addv == ADD_VALUES) {
     ierr = VecScatterBegin(iga->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
   } else if (addv == INSERT_VALUES) {
@@ -262,7 +262,7 @@ PetscErrorCode IGALocalToGlobalEnd(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   if (addv == ADD_VALUES) {
     ierr = VecScatterEnd(iga->g2l,lvec,gvec,ADD_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
   } else if (addv == INSERT_VALUES) {
@@ -292,7 +292,7 @@ PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar 
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidPointer(lvec,3);
   PetscValidPointer(array,4);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = IGAGetLocalVec(iga,lvec);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,gvec,*lvec,INSERT_VALUES);CHKERRQ(ierr);
   ierr = VecGetArrayRead(*lvec,array);CHKERRQ(ierr);
@@ -310,7 +310,7 @@ PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscSca
   PetscValidPointer(lvec,3);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,3);
   PetscValidPointer(array,4);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecRestoreArrayRead(*lvec,array);CHKERRQ(ierr);
   ierr = IGARestoreLocalVec(iga,lvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -323,7 +323,7 @@ PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(nvec,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   *nvec = iga->natural;
   PetscFunctionReturn(0);
 }
@@ -337,7 +337,7 @@ PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecScatterBegin(iga->n2g,nvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (iga->n2g,nvec,gvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -352,7 +352,7 @@ PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = VecScatterBegin(iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   ierr = VecScatterEnd  (iga->g2n,gvec,nvec,INSERT_VALUES,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);

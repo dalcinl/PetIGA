@@ -269,7 +269,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);

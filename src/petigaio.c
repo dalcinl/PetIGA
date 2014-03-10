@@ -77,7 +77,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   if (viewer) {
     PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
@@ -214,7 +214,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
@@ -300,7 +300,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
   if (!iga->geometry) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
@@ -411,7 +411,7 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
@@ -480,7 +480,7 @@ PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
-  if (iga->setupstage < 1) IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
   if (!iga->property) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No property set");
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
@@ -656,7 +656,7 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,3);
   PetscCheckSameComm(iga,1,vec,2);
   PetscCheckSameComm(iga,1,viewer,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetNaturalVec(iga,&natural);
   ierr = VecLoad(natural,viewer);CHKERRQ(ierr);
@@ -677,7 +677,7 @@ PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,3);
   PetscCheckSameComm(iga,1,vec,2);
   PetscCheckSameComm(iga,1,viewer,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetNaturalVec(iga,&natural);
   ierr = IGAGlobalToNatural(iga,vec,natural);
@@ -699,7 +699,7 @@ PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
   PetscCheckSameComm(iga,1,vec,2);
   PetscValidCharPointer(filename,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
@@ -726,7 +726,7 @@ PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
   PetscCheckSameComm(iga,1,vec,2);
   PetscValidCharPointer(filename,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);

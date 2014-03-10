@@ -110,7 +110,7 @@ static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  IGACheckSetUp(iga,0);
+  IGACheckSetUpStage2(iga,0);
   ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmap);CHKERRQ(ierr);
   dm->ltogmap = iga->lgmap;
@@ -125,7 +125,7 @@ static PetscErrorCode DMGetLocalToGlobalMappingBlock_IGA(DM dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  IGACheckSetUp(iga,0);
+  IGACheckSetUpStage2(iga,0);
   ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
   dm->ltogmapb = iga->lgmapb;

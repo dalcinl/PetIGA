@@ -897,7 +897,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(subcomms,2);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
@@ -958,7 +958,7 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
   PetscValidIntPointer(lsizes,4);
   if (periodic) PetscValidIntPointer(periodic,5);
   PetscValidPointer(dm_,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
@@ -997,7 +997,7 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDM(iga,bs,iga->elem_sizes,iga->elem_width,
                      NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1012,7 +1012,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDM(iga,bs,iga->geom_sizes,iga->geom_lwidth,
                      NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1051,7 +1051,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
+  IGACheckSetUpStage2(iga,1);
   ierr = IGACreateDM(iga,bs,iga->node_sizes,iga->node_lwidth,
                      NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1065,7 +1065,6 @@ PetscErrorCode IGAGetElemDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
   if (!iga->elem_dm) {ierr = IGACreateElemDM(iga,iga->dof,&iga->elem_dm);CHKERRQ(ierr);}
   *dm = iga->elem_dm;
   PetscFunctionReturn(0);
@@ -1079,7 +1078,6 @@ PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
   if (!iga->geom_dm) {ierr = IGACreateGeomDM(iga,iga->dof,&iga->geom_dm);CHKERRQ(ierr);}
   *dm = iga->geom_dm;
   PetscFunctionReturn(0);
@@ -1094,7 +1092,6 @@ PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
-  IGACheckSetUp(iga,1);
   if (!iga->node_dm) {
     ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
     if (iga->fieldname)
