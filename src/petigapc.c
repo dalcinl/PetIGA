@@ -52,13 +52,13 @@ PetscInt STENCIL[7][3] = {{ 0,  0, -1},
                           { 0, +1,  0},
                           { 0,  0, +1}};
 
-PETSC_STATIC_INLINE
+static
 #undef  __FUNCT__
-#define __FUNCT__ "ComputeBDDCGraph"
-PetscErrorCode ComputeBDDCGraph(PetscInt bs,
-                                const PetscBool wrap[3],const PetscInt shape[3],
-                                const PetscInt start[3],const PetscInt width[3],
-                                PetscInt *_nvtx,PetscInt *_xadj[],PetscInt *_adjy[])
+#define __FUNCT__ "IGAComputeBDDCGraph"
+PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
+                                   const PetscBool wrap[3],const PetscInt shape[3],
+                                   const PetscInt start[3],const PetscInt width[3],
+                                   PetscInt *_nvtx,PetscInt *_xadj[],PetscInt *_adjy[])
 {
   PetscInt       c,i,j,k,s,v,pos;
   PetscInt       nvtx=0,*xadj;
@@ -142,19 +142,19 @@ PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
 }
 #endif
 
-PETSC_STATIC_INLINE
+static
 #undef  __FUNCT__
-#define __FUNCT__ "ComputeBDDCBoundary"
-PetscErrorCode ComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt shape[3],
-                                   PetscBool atbnd[][2],PetscInt count[][2],PetscInt *field[][2],
-                                   PetscInt *_ndirichlet,PetscInt *_idirichlet[],
-                                   PetscInt *_nneumann,  PetscInt *_ineumann[])
+#define __FUNCT__ "IGAComputeBDDCBoundary"
+PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt shape[3],
+                                      PetscBool atbnd[][2],PetscInt count[][2],PetscInt *field[][2],
+                                      PetscInt *_ndirichlet,PetscInt *_idirichlet[],
+                                      PetscInt *_nneumann,  PetscInt *_ineumann[])
 {
   PetscBT        Dmask,Nmask;
   PetscInt       i, m = bs*shape[0]*shape[1]*shape[2];
   PetscInt       dir, side, ijk[3], index = 0, pos;
-  PetscInt       ndirichlet = 0, *idirichlet = 0;
-  PetscInt       nneumann   = 0, *ineumann   = 0;
+  PetscInt       ndirichlet = 0, *idirichlet = NULL;
+  PetscInt       nneumann   = 0, *ineumann   = NULL;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -228,14 +228,13 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,0);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,0);CHKERRQ(ierr);
 
-#if defined(PETSC_HAVE_PCBDDC)  /* XXX */
   if (graph) {
     PetscInt i,dim,dof;
     PetscBool wrap[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
     PetscInt shape[3] = {1,1,1};
     PetscInt start[3] = {0,0,0};
     PetscInt width[3] = {1,1,1};
-    PetscInt nvtx=0,*xadj=0,*adjy=0;
+    PetscInt nvtx=0,*xadj=NULL,*adjy=NULL;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
@@ -249,8 +248,13 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
         wrap[i]  = iga->axis[i]->periodic;
       }
     }
-    ierr = ComputeBDDCGraph(dof,wrap,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
+    ierr = IGAComputeBDDCGraph(dof,wrap,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
+#if defined(PETSC_HAVE_PCBDDC) /* XXX */
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
+#else
+    ierr = PetscFree(xadj);CHKERRQ(ierr);
+    ierr = PetscFree(adjy);CHKERRQ(ierr);
+#endif
   }
   if (boundary) {
     PetscInt  i,s,dim,dof;
@@ -260,8 +264,8 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
                              {PETSC_FALSE,PETSC_FALSE}};
     PetscInt  count[3][2] = {{0,0},{0,0},{0,0}};
     PetscInt *field[3][2] = {{0,0},{0,0},{0,0}};
-    PetscInt  nd=0,*id=0;
-    PetscInt  nn=0,*in=0;
+    PetscInt  nd=0,*id=NULL;
+    PetscInt  nn=0,*in=NULL;
     IS        isd,isn;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
@@ -275,17 +279,17 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
             field[i][s] = iga->form->value[i][s]->field;
           }
     }
-    ierr = ComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
+    ierr = IGAComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
 
     ierr = ISCreateGeneral(PETSC_COMM_SELF,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
-    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
-    ierr = ISDestroy(&isd);CHKERRQ(ierr);
-
     ierr = ISCreateGeneral(PETSC_COMM_SELF,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
+#if defined(PETSC_HAVE_PCBDDC) /* XXX */
+    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
     ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
+#endif
+    ierr = ISDestroy(&isd);CHKERRQ(ierr);
     ierr = ISDestroy(&isn);CHKERRQ(ierr);
   }
-#endif
 
   PetscFunctionReturn(0);
 }
@@ -330,4 +334,3 @@ PetscErrorCode IGASetOptionsHandlerPC(PC pc)
 }
 
 /* ---------------------------------------------------------------- */
-
