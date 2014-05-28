@@ -14,7 +14,6 @@ NavierStokesKorteweg2D \
 NavierStokesVMS \
 Elasticity3D \
 HyperElasticity \
-PhaseFieldCrystal2D \
 Richards \
 TwoPhaseTwoComponent \
 ShallowWater \
@@ -110,9 +109,6 @@ Elasticity3D: Elasticity3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 HyperElasticity: HyperElasticity.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
-PhaseFieldCrystal2D: PhaseFieldCrystal2D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 Richards: Richards.o chkopts
