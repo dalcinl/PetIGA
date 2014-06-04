@@ -194,13 +194,18 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 
 PETSC_STATIC_INLINE
 #undef  __FUNCT__
-#define __FUNCT__ "L2GApply"
-PetscErrorCode L2GApply(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
+#define __FUNCT__ "L2GApplyBlock"
+PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
+#if PETSC_VERSION_LT(3,5,0)
   ierr = ISLocalToGlobalMappingApply(ltog,1,row,row);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingApply(ltog,*cnt,col,col);CHKERRQ(ierr);
+#else
+  ierr = ISLocalToGlobalMappingApplyBlock(ltog,1,row,row);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingApplyBlock(ltog,*cnt,col,col);CHKERRQ(ierr);
+#endif
   PetscFunctionReturn(0);
 }
 
@@ -263,7 +268,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscInt       gwidth[3] = {1,1,1};
   PetscInt       maxnnz;
   PetscInt       n,N,bs;
-  LGMap          ltogb = 0;
+  LGMap          ltog = NULL;
   Mat            A;
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -296,7 +301,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
   ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
   ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
+#endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
@@ -328,8 +335,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
       ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
       ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
       ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
-      ierr = IGA_Grid_GetLGMapBlock(grid,&ltogb);CHKERRQ(ierr);
-      ierr = PetscObjectReference((PetscObject)ltogb);CHKERRQ(ierr);
+      ierr = IGA_Grid_GetLGMapBlock(grid,&ltog);CHKERRQ(ierr);
+      ierr = PetscObjectReference((PetscObject)ltog);CHKERRQ(ierr);
       ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
     }
   } else {
@@ -370,7 +377,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
             { /* */
               PetscInt r,row = Index3D(gstart,gwidth,i,j,k);
               PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
-              if (ltogb) {ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);}
+              if (ltog) {ierr = L2GApplyBlock(ltog,&row,&count,indices);CHKERRQ(ierr);}
               if (aij) {
                 if (bs == 1) {
                   ierr = MatPreallocateSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
@@ -384,7 +391,11 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
                 ierr = MatPreallocateSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               } else if (sbaij) {
                 ierr = FilterLowerTriangular(row,&count,indices);CHKERRQ(ierr);
+                #if PETSC_VERSION_LT(3,5,0)
                 ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
+                #else
+                ierr = MatPreallocateSymmetricSetBlock(row,count,indices,dnz,onz);CHKERRQ(ierr);
+                #endif
               }
             } /* */
       ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
@@ -431,7 +442,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
           { /* */
             PetscInt row   = Index3D(gstart,gwidth,i,j,k);
             PetscInt count = ColumnIndices(iga,gstart,gwidth,i,j,k,indices);
-            if (ltogb) {ierr = L2GApply(ltogb,&row,&count,indices);CHKERRQ(ierr);}
+            if (ltog) {ierr = L2GApplyBlock(ltog,&row,&count,indices);CHKERRQ(ierr);}
             if (aij) {
               if (bs == 1) {
                 ierr = MatSetValues(A,1,&row,count,indices,values,INSERT_VALUES);CHKERRQ(ierr);
@@ -455,8 +466,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
   }
 
-  ierr = ISLocalToGlobalMappingDestroy(&ltogb);CHKERRQ(ierr);
-
+  ierr = ISLocalToGlobalMappingDestroy(&ltog);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }

@@ -257,6 +257,7 @@ PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid g,LGMap lgmapb)
   ierr = PetscObjectReference((PetscObject)lgmapb);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
   g->lgmapb = lgmapb;
+  ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -274,7 +275,11 @@ PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
     ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
     ierr = IGA_Grid_GetAOBlock(g,&aob);CHKERRQ(ierr);
     ierr = AOApplicationToPetsc(aob,nghost,ighost);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
     ierr = ISLocalToGlobalMappingCreate(g->comm,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
+#else
+    ierr = ISLocalToGlobalMappingCreate(g->comm,g->dof,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
+#endif
   }
   *lgmapb = g->lgmapb;
   PetscFunctionReturn(0);
@@ -289,9 +294,13 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
   PetscValidPointer(g,1);
   PetscValidPointer(lgmap,2);
   if (!g->lgmap) {
-    LGMap lgmapb;
-    ierr = IGA_Grid_GetLGMapBlock(g,&lgmapb);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingUnBlock(lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
+    if (!g->lgmapb) {ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);}
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = ISLocalToGlobalMappingUnBlock(g->lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
+#else
+    ierr = PetscObjectReference((PetscObject)g->lgmapb);CHKERRQ(ierr);
+    g->lgmap = g->lgmapb;
+#endif
   }
   *lgmap = g->lgmap;
   PetscFunctionReturn(0);
@@ -316,9 +325,11 @@ PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
     ierr = PetscLayoutSetLocalSize(g->map,n);CHKERRQ(ierr);
     ierr = PetscLayoutSetSize(g->map,N);CHKERRQ(ierr);
     ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);
     ierr = PetscLayoutSetISLocalToGlobalMapping(g->map,g->lgmap);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);
     ierr = PetscLayoutSetISLocalToGlobalMappingBlock(g->map,g->lgmapb);
+#endif
     ierr = PetscLayoutSetUp(g->map);CHKERRQ(ierr);
   }
   *map = g->map;

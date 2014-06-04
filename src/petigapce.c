@@ -75,8 +75,8 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
   PetscFunctionReturn(0);
 }
 
-static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],
-                                          PetscInt start, PetscInt end,PetscInt bs,
+static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],PetscInt bs,
+                                          PetscInt start, PetscInt end,
                                           PetscInt N, const PetscInt idx[], PetscInt idxout[])
 {
   PetscInt i,c,Nout=0;
@@ -127,12 +127,13 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
     ierr = IGAElementGetSizes(element,NULL,&nen,&dof);CHKERRQ(ierr);
 
-    if (dof == 1) {
-      ierr = MatGetLocalToGlobalMapping(A,&map,NULL);CHKERRQ(ierr);
-    } else {
-      ierr = MatGetLocalToGlobalMappingBlock(A,&map,NULL);CHKERRQ(ierr);
-    }
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = MatGetLocalToGlobalMappingBlock(A,&map,NULL);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetIndices(map,&ltogmap);CHKERRQ(ierr);
+#else
+    ierr = MatGetLocalToGlobalMapping(A,&map,NULL);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingGetBlockIndices(map,&ltogmap);CHKERRQ(ierr);
+#endif
     ierr = MatGetOwnershipRange(A,&start,&end);CHKERRQ(ierr);
     start /= dof; end /= dof;
 
@@ -149,7 +150,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
     while (IGANextElement(iga,element)) {
       ierr = IGAElementGetMapping(element,&nen,&mapping);CHKERRQ(ierr);
-      m = n = ComputeOwnedGlobalIndices(ltogmap,start,end,dof,nen,mapping,indices);
+      m = n = ComputeOwnedGlobalIndices(ltogmap,dof,start,end,nen,mapping,indices);
       /* get element matrix from global matrix */
       ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
       /* compute inverse of element matrix */
@@ -169,7 +170,11 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     }
     ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
+#if PETSC_VERSION_LT(3,5,0)
     ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
+#else
+    ierr = ISLocalToGlobalMappingRestoreBlockIndices(map,&ltogmap);CHKERRQ(ierr);
+#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);

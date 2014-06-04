@@ -114,21 +114,11 @@ static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
   ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmap);CHKERRQ(ierr);
   dm->ltogmap = iga->lgmap;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "DMGetLocalToGlobalMappingBlock_IGA"
-static PetscErrorCode DMGetLocalToGlobalMappingBlock_IGA(DM dm)
-{
-  IGA            iga = DMIGACast(dm)->iga;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  IGACheckSetUpStage2(iga,0);
+#if PETSC_VERSION_LT(3,5,0)
   ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
   dm->ltogmapb = iga->lgmapb;
+#endif
   PetscFunctionReturn(0);
 }
 
@@ -283,7 +273,6 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
   ierr = DMIGA_GetIGA(dm,&iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   ierr = DMGetLocalToGlobalMapping_IGA(dm);CHKERRQ(ierr);
-  ierr = DMGetLocalToGlobalMappingBlock_IGA(dm);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&dm->bs);CHKERRQ(ierr);
   ierr = DMSetVecType(dm,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(dm,iga->mattype);CHKERRQ(ierr);
@@ -337,11 +326,13 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->data = dd;
 
 #if PETSC_VERSION_LE(3,3,0)
-#define getlocaltoglobalmapping      createlocaltoglobalmapping
-#define getlocaltoglobalmappingblock createlocaltoglobalmappingblock
+  #define getlocaltoglobalmapping      createlocaltoglobalmapping
+  #define getlocaltoglobalmappingblock createlocaltoglobalmappingblock
+#endif
+#if PETSC_VERSION_LT(3,5,0)
+  dm->ops->getlocaltoglobalmappingblock = DMGetLocalToGlobalMapping_IGA;
 #endif
   dm->ops->getlocaltoglobalmapping      = DMGetLocalToGlobalMapping_IGA;
-  dm->ops->getlocaltoglobalmappingblock = DMGetLocalToGlobalMappingBlock_IGA;
   dm->ops->globaltolocalbegin           = DMGlobalToLocalBegin_IGA;
   dm->ops->globaltolocalend             = DMGlobalToLocalEnd_IGA;
   dm->ops->localtoglobalbegin           = DMLocalToGlobalBegin_IGA;

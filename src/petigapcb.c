@@ -25,15 +25,12 @@ PetscInt Index3D(const PetscInt start[3],const PetscInt width[3],
   return i + j * width[0] + k * width[0] * width[1];
 }
 
-PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "ComputeOverlap"
-PetscInt ComputeOverlap(LGMap l2g,
-                        PetscInt bs,PetscInt Astart,PetscInt Aend,
-                        const PetscInt gstart[3],const PetscInt gwidth[3],
-                        const PetscInt overlap[3],
-                        PetscInt iA,PetscInt jA,PetscInt kA,
-                        PetscInt *count,PetscInt indices[])
+static PetscInt ComputeOverlap(const PetscInt lgmap[],PetscInt bs,
+                               PetscInt Astart,PetscInt Aend,
+                               const PetscInt gstart[3],const PetscInt gwidth[3],
+                               const PetscInt overlap[3],
+                               PetscInt iA,PetscInt jA,PetscInt kA,
+                               PetscInt indices[])
 {
   PetscInt igs = gstart[0], ige = gstart[0]+gwidth[0], iov = overlap[0];
   PetscInt jgs = gstart[1], jge = gstart[1]+gwidth[1], jov = overlap[1];
@@ -42,18 +39,15 @@ PetscInt ComputeOverlap(LGMap l2g,
   PetscInt j, jL = PetscMax(jA-jov,jgs), jR = PetscMin(jA+jov,jge-1);
   PetscInt k, kL = PetscMax(kA-kov,kgs), kR = PetscMin(kA+kov,kge-1);
   PetscInt c, pos = 0;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
   for (i=iL; i<=iR; i++)
     for (j=jL; j<=jR; j++)
       for (k=kL; k<=kR; k++) {
-        PetscInt Aglobal, Alocal = Index3D(gstart,gwidth,i,j,k);
-        ierr = ISLocalToGlobalMappingApply(l2g,1,&Alocal,&Aglobal);CHKERRQ(ierr);
+        PetscInt Alocal = Index3D(gstart,gwidth,i,j,k);
+        PetscInt Aglobal = lgmap[Alocal];
         if (PetscUnlikely(Aglobal < Astart || Aglobal >= Aend)) continue;
         for (c=0; c<bs; c++) indices[pos++] = c + bs*Aglobal;
       }
-  *count = pos;
-  PetscFunctionReturn(0);
+  return pos;
 }
 
 PETSC_STATIC_INLINE
@@ -196,7 +190,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     const PetscInt *start,*width;
     const PetscInt *gstart,*gwidth;
     const PetscInt *overlap;
-    LGMap          lgmap = 0;
+    const PetscInt *ltogmap;
     PetscInt       rstart,rend;
     PetscInt       n,*indices;
     PetscBLASInt   m,*ipiv,info,lwork;
@@ -210,9 +204,12 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
     gstart  = bbb->ghost_start;
     gwidth  = bbb->ghost_width;
-    lgmap   = bbb->lgmap;
     overlap = bbb->overlap;
-
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = ISLocalToGlobalMappingGetIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
+#else
+    ierr = ISLocalToGlobalMappingGetBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
+#endif
     ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
     rstart /= dof; rend /= dof;
 
@@ -231,7 +228,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
       for (j=start[1]; j<start[1]+width[1]; j++)
         for (i=start[0]; i<start[0]+width[0]; i++)
           {
-            ierr = ComputeOverlap(lgmap,dof,rstart,rend,gstart,gwidth,overlap,i,j,k,&n,indices);CHKERRQ(ierr);
+            n = ComputeOverlap(ltogmap,dof,rstart,rend,gstart,gwidth,overlap,i,j,k,indices);CHKERRQ(ierr);
             /* get element matrix from global matrix */
             ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
             /* compute inverse of element matrix */
@@ -256,11 +253,15 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
             ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
           }
 
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = ISLocalToGlobalMappingRestoreIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
+#else
+    ierr = ISLocalToGlobalMappingRestoreBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
+#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
   }
-
   ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
