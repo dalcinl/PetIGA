@@ -81,7 +81,7 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
      N = +N/dS
   endif
 contains
-function normal2(t) result(n)
+pure function normal2(t) result(n)
   implicit none
   real(kind=IGA_REAL_KIND)             :: n(2)
   real(kind=IGA_REAL_KIND), intent(in) :: t(2)
@@ -89,7 +89,7 @@ function normal2(t) result(n)
   n(1) = + t(2)
   n(2) = - t(1)
 end function normal2
-function normal3(s,t) result(n)
+pure function normal3(s,t) result(n)
   implicit none
   real(kind=IGA_REAL_KIND)             :: n(3)
   real(kind=IGA_REAL_KIND), intent(in) :: s(3)

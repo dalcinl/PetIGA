@@ -43,7 +43,7 @@ pure subroutine IGA_BasisFuns_1D(&
   do iq=1,inq
      call TensorBasisFuns(&
           order,&
-          ina,ind,iN(:,:,iq),&
+          ina,iN(:,:,iq),&
           N0(  :,iq),&
           N1(:,:,iq),&
           N2(:,:,iq),&
@@ -63,13 +63,13 @@ contains
 
 pure subroutine TensorBasisFuns(&
      ord,&
-     ina,ind,iN,&
+     ina,iN,&
      N0,N1,N2,N3)
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 1
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: ord
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina, ind
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ord,ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina)
