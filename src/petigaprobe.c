@@ -257,7 +257,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     if (PetscUnlikely(u[i] < U[a] || u[i] > U[b]))
       SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                "Expecting %g <= u[%D]=%g <= %g",(double)U[a],i,(double)u[i],(double)U[b]);
-    /*PetscValidLogicalCollectiveReal(prb->iga,u[i],2);*/
+    if (prb->collective) PetscValidLogicalCollectiveReal(prb->iga,u[i],2);
   }
 #endif
   for (i=0; i<prb->dim; i++) prb->point[i] = u[i];
