@@ -420,27 +420,30 @@ PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-EXTERN_C_BEGIN
-extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
-			    const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
-EXTERN_C_END
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointInterpolate"
 PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
-  PetscValidPointer(U,2);
-  PetscValidPointer(u,3);
+  PetscValidPointer(U,4);
+  PetscValidPointer(u,4);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
+  if (PetscUnlikely(ider < 0 || ider > 3))
+    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=ider<=3, got der=%D",ider);
   {
     PetscInt nen = point->nen;
     PetscInt dof = point->dof;
     PetscInt dim = point->dim;
     PetscReal *N = point->shape[ider];
-    IGA_Interpolate(nen,dof,dim,ider,N,U,u);
+    switch (ider) {
+    case 0: IGA_GetValue(nen,dof,/**/N,U,u); break;
+    case 1: IGA_GetGrad (nen,dof,dim,N,U,u); break;
+    case 2: IGA_GetHess (nen,dof,dim,N,U,u); break;
+    case 3: IGA_GetDer3 (nen,dof,dim,N,U,u); break;
+    default: PetscFunctionReturn(PETSC_ERR_ARG_OUTOFRANGE);
+    }
   }
   PetscFunctionReturn(0);
 }

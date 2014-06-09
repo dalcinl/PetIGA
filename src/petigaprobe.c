@@ -44,8 +44,11 @@ extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
 EXTERN_C_END
 
 EXTERN_C_BEGIN
-extern void IGA_GetGeomMap(PetscInt nen,PetscInt nsd,const PetscReal N[],const PetscReal C[],PetscReal x[]);
-extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetGeomMap(PetscInt nen,PetscInt nsd,const PetscReal N[],const PetscReal X[],PetscReal x[]);
+extern void IGA_GetValue  (PetscInt nen,PetscInt dof,/*         */const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetGrad   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetHess   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDer3   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -426,8 +429,14 @@ PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
     size_t n = (size_t)prb->dof * intpow[prb->dim][der];
     ierr = PetscMemzero(A,n*sizeof(PetscScalar));CHKERRQ(ierr);
   } else {
-    PetscReal **shape = prb->arrayX ? prb->shape : prb->basis;
-    IGA_Interpolate(prb->nen,prb->dof,prb->dim,der,shape[der],prb->A,A);
+    PetscReal *shape = prb->arrayX ? prb->shape[der] : prb->basis[der];
+    switch (der) {
+    case 0: IGA_GetValue(prb->nen,prb->dof,/*     */shape,prb->A,A); break;
+    case 1: IGA_GetGrad (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
+    case 2: IGA_GetHess (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
+    case 3: IGA_GetDer3 (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
+    default: PetscFunctionReturn(PETSC_ERR_ARG_OUTOFRANGE);
+    }
   }
   PetscFunctionReturn(0);
 }

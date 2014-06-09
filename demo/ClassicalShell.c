@@ -51,9 +51,23 @@ PetscErrorCode BetaRhoKappa(PetscReal N,PetscReal N_xi,PetscReal N_eta,
 }
 
 EXTERN_C_BEGIN
-extern void IGA_Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
-                            const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetValue (PetscInt nen,PetscInt dof,/*         */const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetGrad  (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetHess  (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDer3  (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
+
+static void Interpolate(PetscInt nen,PetscInt dof,PetscInt dim,PetscInt der,
+                        const PetscReal N[],const PetscScalar U[],PetscScalar u[])
+{
+  switch (der) {
+  case 0: IGA_GetValue(nen,dof,/**/N,U,u); break;
+  case 1: IGA_GetGrad (nen,dof,dim,N,U,u); break;
+  case 2: IGA_GetHess (nen,dof,dim,N,U,u); break;
+  case 3: IGA_GetDer3 (nen,dof,dim,N,U,u); break;
+  default: return;
+  }
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAShellInterpolate"
@@ -69,7 +83,7 @@ PetscErrorCode IGAShellInterpolate(IGAPoint point,PetscInt ider,PetscInt dof,con
     PetscInt nen = point->nen;
     PetscInt dim = point->dim;
     PetscReal *N = point->basis[ider];
-    IGA_Interpolate(nen,dof,dim,ider,N,U,u);
+    Interpolate(nen,dof,dim,ider,N,U,u);
   }
   PetscFunctionReturn(0);
 }
