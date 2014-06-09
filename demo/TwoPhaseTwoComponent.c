@@ -8,9 +8,10 @@
  */
 
 #include "petiga.h"
+#include "petigaprobe.h"
 
 typedef struct {
-  IGA         iga;
+  IGA       iga;
   PetscReal rholw,porosity,Pr,n,Slr,Sgr,H,Mh,T,mul,mug,Mw,Dlh,k;
 } AppCtx;
 
@@ -226,6 +227,7 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)mctx;
+  IGAProbe prb;
   IGA      iga = user->iga;
   PetscInt dim = iga->dim;
 
@@ -234,9 +236,12 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   }
 
   // Pl,Pg,Sg computed at left middle
-  PetscReal   point[2] = {0,10};
+  ierr = IGAProbeCreate(iga,U,&prb);CHKERRQ(ierr);
+  PetscReal point[2] = {0,10};
+
   PetscScalar sol[2];
-  ierr = IGAInterpolate(iga,U,point,sol,NULL);CHKERRQ(ierr);
+  ierr = IGAProbeSetPoint(prb,point);CHKERRQ(ierr);
+  ierr = IGAProbeFormValue(prb,&sol[0]);CHKERRQ(ierr);
   PetscScalar Pl,Pg,Sg;
   Pl = sol[0];
   Pg = sol[1]/(user->Mh*user->H);
@@ -254,9 +259,11 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   // fluxw,fluxh computed at right middle
   point[0] = 200;
   PetscScalar sol_x[2][2];
-  ierr = IGAInterpolate(iga,U,point,sol,&sol_x[0][0]);CHKERRQ(ierr);
+  ierr = IGAProbeSetPoint(prb,point);CHKERRQ(ierr);
+  ierr = IGAProbeFormValue(prb,&sol[0]);CHKERRQ(ierr);
+  ierr = IGAProbeFormGrad (prb,&sol_x[0][0]);CHKERRQ(ierr);
   Pl = sol[0];
-  PetscScalar *Pl_x    = sol_x[0];
+  PetscScalar *Pl_x = sol_x[0];
   Pg = sol[1]/(user->Mh*user->H);
   Pc  = Pg-Pl;
   Sle = 1;
@@ -273,6 +280,8 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscScalar fluxh = -user->k*krg/user->mug*(Pg_x[0]);
 
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e\n",fluxw,fluxh);
+
+  ierr = IGAProbeDestroy(&prb);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }

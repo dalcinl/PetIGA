@@ -16,10 +16,6 @@ include ${PETIGA_DIR}/conf/petigarules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
-Test_Eval: Test_Eval.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
-
 IGACreate: IGACreate.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<

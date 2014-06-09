@@ -408,11 +408,6 @@ PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode DMIGASetIGA(DM dm,IGA iga);
 PETSC_EXTERN PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga);
 
-
-PETSC_EXTERN PetscBool      IGALocateElement(IGA iga,PetscReal *pnt,IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAPointEval(IGA iga,IGAPoint point);
-PETSC_EXTERN PetscErrorCode IGAInterpolate(IGA iga,Vec U,PetscReal p[],PetscScalar u[],PetscScalar du[]);
-
 /* ---------------------------------------------------------------- */
 
 struct _n_IGAElement {
