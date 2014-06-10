@@ -149,7 +149,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
 
     ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
     while (IGANextElement(iga,element)) {
-      ierr = IGAElementGetMapping(element,&nen,&mapping);CHKERRQ(ierr);
+      ierr = IGAElementGetClosure(element,&nen,&mapping);CHKERRQ(ierr);
       m = n = ComputeOwnedGlobalIndices(ltogmap,dof,start,end,nen,mapping,indices);
       /* get element matrix from global matrix */
       ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);

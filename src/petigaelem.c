@@ -642,8 +642,8 @@ PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetMapping"
-PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const PetscInt *mapping[])
+#define __FUNCT__ "IGAElementGetClosure"
+PetscErrorCode IGAElementGetClosure(IGAElement element,PetscInt *nen,const PetscInt *mapping[])
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -651,6 +651,25 @@ PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const Petsc
   if (mapping) PetscValidPointer(mapping,3);
   if (nen)     *nen     = element->nen;
   if (mapping) *mapping = element->mapping;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAElementGetIndices"
+PetscErrorCode IGAElementGeIndices(IGAElement element,
+                                   PetscInt *neq,const PetscInt *rowmap[],
+                                   PetscInt *nen,const PetscInt *colmap[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  if (neq)    PetscValidIntPointer(neq,2);
+  if (rowmap) PetscValidPointer(rowmap,3);
+  if (nen)    PetscValidIntPointer(nen,4);
+  if (colmap) PetscValidPointer(colmap,5);
+  if (neq)    *neq    = element->neq;
+  if (colmap) *colmap = element->rowmap;
+  if (nen)    *nen    = element->nen;
+  if (colmap) *colmap = element->colmap;
   PetscFunctionReturn(0);
 }
 
