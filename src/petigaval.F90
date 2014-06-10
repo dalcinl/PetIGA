@@ -58,47 +58,48 @@ subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
   real   (kind=IGA_REAL_KIND   ), intent(out)      :: dS
   real   (kind=IGA_REAL_KIND   ), intent(out)      :: N(dim)
   select case (dim)
-  case (3)
-     select case (axis)
-     case (0); N = normal3(F(2,:),F(3,:))
-     case (1); N = normal3(F(3,:),F(1,:))
-     case (2); N = normal3(F(1,:),F(2,:))
-     end select
-  case (2)
-     select case (axis)
-     case (0); N = +normal2(F(2,:))
-     case (1); N = -normal2(F(1,:))
-     end select
-  case (1)
-     select case (axis)
-     case (0); N = 1
-     end select
+  case (3); dS = normal3d(axis,F,N)
+  case (2); dS = normal2d(axis,F,N)
+  case (1); dS = 1; N(1) = 1
   end select
-  dS = sqrt(sum(N*N))
-  if (side == 0) then
-     N = -N/dS
-  else
-     N = +N/dS
-  endif
+  if (side == 0) N = -N
 contains
-pure function normal2(t) result(n)
+function normal2d(axis,F,N) result(dS)
   implicit none
-  real(kind=IGA_REAL_KIND)             :: n(2)
-  real(kind=IGA_REAL_KIND), intent(in) :: t(2)
+  integer(kind=IGA_INTEGER_KIND), intent(in) :: axis
+  real(kind=IGA_REAL_KIND), intent(in)  :: F(2,2)
+  real(kind=IGA_REAL_KIND), intent(out) :: N(2)
+  real(kind=IGA_REAL_KIND) :: dS
+  real(kind=IGA_REAL_KIND) :: t(2)
+  select case (axis)
+  case (0); t = +F(2,:)
+  case (1); t = -F(1,:)
+  end select
   ! n_i = eps_ij n_j
-  n(1) = + t(2)
-  n(2) = - t(1)
-end function normal2
-pure function normal3(s,t) result(n)
+  N(1) = +t(2)
+  N(2) = -t(1)
+  dS = sqrt(sum(N*N))
+  N = N/dS
+end function normal2d
+function normal3d(axis,F,N) result(dS)
   implicit none
-  real(kind=IGA_REAL_KIND)             :: n(3)
-  real(kind=IGA_REAL_KIND), intent(in) :: s(3)
-  real(kind=IGA_REAL_KIND), intent(in) :: t(3)
+  integer(kind=IGA_INTEGER_KIND), intent(in) :: axis
+  real(kind=IGA_REAL_KIND), intent(in)  :: F(3,3)
+  real(kind=IGA_REAL_KIND), intent(out) :: N(3)
+  real(kind=IGA_REAL_KIND) :: dS
+  real(kind=IGA_REAL_KIND) :: s(3), t(3)
+  select case (axis)
+  case (0); s = F(2,:); t = F(3,:)
+  case (1); s = F(3,:); t = F(1,:)
+  case (2); s = F(1,:); t = F(2,:)
+  end select
   ! n_i = eps_ijk s_j t_k
-  n(1) = s(2) * t(3) - s(3) * t(2)
-  n(2) = s(3) * t(1) - s(1) * t(3)
-  n(3) = s(1) * t(2) - s(2) * t(1)
-end function normal3
+  N(1) = s(2) * t(3) - s(3) * t(2)
+  N(2) = s(3) * t(1) - s(1) * t(3)
+  N(3) = s(1) * t(2) - s(2) * t(1)
+  dS = sqrt(sum(N*N))
+  N = N/dS
+end function normal3d
 end subroutine IGA_GetNormal
 
 
