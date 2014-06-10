@@ -74,6 +74,7 @@ function normal2d(axis,F,N) result(dS)
   select case (axis)
   case (0); t = +F(2,:)
   case (1); t = -F(1,:)
+  case default; t = 0
   end select
   ! n_i = eps_ij n_j
   N(1) = +t(2)
@@ -92,6 +93,7 @@ function normal3d(axis,F,N) result(dS)
   case (0); s = F(2,:); t = F(3,:)
   case (1); s = F(3,:); t = F(1,:)
   case (2); s = F(1,:); t = F(2,:)
+  case default;  s = 0; t = 0
   end select
   ! n_i = eps_ijk s_j t_k
   N(1) = s(2) * t(3) - s(3) * t(2)
