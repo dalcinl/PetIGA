@@ -723,18 +723,6 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 
 /* ---------------------------------------------------------------- */
 
-#ifndef PETSC_VERSION_EQ
-#define PETSC_VERSION_EQ PETSC_VERSION_
-#endif
-#ifndef PETSC_VERSION_GT
-#define PETSC_VERSION_GT(MAJOR,MINOR,SUBMINOR) \
-  (!PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR))
-#endif
-#ifndef PETSC_VERSION_GE
-#define PETSC_VERSION_GE(MAJOR,MINOR,SUBMINOR) \
-  (!PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
-#endif
-
 #ifndef PetscValidRealPointer
 #define PetscValidRealPointer PetscValidDoublePointer
 #endif

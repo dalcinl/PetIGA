@@ -7,6 +7,13 @@
 typedef const char* MatType;
 #endif
 
+#if PETSC_VERSION_LE(3,3,0)
+#define MatGetRowIJ(A,z,f,c,na,ia,ja,done) \
+        MatGetRowIJ(A,z,f,c,na,(PetscInt**)ia,(PetscInt**)ja,done)
+#define MatRestoreRowIJ(A,z,f,c,na,ia,ja,done) \
+        MatRestoreRowIJ(A,z,f,c,na,(PetscInt**)ia,(PetscInt**)ja,done)
+#endif
+
 typedef struct {
   Mat mat;
 } PC_EBE;
@@ -32,13 +39,9 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
       Mat Ad = 0;
       ierr = PetscTryMethod(A,"MatGetDiagonalBlock_C",(Mat,Mat*),(A,&Ad));CHKERRQ(ierr);
       if (Ad) {
-        PetscBool compressed,done;
-        PetscInt  na;
-        #if PETSC_VERSION_LE(3,3,0)
-        PetscInt *ia,*ja;
-        #else
+        PetscInt na;
         const PetscInt *ia,*ja;
-        #endif
+        PetscBool compressed,done;
         ierr = MatGetDiagonalBlock(A,&Ad);CHKERRQ(ierr);
         compressed = (baij||sbaij) ? PETSC_TRUE: PETSC_FALSE;
         ierr = MatGetRowIJ(Ad,0,PETSC_FALSE,compressed,&na,&ia,&ja,&done);CHKERRQ(ierr);

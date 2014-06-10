@@ -1,7 +1,6 @@
 #include <petscsnes.h>
-#include <petsc-private/petscimpl.h>
-
 #if PETSC_VERSION_LE(3,3,0)
+
 #undef  __FUNCT__
 #define __FUNCT__ "SNESComputeJacobianDefaultColor"
 PETSC_EXTERN PetscErrorCode SNESComputeJacobianDefaultColor(SNES snes,Vec x,Mat *J,Mat *B,MatStructure *flag,void *ctx)
@@ -27,7 +26,6 @@ PETSC_EXTERN PetscErrorCode SNESComputeJacobianDefaultColor(SNES snes,Vec x,Mat 
   ierr = SNESDefaultComputeJacobianColor(snes,x,J,B,flag,(void*)color);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#endif
 
 EXTERN_C_BEGIN
 #undef __FUNCT__
@@ -48,3 +46,5 @@ PetscErrorCode SNESSetFromOptions_FDColor(SNES snes)
   PetscFunctionReturn(0);
 }
 EXTERN_C_END
+
+#endif

@@ -1,5 +1,4 @@
 #include <petsc.h>
-#include <petsc-private/petscimpl.h>
 #if PETSC_VERSION_LE(3,3,0)
 
 PETSC_EXTERN PetscErrorCode PetscOptionsGetViewer(MPI_Comm,const char[],const char[],PetscViewer*,PetscViewerFormat*,PetscBool*);

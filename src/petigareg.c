@@ -1,14 +1,9 @@
 #include "petiga.h"
 
-PETSC_EXTERN PetscBool     IGARegisterAllCalled;
-
 #if PETSC_VERSION_LE(3,3,0)
 #define PetscFunctionList        PetscFList
 #define PetscFunctionListDestroy PetscFListDestroy
 #endif
-PETSC_EXTERN PetscFunctionList PCList;
-PETSC_EXTERN PetscFunctionList TSList;
-PETSC_EXTERN PetscFunctionList DMList;
 
 #if PETSC_VERSION_LE(3,3,0)
 #define PCRegisterAll() PCRegisterAll(0)
@@ -18,6 +13,12 @@ PETSC_EXTERN PetscFunctionList DMList;
 #define TSRegister(s,f) TSRegister(s,0,0,f)
 #define DMRegister(s,f) DMRegister(s,0,0,f)
 #endif
+
+PETSC_EXTERN PetscBool IGARegisterAllCalled;
+
+PETSC_EXTERN PetscFunctionList PCList;
+PETSC_EXTERN PetscFunctionList TSList;
+PETSC_EXTERN PetscFunctionList DMList;
 
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_IGAEBE(PC);
@@ -75,9 +76,11 @@ PetscErrorCode IGAFinalizePackage(void)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_BEGIN
 extern PetscErrorCode SNESSetFromOptions_FDColor(SNES);
 EXTERN_C_END
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAInitializePackage"

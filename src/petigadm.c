@@ -15,6 +15,16 @@ static PetscErrorCode VecSetDM(Vec v,DM dm)
 }
 #endif
 
+#if PETSC_VERSION_LE(3,3,0)
+#undef VecType
+typedef const char* VecType;
+#endif
+
+#if PETSC_VERSION_LE(3,3,0)
+#undef MatType
+typedef const char* MatType;
+#endif
+
 #if PETSC_VERSION_(3,4,0)
 #define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
 #endif
@@ -163,11 +173,6 @@ static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LE(3,3,0)
-#undef VecType
-typedef const char* VecType;
-#endif
-
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreateGlobalVector_IGA"
 static PetscErrorCode DMCreateGlobalVector_IGA(DM dm,Vec *gvec)
@@ -203,11 +208,6 @@ static PetscErrorCode DMCreateLocalVector_IGA(DM dm,Vec *lvec)
   ierr = VecSetDM(*lvec,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LE(3,3,0)
-#undef MatType
-typedef const char* MatType;
-#endif
 
 #if PETSC_VERSION_LT(3,5,0)
 #undef  __FUNCT__
