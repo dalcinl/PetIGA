@@ -647,7 +647,7 @@ PetscErrorCode IGAElementGetMapping(IGAElement element,PetscInt *nen,const Petsc
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
-  if (nen)     PetscValidIntPointer(nen,3);
+  if (nen)     PetscValidIntPointer(nen,2);
   if (mapping) PetscValidPointer(mapping,3);
   if (nen)     *nen     = element->nen;
   if (mapping) *mapping = element->mapping;
