@@ -12,6 +12,7 @@ CahnHilliard2D \
 CahnHilliard3D \
 NavierStokesKorteweg2D \
 NavierStokesVMS \
+Elasticity \
 Elasticity3D \
 HyperElasticity \
 Richards \
@@ -105,6 +106,9 @@ ClassicalShell: ClassicalShell.o chkopts
 ElasticRod: ElasticRod.o ElasticRodFJ.o chkopts
 	${CLINKER} -o $@ $< ElasticRodFJ.o ${PETIGA_LIB}
 	${RM} -f $< ElasticRodFJ.o elasticrodfj.mod
+Elasticity: Elasticity.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
 Elasticity3D: Elasticity3D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
