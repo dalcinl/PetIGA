@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
   ierr = IGASetOrder(iga,1);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
+  const char *fieldname[3] = {"u", "v", "w"};
+  for (i=0; i<dim; i++) {ierr = IGASetFieldName(iga,i,fieldname[i]);CHKERRQ(ierr);}
+
   // Set boundary conditions
   for (i=0; i<dim; i++) {ierr = IGASetBoundaryValue(iga,0,0,i,0.0);CHKERRQ(ierr);}     // Dirichlet
   for (i=0; i<dim; i++) {ierr = IGASetBoundaryLoad (iga,0,1,i,load[i]);CHKERRQ(ierr);} // Neumann
