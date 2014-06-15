@@ -54,8 +54,8 @@ pure subroutine IGA_BasisFuns_2D(&
      do iq=1,inq
         call TensorBasisFuns(&
              order,&
-             ina,iN(:,:,iq),&
-             jna,jN(:,:,jq),&
+             ina,ind,iN(:,:,iq),&
+             jna,jnd,jN(:,:,jq),&
              N0(  :,iq,jq),&
              N1(:,:,iq,jq),&
              N2(:,:,iq,jq),&
@@ -76,16 +76,16 @@ contains
 
 pure subroutine TensorBasisFuns(&
      ord,&
-     ina,iN,&
-     jna,jN,&
+     ina,ind,iN,&
+     jna,jnd,jN,&
      N0,N1,N2,N3)
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: ord
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ord,ina)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:ord,jna)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina, ind
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna, jnd
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina,jna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina,jna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina,jna)
