@@ -101,9 +101,6 @@ static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
-PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateVec"
 /*@
@@ -152,7 +149,9 @@ PetscErrorCode IGACreateLocalVec(IGA iga, Vec *vec)
   IGACheckSetUpStage2(iga,1);
   /* */
   bs = iga->dof;
-  n  = Product(iga->node_gwidth);
+  n  = iga->node_gwidth[0];
+  n *= iga->node_gwidth[1];
+  n *= iga->node_gwidth[2];
   ierr = VecCreate(PETSC_COMM_SELF,vec);CHKERRQ(ierr);
   ierr = VecSetSizes(*vec,n*bs,n*bs);CHKERRQ(ierr);
   ierr = VecSetBlockSize(*vec,bs);CHKERRQ(ierr);
