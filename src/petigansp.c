@@ -22,14 +22,13 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  ierr = PetscLayoutGetLocalSize(iga->map,&n);CHKERRQ(ierr);
-  ierr = PetscLayoutGetSize(iga->map,&N);CHKERRQ(ierr);
+  n = dim*Product(iga->node_lwidth);
+  N = dim*Product(iga->node_sizes);
 
   ierr = VecCreate(comm,&vecX);CHKERRQ(ierr);
   ierr = VecSetSizes(vecX,n,N);CHKERRQ(ierr);
   ierr = VecSetBlockSize(vecX,dim);CHKERRQ(ierr);
   ierr = VecSetType(vecX,iga->vectype);CHKERRQ(ierr);
-
   *coords = vecX;
 
   ierr = VecGetArray(vecX,&arrayX);CHKERRQ(ierr);
