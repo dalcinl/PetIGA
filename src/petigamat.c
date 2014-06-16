@@ -59,7 +59,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   MPI_Comm       comm;
   IGA            iga;
   MatType        mtype;
-  PetscInt       m,n,M,N;
+  PetscInt       rbs,cbs,m,n,M,N;
   Mat            Anatural,Apetsc;
   PetscInt       rstart,rend;
   IS             is;
@@ -76,11 +76,13 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 
   /* Create and load the matrix in natural ordering */
   ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
+  ierr = MatGetBlockSizes(A,&rbs,&cbs);CHKERRQ(ierr);
   ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
   ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
   ierr = MatCreate(comm,&Anatural);CHKERRQ(ierr);
   ierr = MatSetType(Anatural,mtype);CHKERRQ(ierr);
   ierr = MatSetSizes(Anatural,m,n,M,N);CHKERRQ(ierr);
+  ierr = MatSetBlockSizes(Anatural,rbs,cbs);CHKERRQ(ierr);
   ierr = MatLoad(Anatural,viewer);CHKERRQ(ierr);
 
   /* Map PETSc ordering to natural ordering and create IS */
