@@ -385,6 +385,9 @@ PETSC_EXTERN PetscErrorCode IGASetMatType(IGA iga,const MatType mattype);
 PETSC_EXTERN PetscErrorCode IGACreateVec(IGA iga,Vec *vec);
 PETSC_EXTERN PetscErrorCode IGACreateMat(IGA iga,Mat *mat);
 
+PETSC_EXTERN PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords);
+PETSC_EXTERN PetscErrorCode IGACreateRigidBody(IGA iga,MatNullSpace *nsp);
+
 PETSC_EXTERN PetscErrorCode IGACreateLocalVec(IGA iga, Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec);

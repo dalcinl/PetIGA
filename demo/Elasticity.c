@@ -97,7 +97,6 @@ int main(int argc, char *argv[]) {
   for (i=0; i<dim; i++) {ierr = IGASetFieldName(iga,i,fieldname[i]);CHKERRQ(ierr);}
 
   // Set boundary conditions
-  for (i=0; i<dim; i++) {ierr = IGASetBoundaryValue(iga,0,0,i,0.0);CHKERRQ(ierr);}     // Dirichlet
   for (i=0; i<dim; i++) {ierr = IGASetBoundaryLoad (iga,0,1,i,load[i]);CHKERRQ(ierr);} // Neumann
 
   // Create linear system
@@ -109,6 +108,12 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
+
+  // Attach rigid-body modes to the matrix
+  MatNullSpace nsp;
+  ierr = IGACreateRigidBody(iga,&nsp);CHKERRQ(ierr);
+  ierr = MatSetNearNullSpace(A,nsp);CHKERRQ(ierr);
+  ierr = MatNullSpaceDestroy(&nsp);CHKERRQ(ierr);
 
   // Solve linear system
   KSP ksp;
