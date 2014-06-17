@@ -85,7 +85,8 @@ PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = MPI_Allreduce(localS,S,n,MPIU_SCALAR,MPIU_SUM,comm);CHKERRQ(ierr);
 
-  ierr = PetscFree2(localS,workS);CHKERRQ(ierr);
+  ierr = PetscFree(localS);CHKERRQ(ierr);
+  ierr = PetscFree(workS);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
