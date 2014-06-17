@@ -78,16 +78,16 @@ else
 endif
 
 $(OBJDIR)/%.o : %.c | $$(@D)/.DIR
-	$(PETSC_COMPILE.c) $< -o $@
+	$(PETSC_COMPILE.c) $(abspath $<) -o $@
 
 $(OBJDIR)/%.o : %.cxx | $$(@D)/.DIR
-	$(PETSC_COMPILE.cxx) $< -o $@
+	$(PETSC_COMPILE.cxx) $(abspath $<) -o $@
 
 $(OBJDIR)/%.o : %.F90 | $(MODDIR)/.DIR $$(@D)/.DIR
 ifneq ($(FC_MODULE_OUTPUT_FLAG),)
-	$(PETSC_COMPILE.F) $< -o $@ $(FC_MODULE_OUTPUT_FLAG)$(MODDIR)
+	$(PETSC_COMPILE.F) $(abspath $<) -o $@ $(FC_MODULE_OUTPUT_FLAG)$(MODDIR)
 else
-	cd $(MODDIR) && $(FC) -c $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) ../../$< -o ../../$@
+	cd $(MODDIR) && $(FC) -c $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) $(abspath $<) -o $(abspath $@)
 endif
 
 # Hack: manual dependencies on object files
