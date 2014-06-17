@@ -22,11 +22,12 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   IS                is;
   const char        *prefix;
   PetscErrorCode    ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,1);
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
-  if (format == PETSC_VIEWER_ASCII_INFO       ) PetscFunctionReturn(0);
+  if (format == PETSC_VIEWER_ASCII_INFO) PetscFunctionReturn(0);
   if (format == PETSC_VIEWER_ASCII_INFO_DETAIL) PetscFunctionReturn(0);
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
@@ -127,7 +128,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
   *last = k - 1;
 
   if (!periodic) {
-    if (i <= p  ) *first = 0;
+    if (i <= p)   *first = 0;
     if (i >= n-p) *last  = n;
   } else if (i==0) {
     PetscInt s = 1;
@@ -177,19 +178,20 @@ PETSC_STATIC_INLINE
 #define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
-  void (*f)(void) = 0;
+  void (*f)(void) = NULL;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   *aij = *baij = *sbaij = PETSC_FALSE;
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*aij = PETSC_TRUE; goto done;};
+  if  (f) {*aij = PETSC_TRUE; goto done;};
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*baij = PETSC_TRUE; goto done;};
+  if  (f) {*baij = PETSC_TRUE; goto done;};
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPISBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqSBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*sbaij = PETSC_TRUE; goto done;};
+  if  (f) {*sbaij = PETSC_TRUE; goto done;};
  done:
   PetscFunctionReturn(0);
 }
@@ -283,7 +285,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
 
   n = N = 1;
-  for(i=0; i<dim; i++) {
+  for (i=0; i<dim; i++) {
     n *= iga->node_lwidth[i];
     N *= iga->node_sizes[i];
   }
@@ -296,7 +298,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   *mat = A;
 
   { /* Check for MATIS matrix subtype */
-    void (*f)(void) = 0;
+    void (*f)(void) = NULL;
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
     is = f ? PETSC_TRUE: PETSC_FALSE;
   }
@@ -356,7 +358,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   n /= bs; N /= bs;
 
   maxnnz = 1;
-  for(i=0; i<dim; i++)
+  for (i=0; i<dim; i++)
     maxnnz *= (2*iga->axis[i]->p + 1); /* XXX do better ? */
 
   if (aij || baij || sbaij) {

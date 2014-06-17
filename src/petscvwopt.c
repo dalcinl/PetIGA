@@ -38,7 +38,7 @@ static PetscErrorCode PetscEnumFind(const char *const *enumlist,const char *str,
   n -= 3;                       /* drop enum name, prefix, and null termination */
   ierr = PetscEListFind(n,enumlist,str,&evalue,&efound);CHKERRQ(ierr);
   if (efound) *value = (PetscEnum)evalue;
-  if (found ) *found = efound;
+  if (found)  *found = efound;
   PetscFunctionReturn(0);
 }
 
@@ -76,7 +76,7 @@ PetscErrorCode PetscOptionsGetViewer(MPI_Comm comm,const char pre[],const char n
       }
       if (loc3_fmode) *loc3_fmode++ = 0;
       ierr = PetscStrendswithwhich(*loc0_vtype ? loc0_vtype : "ascii",viewers,&cnt);CHKERRQ(ierr);
-      if (cnt > (PetscInt) sizeof(viewers)-1) SETERRQ1(comm,PETSC_ERR_ARG_OUTOFRANGE,"Unknown viewer type: %s",loc0_vtype);
+      if (cnt > (PetscInt)sizeof(viewers)-1) SETERRQ1(comm,PETSC_ERR_ARG_OUTOFRANGE,"Unknown viewer type: %s",loc0_vtype);
       if (!loc1_fname) {
         switch (cnt) {
         case 0:

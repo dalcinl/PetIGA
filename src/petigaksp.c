@@ -224,7 +224,7 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
 
 .keywords: IGA, create, KSP
 @*/
-PetscErrorCode IGACreateKSP(IGA iga, KSP *ksp)
+PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp)
 {
   MPI_Comm       comm;
   PetscErrorCode ierr;
@@ -256,10 +256,9 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
   ierr = PetscObjectQuery((PetscObject)ksp,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-
   PetscFunctionReturn(0);
 }
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
 */
 
 #undef  __FUNCT__

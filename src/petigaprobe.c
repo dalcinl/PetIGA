@@ -58,9 +58,10 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
   PetscInt       i;
   IGAProbe       prb;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if(A) PetscValidHeaderSpecific(A,VEC_CLASSID,2);
+  if (A) PetscValidHeaderSpecific(A,VEC_CLASSID,2);
   PetscValidPointer(_prb,3);
   IGACheckSetUp(iga,1);
 
@@ -249,10 +250,11 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
 {
   PetscInt       i;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidPointer(prb,1);
   PetscValidRealPointer(u,2);
-#ifdef PETSC_USE_DEBUG
+#if defined(PETSC_USE_DEBUG)
   for (i=0; i<prb->dim; i++) {
     PetscReal *U = prb->U[i];
     PetscInt   a = prb->p[i];
@@ -318,9 +320,9 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   }
   if (prb->collective) {
     MPI_Comm    comm;
-    PetscMPIInt nen = (PetscMPIInt) prb->nen;
-    PetscMPIInt dim = (PetscMPIInt) prb->dim;
-    PetscMPIInt dof = (PetscMPIInt) prb->dof;
+    PetscMPIInt nen = (PetscMPIInt)prb->nen;
+    PetscMPIInt dim = (PetscMPIInt)prb->dim;
+    PetscMPIInt dof = (PetscMPIInt)prb->dof;
     PetscMPIInt rank=-1,root;
     ierr = IGAGetComm(prb->iga,&comm);CHKERRQ(ierr);
     if (!prb->offprocess) {ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);}

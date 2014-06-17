@@ -283,23 +283,23 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
     IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
     IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
   }
-
   PetscFunctionReturn(0);
 }
 
 PetscInt IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal U[])
 {
   PetscInt low,high,span;
-  if(u <= U[p])   return p;
-  if(u >= U[n+1]) return n;
+  if (u <= U[p])   return p;
+  if (u >= U[n+1]) return n;
   low  = p;
   high = n+1;
   span = (high+low)/2;
-  while(u < U[span] || u >= U[span+1]){
-    if(u < U[span])
+  while (u < U[span] || u >= U[span+1]) {
+    if (u < U[span]) {
       high = span;
-    else
+    } else {
       low = span;
+    }
     span = (high+low)/2;
   }
   return span;
@@ -309,7 +309,7 @@ PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[])
 {
   PetscInt j;
   PetscReal u = 0.0;
-  for(j=0;j<p;j++) u += U[i+j+1];
+  for (j=0; j<p; j++) u += U[i+j+1];
   u /= p;
   return u;
 }

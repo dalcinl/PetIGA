@@ -190,8 +190,8 @@ PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscI
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPointGetQuadrature"
 PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
-				     PetscReal *weight,
-				     PetscReal *detJac)
+                                     PetscReal *weight,
+                                     PetscReal *detJac)
 {
   PetscFunctionBegin;
   PetscValidPointer(point,1);
@@ -211,8 +211,8 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(basisfuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-	    "Requested derivative must be in range [0,%d], got %D",
-	    (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
+            "Requested derivative must be in range [0,%d], got %D",
+            (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
   *basisfuns = point->basis[der];
   PetscFunctionReturn(0);
 }
@@ -226,19 +226,19 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(shapefuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-	    "Requested derivative must be in range [0,%d], got %D",
-	    (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
+            "Requested derivative must be in range [0,%d], got %D",
+            (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
   *shapefuns = point->shape[der];
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
 extern void IGA_GetGeomMap        (PetscInt nen,PetscInt nsd,
-				   const PetscReal N[],const PetscReal C[],PetscReal X[]);
+                                   const PetscReal N[],const PetscReal C[],PetscReal X[]);
 extern void IGA_GetGradGeomMap    (PetscInt nen,PetscInt nsd,PetscInt dim,
-				   const PetscReal N[],const PetscReal C[],PetscReal F[]);
+                                   const PetscReal N[],const PetscReal C[],PetscReal F[]);
 extern void IGA_GetInvGradGeomMap (PetscInt nen,PetscInt nsd,PetscInt dim,
-				   const PetscReal N[],const PetscReal C[],PetscReal G[]);
+                                   const PetscReal N[],const PetscReal C[],PetscReal G[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -297,7 +297,7 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
     }
     for (i=0; i<nsd; i++)
       for (a=0; a<dim; a++)
-	F[i*dim+a] *= L[a];
+        F[i*dim+a] *= L[a];
   } else {
     PetscInt i,dim = p->dim;
     (void)PetscMemzero(F,dim*dim*sizeof(PetscReal));
@@ -326,7 +326,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
     }
     for (a=0; a<dim; a++)
       for (i=0; i<nsd; i++)
-	G[a*nsd+i] /= L[a];
+        G[a*nsd+i] /= L[a];
   } else {
     PetscInt i,dim = p->dim;
     (void)PetscMemzero(G,dim*dim*sizeof(PetscReal));
@@ -344,15 +344,15 @@ EXTERN_C_END
 
 EXTERN_C_BEGIN
 extern void IGA_GetValue(PetscInt nen,PetscInt dof,const PetscReal N[],
-			 const PetscScalar U[],PetscScalar u[]);
+                         const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetGrad (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-			 const PetscScalar U[],PetscScalar u[]);
+                         const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetHess (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-			 const PetscScalar U[],PetscScalar u[]);
+                         const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetDel2 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-			 const PetscScalar U[],PetscScalar u[]);
+                         const PetscScalar U[],PetscScalar u[]);
 extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],
-			 const PetscScalar U[],PetscScalar u[]);
+                         const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__

@@ -389,9 +389,9 @@ PetscBool IGANextElement(IGA iga,IGAElement element)
   }
   /* */
 #undef  CHKERRRETURN
-#define CHKERRRETURN(n,r) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);return(r);}}while(0)
-  ierr = IGAElementBuildClosure(element);  CHKERRRETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildFix(element);      CHKERRRETURN(ierr,PETSC_FALSE);
+#define CHKERRRETURN(n,r) do { if (PetscUnlikely(n)) { CHKERRCONTINUE(n); return (r);} } while (0)
+  ierr = IGAElementBuildClosure(element);CHKERRRETURN(ierr,PETSC_FALSE);
+  ierr = IGAElementBuildFix(element);CHKERRRETURN(ierr,PETSC_FALSE);
 #undef  CHKERRRETURN
   return PETSC_TRUE;
 }
@@ -1410,7 +1410,7 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
       for (side=0; side<2; side++) {
         IGAFormBC bcl = AtBoundaryL(element,dir,side);
         IGAFormBC bcv = AtBoundaryV(element,dir,side);
-        if(bcl && bcl->count) {
+        if (bcl && bcl->count) {
           PetscInt  f, n = bcl->count;
           PetscReal *dshape, normal[3] = {0.0,0.0,0.0};
           if (!element->geometry) {

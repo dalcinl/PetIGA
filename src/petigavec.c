@@ -139,7 +139,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateLocalVec"
-PetscErrorCode IGACreateLocalVec(IGA iga, Vec *vec)
+PetscErrorCode IGACreateLocalVec(IGA iga,Vec *vec)
 {
   PetscInt       bs,n;
   PetscErrorCode ierr;

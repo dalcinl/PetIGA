@@ -328,10 +328,11 @@ PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
     ierr = PetscLayoutSetISLocalToGlobalMapping(g->map,g->lgmap);CHKERRQ(ierr);
 #if PETSC_VERSION_LT(3,5,0)
     ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);
-    ierr = PetscLayoutSetISLocalToGlobalMappingBlock(g->map,g->lgmapb);
+    ierr = PetscLayoutSetISLocalToGlobalMappingBlock(g->map,g->lgmapb);CHKERRQ(ierr);
 #endif
     ierr = PetscLayoutSetUp(g->map);CHKERRQ(ierr);
   }
+
   *map = g->map;
   PetscFunctionReturn(0);
 }
@@ -651,7 +652,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* */
     PetscInt c,i,j,k,pos = 0,index = 0,bs = g->dof;
     ierr = VecGetLocalSize(nvec,&nlocal);CHKERRQ(ierr);
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal );CHKERRQ(ierr);
+    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal);CHKERRQ(ierr);
     ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
@@ -665,12 +666,13 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
             }
     ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingApply(g->lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
-    ierr = ISCreateGeneral(g->comm,nlocal,iglobal, PETSC_OWN_POINTER,&isglobal );CHKERRQ(ierr);
+    ierr = ISCreateGeneral(g->comm,nlocal,iglobal,PETSC_OWN_POINTER,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateGeneral(g->comm,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
     ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
   }
+
   *avec = nvec;
   *a2g  = n2g;
   *g2a  = g2n;

@@ -55,19 +55,19 @@ PETSC_STATIC_INLINE
 #define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
-  void (*f)(void) = 0;
+  void (*f)(void) = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   *aij = *baij = *sbaij = PETSC_FALSE;
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*aij = PETSC_TRUE; goto done;};
+  if  (f) {*aij = PETSC_TRUE; goto done;};
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*baij = PETSC_TRUE; goto done;};
+  if  (f) {*baij = PETSC_TRUE; goto done;};
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPISBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatSeqSBAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
-  if ( f) {*sbaij = PETSC_TRUE; goto done;};
+  if  (f) {*sbaij = PETSC_TRUE; goto done;};
  done:
   PetscFunctionReturn(0);
 }
@@ -149,10 +149,11 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     bbb->dof = iga->dof;
     for (i=0; i<dim; i++) {
       PetscInt p = iga->axis[i]->p;
-      if (overlap[i] < 0)
+      if (overlap[i] < 0) {
         overlap[i] = p/2;
-      else
+      } else {
         overlap[i] = PetscMin(overlap[i], p);
+      }
     }
     for (i=0; i<dim; i++) {
       gstart[i] = lstart[i] - overlap[i];
@@ -276,8 +277,8 @@ static PetscErrorCode PCSetFromOptions_BBB(PC pc)
   PetscBool      flg;
   PetscInt       i,no=3,overlap[3];
   PetscErrorCode ierr;
-  for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   PetscFunctionBegin;
+  for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
   if (flg) for (i=0; i<3; i++) {
       PetscInt ov = (i<no) ? overlap[i] : overlap[0];
@@ -288,7 +289,7 @@ static PetscErrorCode PCSetFromOptions_BBB(PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCApply_BBB"
-static PetscErrorCode PCApply_BBB(PC pc, Vec x,Vec y)
+static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscErrorCode ierr;
@@ -299,7 +300,7 @@ static PetscErrorCode PCApply_BBB(PC pc, Vec x,Vec y)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCApplyTranspose_BBB"
-static PetscErrorCode PCApplyTranspose_BBB(PC pc, Vec x,Vec y)
+static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscErrorCode ierr;

@@ -13,6 +13,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   PetscBool      geometry;
   PetscBool      property;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
@@ -65,6 +66,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
     ierr = IGASetPropertyDim(iga,dim);CHKERRQ(ierr);
     ierr = IGALoadProperty(iga,viewer);CHKERRQ(ierr);
   }
+
   PetscFunctionReturn(0);
 }
 
@@ -75,6 +77,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
   PetscBool      isbinary;
   PetscBool      skipheader;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   IGACheckSetUpStage2(iga,1);
@@ -131,6 +134,7 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
     ierr = IGASaveProperty(iga,viewer);CHKERRQ(ierr);
   }
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -210,6 +214,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   Vec            nvec,gvec,lvec;
   VecScatter     g2n,g2l;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
@@ -239,10 +244,11 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
   /* viewer -> natural*/
-  if (!skipheader)
-    {ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);}
-  else
-    {ierr = VecLoad_Binary_SkipHeader(nvec,viewer);CHKERRQ(ierr);}
+  if (!skipheader) {
+    ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
+  } else {
+    ierr = VecLoad_Binary_SkipHeader(nvec,viewer);CHKERRQ(ierr);
+  }
   /* natural -> global */
   ierr = VecScatterBegin(g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
@@ -263,7 +269,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
     n /= (nsd+1);
     ierr = PetscMalloc1(n*nsd,&iga->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,    &iga->rationalW);CHKERRQ(ierr);
+    ierr = PetscMalloc1(n,&iga->rationalW);CHKERRQ(ierr);
     X = iga->geometryX; W = iga->rationalW;
     ierr = VecGetArrayRead(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
@@ -296,6 +302,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
   Vec            nvec,gvec,lvec;
   VecScatter     l2g,g2n;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
@@ -406,6 +413,7 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
   PetscInt       npd;
   Vec            nvec,gvec,lvec;
   VecScatter     g2n,g2l;
+
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -436,10 +444,11 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
   /* viewer -> natural*/
-  if (!skipheader)
-    {ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);}
-  else
-    {ierr = VecLoad_Binary_SkipHeader(nvec,viewer);CHKERRQ(ierr);}
+  if (!skipheader) {
+    ierr = VecLoad(nvec,viewer);CHKERRQ(ierr);
+  } else {
+    ierr = VecLoad_Binary_SkipHeader(nvec,viewer);CHKERRQ(ierr);
+  }
   /* natural -> global */
   ierr = VecScatterBegin(g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
   ierr = VecScatterEnd  (g2n,nvec,gvec,INSERT_VALUES,SCATTER_REVERSE);CHKERRQ(ierr);
@@ -476,6 +485,7 @@ PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer)
   Vec            nvec,gvec,lvec;
   VecScatter     l2g,g2n;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
@@ -548,9 +558,11 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
   MPI_Comm       comm;
   PetscViewer    viewer;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidCharPointer(filename,2);
+
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
@@ -560,6 +572,7 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
   ierr = PetscViewerFileSetName(viewer,filename);CHKERRQ(ierr);
   ierr = IGALoad(iga,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -583,9 +596,11 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   MPI_Comm       comm;
   PetscViewer    viewer;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidCharPointer(filename,2);
+
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
   ierr = PetscViewerSetType(viewer,PETSCVIEWERBINARY);CHKERRQ(ierr);
@@ -596,13 +611,14 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   ierr = IGASave(iga,viewer);CHKERRQ(ierr);
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
 
 #undef  __FUNCT__
 #define __FUNCT__ "VecLoad_Binary_SkipHeader"
-static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec, PetscViewer viewer)
+static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
 {
   MPI_Comm       comm;
   PetscMPIInt    i,rank,size,tag;
@@ -641,6 +657,7 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec, PetscViewer viewer)
     ierr = MPI_Recv(array,n,MPIU_SCALAR,0,tag,comm,&status);CHKERRQ(ierr);
   }
   ierr = VecRestoreArray(vec,&array);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 
@@ -650,6 +667,7 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
 {
   Vec            natural;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,2);
@@ -658,9 +676,9 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUpStage2(iga,1);
 
-  ierr = IGAGetNaturalVec(iga,&natural);
+  ierr = IGAGetNaturalVec(iga,&natural);CHKERRQ(ierr);
   ierr = VecLoad(natural,viewer);CHKERRQ(ierr);
-  ierr = IGANaturalToGlobal(iga,natural,vec);
+  ierr = IGANaturalToGlobal(iga,natural,vec);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -671,6 +689,7 @@ PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
 {
   Vec            natural;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,2);
@@ -679,8 +698,8 @@ PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUpStage2(iga,1);
 
-  ierr = IGAGetNaturalVec(iga,&natural);
-  ierr = IGAGlobalToNatural(iga,vec,natural);
+  ierr = IGAGetNaturalVec(iga,&natural);CHKERRQ(ierr);
+  ierr = IGAGlobalToNatural(iga,vec,natural);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject)natural,((PetscObject)vec)->name);CHKERRQ(ierr);
   ierr = VecView(natural,viewer);CHKERRQ(ierr);
 
@@ -694,6 +713,7 @@ PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
   MPI_Comm       comm;
   PetscViewer    viewer;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
@@ -721,6 +741,7 @@ PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
   MPI_Comm       comm;
   PetscViewer    viewer;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);

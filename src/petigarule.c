@@ -91,9 +91,9 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
   PetscFunctionReturn(0);
 }
 
-static PetscErrorCode GaussLegendreRule(PetscInt q, PetscReal X[], PetscReal W[]);
+static PetscErrorCode GaussLegendreRule(PetscInt q,PetscReal X[],PetscReal W[]);
 /*
-static PetscErrorCode GaussLobattoRule(PetscInt q, PetscReal X[], PetscReal W[]);
+static PetscErrorCode GaussLobattoRule(PetscInt q,PetscReal X[],PetscReal W[]);
 */
 
 #undef  __FUNCT__
@@ -169,7 +169,7 @@ PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal 
 #define Q(constant) constant##Q
 #endif
 
-static PetscErrorCode GaussLegendreRule(PetscInt q, PetscReal X[], PetscReal W[])
+static PetscErrorCode GaussLegendreRule(PetscInt q,PetscReal X[],PetscReal W[])
 {
   switch (q)  {
   case (1): /* p = 1 */
@@ -287,7 +287,7 @@ static PetscErrorCode GaussLegendreRule(PetscInt q, PetscReal X[], PetscReal W[]
 }
 
 #if 0
-static PetscErrorCode GaussLobattoRule(PetscInt q, PetscReal X[], PetscReal W[])
+static PetscErrorCode GaussLobattoRule(PetscInt q,PetscReal X[],PetscReal W[])
 {
   switch (q)  {
   case (2): /* p = 1 */

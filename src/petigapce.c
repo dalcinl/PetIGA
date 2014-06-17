@@ -20,23 +20,24 @@ typedef struct {
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetUp_EBE_CreateMatrix"
-static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
+static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A,Mat *B)
 {
   MPI_Comm       comm = ((PetscObject)A)->comm;
   PetscMPIInt    size;
-  Mat            mat = 0;
+  Mat            mat = NULL;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
   if (size > 1) {
-    void (*aij)(void) = 0;
-    void (*baij)(void) = 0;
-    void (*sbaij)(void) = 0;
+    void (*aij)(void) = NULL;
+    void (*baij)(void) = NULL;
+    void (*sbaij)(void) = NULL;
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&aij);CHKERRQ(ierr);
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIBAIJSetPreallocation_C",&baij);CHKERRQ(ierr);
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPISBAIJSetPreallocation_C",&sbaij);CHKERRQ(ierr);
     if (aij || baij || sbaij) {
-      Mat Ad = 0;
+      Mat Ad = NULL;
       ierr = PetscTryMethod(A,"MatGetDiagonalBlock_C",(Mat,Mat*),(A,&Ad));CHKERRQ(ierr);
       if (Ad) {
         PetscInt na;
@@ -63,8 +64,8 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
 
           ierr = PetscMalloc1(ia[na],&newja);CHKERRQ(ierr);
           for (j=0; j<ia[na]; j++) newja[j] = ja[j] + cstart;
-          if (aij)   {ierr = MatMPIAIJSetPreallocationCSR  (mat,   ia,newja,NULL);CHKERRQ(ierr);}
-          if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR (mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
+          if (aij)   {ierr = MatMPIAIJSetPreallocationCSR(mat,ia,newja,NULL);CHKERRQ(ierr);}
+          if (baij)  {ierr = MatMPIBAIJSetPreallocationCSR(mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
           if (sbaij) {ierr = MatMPISBAIJSetPreallocationCSR(mat,bs,ia,newja,NULL);CHKERRQ(ierr);}
           ierr = PetscFree(newja);CHKERRQ(ierr);
         }
@@ -79,8 +80,8 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A, Mat *B)
 }
 
 static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],PetscInt bs,
-                                          PetscInt start, PetscInt end,
-                                          PetscInt N, const PetscInt idx[], PetscInt idxout[])
+                                          PetscInt start,PetscInt end,
+                                          PetscInt N,const PetscInt idx[],PetscInt idxout[])
 {
   PetscInt i,c,Nout=0;
   for (i=0; i<N; i++) {
@@ -97,11 +98,11 @@ static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],PetscInt bs,
 static PetscErrorCode PCSetUp_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
-  IGA            iga = 0;
+  IGA            iga = NULL;
   Mat            A,B;
   PetscErrorCode ierr;
-  PetscFunctionBegin;
 
+  PetscFunctionBegin;
   A = pc->pmat;
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
@@ -200,7 +201,7 @@ static PetscErrorCode PCSetFromOptions_EBE(PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCApply_EBE"
-static PetscErrorCode PCApply_EBE(PC pc, Vec x,Vec y)
+static PetscErrorCode PCApply_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
   PetscErrorCode ierr;
@@ -211,7 +212,7 @@ static PetscErrorCode PCApply_EBE(PC pc, Vec x,Vec y)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCApplyTranspose_EBE"
-static PetscErrorCode PCApplyTranspose_EBE(PC pc, Vec x,Vec y)
+static PetscErrorCode PCApplyTranspose_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
   PetscErrorCode ierr;
@@ -281,11 +282,10 @@ PetscErrorCode PCCreate_IGAEBE(PC pc)
   pc->ops->setup               = PCSetUp_EBE;
   pc->ops->reset               = PCReset_EBE;
   pc->ops->destroy             = PCDestroy_EBE;
-  pc->ops->setfromoptions      = 0;/* PCSetFromOptions_EBE; */
+  pc->ops->setfromoptions      = NULL;/* PCSetFromOptions_EBE; */
   pc->ops->view                = PCView_EBE;
   pc->ops->apply               = PCApply_EBE;
   pc->ops->applytranspose      = PCApplyTranspose_EBE;
-
   PetscFunctionReturn(0);
 }
 EXTERN_C_END

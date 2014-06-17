@@ -267,12 +267,11 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 
   if (axis->periodic) {
     PetscInt s = 1;
-    while(s < p && U[m-p] == U[m-p+s]) s++;
+    while (s < p && U[m-p] == U[m-p+s]) s++;
     axis->nnp = n-p+s;
   } else {
     axis->nnp = n+1;
   }
-
   PetscFunctionReturn(0);
 }
 
@@ -396,19 +395,20 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = U;
-  } else
+  } else {
     U = axis->U;
+  }
 
-  for(k=0; k<=p; k++) { /* open part */
+  for (k=0; k<=p; k++) { /* open part */
     U[k]   = u[0];
     U[m-k] = u[r];
   }
-  for(i=1; i<=r-1; i++) { /* r-1 breaks */
-    for(j=0; j<s; j++)    /* s times */
+  for (i=1; i<=r-1; i++) { /* r-1 breaks */
+    for (j=0; j<s; j++)    /* s times */
       U[k++] = u[i];
   }
   if (axis->periodic) {
-    for(k=0; k<=C; k++) { /* periodic part */
+    for (k=0; k<=C; k++) { /* periodic part */
       U[C-k]   = U[p] - U[m-p] + U[n-k];
       U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
     }
@@ -417,10 +417,9 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   axis->nel = r;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
-  for(i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
+  for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
 
   axis->nnp = axis->periodic ? n-C : n+1;
-
   PetscFunctionReturn(0);
 }
 
@@ -482,19 +481,20 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = U;
-  } else
+  } else {
     U = axis->U;
+  }
 
-  for(k=0; k<=p; k++) { /* open part */
+  for (k=0; k<=p; k++) { /* open part */
     U[k]   = Ui;
     U[m-k] = Uf;
   }
-  for(i=1; i<=r-1; i++) { /* (N-1) breaks */
-    for(j=1; j<=s; j++)     /* s times */
+  for (i=1; i<=r-1; i++) { /* (N-1) breaks */
+    for (j=1; j<=s; j++)     /* s times */
       U[k++] = Ui + i * ((Uf-Ui)/N);
   }
   if (axis->periodic) {
-    for(k=0; k<=C; k++) { /* periodic part */
+    for (k=0; k<=C; k++) { /* periodic part */
       U[C-k]   = U[p] - U[m-p] + U[n-k];
       U[m-C+k] = U[m-p] - U[p] + U[p+1+k];
     }
@@ -503,7 +503,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   axis->nel = r;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
-  for(i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
+  for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
 
   axis->nnp = axis->periodic ? n-C : n+1;
 
@@ -514,9 +514,9 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
 #define __FUNCT__ "IGAAxisSetUp"
 PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 {
-  PetscInt p,m,n;
+  PetscInt        p,m,n;
   const PetscReal *U;
-  PetscErrorCode ierr;
+  PetscErrorCode  ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (axis->p < 1)
@@ -535,12 +535,11 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 
   if (axis->periodic) {
     PetscInt s = 1;
-    while(s < p && U[m-p] == U[m-p+s]) s++;
+    while (s < p && U[m-p] == U[m-p+s]) s++;
     axis->nnp = n-p+s;
   } else {
     axis->nnp = n+1;
   }
-
   PetscFunctionReturn(0);
 }
 

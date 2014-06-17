@@ -3,7 +3,7 @@
 
 #include <petsc.h>
 
-#ifndef LGMap
+#if !defined(LGMap)
 #define LGMap ISLocalToGlobalMapping
 #endif
 

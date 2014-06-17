@@ -270,12 +270,12 @@ PetscErrorCode IGACreateTS2(IGA iga,TS *ts)
   ierr = VecDestroy(&V);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&F);CHKERRQ(ierr);
-  ierr = TSSetIFunction (*ts,F,IGATSFormIFunction ,iga);CHKERRQ(ierr);
+  ierr = TSSetIFunction (*ts,F,IGATSFormIFunction,iga);CHKERRQ(ierr);
   ierr = TSSetIFunction2(*ts,F,IGATSFormIFunction2,iga);CHKERRQ(ierr);
   ierr = VecDestroy(&F);CHKERRQ(ierr);
 
   ierr = IGACreateMat(iga,&J);CHKERRQ(ierr);
-  ierr = TSSetIJacobian (*ts,J,J,IGATSFormIJacobian, iga);CHKERRQ(ierr);
+  ierr = TSSetIJacobian (*ts,J,J,IGATSFormIJacobian,iga);CHKERRQ(ierr);
   ierr = TSSetIJacobian2(*ts,J,J,IGATSFormIJacobian2,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 

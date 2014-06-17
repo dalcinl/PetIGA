@@ -169,7 +169,7 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (isbinary) { ierr = IGASave(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
 
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII, &isascii );CHKERRQ(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
 
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
@@ -404,10 +404,7 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
   if (field < 0 || field >= iga->dof)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Field number must be in range [0,%D], got %D",iga->dof-1,field);
-  if (iga->fieldname)
-    *name = iga->fieldname[field];
-  else
-    *name = NULL;
+  *name = iga->fieldname ? iga->fieldname[field] : NULL;
   PetscFunctionReturn(0);
 }
 
@@ -786,10 +783,10 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsString("-iga_load","Specify IGA geometry file","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);
     if (!flg) {ierr = PetscOptionsString("-iga_geometry","deprecated, use -iga_load","IGARead",filename,filename,sizeof(filename),&flg);CHKERRQ(ierr);}
     if (flg) { /* load from file */
-      ierr = IGAOptionsReject(prefix,"-iga_elements"  );CHKERRQ(ierr);
-      ierr = IGAOptionsReject(prefix,"-iga_degree"    );CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_elements");CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_degree");CHKERRQ(ierr);
       ierr = IGAOptionsReject(prefix,"-iga_continuity");CHKERRQ(ierr);
-      ierr = IGAOptionsReject(prefix,"-iga_limits"    );CHKERRQ(ierr);
+      ierr = IGAOptionsReject(prefix,"-iga_limits");CHKERRQ(ierr);
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
       ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     } else { /* set axis details */
@@ -905,7 +902,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   if (size == 1 || dim == 1)
     for (i=0; i<dim; i++)
       {ierr = MPI_Comm_dup(comm,&subcomms[i]);CHKERRQ(ierr);}
-#ifndef PETSC_HAVE_MPIUNI
+#if !defined(PETSC_HAVE_MPIUNI)
   else {
     MPI_Comm    cartcomm;
     PetscMPIInt i,ndims,dims[3],periods[3]={0,0,0},reorder=0;
@@ -977,7 +974,7 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
   ierr = DMDASetDim(dm,dim);CHKERRQ(ierr);
   ierr = DMDASetDof(dm,bs);CHKERRQ(ierr);
   ierr = DMDASetNumProcs(dm,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
-  ierr = DMDASetSizes(dm,sizes[0],sizes[1],sizes[2]); CHKERRQ(ierr);
+  ierr = DMDASetSizes(dm,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);
   ierr = DMDASetOwnershipRanges(dm,ranges[0],ranges[1],ranges[2]);CHKERRQ(ierr);
   ierr = DMDASetBoundaryType(dm,btype[0],btype[1],btype[2]);CHKERRQ(ierr);
   ierr = DMDASetStencilType(dm,stype);CHKERRQ(ierr);
@@ -1126,12 +1123,13 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
   for (i=dim; i<3; i++)
     {ierr = IGAAxisReset(iga->axis[i]);CHKERRQ(ierr);}
 
-  if (!iga->collocation)
+  if (!iga->collocation) {
     for (i=0; i<dim; i++)
       grid_sizes[i] = iga->axis[i]->nel;
-  else
+  } else {
     for (i=0; i<dim; i++)
       grid_sizes[i] = iga->axis[i]->nnp;
+  }
 
   { /* processor grid and coordinates */
     MPI_Comm    comm = ((PetscObject)iga)->comm;
@@ -1162,8 +1160,8 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
     }
   }
 
-  if (!iga->collocation)
-  { /* geometry partitioning */
+  if (!iga->collocation) {
+    /* geometry partitioning */
     PetscInt *geom_sizes  = iga->geom_sizes;
     PetscInt *geom_lstart = iga->geom_lstart;
     PetscInt *geom_lwidth = iga->geom_lwidth;
@@ -1180,10 +1178,11 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
       gstart = span[efirst] - p;
       gend = span[elast] + 1;
       lstart = span[efirst] - p;
-      if(elast < nel-1)
+      if (elast < nel-1) {
         lend = span[elast+1] - p;
-      else
+      } else {
         lend = span[elast] + 1;
+      }
       geom_sizes[i]  = size;
       geom_lstart[i] = lstart;
       geom_lwidth[i] = lend - lstart;
@@ -1197,8 +1196,8 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
       geom_gstart[i] = 0;
       geom_gwidth[i] = 1;
     }
-  } else
-  {  /* geometry partitioning */
+  } else {
+    /* geometry partitioning */
     PetscInt *geom_sizes  = iga->geom_sizes;
     PetscInt *geom_lstart = iga->geom_lstart;
     PetscInt *geom_lwidth = iga->geom_lwidth;
@@ -1374,13 +1373,14 @@ static PetscErrorCode IGASetUp_View(IGA iga)
   char           filename2[PETSC_MAX_PATH_LEN] = "";
   PetscViewer    viewer;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view_ascii",  "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&flg1);CHKERRQ(ierr);
-  ierr = PetscOptionsBool(  "-iga_view_info",   "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool(  "-iga_view_detail", "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-iga_view_info",   "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool  ("-iga_view_detail", "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view_binary", "Save to file in binary format",   "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&flg2);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
@@ -1449,7 +1449,7 @@ PetscErrorCode IGASetUp(IGA iga)
 
   if (iga->collocation) {
     for (i=0; i<iga->dim; i++)
-      if(iga->axis[i]->periodic)
+      if (iga->axis[i]->periodic)
         SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Collocation not supported with periodicity");
   }
 
@@ -1457,15 +1457,16 @@ PetscErrorCode IGASetUp(IGA iga)
     if (!iga->collocation) {
       if (i >= iga->dim || iga->rule[i]->nqp < 1)
         {ierr = IGARuleInit(iga->rule[i],iga->axis[i]->p + 1);CHKERRQ(ierr);}
+    } else {
+      ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
     }
-    else
-      {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
 
   for (i=0; i<3; i++)
-    if (!iga->collocation)
-      {ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);}
-    else
-      {ierr = IGABasisInitCollocation(iga->basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);}
+    if (!iga->collocation) {
+      ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+    } else {
+      ierr = IGABasisInitCollocation(iga->basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
+    }
 
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);
 

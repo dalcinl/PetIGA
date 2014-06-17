@@ -81,7 +81,7 @@ PetscErrorCode IGAFormReset(IGAForm form)
   form->dof = 0;
   ierr = PetscMemzero(form->ops,sizeof(struct _IGAFormOps));CHKERRQ(ierr);
   ierr = PetscMemzero(form->value,3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);
-  ierr = PetscMemzero(form->load, 3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);
+  ierr = PetscMemzero(form->load,3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);
   ierr = PetscMemzero(form->visit,3*2*sizeof(PetscBool));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -101,13 +101,13 @@ PetscErrorCode IGAFormReference(IGAForm form)
 #define IGAFormUpdateDof(form,field) \
   do { \
     (form)->dof = PetscMax((form)->dof,(field)+1);      \
-  } while(0)
+  } while (0)
 
 #define IGAFormCheckArg(arg,m) \
 do { \
   if (arg<0)  SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be nonnegative, got %D",arg); \
   if (arg>=m) SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be less than %D, got %D",m,arg); \
- } while(0)
+ } while (0)
 
 PETSC_STATIC_INLINE
 void IGAFormBCSetEntry(IGAFormBC bc,PetscInt field,PetscScalar value)
@@ -302,22 +302,22 @@ PetscErrorCode IGASetFixTable(IGA iga,Vec U)
   PetscInt          nlocal;
   const PetscScalar *vlocal;
   PetscErrorCode    ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (U) PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   IGACheckSetUpStage2(iga,1);
 
   iga->fixtable = PETSC_FALSE;
-  ierr = PetscFree(iga->fixtableU);
+  ierr = PetscFree(iga->fixtableU);CHKERRQ(ierr);
   if (!U) PetscFunctionReturn(0);
 
-  PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   ierr = IGAGetLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
   ierr = VecGetSize(local,&nlocal);CHKERRQ(ierr);
   iga->fixtable = PETSC_TRUE;
-  ierr = PetscMalloc1(nlocal,&iga->fixtableU);
+  ierr = PetscMalloc1(nlocal,&iga->fixtableU);CHKERRQ(ierr);
   ierr = PetscMemcpy(iga->fixtableU,vlocal,nlocal*sizeof(PetscScalar));CHKERRQ(ierr);
   ierr = IGARestoreLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 

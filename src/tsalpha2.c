@@ -107,7 +107,6 @@ static PetscErrorCode TSStep_Alpha2(TS ts)
   PetscReal           next_time_step;
   SNESConvergedReason snesreason = SNES_CONVERGED_ITERATING;
   PetscErrorCode      ierr;
-
   PetscFunctionBegin;
 
   if (ts->steps == 0) {
@@ -221,7 +220,6 @@ static PetscErrorCode TSReset_Alpha2(TS ts)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
-
   PetscFunctionBegin;
   ierr = VecDestroy(&th->X0);CHKERRQ(ierr);
   ierr = VecDestroy(&th->Xa);CHKERRQ(ierr);
@@ -521,7 +519,6 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ts->ops->step           = TSStep_Alpha2;
   ts->ops->snesfunction   = SNESTSFormFunction_Alpha2;
   ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha2;
-
   ts->ops->reset          = TSReset_Alpha2;
   ts->ops->destroy        = TSDestroy_Alpha2;
   ts->ops->setup          = TSSetUp_Alpha2;

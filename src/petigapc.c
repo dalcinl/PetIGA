@@ -177,8 +177,8 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
                 PetscInt  *f = field[dir][side];
                 for (c=0; c<n; c++) {
                   i = f[c] + bs*index;
-                  if (!PetscBTLookupSet  (Dmask,i)) ndirichlet++;
-                  if ( PetscBTLookupClear(Nmask,i)) nneumann--;
+                  if (!PetscBTLookupSet(Dmask,i))  ndirichlet++;
+                  if (PetscBTLookupClear(Nmask,i)) nneumann--;
                 }
                 for (c=0; c<bs; c++) {
                   i = c + bs*index;
@@ -320,13 +320,14 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
   /* */
   PetscFunctionReturn(0);
 }
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsHandlerPC"
 PetscErrorCode IGASetOptionsHandlerPC(PC pc)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
   ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,NULL);CHKERRQ(ierr);

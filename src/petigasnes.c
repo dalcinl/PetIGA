@@ -230,10 +230,9 @@ static PetscErrorCode IGA_OptionsHandler_SNES(PetscObject obj,void *ctx)
   ierr = PetscObjectQuery((PetscObject)snes,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-
   PetscFunctionReturn(0);
 }
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx){return 0;}
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
 */
 
 #undef  __FUNCT__
