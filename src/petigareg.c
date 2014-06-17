@@ -14,6 +14,7 @@
 #define DMRegister(s,f) DMRegister(s,0,0,f)
 #endif
 
+PETSC_EXTERN PetscBool IGAPackageInitialized;
 PETSC_EXTERN PetscBool IGARegisterAllCalled;
 
 PETSC_EXTERN PetscFunctionList PCList;
@@ -33,8 +34,8 @@ EXTERN_C_BEGIN
 extern PetscErrorCode DMCreate_IGA(DM);
 EXTERN_C_END
 
-static PetscBool IGAPackageInitialized = PETSC_FALSE;
-PetscBool        IGARegisterAllCalled  = PETSC_FALSE;
+PetscBool IGAPackageInitialized = PETSC_FALSE;
+PetscBool IGARegisterAllCalled  = PETSC_FALSE;
 
 PetscClassId  IGA_CLASSID = 0;
 
@@ -73,6 +74,8 @@ PetscErrorCode IGAFinalizePackage(void)
   if (PCList) {ierr = PetscFunctionListDestroy(&PCList);CHKERRQ(ierr);}
   if (TSList) {ierr = PetscFunctionListDestroy(&TSList);CHKERRQ(ierr);}
   if (DMList) {ierr = PetscFunctionListDestroy(&DMList);CHKERRQ(ierr);}
+  IGAPackageInitialized = PETSC_FALSE;
+  IGARegisterAllCalled  = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
