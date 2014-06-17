@@ -448,7 +448,7 @@ PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidIntPointer(order,2);
-  *order= iga->order;
+  *order = iga->order;
   PetscFunctionReturn(0);
 }
 
@@ -1288,6 +1288,15 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
 
   if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
 
+  if (!iga->vectype) {
+    const MatType vtype = VECSTANDARD;
+    ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);
+  }
+  if (!iga->mattype) {
+    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
+    ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);
+  }
+
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
   ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
@@ -1333,15 +1342,6 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
                                   &iga->natural,&iga->n2g,&iga->g2n);CHKERRQ(ierr);
     /* destroy the grid context */
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
-  }
-
-  if (!iga->vectype) {
-    const MatType vtype = VECSTANDARD;
-    ierr = IGASetVecType(iga,vtype);CHKERRQ(ierr);
-  }
-  if (!iga->mattype) {
-    const MatType mtype = (iga->dof > 1) ? MATBAIJ : MATAIJ;
-    ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);
   }
 
   PetscFunctionReturn(0);
@@ -1443,11 +1443,10 @@ PetscErrorCode IGASetUp(IGA iga)
   iga->order = PetscMax(iga->order,1); /* XXX */
   iga->order = PetscMin(iga->order,3); /* XXX */
 
-  if (iga->collocation) {
+  if (iga->collocation)
     for (i=0; i<iga->dim; i++)
       if (iga->axis[i]->periodic)
         SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Collocation not supported with periodicity");
-  }
 
   for (i=0; i<3; i++)
     if (!iga->collocation) {
@@ -1468,6 +1467,64 @@ PetscErrorCode IGASetUp(IGA iga)
 
   ierr = IGAViewFromOptions(iga,NULL,"-iga_view");CHKERRQ(ierr);
   ierr = IGASetUp_View(iga);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAClone"
+PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
+{
+  MPI_Comm       comm;
+  IGA            newiga;
+  PetscInt       i,n,dim;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,dof,2);
+  PetscValidPointer(_newiga,3);
+  IGACheckSetUp(iga,1);
+
+  *_newiga = NULL;
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = IGACreate(comm,&newiga);CHKERRQ(ierr);
+  *_newiga = newiga;
+
+  newiga->dim = dim = iga->dim;
+  for (i=0; i<dim; i++) {
+    ierr = IGAAxisCopy(iga->axis[i],newiga->axis[i]);CHKERRQ(ierr);
+    ierr = IGARuleCopy(iga->rule[i],newiga->rule[i]);CHKERRQ(ierr);
+  }
+  for (i=0; i<3; i++)
+    newiga->proc_sizes[i] = iga->proc_sizes[i];
+  newiga->collocation = iga->collocation;
+  ierr = IGASetUp_Stage1(newiga);CHKERRQ(ierr);
+
+  n  = iga->geom_gwidth[0];
+  n *= iga->geom_gwidth[1];
+  n *= iga->geom_gwidth[2];
+  if (iga->rational) {
+    newiga->rational = iga->rational;
+    ierr = PetscMalloc1((size_t)n,&newiga->rationalW);CHKERRQ(ierr);
+    ierr = PetscMemcpy(newiga->rationalW,iga->rationalW,(size_t)n*sizeof(PetscReal));CHKERRQ(ierr);
+  }
+  if (iga->geometry) {
+    PetscInt nsd = newiga->geometry = iga->geometry;
+    ierr = PetscMalloc1((size_t)(n*nsd),&newiga->geometryX);CHKERRQ(ierr);
+    ierr = PetscMemcpy(newiga->geometryX,iga->geometryX,(size_t)(n*nsd)*sizeof(PetscReal));CHKERRQ(ierr);
+  }
+  if (iga->property) {
+    PetscInt npd = newiga->property = iga->property;
+    ierr = PetscMalloc1((size_t)(n*npd),&newiga->propertyA);CHKERRQ(ierr);
+    ierr = PetscMemcpy(newiga->propertyA,iga->propertyA,(size_t)(n*npd)*sizeof(PetscScalar));CHKERRQ(ierr);
+  }
+
+  newiga->dof = (dof > 0) ? dof : iga->dof;
+  ierr = IGASetUp_Stage2(newiga);CHKERRQ(ierr);
+
+  newiga->order = iga->order;
+  ierr = IGASetUp(newiga);CHKERRQ(ierr);
+
   PetscFunctionReturn(0);
 }
 

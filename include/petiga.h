@@ -405,6 +405,8 @@ PETSC_EXTERN PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec);
 PETSC_EXTERN PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[]);
 
+PETSC_EXTERN PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *newiga);
+
 #undef  DMIGA
 #define DMIGA "iga"
 PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);

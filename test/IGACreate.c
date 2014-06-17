@@ -78,7 +78,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 int main(int argc, char *argv[]) {
 
   PetscInt       dim,dof;
-  IGA            iga;
+  IGA            iga,giga;
   PetscScalar    s;
   PetscReal      xmin,xmax;
   Vec            b,x;
@@ -168,6 +168,9 @@ int main(int argc, char *argv[]) {
 #endif
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
+
+  ierr = IGAClone(iga,dim,&giga);CHKERRQ(ierr);
+  ierr = IGADestroy(&giga);CHKERRQ(ierr);
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 

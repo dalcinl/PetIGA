@@ -308,6 +308,22 @@ static PetscErrorCode DMLoad_IGA(DM dm,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#if 0==PETSC_VERSION_LT(3,5,0)
+#undef  __FUNCT__
+#define __FUNCT__ "DMClone_IGA"
+static PetscErrorCode DMClone_IGA(DM dm, DM *newdm)
+{
+  IGA            iga = DMIGACast(dm)->iga;
+  IGA            newiga;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = IGAClone(iga,iga->dof,&newiga);CHKERRQ(ierr);
+  ierr = IGACreateWrapperDM(newiga,newdm);CHKERRQ(ierr);
+  ierr = IGADestroy(&newiga);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#endif
+
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreate_IGA"
@@ -355,6 +371,9 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->setfromoptions               = DMSetFromOptions_IGA;
   dm->ops->setup                        = DMSetUp_IGA;
   dm->ops->load                         = DMLoad_IGA;
+#if 0==PETSC_VERSION_LT(3,5,0)
+  dm->ops->clone                        = DMClone_IGA;
+#endif
   /*
   dm->ops->createcoordinatedm           = DMCreateCoordinateDM_IGA;
   dm->ops->createsubdm                  = DMCreateSubDM_IGA;
