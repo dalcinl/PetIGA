@@ -13,33 +13,29 @@
 .  comm - MPI communicator
 
    Output Parameter:
-.  _iga - location to put the IGA context
+.  newiga - location to put the IGA context
 
    Level: normal
 
 .keywords: IGA, create
 @*/
-PetscErrorCode IGACreate(MPI_Comm comm,IGA *_iga)
+PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
 {
   PetscInt       i;
   IGA            iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_iga,2);
-  *_iga = NULL;
+  PetscValidPointer(newiga,2);
+
   ierr = IGAInitializePackage();CHKERRQ(ierr);
+
+  *newiga = NULL;
 #if PETSC_VERSION_LE(3,3,0)
-  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,
-                           "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
 #else
-  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,
-                           "IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
 #endif
-
-  *_iga = iga;
-
-  iga->vectype = NULL;
-  iga->mattype = NULL;
+  *newiga = iga;
 
   iga->dim = -1;
   iga->dof = -1;
