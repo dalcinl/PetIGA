@@ -1,5 +1,4 @@
 TARGETS = \
-L2Proj1D L2Proj2D \
 Poisson1D Poisson2D Poisson3D \
 L2Projection AdaptiveL2Projection \
 Laplace BoundaryIntegral \
@@ -39,12 +38,6 @@ PETIGA_DIR ?= $(topdir)
 include ${PETIGA_DIR}/conf/petigavariables
 include ${PETIGA_DIR}/conf/petigarules
 
-L2Proj1D: L2Proj1D.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
-L2Proj2D: L2Proj2D.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
 Poisson1D: Poisson1D.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
