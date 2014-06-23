@@ -231,10 +231,16 @@ static PetscErrorCode DMCreateMatrix_IGA(DM dm,MatType mtype,Mat *J)
 static PetscErrorCode DMCreateMatrix_IGA(DM dm,Mat *J)
 {
   IGA            iga = DMIGACast(dm)->iga;
+  MatType        mtype,save;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+  mtype = dm->mattype;
+  save = iga->mattype;
+  if (mtype) iga->mattype = (char*)mtype;
   ierr = IGACreateMat(iga,J);CHKERRQ(ierr);
+  if (mtype) iga->mattype = (char*)save;
+  ierr = MatSetDM(*J,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #endif
