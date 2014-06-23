@@ -172,6 +172,30 @@ static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
   ierr = IGALocalToGlobalEnd(iga,l,g,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+#if 0==PETSC_VERSION_LT(3,5,0)
+#undef  __FUNCT__
+#define __FUNCT__ "DMLocalToLocalBegin_IGA"
+static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
+{
+  IGA            iga = DMIGACast(dm)->iga;
+  /*PetscErrorCode ierr;*/
+  PetscFunctionBegin;
+  /*ierr = IGALocalToLocalBegin(iga,g,l,mode);CHKERRQ(ierr);*/
+  SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  PetscFunctionReturn(0);
+}
+#undef  __FUNCT__
+#define __FUNCT__ "DMLocalToLocalEnd_IGA"
+static PetscErrorCode DMLocalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
+{
+  IGA            iga = DMIGACast(dm)->iga;
+  /*PetscErrorCode ierr;*/
+  PetscFunctionBegin;
+  /*ierr = IGALocalToLocalEnd(iga,g,l,mode);CHKERRQ(ierr);*/
+  SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  PetscFunctionReturn(0);
+}
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreateGlobalVector_IGA"
@@ -359,6 +383,10 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->globaltolocalend             = DMGlobalToLocalEnd_IGA;
   dm->ops->localtoglobalbegin           = DMLocalToGlobalBegin_IGA;
   dm->ops->localtoglobalend             = DMLocalToGlobalEnd_IGA;
+#if 0==PETSC_VERSION_LT(3,5,0)
+  dm->ops->localtolocalbegin            = DMLocalToLocalBegin_IGA;
+  dm->ops->localtolocalend              = DMLocalToLocalEnd_IGA;
+#endif
   dm->ops->createglobalvector           = DMCreateGlobalVector_IGA;
   dm->ops->createlocalvector            = DMCreateLocalVector_IGA;
   dm->ops->creatematrix                 = DMCreateMatrix_IGA;
