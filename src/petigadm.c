@@ -178,10 +178,9 @@ static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
 static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
-  /*PetscErrorCode ierr;*/
+  PetscErrorCode ierr;
   PetscFunctionBegin;
-  /*ierr = IGALocalToLocalBegin(iga,g,l,mode);CHKERRQ(ierr);*/
-  SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  ierr = IGALocalToLocalBegin(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #undef  __FUNCT__
@@ -189,10 +188,9 @@ static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 static PetscErrorCode DMLocalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
-  /*PetscErrorCode ierr;*/
+  PetscErrorCode ierr;
   PetscFunctionBegin;
-  /*ierr = IGALocalToLocalEnd(iga,g,l,mode);CHKERRQ(ierr);*/
-  SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  ierr = IGALocalToLocalEnd(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #endif

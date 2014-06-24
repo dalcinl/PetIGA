@@ -135,6 +135,7 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&iga->l2l);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->natural);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->n2g);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2n);CHKERRQ(ierr);
@@ -1304,6 +1305,7 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
   ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2l);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->l2g);CHKERRQ(ierr);
+  ierr = VecScatterDestroy(&iga->l2l);CHKERRQ(ierr);
   ierr = VecDestroy(&iga->natural);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->n2g);CHKERRQ(ierr);
   ierr = VecScatterDestroy(&iga->g2n);CHKERRQ(ierr);

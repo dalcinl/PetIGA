@@ -304,7 +304,7 @@ struct _p_IGA {
   AO          ao,aob;
   LGMap       lgmap,lgmapb;
   PetscLayout map;
-  VecScatter  g2l,l2g;
+  VecScatter  g2l,l2g,l2l;
   PetscInt    nwork;
   Vec         vwork[16];
   Vec         natural;
@@ -397,6 +397,9 @@ PETSC_EXTERN PetscErrorCode IGAGlobalToLocal     (IGA iga,Vec gvec,Vec lvec,Inse
 PETSC_EXTERN PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv);
 PETSC_EXTERN PetscErrorCode IGALocalToGlobalEnd  (IGA iga,Vec lvec,Vec gvec,InsertMode addv);
 PETSC_EXTERN PetscErrorCode IGALocalToGlobal     (IGA iga,Vec lvec,Vec gvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToLocalBegin (IGA iga,Vec gvec,Vec lvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToLocalEnd   (IGA iga,Vec gvec,Vec lvec,InsertMode addv);
+PETSC_EXTERN PetscErrorCode IGALocalToLocal      (IGA iga,Vec gvec,Vec lvec,InsertMode addv);
 
 PETSC_EXTERN PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec);
 PETSC_EXTERN PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec);

@@ -2,6 +2,10 @@
 #include <petsc-private/vecimpl.h>
 
 #if PETSC_VERSION_LE(3,3,0)
+static MPI_Comm PetscObjectComm(PetscObject obj) { return obj ? obj->comm : MPI_COMM_NULL; }
+#endif
+
+#if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_BEGIN
 #endif
 PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
@@ -278,6 +282,47 @@ PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscFunctionBegin;
   ierr = IGALocalToGlobalBegin(iga,lvec,gvec,addv);CHKERRQ(ierr);
   ierr = IGALocalToGlobalEnd  (iga,lvec,gvec,addv);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToLocalBegin"
+PetscErrorCode IGALocalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
+  IGACheckSetUpStage2(iga,1);
+  if (!iga->l2l) SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  ierr = VecScatterBegin(iga->l2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToLocalEnd"
+PetscErrorCode IGALocalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
+  IGACheckSetUpStage2(iga,1);
+  if (!iga->l2l) SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  ierr = VecScatterEnd(iga->l2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGALocalToLocal"
+PetscErrorCode IGALocalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = IGALocalToLocalBegin(iga,gvec,lvec,addv);CHKERRQ(ierr);
+  ierr = IGALocalToLocalEnd  (iga,gvec,lvec,addv);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
