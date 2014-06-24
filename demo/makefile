@@ -118,14 +118,17 @@ TwoPhaseTwoComponent: TwoPhaseTwoComponent.o chkopts
 OPTS=-nox -malloc_debug -malloc_dump
 
 runex1a_1:
-	-@${MPIEXEC} -n 1 ./L2Proj1D ${OPTS}
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 1 -check_error
 runex1a_4:
-	-@${MPIEXEC} -n 4 ./L2Proj1D ${OPTS}
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 1 -check_error
 runex1b_1:
-	-@${MPIEXEC} -n 1 ./L2Proj2D ${OPTS}
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 2 -check_error
 runex1b_4:
-	-@${MPIEXEC} -n 4 ./L2Proj2D ${OPTS}
-
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 2 -check_error
+runex1c_1:
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 3 -p 1 -check_error
+runex1c_4:
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 3 -p 1 -check_error
 runex2a_1:
 	-@${MPIEXEC} -n 1 ./Poisson1D ${OPTS}
 runex2a_4:
@@ -192,27 +195,44 @@ runex8_4:
 	-@${MPIEXEC} -n 4 ./ElasticRod ${OPTS} -ts_max_steps 10
 
 
-L2Proj1D := L2Proj1D.PETSc runex1a_1 runex1a_4 L2Proj1D.rm
-L2Proj2D := L2Proj2D.PETSc runex1b_1 runex1b_4 L2Proj2D.rm
+L2Projection := \
+L2Projection.PETSc \
+runex1a_1 runex1a_4 \
+runex1b_1 runex1b_4 \
+runex1c_1 runex1c_4 \
+L2Projection.rm
+
+Laplace := \
+Laplace.PETSc \
+Laplace.rm
+
 Poisson1D := Poisson1D.PETSc runex2a_1 runex2a_4 Poisson1D.rm
 Poisson2D := Poisson2D.PETSc runex2b_1 runex2b_4 Poisson2D.rm
 Poisson3D := Poisson3D.PETSc runex2c_1 runex2c_4 Poisson3D.rm
-Neumann := Neumann.PETSc runex7a_1 runex7a_4 runex7b_1 runex7b_4 runex7c_4 Neumann.rm
-Bratu   := \
+Poisson   := $(Poisson1D) $(Poisson2D) $(Poisson3D)
+
+Neumann := \
+Neumann.PETSc \
+runex7a_1 runex7a_4 \
+runex7b_1 runex7b_4 runex7c_4 \
+Neumann.rm
+
+Bratu := \
 Bratu.PETSc \
 runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 \
 runex6d_1 runex6d_2 runex6d_4 runex6d_8 runex6d_9 \
 runex6e_1 runex6e_4 \
 Bratu.rm
+
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
+CahnHilliard3D := CahnHilliard3D.PETSc CahnHilliard3D.rm
+CahnHilliard   := $(CahnHilliard2D) $(CahnHilliard3D)
+
 PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b_4 PatternFormation.rm
 ElasticRod := ElasticRod.PETSc runex8_1 runex8_4 ElasticRod.rm
 
-L2Proj       := $(L2Proj1D) $(L2Proj2D) $(L2Proj3D)
-Poisson      := $(Poisson1D) $(Poisson2D) $(Poisson3D)
-CahnHilliard := $(CahnHilliard2D) $(CahnHilliard3D)
 
-TESTEXAMPLES_C := $(L2Proj) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
+TESTEXAMPLES_C := $(L2Projection) $(Laplace) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
 TESTEXAMPLES_F :=
 TESTEXAMPLES_FORTRAN:=$(TESTEXAMPLES_F)
 testexamples:
