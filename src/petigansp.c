@@ -21,7 +21,8 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
   IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetGeometryDim(iga,&dim);CHKERRQ(ierr);
+  if (!dim) {ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);}
   n = dim*Product(iga->node_lwidth);
   N = dim*Product(iga->node_sizes);
 
