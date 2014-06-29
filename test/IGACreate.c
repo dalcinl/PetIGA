@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   TS             ts;
   DM             dm;
   PetscErrorCode ierr;
-  ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
+  ierr = PetscInitialize(&argc,&argv,NULL,NULL);CHKERRQ(ierr);
 
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   ierr = IGADestroy(&giga);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
-  ierr = IGAComputeScalar(iga,x,1,&s,Scalar,0);CHKERRQ(ierr);
+  ierr = IGAComputeScalar(iga,x,1,&s,Scalar,NULL);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
@@ -110,38 +110,46 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
-  ierr = IGASetFormSystem(iga,System,0);CHKERRQ(ierr);
+  ierr = IGASetFormSystem(iga,System,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
-  ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ksp,1e-7,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-  ierr = VecMin(x,0,&xmin);CHKERRQ(ierr);
-  ierr = VecMax(x,0,&xmax);CHKERRQ(ierr);
+  ierr = VecMin(x,NULL,&xmin);CHKERRQ(ierr);
+  ierr = VecMax(x,NULL,&xmax);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
+  if ((xmax-xmin) > 1e-2) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Unexpected result: x_min=%g x_max=%g\n",
+                       (double)xmin,(double)xmax);CHKERRQ(ierr);
+  }
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
   ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
-  ierr = IGASetFormVector(iga,Vector,0);CHKERRQ(ierr);
+  ierr = IGASetFormVector(iga,Vector,NULL);CHKERRQ(ierr);
   ierr = IGAComputeVector(iga,b);CHKERRQ(ierr);
-  ierr = IGASetFormMatrix(iga,Matrix,0);CHKERRQ(ierr);
+  ierr = IGASetFormMatrix(iga,Matrix,NULL);CHKERRQ(ierr);
   ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
-  ierr = KSPSetFromOptions(ksp);;CHKERRQ(ierr);
-  ierr = KSPSetTolerances(ksp,1e-6,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetTolerances(ksp,1e-7,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+  ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-  ierr = VecMin(x,0,&xmin);CHKERRQ(ierr);
-  ierr = VecMax(x,0,&xmax);CHKERRQ(ierr);
+  ierr = VecMin(x,NULL,&xmin);CHKERRQ(ierr);
+  ierr = VecMax(x,NULL,&xmax);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
+  if ((xmax-xmin) > 1e-2) {
+    ierr = PetscPrintf(PETSC_COMM_WORLD,"Unexpected result: x_min=%g x_max=%g\n",
+                       (double)xmin,(double)xmax);CHKERRQ(ierr);
+  }
 
   ierr = IGACreateSNES(iga,&snes);CHKERRQ(ierr);
   ierr = SNESDestroy(&snes);CHKERRQ(ierr);
@@ -230,11 +238,6 @@ int main(int argc, char *argv[]) {
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
-
-  if ((xmax-xmin) > 1e-2) {
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"Unexpected result: x_min=%G x_max=%G\n",
-                       (PetscScalar)xmin,(PetscScalar)xmax);CHKERRQ(ierr);
-  }
 
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
