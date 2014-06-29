@@ -221,8 +221,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
-  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
-  if (check_error) {if (PetscRealPart(error)>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%G\n",error);}
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)error);CHKERRQ(ierr);}
+  if (check_error) {if (PetscRealPart(error)>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

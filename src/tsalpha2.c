@@ -322,7 +322,7 @@ static PetscErrorCode TSView_Alpha2(TS ts,PetscViewer viewer)
   PetscFunctionBegin;
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&ascii);CHKERRQ(ierr);
   if (ascii) {
-    ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%G, Alpha_f=%G, Gamma=%G, Beta=%G\n",th->Alpha_m,th->Alpha_f,th->Gamma,th->Beta);CHKERRQ(ierr);
+    ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%g, Alpha_f=%g, Gamma=%g, Beta=%g\n",(double)th->Alpha_m,(double)th->Alpha_f,(double)th->Gamma,(double)th->Beta);CHKERRQ(ierr);
   }
   ierr = SNESView(ts->snes,viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -762,7 +762,7 @@ PetscErrorCode TSAlpha2SetRadius(TS ts,PetscReal radius)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidLogicalCollectiveReal(ts,radius,2);
-  if (radius < 0 || radius > 1) SETERRQ1(((PetscObject)ts)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Radius %G not in range [0,1]",radius);
+  if (radius < 0 || radius > 1) SETERRQ1(((PetscObject)ts)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Radius %g not in range [0,1]",(double)radius);
   ierr = PetscTryMethod(ts,"TSAlpha2SetRadius_C",(TS,PetscReal),(ts,radius));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

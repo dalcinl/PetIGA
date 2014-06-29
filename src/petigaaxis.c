@@ -242,14 +242,14 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
     /* check increasing sequence */
     if (U[k-1] > U[k])
       SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Knot sequence must be increasing, got U[%D]=%G > U[%D]=%G",
-               k-1,U[k-1],k,U[k]);
+               "Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",
+               k-1,(double)U[k-1],k,(double)U[k]);
     /* check multiplicity */
     while (++k < m && U[i] == U[k]) s++;
     if (s > p)
       SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Knot U[%D]=%G has multiplicity %D greater than polynomial degree %D",
-               i,U[i],s,p);
+               "Knot U[%D]=%g has multiplicity %D greater than polynomial degree %D",
+               i,(double)U[i],s,p);
   }
 
   if (m != axis->m) {
@@ -378,8 +378,8 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
     if (u[i-1] >= u[i])
       SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                "Break sequence must be strictly increasing, "
-               "got u[%D]=%G %s u[%D]=%G",
-               i-1,u[i-1],i,u[i],(u[i]==u[i-1])?"==":">");
+               "got u[%D]=%g %s u[%D]=%g",
+               i-1,(double)u[i-1],(u[i]==u[i-1])?"==":">",i,(double)u[i]);
   if (C < 0 || C >= axis->p)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Continuity must be in range [0,%D], got %D",axis->p-1,C);
@@ -465,7 +465,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
              "Number of elements must be greater than zero, got %D",N);
   if (Ui >= Uf)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Initial value %G must be less than final value %G",Ui,Uf);
+             "Initial value %g must be less than final value %g",(double)Ui,(double)Uf);
   if (C < 0 || C >= axis->p)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Continuity must be in range [0,%D], got %D",axis->p-1,C);

@@ -154,8 +154,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
-  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %G\n",error);CHKERRQ(ierr);}
-  if (check_error) {if (PetscRealPart(error)>error_tol) SETERRQ2(PETSC_COMM_WORLD,1,"L2 error=%G > %G\n",error,error_tol);}
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)error);CHKERRQ(ierr);}
+  if (check_error) {if (PetscRealPart(error)>error_tol) SETERRQ2(PETSC_COMM_WORLD,1,"L2 error=%g > %g\n",(double)error,(double)error_tol);}
   if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = MatDestroy(&A);CHKERRQ(ierr);

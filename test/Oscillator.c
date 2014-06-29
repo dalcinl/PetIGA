@@ -132,7 +132,7 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
   ierr = TSGetSolution2(ts,&X,&V);CHKERRQ(ierr);
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecGetArrayRead(V,&v);CHKERRQ(ierr);
-  ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%G %G %G\n",t,x[0],v[0]);CHKERRQ(ierr);
+  ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%g %g %g\n",(double)t,(double)x[0],(double)v[0]);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(V,&v);CHKERRQ(ierr);
   ierr = TSGetConvergedReason(ts,&reason); CHKERRQ(ierr);
