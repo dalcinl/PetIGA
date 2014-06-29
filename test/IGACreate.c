@@ -92,12 +92,14 @@ int main(int argc, char *argv[]) {
 
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
-
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   if (dim < 1) {ierr = IGASetDim(iga,dim=3);CHKERRQ(ierr);}
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   if (dof < 1) {ierr = IGASetDof(iga,dof=1);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
+
+  ierr = IGAClone(iga,dim,&giga);CHKERRQ(ierr);
+  ierr = IGADestroy(&giga);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGAComputeScalar(iga,x,1,&s,Scalar,0);CHKERRQ(ierr);
@@ -169,8 +171,63 @@ int main(int argc, char *argv[]) {
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
-  ierr = IGAClone(iga,dim,&giga);CHKERRQ(ierr);
-  ierr = IGADestroy(&giga);CHKERRQ(ierr);
+  ierr = IGACreateWrapperDM(iga,&dm);CHKERRQ(ierr);
+#if PETSC_VERSION_GE(3,5,0)
+  {
+    DM newdm;
+    ierr = DMClone(dm,&newdm);CHKERRQ(ierr);
+    ierr = DMDestroy(&newdm);CHKERRQ(ierr);
+  }
+#endif
+#if PETSC_VERSION_GE(3,4,0)
+  {
+    DM cdm;
+    ierr = DMGetCoordinateDM(dm,&cdm);CHKERRQ(ierr);
+  }
+  {
+    PetscInt i,j,fields[64];IS is;DM subdm;
+    for (i=0; i<dof; i++) fields[i] = i;
+    for (i=0; i<dof; i++) {
+      ierr = DMCreateSubDM(dm,1,&i,&is,&subdm);CHKERRQ(ierr);
+      ierr = ISDestroy(&is);CHKERRQ(ierr);
+      ierr = DMDestroy(&subdm);CHKERRQ(ierr);
+      ierr = DMCreateSubDM(dm,i+1,fields,&is,&subdm);CHKERRQ(ierr);
+      ierr = ISDestroy(&is);CHKERRQ(ierr);
+      ierr = DMDestroy(&subdm);CHKERRQ(ierr);
+      ierr = DMCreateSubDM(dm,dof-i,fields+i,&is,&subdm);CHKERRQ(ierr);
+      ierr = ISDestroy(&is);CHKERRQ(ierr);
+      ierr = DMDestroy(&subdm);CHKERRQ(ierr);
+      for (j=i+1; j<dof; j++) {
+        ierr = DMCreateSubDM(dm,dof-j,fields+i,&is,&subdm);CHKERRQ(ierr);
+        ierr = ISDestroy(&is);CHKERRQ(ierr);
+        ierr = DMDestroy(&subdm);CHKERRQ(ierr);
+      }
+    }
+  }
+#endif
+  {
+    PetscInt i,len;char **namelist;IS *islist;
+    ierr = DMCreateFieldIS(dm,&len,&namelist,&islist);CHKERRQ(ierr);
+    for (i=0; i<len; i++) {
+      ierr = PetscFree(namelist[i]);CHKERRQ(ierr);
+      ierr = ISDestroy(&islist[i]);CHKERRQ(ierr);
+    }
+    ierr = PetscFree(namelist);CHKERRQ(ierr);
+    ierr = PetscFree(islist);CHKERRQ(ierr);
+  }
+  {
+    PetscInt i,len;char **namelist;IS *islist;DM *dmlist;
+    ierr = DMCreateFieldDecomposition(dm,&len,&namelist,&islist,&dmlist);CHKERRQ(ierr);
+    for (i=0; i<len; i++) {
+      ierr = PetscFree(namelist[i]);CHKERRQ(ierr);
+      ierr = ISDestroy(&islist[i]);CHKERRQ(ierr);
+      ierr = DMDestroy(&dmlist[i]);CHKERRQ(ierr);
+    }
+    ierr = PetscFree(namelist);CHKERRQ(ierr);
+    ierr = PetscFree(islist);CHKERRQ(ierr);
+    ierr = PetscFree(dmlist);CHKERRQ(ierr);
+  }
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
