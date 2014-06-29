@@ -747,4 +747,32 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 
 /* ---------------------------------------------------------------- */
 
+#if PETSC_VERSION_(3,3,0)
+
+#undef  PETSC_VERSION_LT
+#define PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR)    \
+  (PETSC_VERSION_RELEASE == 1 &&                  \
+   (PETSC_VERSION_MAJOR < (MAJOR) ||              \
+    (PETSC_VERSION_MAJOR == (MAJOR) &&            \
+     (PETSC_VERSION_MINOR < (MINOR) ||            \
+      (PETSC_VERSION_MINOR == (MINOR) &&          \
+       (PETSC_VERSION_SUBMINOR < (SUBMINOR)))))))
+
+#undef  PETSC_VERSION_LE
+#define PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR) \
+  (PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) ||   \
+   PETSC_VERSION_(MAJOR,MINOR,SUBMINOR))
+
+#undef  PETSC_VERSION_GE
+#define PETSC_VERSION_GE(MAJOR,MINOR,SUBMINOR) \
+  (0 == PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
+
+#undef  PETSC_VERSION_GT
+#define PETSC_VERSION_GT(MAJOR,MINOR,SUBMINOR) \
+  (0 == PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR))
+
+#endif
+
+/* ---------------------------------------------------------------- */
+
 #endif/*PETIGA_H*/
