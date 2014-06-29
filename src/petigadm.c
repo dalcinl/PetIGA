@@ -338,8 +338,10 @@ static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
   PetscFunctionBegin;
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   ierr = IGAClone(iga,dof,&newiga);CHKERRQ(ierr);
-  ierr = IGACreateWrapperDM(newiga,newdm);CHKERRQ(ierr);
+  ierr = DMSetType(*newdm,DMIGA);CHKERRQ(ierr);
+  ierr = DMIGASetIGA(*newdm,newiga);CHKERRQ(ierr);
   ierr = IGADestroy(&newiga);CHKERRQ(ierr);
+  ierr = DMSetUp(*newdm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 #endif
