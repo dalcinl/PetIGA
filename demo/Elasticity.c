@@ -97,6 +97,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<dim; i++) {ierr = IGASetFieldName(iga,i,fieldname[i]);CHKERRQ(ierr);}
 
   // Set boundary conditions
+  for (i=0; i<dim; i++) {ierr = IGASetBoundaryValue(iga,0,0,i,0.0);CHKERRQ(ierr);}     // Dirichlet
   for (i=0; i<dim; i++) {ierr = IGASetBoundaryLoad (iga,0,1,i,load[i]);CHKERRQ(ierr);} // Neumann
 
   // Create linear system
