@@ -206,6 +206,7 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
 #define __FUNCT__ "IGAPreparePCBDDC"
 PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 {
+  MPI_Comm       comm;
   Mat            mat;
   void           (*f)(void);
   const char     *prefix;
@@ -218,6 +219,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
   IGACheckSetUpStage2(iga,1);
 
+  ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
   ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
   ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
@@ -281,12 +283,22 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     }
     ierr = IGAComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
 
+#if PETSC_VERSION_LT(3,5,0)
     ierr = ISCreateGeneral(PETSC_COMM_SELF,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
     ierr = ISCreateGeneral(PETSC_COMM_SELF,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
-#if defined(PETSC_HAVE_PCBDDC) /* XXX */
+#   if defined(PETSC_HAVE_PCBDDC) /* XXX */
     ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
     ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
+#   endif
+#else
+    ierr = ISCreateGeneral(comm,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
+    ierr = ISCreateGeneral(comm,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
+#   if defined(PETSC_HAVE_PCBDDC) /* XXX */
+    ierr = PCBDDCSetDirichletBoundariesLocal(pc,isd);CHKERRQ(ierr);
+    ierr = PCBDDCSetNeumannBoundariesLocal(pc,isn);CHKERRQ(ierr);
+#   endif
 #endif
+
     ierr = ISDestroy(&isd);CHKERRQ(ierr);
     ierr = ISDestroy(&isn);CHKERRQ(ierr);
   }
