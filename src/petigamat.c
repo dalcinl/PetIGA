@@ -341,7 +341,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
       IGA_Grid  grid;
       PetscInt *sizes = iga->node_sizes;
       ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
-      ierr = IGA_Grid_Init(grid,iga->dim,bs,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
+      ierr = IGA_Grid_Init(grid,iga->dim,1,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
       ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
       ierr = IGA_Grid_GetLGMapBlock(grid,&ltog);CHKERRQ(ierr);
       ierr = PetscObjectReference((PetscObject)ltog);CHKERRQ(ierr);
