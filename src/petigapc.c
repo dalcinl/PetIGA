@@ -206,12 +206,12 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
 #define __FUNCT__ "IGAPreparePCBDDC"
 PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 {
-  MPI_Comm       comm;
   Mat            mat;
   void           (*f)(void);
   const char     *prefix;
   PetscBool      graph = PETSC_TRUE;
   PetscBool      boundary = PETSC_TRUE;
+  PetscBool      nullspace = PETSC_TRUE;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -219,16 +219,25 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
   IGACheckSetUpStage2(iga,1);
 
-  ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
-  ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
+  {
+    Mat A,B;
+    PetscBool useAmat = PETSC_FALSE;
+    ierr = PCGetOperators(pc,&A,&B);CHKERRQ(ierr);
+#if PETSC_VERSION_GE(3,4,0)
+    ierr = PCGetUseAmat(pc,&useAmat);CHKERRQ(ierr);
+#endif
+    mat = useAmat ? A : B;
+  }
+
   ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
   ierr = PetscObjectQueryFunction((PetscObject)pc,"PCBDDCSetLocalAdjacencyGraph_C",&f);CHKERRQ(ierr);
   if (!f) PetscFunctionReturn(0);
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,0);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,0);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
 
   if (graph) {
     PetscInt i,dim,dof;
@@ -258,6 +267,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = PetscFree(adjy);CHKERRQ(ierr);
 #endif
   }
+
   if (boundary) {
     PetscInt  i,s,dim,dof;
     PetscInt  shape[3]    = {1,1,1};
@@ -268,6 +278,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     PetscInt *field[3][2] = {{0,0},{0,0},{0,0}};
     PetscInt  nd=0,*id=NULL;
     PetscInt  nn=0,*in=NULL;
+    MPI_Comm  comm;
     IS        isd,isn;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
@@ -275,32 +286,41 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
       shape[i] = iga->node_gwidth[i];
       if (!iga->axis[i]->periodic)
         for (s=0; s<=1; s++)
-          if (iga->proc_ranks[i] == (!s?0:iga->proc_sizes[i]-1)) {
+          if (iga->proc_ranks[i] == ((!s)?0:iga->proc_sizes[i]-1)) {
             atbnd[i][s] = PETSC_TRUE;
             count[i][s] = iga->form->value[i][s]->count;
             field[i][s] = iga->form->value[i][s]->field;
           }
     }
     ierr = IGAComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
-
 #if PETSC_VERSION_LT(3,5,0)
-    ierr = ISCreateGeneral(PETSC_COMM_SELF,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
-    ierr = ISCreateGeneral(PETSC_COMM_SELF,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
-#   if defined(PETSC_HAVE_PCBDDC) /* XXX */
-    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
-    ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
-#   endif
+    comm = PETSC_COMM_SELF;
 #else
+    comm = PetscObjectComm((PetscObject)pc);
+#endif
     ierr = ISCreateGeneral(comm,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
     ierr = ISCreateGeneral(comm,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
-#   if defined(PETSC_HAVE_PCBDDC) /* XXX */
+#if defined(PETSC_HAVE_PCBDDC) /* XXX */
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
+    ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
+#else
     ierr = PCBDDCSetDirichletBoundariesLocal(pc,isd);CHKERRQ(ierr);
     ierr = PCBDDCSetNeumannBoundariesLocal(pc,isn);CHKERRQ(ierr);
-#   endif
 #endif
-
+#endif
     ierr = ISDestroy(&isd);CHKERRQ(ierr);
     ierr = ISDestroy(&isn);CHKERRQ(ierr);
+  }
+
+  if (nullspace) {
+    MatNullSpace nsp;
+    ierr = MatGetNullSpace(mat,&nsp);CHKERRQ(ierr);
+#if defined(PETSC_HAVE_PCBDDC) /* XXX */
+#if PETSC_VERSION_GE(3,4,0)
+    if (nsp) {ierr = PCBDDCSetNullSpace(pc,nsp);CHKERRQ(ierr);}
+#endif
+#endif
   }
 
   PetscFunctionReturn(0);
