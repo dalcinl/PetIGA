@@ -6,6 +6,10 @@
 typedef const char* MatType;
 #endif
 
+#if PETSC_VERSION_LT(3,5,0)
+#define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
+#endif
+
 PETSC_EXTERN PetscErrorCode MatHeaderReplace(Mat,Mat);
 static       PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static       PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
@@ -395,11 +399,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
                 ierr = MatPreallocateSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
               } else if (sbaij) {
                 ierr = FilterLowerTriangular(row,&count,indices);CHKERRQ(ierr);
-                #if PETSC_VERSION_LT(3,5,0)
-                ierr = MatPreallocateSymmetricSet(row,count,indices,dnz,onz);CHKERRQ(ierr);
-                #else
                 ierr = MatPreallocateSymmetricSetBlock(row,count,indices,dnz,onz);CHKERRQ(ierr);
-                #endif
               }
             } /* */
       ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
