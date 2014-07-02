@@ -77,7 +77,6 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
     g->ghost_width[i] = 1;
   }
   ierr = AODestroy(&g->ao);CHKERRQ(ierr);
-  ierr = AODestroy(&g->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
   ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
@@ -185,42 +184,16 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_SetAOBlock"
-PetscErrorCode IGA_Grid_SetAOBlock(IGA_Grid g,AO aob)
+#define __FUNCT__ "IGA_Grid_SetAO"
+PetscErrorCode IGA_Grid_SetAO(IGA_Grid g,AO ao)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(g,1);
-  PetscValidHeaderSpecific(aob,AO_CLASSID,2);
-  ierr = PetscObjectReference((PetscObject)aob);CHKERRQ(ierr);
-  ierr = AODestroy(&g->aob);CHKERRQ(ierr);
-  g->aob = aob;
-  if (g->dof == 1 && !g->ao) {
-    ierr = PetscObjectReference((PetscObject)g->aob);CHKERRQ(ierr);
-    g->ao = g->aob;
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetAOBlock"
-PetscErrorCode IGA_Grid_GetAOBlock(IGA_Grid g,AO *aob)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(aob,2);
-  if (!g->aob) {
-    PetscInt napp,*iapp;
-    ierr = IGA_Grid_LocalIndices(g,1,&napp,&iapp);CHKERRQ(ierr);
-    ierr = AOCreateMemoryScalable(g->comm,napp,iapp,NULL,&g->aob);CHKERRQ(ierr);
-    ierr = PetscFree(iapp);CHKERRQ(ierr);
-  }
-  *aob = g->aob;
-  if (g->dof == 1 && !g->ao) {
-    ierr = PetscObjectReference((PetscObject)g->aob);CHKERRQ(ierr);
-    g->ao = g->aob;
-  }
+  PetscValidHeaderSpecific(ao,AO_CLASSID,2);
+  ierr = PetscObjectReference((PetscObject)ao);CHKERRQ(ierr);
+  ierr = AODestroy(&g->ao);CHKERRQ(ierr);
+  g->ao = ao;
   PetscFunctionReturn(0);
 }
 
@@ -234,15 +207,11 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
   PetscValidPointer(ao,2);
   if (!g->ao) {
     PetscInt napp,*iapp;
-    ierr = IGA_Grid_LocalIndices(g,g->dof,&napp,&iapp);CHKERRQ(ierr);
+    ierr = IGA_Grid_LocalIndices(g,1,&napp,&iapp);CHKERRQ(ierr);
     ierr = AOCreateMemoryScalable(g->comm,napp,iapp,NULL,&g->ao);CHKERRQ(ierr);
     ierr = PetscFree(iapp);CHKERRQ(ierr);
   }
   *ao = g->ao;
-  if (g->dof == 1 && !g->aob) {
-    ierr = PetscObjectReference((PetscObject)g->ao);CHKERRQ(ierr);
-    g->aob = g->ao;
-  }
   PetscFunctionReturn(0);
 }
 
@@ -270,15 +239,16 @@ PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
   PetscValidPointer(g,1);
   PetscValidPointer(lgmapb,2);
   if (!g->lgmapb) {
-    AO aob;
     PetscInt nghost,*ighost;
     ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetAOBlock(g,&aob);CHKERRQ(ierr);
-    ierr = AOApplicationToPetsc(aob,nghost,ighost);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetAO(g,&g->ao);CHKERRQ(ierr);
+    ierr = AOApplicationToPetsc(g->ao,nghost,ighost);CHKERRQ(ierr);
 #if PETSC_VERSION_LT(3,5,0)
     ierr = ISLocalToGlobalMappingCreate(g->comm,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
 #else
     ierr = ISLocalToGlobalMappingCreate(g->comm,g->dof,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
+    ierr = PetscObjectReference((PetscObject)g->lgmapb);CHKERRQ(ierr);
+    g->lgmap = g->lgmapb;
 #endif
   }
   *lgmapb = g->lgmapb;

@@ -129,7 +129,6 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
   /* node */
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
-  ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
   ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
@@ -1299,7 +1298,6 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
   }
 
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
-  ierr = AODestroy(&iga->aob);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmapb);CHKERRQ(ierr);
   ierr = PetscLayoutDestroy(&iga->map);CHKERRQ(ierr);
@@ -1323,8 +1321,6 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
     /* build the scalar and block application orderings */
     ierr = IGA_Grid_GetAO(grid,&iga->ao);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->ao);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetAOBlock(grid,&iga->aob);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)iga->aob);CHKERRQ(ierr);
     /* build the scalar and block local to global mappings */
     ierr = IGA_Grid_GetLGMap(grid,&iga->lgmap);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);

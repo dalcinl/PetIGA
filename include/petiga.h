@@ -301,7 +301,7 @@ struct _p_IGA {
   PetscInt  node_gwidth[3];
   DM        node_dm;
 
-  AO          ao,aob;
+  AO          ao;
   LGMap       lgmap,lgmapb;
   PetscLayout map;
   VecScatter  g2l,l2g,l2l;

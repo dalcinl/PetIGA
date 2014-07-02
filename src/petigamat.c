@@ -43,7 +43,7 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
   ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
   ierr = ISCreateStride(comm,(rend-rstart)/bs,rstart/bs,1,&is);CHKERRQ(ierr);
-  ierr = AOApplicationToPetscIS(iga->aob,is);CHKERRQ(ierr);
+  ierr = AOApplicationToPetscIS(iga->ao,is);CHKERRQ(ierr);
   if (bs > 1) {
     IS isb;
     PetscInt n;
@@ -106,7 +106,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
   ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
   ierr = ISCreateStride(comm,(rend-rstart)/bs,rstart/bs,1,&is);CHKERRQ(ierr);
-  ierr = AOPetscToApplicationIS(iga->aob,is);CHKERRQ(ierr);
+  ierr = AOPetscToApplicationIS(iga->ao,is);CHKERRQ(ierr);
   if (bs > 1) {
     IS isb;
     PetscInt n;
@@ -367,7 +367,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
       PetscInt *sizes = iga->node_sizes;
       ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
       ierr = IGA_Grid_Init(grid,iga->dim,1,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
-      ierr = IGA_Grid_SetAOBlock(grid,iga->aob);CHKERRQ(ierr);
+      ierr = IGA_Grid_SetAO(grid,iga->ao);CHKERRQ(ierr);
       ierr = IGA_Grid_GetLGMapBlock(grid,&ltog);CHKERRQ(ierr);
       ierr = PetscObjectReference((PetscObject)ltog);CHKERRQ(ierr);
       ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
