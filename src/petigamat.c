@@ -22,8 +22,8 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   MPI_Comm          comm;
   IGA               iga;
   Mat               Anatural;
-  PetscInt          rstart,rend;
   IS                is;
+  PetscInt          bs,rstart,rend;
   const char        *prefix;
   PetscErrorCode    ierr;
 
@@ -40,9 +40,21 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   /* Map natural ordering to PETSc ordering and create IS */
+  ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
   ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
-  ierr = ISCreateStride(comm,rend-rstart,rstart,1,&is);CHKERRQ(ierr);
-  ierr = AOApplicationToPetscIS(iga->ao,is);CHKERRQ(ierr);
+  ierr = ISCreateStride(comm,(rend-rstart)/bs,rstart/bs,1,&is);CHKERRQ(ierr);
+  ierr = AOApplicationToPetscIS(iga->aob,is);CHKERRQ(ierr);
+  if (bs > 1) {
+    IS isb;
+    PetscInt n;
+    const PetscInt *idx;
+    ierr = ISGetLocalSize(is,&n);CHKERRQ(ierr);
+    ierr = ISGetIndices(is,&idx);CHKERRQ(ierr);
+    ierr = ISCreateBlock(comm,bs,n,idx,PETSC_COPY_VALUES,&isb);CHKERRQ(ierr);
+    ierr = ISRestoreIndices(is,&idx);CHKERRQ(ierr);
+    ierr = ISDestroy(&is);CHKERRQ(ierr);
+    is = isb;
+  }
 
   /* Do permutation and view matrix */
   ierr = MatGetSubMatrix(A,is,is,MAT_INITIAL_MATRIX,&Anatural);CHKERRQ(ierr);
@@ -66,7 +78,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   MatType        mtype;
   PetscInt       rbs,cbs,m,n,M,N;
   Mat            Anatural,Apetsc;
-  PetscInt       rstart,rend;
+  PetscInt       bs,rstart,rend;
   IS             is;
   PetscErrorCode ierr;
 
@@ -91,16 +103,29 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   ierr = MatLoad(Anatural,viewer);CHKERRQ(ierr);
 
   /* Map PETSc ordering to natural ordering and create IS */
-  ierr = MatGetOwnershipRange(Anatural,&rstart,&rend);CHKERRQ(ierr);
-  ierr = ISCreateStride(comm,rend-rstart,rstart,1,&is);CHKERRQ(ierr);
-  ierr = AOPetscToApplicationIS(iga->ao,is);CHKERRQ(ierr);
+  ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
+  ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
+  ierr = ISCreateStride(comm,(rend-rstart)/bs,rstart/bs,1,&is);CHKERRQ(ierr);
+  ierr = AOPetscToApplicationIS(iga->aob,is);CHKERRQ(ierr);
+  if (bs > 1) {
+    IS isb;
+    PetscInt n;
+    const PetscInt *idx;
+    ierr = ISGetLocalSize(is,&n);CHKERRQ(ierr);
+    ierr = ISGetIndices(is,&idx);CHKERRQ(ierr);
+    ierr = ISCreateBlock(comm,bs,n,idx,PETSC_COPY_VALUES,&isb);CHKERRQ(ierr);
+    ierr = ISRestoreIndices(is,&idx);CHKERRQ(ierr);
+    ierr = ISDestroy(&is);CHKERRQ(ierr);
+    is = isb;
+  }
 
-  /* Do permutation and replace header */
+  /* Do permutation and copy values */
   ierr = MatGetSubMatrix(Anatural,is,is,MAT_INITIAL_MATRIX,&Apetsc);CHKERRQ(ierr);
-  ierr = MatHeaderReplace(A,Apetsc);CHKERRQ(ierr);
+  ierr = MatCopy(Apetsc,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 
-  ierr = ISDestroy(&is);CHKERRQ(ierr);
   ierr = MatDestroy(&Anatural);CHKERRQ(ierr);
+  ierr = MatDestroy(&Apetsc);CHKERRQ(ierr);
+  ierr = ISDestroy(&is);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
