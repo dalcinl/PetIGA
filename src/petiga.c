@@ -1470,7 +1470,7 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
 {
   MPI_Comm       comm;
   IGA            newiga;
-  PetscInt       i,n,dim;
+  PetscInt       i,n;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -1484,30 +1484,38 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
   ierr = IGACreate(comm,&newiga);CHKERRQ(ierr);
   *_newiga = newiga;
 
-  newiga->dim = dim = iga->dim;
-  for (i=0; i<dim; i++) {
+  newiga->dim = iga->dim;
+  for (i=0; i<3; i++) {
     ierr = IGAAxisCopy(iga->axis[i],newiga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCopy(iga->rule[i],newiga->rule[i]);CHKERRQ(ierr);
+    newiga->proc_sizes[i]  = iga->proc_sizes[i];
+    newiga->proc_ranks[i]  = iga->proc_ranks[i];
+    newiga->elem_sizes[i]  = iga->elem_sizes[i];
+    newiga->elem_start[i]  = iga->elem_start[i];
+    newiga->elem_width[i]  = iga->elem_width[i];
+    newiga->geom_sizes[i]  = iga->geom_sizes[i];
+    newiga->geom_lstart[i] = iga->geom_lstart[i];
+    newiga->geom_lwidth[i] = iga->geom_lwidth[i];
+    newiga->geom_gstart[i] = iga->geom_gstart[i];
+    newiga->geom_gwidth[i] = iga->geom_gwidth[i];
   }
-  for (i=0; i<3; i++)
-    newiga->proc_sizes[i] = iga->proc_sizes[i];
   newiga->collocation = iga->collocation;
-  ierr = IGASetUp_Stage1(newiga);CHKERRQ(ierr);
+  iga->setupstage = 1;
 
   n  = iga->geom_gwidth[0];
   n *= iga->geom_gwidth[1];
   n *= iga->geom_gwidth[2];
-  if (iga->rational) {
+  if (iga->rational && iga->rationalW) {
     newiga->rational = iga->rational;
     ierr = PetscMalloc1((size_t)n,&newiga->rationalW);CHKERRQ(ierr);
     ierr = PetscMemcpy(newiga->rationalW,iga->rationalW,(size_t)n*sizeof(PetscReal));CHKERRQ(ierr);
   }
-  if (iga->geometry) {
+  if (iga->geometry && iga->geometryX) {
     PetscInt nsd = newiga->geometry = iga->geometry;
     ierr = PetscMalloc1((size_t)(n*nsd),&newiga->geometryX);CHKERRQ(ierr);
     ierr = PetscMemcpy(newiga->geometryX,iga->geometryX,(size_t)(n*nsd)*sizeof(PetscReal));CHKERRQ(ierr);
   }
-  if (iga->property) {
+  if (iga->property && iga->propertyA) {
     PetscInt npd = newiga->property = iga->property;
     ierr = PetscMalloc1((size_t)(n*npd),&newiga->propertyA);CHKERRQ(ierr);
     ierr = PetscMemcpy(newiga->propertyA,iga->propertyA,(size_t)(n*npd)*sizeof(PetscScalar));CHKERRQ(ierr);
