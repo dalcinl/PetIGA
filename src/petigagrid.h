@@ -18,7 +18,7 @@ struct _n_IGA_Grid {
   PetscInt    ghost_start[3];
   PetscInt    ghost_width[3];
   AO          ao;
-  LGMap       lgmap,lgmapb;
+  LGMap       lgmap;
   PetscLayout map;
   Vec         lvec,gvec,nvec;
   VecScatter  g2l,l2g,g2n;
@@ -38,8 +38,7 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid,PetscInt,PetscInt*,Pe
 PETSC_EXTERN PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid,PetscInt,PetscInt*,PetscInt*[]);
 PETSC_EXTERN PetscErrorCode IGA_Grid_SetAO(IGA_Grid,AO);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetAO(IGA_Grid,AO*);
-PETSC_EXTERN PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid,LGMap);
-PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid,LGMap*);
+PETSC_EXTERN PetscErrorCode IGA_Grid_SetLGMap(IGA_Grid,LGMap);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid,LGMap*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetLayout(IGA_Grid,PetscLayout*);
 PETSC_EXTERN PetscErrorCode IGA_Grid_GetVecLocal  (IGA_Grid,const VecType,Vec*);

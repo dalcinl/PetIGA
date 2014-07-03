@@ -78,7 +78,6 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   }
   ierr = AODestroy(&g->ao);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
   ierr = VecDestroy(&g->lvec);CHKERRQ(ierr);
   ierr = VecDestroy(&g->gvec);CHKERRQ(ierr);
   ierr = VecDestroy(&g->nvec);CHKERRQ(ierr);
@@ -216,42 +215,16 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_SetLGMapBlock"
-PetscErrorCode IGA_Grid_SetLGMapBlock(IGA_Grid g,LGMap lgmapb)
+#define __FUNCT__ "IGA_Grid_SetLGMap"
+PetscErrorCode IGA_Grid_SetLGMap(IGA_Grid g,LGMap lgmap)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(g,1);
-  PetscValidHeaderSpecific(lgmapb,IS_LTOGM_CLASSID,2);
-  ierr = PetscObjectReference((PetscObject)lgmapb);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingDestroy(&g->lgmapb);CHKERRQ(ierr);
-  g->lgmapb = lgmapb;
+  PetscValidHeaderSpecific(lgmap,IS_LTOGM_CLASSID,2);
+  ierr = PetscObjectReference((PetscObject)lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetLGMapBlock"
-PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(lgmapb,2);
-  if (!g->lgmapb) {
-    PetscInt nghost,*ighost;
-    ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetAO(g,&g->ao);CHKERRQ(ierr);
-    ierr = AOApplicationToPetsc(g->ao,nghost,ighost);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingCreate(g->comm,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
-#else
-    ierr = ISLocalToGlobalMappingCreate(g->comm,g->dof,nghost,ighost,PETSC_OWN_POINTER,&g->lgmapb);CHKERRQ(ierr);
-    ierr = PetscObjectReference((PetscObject)g->lgmapb);CHKERRQ(ierr);
-    g->lgmap = g->lgmapb;
-#endif
-  }
-  *lgmapb = g->lgmapb;
+  g->lgmap = lgmap;
   PetscFunctionReturn(0);
 }
 
@@ -263,20 +236,41 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
   PetscFunctionBegin;
   PetscValidPointer(g,1);
   PetscValidPointer(lgmap,2);
-  if (!g->lgmapb) {ierr = IGA_Grid_GetLGMapBlock(g,&g->lgmapb);CHKERRQ(ierr);}
   if (!g->lgmap) {
+    PetscInt nghost,*ighost;
+    ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetAO(g,&g->ao);CHKERRQ(ierr);
+    ierr = AOApplicationToPetsc(g->ao,nghost,ighost);CHKERRQ(ierr);
 #if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingUnBlock(g->lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
-    if (g->lgmapb != g->lgmap)
-      {ierr = PetscObjectCompose((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject)g->lgmapb);CHKERRQ(ierr);}
+    { LGMap lgmapb;
+    ierr = ISLocalToGlobalMappingCreate(g->comm,nghost,ighost,PETSC_OWN_POINTER,&lgmapb);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingUnBlock(lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
+    if (g->lgmap != lgmapb) {ierr = PetscObjectCompose((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject)lgmapb);CHKERRQ(ierr);}
+    ierr = ISLocalToGlobalMappingDestroy(&lgmapb);CHKERRQ(ierr); }
 #else
-    ierr = PetscObjectReference((PetscObject)g->lgmapb);CHKERRQ(ierr);
-    g->lgmap = g->lgmapb;
+    ierr = ISLocalToGlobalMappingCreate(g->comm,g->dof,nghost,ighost,PETSC_OWN_POINTER,&g->lgmap);CHKERRQ(ierr);
 #endif
   }
   *lgmap = g->lgmap;
   PetscFunctionReturn(0);
 }
+
+#if PETSC_VERSION_LT(3,5,0)
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_Grid_GetLGMapBlock"
+static PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(g,1);
+  PetscValidPointer(lgmapb,2);
+  if (!g->lgmap) {ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);}
+  if (g->dof == 1) {*lgmapb = g->lgmap; PetscFunctionReturn(0);}
+  ierr = PetscObjectQuery((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject*)lgmapb);CHKERRQ(ierr);
+  PetscValidHeaderSpecific(*lgmapb,IS_LTOGM_CLASSID,1);
+  PetscFunctionReturn(0);
+}
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_GetLayout"
