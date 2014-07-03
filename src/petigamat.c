@@ -293,14 +293,14 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
-  PetscMPIInt    size;
   PetscBool      is,aij,baij,sbaij;
   PetscInt       i,dim;
   PetscInt       *lstart,*lwidth;
   PetscInt       gstart[3] = {0,0,0};
   PetscInt       gwidth[3] = {1,1,1};
   PetscInt       maxnnz;
-  PetscInt       n,N,bs;
+  PetscInt       bs,n,N;
+  PetscLayout    rmap,cmap;
   LGMap          ltog = NULL;
   Mat            A;
   PetscErrorCode ierr;
@@ -313,14 +313,10 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
 
-  n = N = 1;
-  for (i=0; i<dim; i++) {
-    n *= iga->node_lwidth[i];
-    N *= iga->node_sizes[i];
-  }
+  rmap = cmap = iga->map;
   ierr = MatCreate(comm,&A);CHKERRQ(ierr);
-  ierr = MatSetSizes(A,bs*n,bs*n,bs*N,bs*N);CHKERRQ(ierr);
-  ierr = MatSetBlockSize(A,bs);CHKERRQ(ierr);
+  ierr = MatSetSizes(A,rmap->n,cmap->n,rmap->N,cmap->N);CHKERRQ(ierr);
+  ierr = MatSetBlockSizes(A,rmap->bs,cmap->bs);CHKERRQ(ierr);
   ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
@@ -333,21 +329,22 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   }
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
-  ierr = MatSetLocalToGlobalMapping(A,iga->lgmap,iga->lgmap);CHKERRQ(ierr);
+  ierr = MatSetLocalToGlobalMapping(A,rmap->mapping,cmap->mapping);CHKERRQ(ierr);
 #if PETSC_VERSION_LT(3,5,0)
-  ierr = MatSetLocalToGlobalMappingBlock(A,iga->lgmapb,iga->lgmapb);CHKERRQ(ierr);
+  ierr = MatSetLocalToGlobalMappingBlock(A,rmap->bmapping,cmap->bmapping);CHKERRQ(ierr);
 #endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
     ierr = MatSetType(A,mtype);CHKERRQ(ierr);
     ierr = MatSetFromOptions(A);CHKERRQ(ierr);
-  }
-
-  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
-  if (!is && size > 1) { /* change viewer to display matrix in natural ordering */
-    ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
-    ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
+  } else {
+    PetscMPIInt size;
+    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+    if (size > 1) { /* change viewer to display matrix in natural ordering */
+      ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
+      ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
+    }
   }
 
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
@@ -458,11 +455,11 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscInt i,j,k;
     PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;PetscScalar *values=NULL;
     #if PETSC_VERSION_LT(3,5,0)
-    ierr = PetscMalloc2(nnz,PetscInt,&indices,nnz*bs*nnz*bs,PetscScalar,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);
+    ierr = PetscMalloc2(nnz,PetscInt,&indices,nnz*bs*nnz*bs,PetscScalar,&values);CHKERRQ(ierr);
     #else
-    ierr = PetscMalloc2(nnz,&indices,nnz*bs*nnz*bs,&values);CHKERRQ(ierr);
     ierr = PetscMalloc2(bs,&ubrows,nnz*bs,&ubcols);CHKERRQ(ierr);
+    ierr = PetscMalloc2(nnz,&indices,nnz*bs*nnz*bs,&values);CHKERRQ(ierr);
     #endif
     ierr = PetscMemzero(values,nnz*bs*nnz*bs*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
