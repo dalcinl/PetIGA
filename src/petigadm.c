@@ -125,9 +125,18 @@ static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmap);CHKERRQ(ierr);
   dm->ltogmap = iga->lgmap;
 #if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscObjectReference((PetscObject)iga->lgmapb);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
-  dm->ltogmapb = iga->lgmapb;
+  if (iga->dof == 1) {
+    ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
+    dm->ltogmapb = iga->lgmap;
+  } else {
+    ISLocalToGlobalMapping lgmapb;
+    ierr = PetscObjectQuery((PetscObject)iga->lgmap,"__IGA_lgmapb",(PetscObject*)&lgmapb);CHKERRQ(ierr);
+    PetscValidHeaderSpecific(lgmapb,IS_LTOGM_CLASSID,1);
+    ierr = PetscObjectReference((PetscObject)lgmapb);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
+    dm->ltogmapb = lgmapb;
+  }
 #endif
   PetscFunctionReturn(0);
 }

@@ -267,6 +267,8 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
   if (!g->lgmap) {
 #if PETSC_VERSION_LT(3,5,0)
     ierr = ISLocalToGlobalMappingUnBlock(g->lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
+    if (g->lgmapb != g->lgmap)
+      {ierr = PetscObjectCompose((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject)g->lgmapb);CHKERRQ(ierr);}
 #else
     ierr = PetscObjectReference((PetscObject)g->lgmapb);CHKERRQ(ierr);
     g->lgmap = g->lgmapb;

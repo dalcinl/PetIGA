@@ -302,7 +302,7 @@ struct _p_IGA {
   DM        node_dm;
 
   AO          ao;
-  LGMap       lgmap,lgmapb;
+  LGMap       lgmap;
   PetscLayout map;
   VecScatter  g2l,l2g,l2l;
   PetscInt    nwork;

@@ -172,7 +172,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     ierr = IGA_Grid_Create(comm,&grid);CHKERRQ(ierr);
     ierr = IGA_Grid_Init(grid,iga->dim,1,sizes,lstart,lwidth,gstart,gwidth);CHKERRQ(ierr);
     ierr = IGA_Grid_SetAO(grid,iga->ao);CHKERRQ(ierr);
-    ierr = IGA_Grid_GetLGMapBlock(grid,&bbb->lgmap);CHKERRQ(ierr);
+    ierr = IGA_Grid_GetLGMap(grid,&bbb->lgmap);CHKERRQ(ierr);
     ierr = PetscObjectReference((PetscObject)bbb->lgmap);CHKERRQ(ierr);
     ierr = IGA_Grid_Destroy(&grid);CHKERRQ(ierr);
   }
