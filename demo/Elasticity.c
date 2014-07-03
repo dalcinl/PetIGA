@@ -106,15 +106,17 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
-  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
 
   // Attach rigid-body modes to the matrix
   MatNullSpace nsp;
   ierr = IGACreateRigidBody(iga,&nsp);CHKERRQ(ierr);
   ierr = MatSetNearNullSpace(A,nsp);CHKERRQ(ierr);
   ierr = MatNullSpaceDestroy(&nsp);CHKERRQ(ierr);
+
+  // Compute linear system
+  ierr = IGASetFormSystem(iga,System,&user);CHKERRQ(ierr);
+  ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
+  ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
 
   // Solve linear system
   KSP ksp;
