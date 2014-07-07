@@ -42,7 +42,7 @@ ifndef CXX_DEPFLAGS
 CXX_DEPFLAGS = $(if $(shell $(CXX) --version 2>/dev/null | grep "GCC\|clang\|ICC"),-MMD -MP)
 endif
 ifndef FC_DEPFLAGS
-FC_DEPFLAGS  = $(if $(shell $(FC)  --version 2>/dev/null | grep "GNU\|IFORT"),-MMD -MP)
+FC_DEPFLAGS  = $(if $(shell $(FC)  --version 2>/dev/null | grep "GNU"),-MMD -MP)
 endif
 
 pcc = $(if $(findstring CONLY,$(PETSC_LANGUAGE)),CC,CXX)
