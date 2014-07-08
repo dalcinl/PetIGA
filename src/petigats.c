@@ -337,6 +337,154 @@ PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
   PetscFunctionReturn(0);
 }
 
+
+PETSC_STATIC_INLINE
+PetscBool IGAElementNextFormRHSFunction(IGAElement element,IGAFormRHSFunction *fun,void **ctx)
+{
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *fun = form->ops->RHSFunction;
+  *ctx = form->ops->RHSFunCtx;
+  return PETSC_TRUE;
+}
+
+PETSC_STATIC_INLINE
+PetscBool IGAElementNextFormRHSJacobian(IGAElement element,IGAFormRHSJacobian *jac,void **ctx)
+{
+  IGAForm form = element->parent->form;
+  if (!IGAElementNextForm(element,form->visit)) return PETSC_FALSE;
+  *jac = form->ops->RHSJacobian;
+  *ctx = form->ops->RHSJacCtx;
+  return PETSC_TRUE;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAComputeRHSFunction"
+PetscErrorCode IGAComputeRHSFunction(IGA iga,PetscReal dt,
+                                     PetscReal t,Vec vecU,
+                                     Vec vecF)
+{
+  Vec               localU;
+  const PetscScalar *arrayU;
+  IGAElement        element;
+  IGAPoint          point;
+  IGAFormRHSFunction RHSFunction;
+  void              *ctx;
+  PetscScalar       *U,*F,*R;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
+  PetscValidHeaderSpecific(vecF,VEC_CLASSID,9);
+  IGACheckSetUp(iga,1);
+  IGACheckFormOp(iga,1,RHSFunction);
+
+  /* Clear global vector F */
+  ierr = VecZeroEntries(vecF);CHKERRQ(ierr);
+
+  /* Get local vectors U and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_FormIFunction,iga,vecU,vecF,NULL);CHKERRQ(ierr);
+
+  /* Element loop */
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
+    ierr = IGAElementGetWorkVec(element,&F);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
+    /* FormRHSFunction loop */
+    while (IGAElementNextFormRHSFunction(element,&RHSFunction,&ctx)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = IGAPointGetWorkVec(point,&R);CHKERRQ(ierr);
+        ierr = RHSFunction(point,dt,t,U,R,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddVec(point,R,F);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    }
+    ierr = IGAElementFixFunction(element,F);CHKERRQ(ierr);
+    ierr = IGAElementAssembleVec(element,F,vecF);CHKERRQ(ierr);
+  }
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
+  ierr = PetscLogEventEnd(IGA_FormIFunction,iga,vecU,vecF,NULL);CHKERRQ(ierr);
+
+  /* Restore local vectors U and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  /* Assemble global vector F */
+  ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
+  ierr = VecAssemblyEnd(vecF);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAComputeRHSJacobian"
+PetscErrorCode IGAComputeRHSJacobian(IGA iga,PetscReal dt,
+                                     PetscReal t,Vec vecU,
+                                     Mat matJ)
+{
+  Vec               localU;
+  const PetscScalar *arrayU;
+  IGAElement        element;
+  IGAPoint          point;
+  IGAFormRHSJacobian RHSJacobian;
+  void              *ctx;
+  PetscScalar       *U,*J,*K;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vecU,VEC_CLASSID,6);
+  PetscValidHeaderSpecific(matJ,MAT_CLASSID,9);
+  IGACheckSetUp(iga,1);
+  IGACheckFormOp(iga,1,RHSJacobian);
+
+  /* Clear global matrix J */
+  ierr = MatZeroEntries(matJ);CHKERRQ(ierr);
+
+  /* Get local vectors U and arrays */
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_FormIJacobian,iga,vecU,matJ,NULL);CHKERRQ(ierr);
+
+  /* Element Loop */
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
+    ierr = IGAElementGetWorkMat(element,&J);CHKERRQ(ierr);
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
+    /* FormRHSJacobian loop */
+    while (IGAElementNextFormRHSJacobian(element,&RHSJacobian,&ctx)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = IGAPointGetWorkMat(point,&K);CHKERRQ(ierr);
+        ierr = RHSJacobian(point,dt,t,U,K,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddMat(point,K,J);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    }
+    ierr = IGAElementFixJacobian(element,J);CHKERRQ(ierr);
+    ierr = IGAElementAssembleMat(element,J,matJ);CHKERRQ(ierr);
+  }
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
+  ierr = PetscLogEventEnd(IGA_FormIJacobian,iga,vecU,matJ,NULL);CHKERRQ(ierr);
+
+  /* Restore local vectors U and arrays */
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  /* Assemble global matrix J*/
+  ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+
 PETSC_EXTERN PetscErrorCode IGATSFormIFunction(TS,PetscReal,Vec,Vec,Vec,void*);
 PETSC_EXTERN PetscErrorCode IGATSFormIJacobian(TS,PetscReal,Vec,Vec,PetscReal,Mat,Mat,void*);
 

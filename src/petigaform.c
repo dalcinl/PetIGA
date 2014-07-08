@@ -291,6 +291,27 @@ PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,vo
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAFormSetRHSFunction"
+PetscErrorCode IGAFormSetRHSFunction(IGAForm form,IGAFormRHSFunction RHSFunction,void *RHSFunCtx)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(form,1);
+  form->ops->RHSFunction = RHSFunction;
+  form->ops->RHSFunCtx   = RHSFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAFormSetRHSJacobian"
+PetscErrorCode IGAFormSetRHSJacobian(IGAForm form,IGAFormRHSJacobian RHSJacobian,void *RHSJacCtx)
+{
+  PetscFunctionBegin;
+  PetscValidPointer(form,1);
+  form->ops->RHSJacobian = RHSJacobian;
+  form->ops->RHSJacCtx   = RHSJacCtx;
+  PetscFunctionReturn(0);
+}
 
 /* --------------------------------------------------------------- */
 
@@ -796,5 +817,83 @@ PetscErrorCode IGASetFormIEJacobian(IGA iga,IGAFormIEJacobian IEJacobian,void *I
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   iga->form->ops->IEJacobian = IEJacobian;
   iga->form->ops->IEJacCtx   = IEJacCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetFormRHSFunction"
+/*@
+
+   IGASetFormRHSFunction - Set the function to compute the right-hand side function
+   F(t,U) for use with explicit or implicit time stepping routines.
+
+   Logically Collective on IGA
+
+   Input Parameter:
++  iga - the IGA context
+.  RHSFunction - the function evaluation routine
+-  RHSFunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
+
+   Details of RHSFunction:
+$  PetscErrorCode RHSFunction(IGAPoint p,PetscReal dt,
+                              PetscReal t, const PetscScalar *U,
+                              PetscScalar *R,void *ctx);
+
++  p - point at which to compute the residual
+.  dt - time step size
+.  t - time at step/stage being solved
+.  U - state vector at t
+.  R - function vector
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
+PetscErrorCode IGASetFormRHSFunction(IGA iga,IGAFormRHSFunction RHSFunction,void *RHSFunCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  iga->form->ops->RHSFunction = RHSFunction;
+  iga->form->ops->RHSFunCtx   = RHSFunCtx;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetFormRHSJacobian"
+/*@
+   IGASetFormRHSJacobian - Set the function to compute the Jacobian matrix
+   J = dF/dU where F(t,U) is the right-hand side function you provided with
+   IGASetFormRHSFunction(). For use with implicit or explicit TS methods.
+
+   Logically Collective on IGA
+
+   Input Parameter:
++  iga - the IGA context
+.  RHSJacobian - the Jacobian evaluation routine
+-  RHSJacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
+
+   Details of RHSJacobian:
+$  PetscErrorCode RHSJacobian(IGAPoint p,PetscReal dt,
+                              PetscReal t, const PetscScalar *U,
+                              PetscScalar *J,void *ctx);
+
++  p - point at which to compute the Jacobian
+.  dt - time step size
+.  t - time at step/stage being solved
+.  U - state vector at t
+.  J - Jacobian matrix
+-  ctx - [optional] user-defined context for evaluation routine
+
+   Level: normal
+
+.keywords: IGA, options
+@*/
+PetscErrorCode IGASetFormRHSJacobian(IGA iga,IGAFormRHSJacobian RHSJacobian,void *RHSJacCtx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  iga->form->ops->RHSJacobian = RHSJacobian;
+  iga->form->ops->RHSJacCtx   = RHSJacCtx;
   PetscFunctionReturn(0);
 }
