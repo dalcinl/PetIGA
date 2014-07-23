@@ -227,8 +227,8 @@ PetscErrorCode IGAComputeIEFunction(IGA iga,PetscReal dt,
     ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU0,&U0);CHKERRQ(ierr);
-    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
     ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
+    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
     /* FormIEFunction loop */
     while (IGAElementNextFormIEFunction(element,&IEFunction,&ctx)) {
       /* Quadrature loop */
@@ -305,8 +305,8 @@ PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
     ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU0,&U0);CHKERRQ(ierr);
-    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
     ierr = IGAElementFixValues(element,U0);CHKERRQ(ierr); /* XXX */
+    ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);  /* XXX */
     /* FormIEJacobian loop */
     while (IGAElementNextFormIEJacobian(element,&IEJacobian,&ctx)) {
       /* Quadrature loop */
