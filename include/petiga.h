@@ -380,16 +380,21 @@ PETSC_EXTERN PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type
 PETSC_EXTERN PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q);
 PETSC_EXTERN PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation);
 
+PETSC_EXTERN PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
 PETSC_EXTERN PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis);
 PETSC_EXTERN PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule);
 PETSC_EXTERN PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis);
 
-PETSC_EXTERN PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm);
-
+PETSC_EXTERN PetscErrorCode IGACreateDMDA(IGA iga,PetscInt bs,
+                                          const PetscInt gsizes[],
+                                          const PetscInt lsizes[],
+                                          const PetscBool periodic[],
+                                          PetscBool stencil_box,
+                                          PetscInt stencil_width,
+                                          DM *dm);
 PETSC_EXTERN PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm);
-
 PETSC_EXTERN PetscErrorCode IGAGetElemDM(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm);

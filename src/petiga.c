@@ -919,15 +919,15 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 #endif
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGACreateDM"
-static
-PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
-                           const PetscInt gsizes[],
-                           const PetscInt lsizes[],
-                           const PetscBool periodic[],
-                           PetscBool stencil_box,
-                           PetscInt  stencil_width,
-                           DM *dm_)
+#define __FUNCT__ "IGACreateDMDA"
+PetscErrorCode IGACreateDMDA(IGA iga,
+                             PetscInt bs,
+                             const PetscInt  gsizes[],
+                             const PetscInt  lsizes[],
+                             const PetscBool periodic[],
+                             PetscBool stencil_box,
+                             PetscInt  stencil_width,
+                             DM *dm)
 {
   PetscInt        i,dim;
   MPI_Comm        subcomms[3];
@@ -938,23 +938,26 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
   DMBoundaryType  btype[3]   = {DM_BOUNDARY_NONE,DM_BOUNDARY_NONE,DM_BOUNDARY_NONE};
   DMDAStencilType stype      = stencil_box ? DMDA_STENCIL_BOX : DMDA_STENCIL_STAR;
   PetscInt        swidth     = stencil_width;
-  DM              dm;
+  DM              da;
   PetscErrorCode  ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidIntPointer(gsizes,3);
   PetscValidIntPointer(lsizes,4);
   if (periodic) PetscValidIntPointer(periodic,5);
-  PetscValidPointer(dm_,3);
+  PetscValidLogicalCollectiveBool(iga,stencil_width,6);
+  PetscValidLogicalCollectiveInt(iga,stencil_width,7);
+  PetscValidPointer(dm,8);
   IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
+    procs[i] = iga->proc_sizes[i];
+    btype[i] = (periodic && periodic[i]) ? DM_BOUNDARY_PERIODIC : DM_BOUNDARY_NONE;
     sizes[i] = gsizes[i];
     width[i] = lsizes[i];
-    btype[i] = (periodic && periodic[i]) ? DM_BOUNDARY_PERIODIC : DM_BOUNDARY_NONE;
-    procs[i] = iga->proc_sizes[i];
   }
   ierr = IGACreateSubComms1D(iga,subcomms);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
@@ -962,18 +965,19 @@ PetscErrorCode IGACreateDM(IGA iga,PetscInt bs,
     ierr = MPI_Allgather(&width[i],1,MPIU_INT,ranges[i],1,MPIU_INT,subcomms[i]);CHKERRQ(ierr);
     ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
   }
-  ierr = DMDACreate(((PetscObject)iga)->comm,&dm);CHKERRQ(ierr);
-  ierr = DMDASetDim(dm,dim);CHKERRQ(ierr);
-  ierr = DMDASetDof(dm,bs);CHKERRQ(ierr);
-  ierr = DMDASetNumProcs(dm,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
-  ierr = DMDASetSizes(dm,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);
-  ierr = DMDASetOwnershipRanges(dm,ranges[0],ranges[1],ranges[2]);CHKERRQ(ierr);
-  ierr = DMDASetBoundaryType(dm,btype[0],btype[1],btype[2]);CHKERRQ(ierr);
-  ierr = DMDASetStencilType(dm,stype);CHKERRQ(ierr);
-  ierr = DMDASetStencilWidth(dm,swidth);CHKERRQ(ierr);
-  ierr = DMSetUp(dm);CHKERRQ(ierr);
+  ierr = DMDACreate(((PetscObject)iga)->comm,&da);CHKERRQ(ierr);
+  ierr = DMDASetDim(da,dim);CHKERRQ(ierr);
+  ierr = DMDASetDof(da,bs);CHKERRQ(ierr);
+  ierr = DMDASetNumProcs(da,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
+  ierr = DMDASetSizes(da,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);
+  ierr = DMDASetOwnershipRanges(da,ranges[0],ranges[1],ranges[2]);CHKERRQ(ierr);
+  ierr = DMDASetBoundaryType(da,btype[0],btype[1],btype[2]);CHKERRQ(ierr);
+  ierr = DMDASetStencilType(da,stype);CHKERRQ(ierr);
+  ierr = DMDASetStencilWidth(da,swidth);CHKERRQ(ierr);
+  ierr = DMSetUp(da);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {ierr = PetscFree(ranges[i]);CHKERRQ(ierr);}
-  *dm_ = dm;
+
+  *dm = da;
   PetscFunctionReturn(0);
 }
 
@@ -987,8 +991,8 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
   IGACheckSetUpStage1(iga,1);
-  ierr = IGACreateDM(iga,bs,iga->elem_sizes,iga->elem_width,
-                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+  ierr = IGACreateDMDA(iga,bs,iga->elem_sizes,iga->elem_width,
+                       NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1002,8 +1006,8 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
   IGACheckSetUpStage1(iga,1);
-  ierr = IGACreateDM(iga,bs,iga->geom_sizes,iga->geom_lwidth,
-                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+  ierr = IGACreateDMDA(iga,bs,iga->geom_sizes,iga->geom_lwidth,
+                       NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -1041,8 +1045,8 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
   IGACheckSetUpStage2(iga,1);
-  ierr = IGACreateDM(iga,bs,iga->node_sizes,iga->node_lwidth,
-                     NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
+  ierr = IGACreateDMDA(iga,bs,iga->node_sizes,iga->node_lwidth,
+                       NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
