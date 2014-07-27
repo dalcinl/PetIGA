@@ -2,10 +2,6 @@
 #include <petsc-private/vecimpl.h>
 
 #if PETSC_VERSION_LE(3,3,0)
-static MPI_Comm PetscObjectComm(PetscObject obj) { return obj ? obj->comm : MPI_COMM_NULL; }
-#endif
-
-#if PETSC_VERSION_LE(3,3,0)
 EXTERN_C_BEGIN
 #endif
 PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
@@ -295,7 +291,7 @@ PetscErrorCode IGALocalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
   IGACheckSetUpStage2(iga,1);
-  if (!iga->l2l) SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  if (!iga->l2l) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Not implemented");
   ierr = VecScatterBegin(iga->l2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -310,7 +306,7 @@ PetscErrorCode IGALocalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
   IGACheckSetUpStage2(iga,1);
-  if (!iga->l2l) SETERRQ(PetscObjectComm((PetscObject)iga),PETSC_ERR_SUP,"Not implemented");
+  if (!iga->l2l) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_SUP,"Not implemented");
   ierr = VecScatterEnd(iga->l2l,gvec,lvec,addv,SCATTER_FORWARD);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

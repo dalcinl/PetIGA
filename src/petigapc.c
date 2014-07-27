@@ -296,7 +296,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 #if PETSC_VERSION_LT(3,5,0)
     comm = PETSC_COMM_SELF;
 #else
-    comm = PetscObjectComm((PetscObject)pc);
+    ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
 #endif
     ierr = ISCreateGeneral(comm,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
     ierr = ISCreateGeneral(comm,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
