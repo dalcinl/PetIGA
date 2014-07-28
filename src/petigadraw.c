@@ -1,5 +1,10 @@
 #include "petigaprobe.h"
 
+#if PETSC_VERSION_LE(3,3,0)
+#define DMSetCoordinates DMDASetCoordinates
+#define DMGetCoordinates DMDAGetCoordinates
+#endif
+
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
