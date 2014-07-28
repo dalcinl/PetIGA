@@ -300,21 +300,18 @@ struct _p_IGA {
   PetscInt  elem_sizes[3];
   PetscInt  elem_start[3];
   PetscInt  elem_width[3];
-  DM        elem_dm;
 
   PetscInt  geom_sizes[3];
   PetscInt  geom_lstart[3];
   PetscInt  geom_lwidth[3];
   PetscInt  geom_gstart[3];
   PetscInt  geom_gwidth[3];
-  DM        geom_dm;
 
   PetscInt  node_sizes[3];
   PetscInt  node_lstart[3];
   PetscInt  node_lwidth[3];
   PetscInt  node_gstart[3];
   PetscInt  node_gwidth[3];
-  DM        node_dm;
 
   AO          ao;
   LGMap       lgmap;
@@ -324,6 +321,11 @@ struct _p_IGA {
   Vec         vwork[16];
   Vec         natural;
   VecScatter  n2g,g2n;
+
+  DM elem_dm;
+  DM geom_dm;
+  DM node_dm;
+  DM draw_dm;
 };
 
 PETSC_EXTERN PetscClassId IGA_CLASSID;
@@ -364,6 +366,7 @@ PETSC_EXTERN PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer);
 
 PETSC_EXTERN PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[]);
 PETSC_EXTERN PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[]);
 

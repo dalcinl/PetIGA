@@ -38,6 +38,7 @@ petigavec.c \
 petigamat.c \
 petigansp.c \
 petigadm.c \
+petigadraw.c \
 petigacomp.c \
 petigapcb.c \
 petigapce.c \

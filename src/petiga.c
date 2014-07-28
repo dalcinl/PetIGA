@@ -115,8 +115,6 @@ PetscErrorCode IGAReset(IGA iga)
   iga->setup = PETSC_FALSE;
   iga->setupstage = 0;
 
-  /* element */
-  ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   /* geometry */
   iga->rational = PETSC_FALSE;
   iga->geometry = 0;
@@ -126,7 +124,6 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   ierr = PetscFree(iga->fixtableU);CHKERRQ(ierr);
-  ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
   /* node */
   ierr = AODestroy(&iga->ao);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&iga->lgmap);CHKERRQ(ierr);
@@ -139,7 +136,11 @@ PetscErrorCode IGAReset(IGA iga)
   ierr = VecScatterDestroy(&iga->g2n);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
+
+  ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&iga->draw_dm);CHKERRQ(ierr);
 
   ierr = IGAElementReset(iga->iterator);CHKERRQ(ierr);
 
@@ -380,6 +381,7 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   ierr = PetscFree(iga->fieldname[field]);CHKERRQ(ierr);
   iga->fieldname[field] = fname;
   if (iga->node_dm) {ierr = DMDASetFieldName(iga->node_dm,field,fname);CHKERRQ(ierr);}
+  if (iga->draw_dm) {ierr = DMDASetFieldName(iga->draw_dm,field,fname);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -1058,6 +1060,7 @@ PetscErrorCode IGAGetElemDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
+  IGACheckSetUpStage2(iga,1);
   if (!iga->elem_dm) {ierr = IGACreateElemDM(iga,iga->dof,&iga->elem_dm);CHKERRQ(ierr);}
   *dm = iga->elem_dm;
   PetscFunctionReturn(0);
@@ -1071,6 +1074,7 @@ PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
+  IGACheckSetUpStage2(iga,1);
   if (!iga->geom_dm) {ierr = IGACreateGeomDM(iga,iga->dof,&iga->geom_dm);CHKERRQ(ierr);}
   *dm = iga->geom_dm;
   PetscFunctionReturn(0);
@@ -1085,6 +1089,7 @@ PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,3);
+  IGACheckSetUpStage2(iga,1);
   if (!iga->node_dm) {
     ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
     if (iga->fieldname)
@@ -1229,9 +1234,6 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
     }
   }
 
-  /* element */
-  ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
-  /* geometry */
   iga->rational = PETSC_FALSE;
   iga->geometry = 0;
   iga->property = 0;
@@ -1240,7 +1242,11 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
   ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(iga->propertyA);CHKERRQ(ierr);
   ierr = PetscFree(iga->fixtableU);CHKERRQ(ierr);
+
+  ierr = DMDestroy(&iga->elem_dm);CHKERRQ(ierr);
   ierr = DMDestroy(&iga->geom_dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&iga->draw_dm);CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -1308,7 +1314,6 @@ static PetscErrorCode IGASetUp_Stage2(IGA iga)
   ierr = VecScatterDestroy(&iga->g2n);CHKERRQ(ierr);
   while (iga->nwork > 0)
     {ierr = VecDestroy(&iga->vwork[--iga->nwork]);CHKERRQ(ierr);}
-  ierr = DMDestroy(&iga->node_dm);CHKERRQ(ierr);
   {
     IGA_Grid grid;
     /* create the grid context */
