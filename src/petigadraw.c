@@ -100,7 +100,7 @@ PetscReal LagrangeParameter(PetscInt index,IGAAxis axis)
   e = index / p;
   i = index % p;
   if (PetscUnlikely(e == axis->nel))
-    return axis->U[axis->span[e-1] + p + 1];
+    return axis->U[axis->span[e-1] + 1];
   k  = axis->span[e];
   u0 = axis->U[k];
   u1 = axis->U[k+1];
