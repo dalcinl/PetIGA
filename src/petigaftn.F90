@@ -218,7 +218,7 @@ module PetIGA
       use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
       implicit none
       type(IGAPoint), intent(in) :: p
-      real(kind=IGA_REAL_KIND), pointer :: X(:)
+      real(kind=IGA_REAL_KIND), pointer :: X(:,:)
       nullify(X)
       if (nonnull(p%geometry)) &
       call c2f(p%geometry,X,(/p%nsd,p%nen/))
@@ -229,7 +229,7 @@ module PetIGA
       use ISO_C_BINDING, only: nonnull => C_ASSOCIATED
       implicit none
       type(IGAPoint), intent(in) :: p
-      real(kind=IGA_REAL_KIND), pointer :: A(:)
+      real(kind=IGA_REAL_KIND), pointer :: A(:,:)
       nullify(A)
       if (nonnull(p%property)) &
       call c2f(p%property,A,(/p%npd,p%nen/))
