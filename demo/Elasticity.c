@@ -128,20 +128,13 @@ int main(int argc, char *argv[]) {
   // Save geometry and solution vector
   PetscBool save = PETSC_FALSE;
   ierr = PetscOptionsGetBool(NULL,"-save",&save,NULL);CHKERRQ(ierr);
-  if (save) {
-    ierr = IGAWrite(iga,"Elasticity-geometry.dat");CHKERRQ(ierr);
-    ierr = IGAWriteVec(iga,x,"Elasticity-solution.dat");CHKERRQ(ierr);
-  }
+  if (save) {ierr = IGAWrite(iga,"Elasticity-geometry.dat");CHKERRQ(ierr);}
+  if (save) {ierr = IGAWriteVec(iga,x,"Elasticity-solution.dat");CHKERRQ(ierr);}
 
   // Draw solution vector
   PetscBool draw = PETSC_FALSE;
-  PetscReal pause = 0.0;
   ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(NULL,"-pause",&pause,NULL);CHKERRQ(ierr);
-  if (draw && dim <= 2) {
-    ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-    ierr = PetscSleep(pause);CHKERRQ(ierr);
-  }
+  if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   // Cleanup
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

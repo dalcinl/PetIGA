@@ -989,26 +989,6 @@ PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "WriteSolution"
-PetscErrorCode WriteSolution(Vec U, const char pattern[],int number)
-{
-  PetscFunctionBegin;
-  PetscErrorCode  ierr;
-  MPI_Comm        comm;
-  char            filename[256];
-  PetscViewer     viewer;
-
-  PetscFunctionBegin;
-  sprintf(filename,pattern,number);
-  ierr = PetscObjectGetComm((PetscObject)U,&comm);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(comm,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-  ierr = VecView(U,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {

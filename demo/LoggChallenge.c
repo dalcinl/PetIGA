@@ -152,10 +152,8 @@ int main(int argc, char *argv[]) {
                      error,rnorm,its,tt,ta,ta/tt*100,ts,ts/tt*100);CHKERRQ(ierr);
 
   PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
-  if (draw) {
-    ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);
-  }
+  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  if (draw) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);

@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+  if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
   if (save)        {ierr = IGAWrite(iga,"PoissonGeometry.dat");CHKERRQ(ierr);}
   if (save)        {ierr = IGAWriteVec(iga,x,"PoissonSolution.dat");CHKERRQ(ierr);}
 

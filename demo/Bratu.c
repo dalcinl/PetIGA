@@ -113,11 +113,17 @@ int main(int argc, char *argv[]) {
     ierr = TSSolve(ts,x);CHKERRQ(ierr);
     ierr = TSDestroy(&ts);CHKERRQ(ierr);
   }
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(0,"-draw",&draw,0);CHKERRQ(ierr);
-  if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
-  ierr = VecDestroy(&x);CHKERRQ(ierr);
 
+  PetscBool save = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(NULL,"-save",&save,NULL);CHKERRQ(ierr);
+  if (save) {ierr = IGAWrite(iga,"Bratu-geometry.dat");CHKERRQ(ierr);}
+  if (save) {ierr = IGAWriteVec(iga,x,"Bratu-solution.dat");CHKERRQ(ierr);}
+
+  PetscBool draw = PETSC_FALSE;
+  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+
+  ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
   PetscBool flag = PETSC_FALSE;
