@@ -69,12 +69,18 @@ static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
 {
   IGA            iga;
+  PetscBool      isvtk,isdraw;
   DM             save,dm;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&isvtk);CHKERRQ(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&isdraw);CHKERRQ(ierr);
+  if (isvtk)  {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  if (isdraw) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
   ierr = VecGetDM(v,&save);CHKERRQ(ierr);
   if (save) {ierr = PetscObjectReference((PetscObject)save);CHKERRQ(ierr);}
-  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecView_MPI_DA(v,viewer);CHKERRQ(ierr);
@@ -90,9 +96,10 @@ static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
   DM             save,dm;
   PetscErrorCode ierr;
   PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   ierr = VecGetDM(v,&save);CHKERRQ(ierr);
   if (save) {ierr = PetscObjectReference((PetscObject)save);CHKERRQ(ierr);}
-  ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = VecSetDM(v,dm);CHKERRQ(ierr);
   ierr = VecLoad_Default_DA(v,viewer);CHKERRQ(ierr);
