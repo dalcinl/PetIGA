@@ -78,7 +78,7 @@ PetscErrorCode IGAFormReset(IGAForm form)
   PetscFunctionBegin;
   if (!form) PetscFunctionReturn(0);
   PetscValidPointer(form,1);
-  form->dof = 0;
+  form->dof = -1;
   ierr = PetscMemzero(form->ops,sizeof(struct _IGAFormOps));CHKERRQ(ierr);
   ierr = PetscMemzero(form->value,3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);
   ierr = PetscMemzero(form->load,3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);

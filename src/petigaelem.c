@@ -1200,6 +1200,7 @@ static void AddFixa(IGAElement element,IGAFormBC bc,PetscInt a)
       PetscInt c = bc->field[k];
       PetscInt idx = a*dof + c;
       PetscScalar val = bc->value[k];
+      if (PetscUnlikely(c >= dof)) continue;
       if (iga->fixtable) val = iga->fixtableU[c + element->mapping[a]*dof];
       for (j=0; j<count; j++)
         if (index[j] == idx) break;
@@ -1220,8 +1221,10 @@ static void AddFlux(IGAElement element,IGAFormBC bc,PetscInt a,PetscReal A)
     PetscScalar *value = element->vflux;
     PetscInt j,k,n = bc->count;
     for (k=0; k<n; k++) {
-      PetscInt idx = a*dof + bc->field[k];
+      PetscInt c = bc->field[k];
+      PetscInt idx = a*dof + c;
       PetscScalar val = bc->value[k];
+      if (PetscUnlikely(c >= dof)) continue;
       for (j=0; j<count; j++)
         if (index[j] == idx) break;
       if (j == count) value[count++] = 0.0;
