@@ -301,6 +301,16 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   ierr = DMGetLocalToGlobalMapping_IGA(dm);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&dm->bs);CHKERRQ(ierr);
+#if PETSC_VERSION_GE(3,6,0)
+  {
+    PetscInt dim,nsd;
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
+    ierr = DMSetDimension(dm,dim);CHKERRQ(ierr);
+    if (nsd < 1) nsd = PETSC_DEFAULT;
+    ierr = DMSetCoordinateDim(dm,nsd);CHKERRQ(ierr);
+  }
+#endif
   ierr = DMSetVecType(dm,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(dm,iga->mattype);CHKERRQ(ierr);
   PetscFunctionReturn(0);

@@ -966,7 +966,11 @@ PetscErrorCode IGACreateDMDA(IGA iga,
     ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
   }
   ierr = DMDACreate(((PetscObject)iga)->comm,&da);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,6,0)
   ierr = DMDASetDim(da,dim);CHKERRQ(ierr);
+#else
+  ierr = DMSetDimension(da,dim);CHKERRQ(ierr);
+#endif
   ierr = DMDASetDof(da,bs);CHKERRQ(ierr);
   ierr = DMDASetNumProcs(da,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
   ierr = DMDASetSizes(da,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);
