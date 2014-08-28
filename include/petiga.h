@@ -634,13 +634,12 @@ PETSC_EXTERN PetscErrorCode IGAPointGetQuadrature(IGAPoint point,PetscReal *weig
 PETSC_EXTERN PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[]);
 
-PETSC_EXTERN PetscErrorCode IGAPointInterpolate(IGAPoint point,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
-
 PETSC_EXTERN PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[]);
 
+PETSC_EXTERN PetscErrorCode IGAPointEvaluate (IGAPoint p,PetscInt ider,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormGrad (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
