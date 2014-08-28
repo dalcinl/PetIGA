@@ -340,8 +340,6 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
           ComputeBasis = IGA_Basis_BSpline;  break;
         case IGA_BASIS_LAGRANGE:
           ComputeBasis = IGA_Basis_Lagrange; break;
-        case IGA_BASIS_HIERARCHICAL:
-          ComputeBasis = NULL;
         }
       ComputeBasis(prb->ID[i],prb->point[i],prb->p[i],prb->order,prb->U[i],prb->BD[i]);
     }

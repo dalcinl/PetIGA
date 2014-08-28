@@ -77,8 +77,7 @@ PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x
 typedef enum {
   IGA_BASIS_BSPLINE=0,
   IGA_BASIS_BERNSTEIN,
-  IGA_BASIS_LAGRANGE,
-  IGA_BASIS_HIERARCHICAL
+  IGA_BASIS_LAGRANGE
 } IGABasisType;
 
 PETSC_EXTERN const char *const IGABasisTypes[];
