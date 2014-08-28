@@ -897,7 +897,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 #if !defined(PETSC_HAVE_MPIUNI)
   else {
     MPI_Comm    cartcomm;
-    PetscMPIInt i,ndims,dims[3],periods[3]={0,0,0},reorder=0;
+    PetscMPIInt ndims,dims[3],periods[3]={0,0,0},reorder=0;
     ndims = (PetscMPIInt)dim;
     for (i=0; i<ndims; i++) dims[i] = (PetscMPIInt)iga->proc_sizes[ndims-1-i];
     ierr = MPI_Cart_create(comm,ndims,dims,periods,reorder,&cartcomm);CHKERRQ(ierr);
@@ -1362,7 +1362,7 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
 #define __FUNCT__ "IGASetUp_View"
 static PetscErrorCode IGASetUp_View(IGA iga)
 {
-  PetscBool      flg1,flg2,info=PETSC_FALSE;
+  PetscBool      flg1=PETSC_FALSE,flg2=PETSC_FALSE,info=PETSC_FALSE;
   char           filename1[PETSC_MAX_PATH_LEN] = "";
   char           filename2[PETSC_MAX_PATH_LEN] = "";
   PetscViewer    viewer;

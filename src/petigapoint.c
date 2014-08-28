@@ -336,6 +336,12 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
 }
 
 EXTERN_C_BEGIN
+extern void igapoint_geommap       (IGAPoint,PetscReal[]);
+extern void igapoint_gradgeommap   (IGAPoint,PetscReal[]);
+extern void igapoint_invgradgeommap(IGAPoint,PetscReal[]);
+EXTERN_C_END
+
+EXTERN_C_BEGIN
 void igapoint_geommap       (IGAPoint p,PetscReal x[]) {(void)IGAPointFormGeomMap(p,x);}
 void igapoint_gradgeommap   (IGAPoint p,PetscReal f[]) {(void)IGAPointFormGradGeomMap(p,f);}
 void igapoint_invgradgeommap(IGAPoint p,PetscReal g[]) {(void)IGAPointFormInvGradGeomMap(p,g);}
@@ -458,7 +464,7 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
   PetscValidPointer(V,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  if (PetscUnlikely(point->nvec >= sizeof(point->wvec)/sizeof(PetscScalar*)))
+  if (PetscUnlikely((size_t)point->nvec >= sizeof(point->wvec)/sizeof(PetscScalar*)))
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
   {
     size_t m = (size_t)(point->neq * point->dof);
@@ -478,7 +484,7 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
   PetscValidPointer(M,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  if (PetscUnlikely(point->nmat >= sizeof(point->wmat)/sizeof(PetscScalar*)))
+  if (PetscUnlikely((size_t)point->nmat >= sizeof(point->wmat)/sizeof(PetscScalar*)))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
   {
     size_t m = (size_t)(point->neq * point->dof);

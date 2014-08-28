@@ -282,7 +282,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   /* Span closure */
   if (!prb->offprocess) {
     PetscInt a,nen = prb->nen;
-    PetscInt i,dim = prb->dim;
+    PetscInt k,dim = prb->dim;
     PetscInt c,dof = prb->dof;
     PetscInt *map  = prb->map;
     {
@@ -307,8 +307,8 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
         prb->W[a] = prb->arrayW[map[a]];
     if (prb->arrayX)
       for (a=0; a<nen; a++)
-        for (i=0; i<dim; i++)
-          prb->X[i + a*dim] = prb->arrayX[i + map[a]*dim];
+        for (k=0; k<dim; k++)
+          prb->X[k + a*dim] = prb->arrayX[k + map[a]*dim];
     if (prb->arrayA)
       for (a=0; a<nen; a++)
         for (c=0; c<dof; c++)
@@ -340,8 +340,8 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
           ComputeBasis = IGA_Basis_BSpline;  break;
         case IGA_BASIS_LAGRANGE:
           ComputeBasis = IGA_Basis_Lagrange; break;
-        default:
-          ComputeBasis = IGA_Basis_BSpline;
+        case IGA_BASIS_HIERARCHICAL:
+          ComputeBasis = NULL;
         }
       ComputeBasis(prb->ID[i],prb->point[i],prb->p[i],prb->order,prb->U[i],prb->BD[i]);
     }

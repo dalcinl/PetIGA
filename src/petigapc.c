@@ -331,7 +331,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_PC"
-static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
+static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
   Mat            mat;
@@ -352,7 +352,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,void *ctx)
   /* */
   PetscFunctionReturn(0);
 }
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
+static PetscErrorCode OptHdlDel(PETSC_UNUSED PetscObject obj,PETSC_UNUSED void *ctx) {return 0;}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsHandlerPC"

@@ -418,7 +418,7 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields
 
 #undef __FUNCT__
 #define __FUNCT__ "DMCreateFieldIS_IGA"
-PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fieldNames,IS **fields)
+static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fieldNames,IS **fields)
 {
   IGA            iga = DMIGACast(dm)->iga;
   PetscInt       i,dof;

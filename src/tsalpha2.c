@@ -37,7 +37,7 @@ PETSC_EXTERN PetscLogEvent TS_JacobianEval;
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormFunction_Alpha2"
-static PetscErrorCode SNESTSFormFunction_Alpha2(SNES snes,Vec X,Vec F,TS ts)
+static PetscErrorCode SNESTSFormFunction_Alpha2(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -61,7 +61,8 @@ static PetscErrorCode SNESTSFormFunction_Alpha2(SNES snes,Vec X,Vec F,TS ts)
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormJacobian_Alpha2"
-static PetscErrorCode SNESTSFormJacobian_Alpha2(SNES snes,Vec X,
+static PetscErrorCode SNESTSFormJacobian_Alpha2(PETSC_UNUSED SNES snes,
+                                                Vec X,
 #if PETSC_VERSION_LT(3,5,0)
                                                 Mat *J,Mat *P,MatStructure *m,
 #else
@@ -360,7 +361,7 @@ PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIFunction2_Alpha2"
-PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PetscBool imex)
+PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -377,7 +378,7 @@ PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Ve
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIJacobian2_Alpha2"
-PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PetscBool imex)
+PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;

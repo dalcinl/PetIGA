@@ -109,11 +109,11 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   ierr = AOPetscToApplicationIS(iga->ao,is);CHKERRQ(ierr);
   if (bs > 1) {
     IS isb;
-    PetscInt n;
+    PetscInt nidx;
     const PetscInt *idx;
-    ierr = ISGetLocalSize(is,&n);CHKERRQ(ierr);
+    ierr = ISGetLocalSize(is,&nidx);CHKERRQ(ierr);
     ierr = ISGetIndices(is,&idx);CHKERRQ(ierr);
-    ierr = ISCreateBlock(comm,bs,n,idx,PETSC_COPY_VALUES,&isb);CHKERRQ(ierr);
+    ierr = ISCreateBlock(comm,bs,nidx,idx,PETSC_COPY_VALUES,&isb);CHKERRQ(ierr);
     ierr = ISRestoreIndices(is,&idx);CHKERRQ(ierr);
     ierr = ISDestroy(&is);CHKERRQ(ierr);
     is = isb;
@@ -294,7 +294,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
   PetscBool      is,aij,baij,sbaij;
-  PetscInt       i,dim;
+  PetscInt       i,j,k,dim;
   PetscInt       *lstart,*lwidth;
   PetscInt       gstart[3] = {0,0,0};
   PetscInt       gwidth[3] = {1,1,1};
@@ -393,7 +393,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscInt *dnz = NULL, *onz = NULL;
     ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
     {
-      PetscInt i,j,k;
       PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;
       ierr = PetscMalloc1(nnz,&indices);CHKERRQ(ierr);
       #if PETSC_VERSION_LT(3,5,0)
@@ -452,7 +451,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   }
 
   if (aij || baij || sbaij) {
-    PetscInt i,j,k;
     PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;PetscScalar *values=NULL;
     #if PETSC_VERSION_LT(3,5,0)
     ierr = PetscMalloc2(bs,PetscInt,&ubrows,nnz*bs,PetscInt,&ubcols);CHKERRQ(ierr);

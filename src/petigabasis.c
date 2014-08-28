@@ -142,8 +142,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
     ComputeBasis = IGA_Basis_Lagrange; break;
   case IGA_BASIS_HIERARCHICAL:
     ComputeBasis = IGA_Basis_Hierarchical; break;
-  default:
-    ComputeBasis = NULL;
   }
 
   ierr = PetscMalloc1(nel,&offset);CHKERRQ(ierr);

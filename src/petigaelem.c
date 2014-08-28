@@ -364,7 +364,7 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGANextElement"
-PetscBool IGANextElement(IGA iga,IGAElement element)
+PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
 {
   PetscInt i,dim  = element->dim;
   PetscInt *start = element->start;
@@ -656,9 +656,9 @@ PetscErrorCode IGAElementGetClosure(IGAElement element,PetscInt *nen,const Petsc
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementGetIndices"
-PetscErrorCode IGAElementGeIndices(IGAElement element,
-                                   PetscInt *neq,const PetscInt *rowmap[],
-                                   PetscInt *nen,const PetscInt *colmap[])
+PetscErrorCode IGAElementGetIndices(IGAElement element,
+                                    PetscInt *neq,const PetscInt *rowmap[],
+                                    PetscInt *nen,const PetscInt *colmap[])
 {
   PetscFunctionBegin;
   PetscValidPointer(element,1);
@@ -1062,7 +1062,7 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
   PetscValidPointer(V,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  if (PetscUnlikely(element->nvec >= sizeof(element->wvec)/sizeof(PetscScalar*)))
+  if (PetscUnlikely((size_t)element->nvec >= sizeof(element->wvec)/sizeof(PetscScalar*)))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
   {
     size_t m = (size_t)(element->neq * element->dof);
@@ -1082,7 +1082,7 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
   PetscValidPointer(M,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
-  if (PetscUnlikely(element->nmat >= sizeof(element->wmat)/sizeof(PetscScalar*)))
+  if (PetscUnlikely((size_t)element->nmat >= sizeof(element->wmat)/sizeof(PetscScalar*)))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
   {
     size_t m = (size_t)(element->neq * element->dof);
@@ -1416,8 +1416,8 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
             normal[dir] = side ? 1.0 : -1.0;
             dshape = element->basis[1];
           } else {
-            PetscReal dS, *F = element->gradX[0];
-            IGA_GetNormal(dim,dir,side,F,&dS,normal);
+            PetscReal dS, *gX = element->gradX[0];
+            IGA_GetNormal(dim,dir,side,gX,&dS,normal);
             dshape = element->shape[1];
           }
           for (f=0; f<n; f++) {
