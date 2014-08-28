@@ -433,9 +433,7 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
              "Order must be nonnegative, got %D",order);
   order = PetscMax(order,1);
   order = PetscMin(order,3);
-  if (iga->order == order) PetscFunctionReturn(0);
   iga->order = order;
-  iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -1437,11 +1435,11 @@ PetscErrorCode IGASetUp(IGA iga)
   /* --- Stage 3 --- */
   iga->setupstage = 3;
 
-  if (iga->order < 0)
+  if (iga->order < 0) {
     for (i=0; i<iga->dim; i++)
       iga->order = PetscMax(iga->order,iga->axis[i]->p);
-  iga->order = PetscMax(iga->order,1); /* XXX */
-  iga->order = PetscMin(iga->order,3); /* XXX */
+    ierr = IGASetOrder(iga,iga->order);CHKERRQ(ierr);
+  }
 
   if (iga->collocation)
     for (i=0; i<iga->dim; i++)
@@ -1458,9 +1456,9 @@ PetscErrorCode IGASetUp(IGA iga)
 
   for (i=0; i<3; i++)
     if (!iga->collocation) {
-      ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i],iga->order);CHKERRQ(ierr);
+      ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i]);CHKERRQ(ierr);
     } else {
-      ierr = IGABasisInitCollocation(iga->basis[i],iga->axis[i],iga->order);CHKERRQ(ierr);
+      ierr = IGABasisInitCollocation(iga->basis[i],iga->axis[i]);CHKERRQ(ierr);
     }
 
   ierr = IGAElementInit(iga->iterator,iga);CHKERRQ(ierr);

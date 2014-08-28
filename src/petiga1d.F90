@@ -22,7 +22,7 @@ end subroutine IGA_Quadrature_1D
 pure subroutine IGA_BasisFuns_1D(&
      order,                      &
      rational,W,                 &
-     inq,ina,ind,iN,             &
+     inq,ina,iN,                 &
      N0,N1,N2,N3)                &
   bind(C, name="IGA_BasisFuns_1D")
   use PetIGA
@@ -30,9 +30,9 @@ pure subroutine IGA_BasisFuns_1D(&
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 1
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: rational
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina, ind
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(ina)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina,inq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina,inq)
@@ -43,7 +43,7 @@ pure subroutine IGA_BasisFuns_1D(&
   do iq=1,inq
      call TensorBasisFuns(&
           order,&
-          ina,ind,iN(:,:,iq),&
+          ina,iN(:,:,iq),&
           N0(  :,iq),&
           N1(:,:,iq),&
           N2(:,:,iq),&
@@ -62,14 +62,14 @@ pure subroutine IGA_BasisFuns_1D(&
 contains
 
 pure subroutine TensorBasisFuns(&
-     ord,&
-     ina,ind,iN,&
+     order,&
+     ina,iN,&
      N0,N1,N2,N3)
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 1
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ord
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina, ind
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina)
@@ -80,16 +80,17 @@ pure subroutine TensorBasisFuns(&
      N0(ia) = iN(0,ia)
   end do
   !
+  if (order < 1) return
   do ia=1,ina
      N1(1,ia) = iN(1,ia)
   end do
   !
-  if (ord < 2) return
+  if (order < 2) return
   do ia=1,ina
      N2(1,1,ia) = iN(2,ia)
   end do
   !
-  if (ord < 3) return
+  if (order < 3) return
   do ia=1,ina
      N3(1,1,1,ia) = iN(3,ia)
   end do

@@ -32,16 +32,14 @@ pure subroutine GeometryMap(&
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
   integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
 
-  ! gradient of the mapping
-  X1 = matmul(N1,transpose(X))
-  dX = Determinant(dim,X1)
-  E1 = Inverse(dim,dX,X1)
-
   ! 0th derivatives
   R0 = N0
 
   ! 1st derivatives
   if (order < 1) return
+  X1 = matmul(N1,transpose(X))
+  dX = Determinant(dim,X1)
+  E1 = Inverse(dim,dX,X1)
   R1 = 0 ! matmul(E1,N1)
   do node = 1,nen
      do i = 1,dim

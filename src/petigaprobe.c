@@ -11,16 +11,16 @@ EXTERN_C_END
 
 EXTERN_C_BEGIN
 extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
@@ -353,16 +353,16 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     PetscReal **M = prb->basis;
     switch (prb->dim) {
     case 3: IGA_BasisFuns_3D(prb->order,rational,prb->W,
-                             1,prb->p[0]+1,prb->order,prb->BD[0],
-                             1,prb->p[1]+1,prb->order,prb->BD[1],
-                             1,prb->p[2]+1,prb->order,prb->BD[2],
+                             1,prb->p[0]+1,prb->BD[0],
+                             1,prb->p[1]+1,prb->BD[1],
+                             1,prb->p[2]+1,prb->BD[2],
                              M[0],M[1],M[2],M[3]); break;
     case 2: IGA_BasisFuns_2D(prb->order,rational,prb->W,
-                             1,prb->p[0]+1,prb->order,prb->BD[0],
-                             1,prb->p[1]+1,prb->order,prb->BD[1],
+                             1,prb->p[0]+1,prb->BD[0],
+                             1,prb->p[1]+1,prb->BD[1],
                              M[0],M[1],M[2],M[3]); break;
     case 1: IGA_BasisFuns_1D(prb->order,rational,prb->W,
-                             1,prb->p[0]+1,prb->order,prb->BD[0],
+                             1,prb->p[0]+1,prb->BD[0],
                              M[0],M[1],M[2],M[3]); break;
     }
   }

@@ -32,9 +32,9 @@ end subroutine IGA_Quadrature_3D
 pure subroutine IGA_BasisFuns_3D(&
      order,                      &
      rational,W,                 &
-     inq,ina,ind,iN,             &
-     jnq,jna,jnd,jN,             &
-     knq,kna,knd,kN,             &
+     inq,ina,iN,                 &
+     jnq,jna,jN,                 &
+     knq,kna,kN,                 &
      N0,N1,N2,N3)                &
   bind(C, name="IGA_BasisFuns_3D")
   use PetIGA
@@ -42,13 +42,13 @@ pure subroutine IGA_BasisFuns_3D(&
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: rational
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina, ind
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna, jnd
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq, kna, knd
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq, kna
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(ina*jna*kna)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina,inq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna,jnq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:knd,kna,knq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina,inq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:3,jna,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:3,kna,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina*jna*kna,inq,jnq,knq)
@@ -63,9 +63,9 @@ pure subroutine IGA_BasisFuns_3D(&
         do iq=1,inq
            call TensorBasisFuns(&
                 order,&
-                ina,ind,iN(:,:,iq),&
-                jna,jnd,jN(:,:,jq),&
-                kna,knd,kN(:,:,kq),&
+                ina,iN(:,:,iq),&
+                jna,jN(:,:,jq),&
+                kna,kN(:,:,kq),&
                 N0(  :,iq,jq,kq),&
                 N1(:,:,iq,jq,kq),&
                 N2(:,:,iq,jq,kq),&
@@ -86,20 +86,20 @@ pure subroutine IGA_BasisFuns_3D(&
 contains
 
 pure subroutine TensorBasisFuns(&
-     ord,&
-     ina,ind,iN,&
-     jna,jnd,jN,&
-     kna,knd,kN,&
+     order,&
+     ina,iN,&
+     jna,jN,&
+     kna,kN,&
      N0,N1,N2,N3)
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ord
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina, ind
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna, jnd
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: kna, knd
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:ind,ina)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:jnd,jna)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:knd,kna)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: kna
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:3,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:3,kna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina,jna,kna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina,jna,kna)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina,jna,kna)
@@ -110,13 +110,14 @@ pure subroutine TensorBasisFuns(&
      N0(ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(0,ka)
   end do; end do; end do
   !
+  if (order < 1) return
   do ka=1,kna; do ja=1,jna; do ia=1,ina
      N1(1,ia,ja,ka) = iN(1,ia) * jN(0,ja) * kN(0,ka)
      N1(2,ia,ja,ka) = iN(0,ia) * jN(1,ja) * kN(0,ka)
      N1(3,ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(1,ka)
   end do; end do; end do
   !
-  if (ord < 2) return ! XXX Optimize!
+  if (order < 2) return ! XXX Optimize!
   do ka=1,kna; do ja=1,jna; do ia=1,ina
      N2(1,1,ia,ja,ka) = iN(2,ia) * jN(0,ja) * kN(0,ka)
      N2(2,1,ia,ja,ka) = iN(1,ia) * jN(1,ja) * kN(0,ka)
@@ -129,7 +130,7 @@ pure subroutine TensorBasisFuns(&
      N2(3,3,ia,ja,ka) = iN(0,ia) * jN(0,ja) * kN(2,ka)
   end do; end do; end do
   !
-  if (ord < 3) return ! XXX Optimize!
+  if (order < 3) return ! XXX Optimize!
   do ka=1,kna; do ja=1,jna; do ia=1,ina
      N3(1,1,1,ia,ja,ka) = iN(3,ia) * jN(0,ja) * kN(0,ka)
      N3(2,1,1,ia,ja,ka) = iN(2,ia) * jN(1,ja) * kN(0,ka)
@@ -217,8 +218,8 @@ subroutine IGA_BoundaryArea_3D(&
      m,axis,side,              &
      geometry,Cx,              &
      rational,Cw,              &
-     inqp,iW,inen,indr,iN,     &
-     jnqp,jW,jnen,jndr,jN,     &
+     inqp,iW,inen,iN,          &
+     jnqp,jW,jnen,jN,          &
      dS)                       &
   bind(C, name="IGA_BoundaryArea_3D")
   use PetIGA
@@ -230,10 +231,10 @@ subroutine IGA_BoundaryArea_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: geometry, rational
   real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cx(nsd,m(1),m(2),m(3))
   real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cw(    m(1),m(2),m(3))
-  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: inqp, inen, indr
-  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: jnqp, jnen, jndr
-  real   (kind=IGA_REAL_KIND   ), intent(in)        :: iW(inqp), iN(0:indr,inen,inqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)        :: jW(jnqp), jN(0:jndr,jnen,jnqp)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: inqp, inen
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: jnqp, jnen
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: iW(inqp), iN(0:3,inen,inqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: jW(jnqp), jN(0:3,jnen,jnqp)
   real   (kind=IGA_REAL_KIND   ), intent(out)       :: dS
   integer(kind=IGA_INTEGER_KIND)  :: k, nen, iq, jq, ia, ja
   real   (kind=IGA_REAL_KIND   )  :: N0(inen,jnen), N1(dim,inen,jnen), detJ

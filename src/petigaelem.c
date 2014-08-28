@@ -756,16 +756,16 @@ EXTERN_C_END
 
 EXTERN_C_BEGIN
 extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
@@ -788,7 +788,7 @@ EXTERN_C_END
   BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight,BD[i]->detJ+ID[i]
 
 #define IGA_BasisFuns_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[i]->nen,BD[i]->d,BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*(BD[i]->d+1)
+  BD[i]->nqp,BD[i]->nen,BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*4
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildQuadrature"
@@ -890,7 +890,7 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   1,&BD[i]->bnd_point[s],&BD[i]->bnd_weight[s],&BD[i]->bnd_detJ[s]
 
 #define IGA_BasisFuns_BNDR(ID,BD,i,s) \
-  1,BD[i]->nen,BD[i]->d,BD[i]->bnd_value[s]
+  1,BD[i]->nen,BD[i]->bnd_value[s]
 
 EXTERN_C_BEGIN
 extern void IGA_GetNormal(PetscInt dim,PetscInt axis,PetscInt side,const PetscReal F[],PetscReal *dS,PetscReal N[]);
@@ -1130,13 +1130,13 @@ EXTERN_C_BEGIN
 extern void IGA_BoundaryArea_2D(const PetscInt[],PetscInt,PetscInt,
                                 PetscInt,const PetscReal[],
                                 PetscInt,const PetscReal[],
-                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,const PetscReal[],
                                 PetscReal*);
 extern void IGA_BoundaryArea_3D(const PetscInt[],PetscInt,PetscInt,
                                 PetscInt,const PetscReal[],
                                 PetscInt,const PetscReal[],
-                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
-                                PetscInt,const PetscReal[],PetscInt,PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,const PetscReal[],
+                                PetscInt,const PetscReal[],PetscInt,const PetscReal[],
                                 PetscReal*);
 EXTERN_C_END
 
@@ -1157,7 +1157,7 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
     A *= (dim==2) ? 2 : 4; /* sum(W) = 2 */
   } else {
     PetscInt shape[3] = {1,1,1};
-    PetscInt k,nqp[3],nen[3],ndr[3];
+    PetscInt k,nqp[3],nen[3];
     PetscReal *W[3],*N[3],dS = 1.0;
     for (i=0; i<dim; i++)
       shape[i] = BD[i]->nen;
@@ -1165,22 +1165,21 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
       if (i == dir) continue;
       nqp[k] = BD[i]->nqp;
       nen[k] = BD[i]->nen;
-      ndr[k] = BD[i]->d;
       W[k]   = BD[i]->weight;
-      N[k]   = BD[i]->value+ID[i]*nqp[k]*nen[k]*(ndr[k]+1);
+      N[k]   = BD[i]->value+ID[i]*nqp[k]*nen[k]*4;
       k++;
     }
     switch (dim) {
     case 2: IGA_BoundaryArea_2D(shape,dir,side,
                                 element->geometry,element->geometryX,
                                 element->rational,element->rationalW,
-                                nqp[0],W[0],nen[0],ndr[0],N[0],
+                                nqp[0],W[0],nen[0],N[0],
                                 &dS); break;
     case 3: IGA_BoundaryArea_3D(shape,dir,side,
                                 element->geometry,element->geometryX,
                                 element->rational,element->rationalW,
-                                nqp[0],W[0],nen[0],ndr[0],N[0],
-                                nqp[1],W[1],nen[1],ndr[1],N[1],
+                                nqp[0],W[0],nen[0],N[0],
+                                nqp[1],W[1],nen[1],N[1],
                                 &dS);break;
     }
     A *= dS;

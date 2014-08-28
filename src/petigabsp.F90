@@ -7,10 +7,10 @@ subroutine IGA_Basis_BSpline(k,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: k, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
   real   (kind=IGA_REAL_KIND   )  :: ders(0:p,0:d)
   call BasisFunsDers(k,uu,p,d,U,ders)
-  B = transpose(ders)
+  B = 0; B(0:d,:) = transpose(ders)
 contains
 pure subroutine BasisFunsDers(i,uu,p,n,U,ders)
   use PetIGA
@@ -84,10 +84,17 @@ subroutine IGA_Basis_Lagrange(kk,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: kk, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:kk+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
   integer(kind=IGA_INTEGER_KIND)  :: m, i, j, k, l
   real   (kind=IGA_REAL_KIND   )  :: Lp, Ls1, Ls2, Ls3
   real   (kind=IGA_REAL_KIND   )  :: X(0:p)
+
+  B = 0
+
+  if (p == 0) then
+     B(0,0) = 1
+     return
+  end if
 
   do m = 0, p
      X(m) = U(kk) + m * (U(kk+1) - U(kk)) / p
@@ -172,10 +179,12 @@ subroutine IGA_Basis_Hierarchical(kk,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: kk, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:kk+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:d,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
   integer(kind=IGA_INTEGER_KIND)  :: i, k
   real   (kind=IGA_REAL_KIND   )  :: J, x, Lp(0:p,0:d)
   real   (kind=IGA_REAL_KIND   ), parameter :: two = 2
+
+  B = 0
 
   J = (U(kk+1)-U(kk))/2
   x = (uu-U(kk))/J - 1

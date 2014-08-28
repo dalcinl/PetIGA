@@ -48,7 +48,6 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   basis->nqp = 0;
   basis->nen = 0;
   basis->p   = 0;
-  basis->d   = 0;
   ierr = PetscFree(basis->offset);CHKERRQ(ierr);
   ierr = PetscFree(basis->detJ);CHKERRQ(ierr);
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
@@ -89,14 +88,14 @@ EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisInitQuadrature"
-PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,PetscInt d)
+PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
 {
   PetscInt       m,p;
   const PetscInt *span;
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
-  PetscInt       nen,ndr;
+  PetscInt       nen,d,ndr=4;
   PetscInt       *offset;
   PetscReal      *detJ;
   PetscReal      *weight;
@@ -108,8 +107,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   PetscValidPointer(basis,1);
   PetscValidPointer(axis,2);
   PetscValidPointer(rule,3);
-  if (d < 0) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                      "Derivative order must be grather than zero, got %D",d);
 
   m = axis->m;
   p = axis->p;
@@ -134,7 +131,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   nel  = axis->nel;
   span = axis->span;
   nen  = p+1;
-  ndr  = d+1;
+
+  d = PetscMin(p,3);
 
   switch (basis->type) {
   case IGA_BASIS_BSPLINE:
@@ -153,7 +151,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   ierr = PetscMalloc1(nqp,&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp*nen*ndr,&value);CHKERRQ(ierr);
-  ierr = PetscMemzero(value,nel*nqp*nen*ndr*sizeof(PetscReal));CHKERRQ(ierr);
 
   for (iqp=0; iqp<nqp; iqp++) {
     weight[iqp] = W[iqp];
@@ -178,7 +175,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule,P
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->p      = p;
-  basis->d      = d;
   basis->offset = offset;
 
   basis->detJ   = detJ;
@@ -210,13 +206,13 @@ EXTERN_C_END
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisInitCollocation"
-PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
+PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
 {
   PetscInt       p,n;
   const PetscReal*U;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
-  PetscInt       nen,ndr;
+  PetscInt       nen,d,ndr=4;
   PetscInt       *offset;
   PetscReal      *detJ;
   PetscReal      *weight;
@@ -226,8 +222,6 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   PetscFunctionBegin;
   PetscValidPointer(basis,1);
   PetscValidPointer(axis,2);
-  if (d < 0) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                      "Derivative order must be grather than zero, got %D",d);
 
   p = axis->p;
   n = axis->m - p - 1;
@@ -236,7 +230,8 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   nel  = axis->nnp;
   nqp  = 1;
   nen  = p+1;
-  ndr  = d+1;
+
+  d = PetscMin(p,3);
 
   ierr = PetscMalloc1(nel,&offset);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel,&detJ);CHKERRQ(ierr);
@@ -263,7 +258,6 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt d)
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->p      = p;
-  basis->d      = d;
   basis->offset = offset;
 
   basis->detJ   = detJ;

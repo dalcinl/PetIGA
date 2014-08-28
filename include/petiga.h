@@ -91,19 +91,19 @@ struct _n_IGABasis {
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
-  PetscInt  p,d;      /* polynomial order, last derivative index */
+  PetscInt  p;        /* polynomial order */
 
   PetscInt  *offset;  /* [nel] basis offset   */
   PetscReal *detJ;    /* [nel]                */
   PetscReal *weight;  /* [nqp]                */
   PetscReal *point;   /* [nel][nqp]           */
-  PetscReal *value;   /* [nel][nqp][nen][d+1] */
+  PetscReal *value;   /* [nel][nqp][nen][4]   */
 
   PetscInt   bnd_offset[2];
   PetscReal  bnd_detJ[2];
   PetscReal  bnd_weight[2];
   PetscReal  bnd_point[2];
-  PetscReal *bnd_value[2]; /* [nen][d+1] */
+  PetscReal *bnd_value[2]; /* [nen][4] */
 };
 
 PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
@@ -111,8 +111,8 @@ PETSC_EXTERN PetscErrorCode IGABasisDestroy(IGABasis *basis);
 PETSC_EXTERN PetscErrorCode IGABasisReset(IGABasis basis);
 PETSC_EXTERN PetscErrorCode IGABasisReference(IGABasis basis);
 PETSC_EXTERN PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type);
-PETSC_EXTERN PetscErrorCode IGABasisInitQuadrature (IGABasis basis,IGAAxis axis,IGARule rule,PetscInt order);
-PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis,PetscInt order);
+PETSC_EXTERN PetscErrorCode IGABasisInitQuadrature (IGABasis basis,IGAAxis axis,IGARule rule);
+PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis);
 
 /* ---------------------------------------------------------------- */
 
