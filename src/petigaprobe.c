@@ -331,7 +331,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   /* Compute 1D basis functions */
   {
     IGABasis *basis = prb->iga->basis;
-    void (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]);
+    void (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]) = NULL;
     for (i=0; i<prb->dim; i++) {
       switch (basis[i]->type)
         {

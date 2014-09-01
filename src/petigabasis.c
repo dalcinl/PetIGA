@@ -99,7 +99,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   PetscReal      *weight;
   PetscReal      *point;
   PetscReal      *value;
-  void          (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]);
+  void          (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]) = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(basis,1);
