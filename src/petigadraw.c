@@ -30,7 +30,7 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
 
   /* compute global and local sizes */
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  dim = PetscMax(0,dim); /* silent GCC -O3 warning */
+  dim = PetscMax(1,dim); /* silent GCC -O3 warning */
   dim = PetscMin(dim,3); /* silent GCC -O3 warning */
   if (!iga->collocation) {
     const PetscInt *pranks = iga->proc_ranks;
