@@ -277,10 +277,10 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
       if (first < start || last >= end) prb->offprocess = PETSC_TRUE;
     }
   }
-  if (prb->offprocess && !prb->collective) PetscFunctionReturn(0);
+  if (PetscUnlikely(prb->offprocess && !prb->collective)) PetscFunctionReturn(0);
 
   /* Span closure */
-  if (!prb->offprocess) {
+  if (PetscLikely(!prb->offprocess)) {
     PetscInt a,nen = prb->nen;
     PetscInt k,dim = prb->dim;
     PetscInt c,dof = prb->dof;
@@ -314,7 +314,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
         for (c=0; c<dof; c++)
           prb->A[c + a*dof] = prb->arrayA[c + map[a]*dof];
   }
-  if (prb->collective) {
+  if (PetscUnlikely(prb->collective)) {
     MPI_Comm    comm;
     PetscMPIInt nen = (PetscMPIInt)prb->nen;
     PetscMPIInt dim = (PetscMPIInt)prb->dim;
@@ -333,14 +333,13 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     IGABasis *basis = prb->iga->basis;
     void (*ComputeBasis)(PetscInt,PetscReal,PetscInt,PetscInt,const PetscReal[],PetscReal[]) = NULL;
     for (i=0; i<prb->dim; i++) {
-      switch (basis[i]->type)
-        {
-        case IGA_BASIS_BSPLINE:
-        case IGA_BASIS_BERNSTEIN:
-          ComputeBasis = IGA_Basis_BSpline;  break;
-        case IGA_BASIS_LAGRANGE:
-          ComputeBasis = IGA_Basis_Lagrange; break;
-        }
+      switch (basis[i]->type) {
+      case IGA_BASIS_BSPLINE:
+      case IGA_BASIS_BERNSTEIN:
+        ComputeBasis = IGA_Basis_BSpline;  break;
+      case IGA_BASIS_LAGRANGE:
+        ComputeBasis = IGA_Basis_Lagrange; break;
+      }
       ComputeBasis(prb->ID[i],prb->point[i],prb->p[i],prb->order,prb->U[i],prb->BD[i]);
     }
   }
@@ -399,7 +398,7 @@ PetscErrorCode IGAProbeGeomMap(IGAProbe prb,PetscReal x[])
   PetscFunctionBegin;
   PetscValidPointer(prb,1);
   PetscValidRealPointer(x,2);
-  if (prb->offprocess && !prb->collective) {
+  if (PetscUnlikely(prb->offprocess && !prb->collective)) {
     PetscInt i; for (i=0; i<prb->dim; i++) x[i] = 0.0;
   } else if (!prb->arrayX) {
     PetscInt i; for (i=0; i<prb->dim; i++) x[i] = prb->point[i];
@@ -421,7 +420,7 @@ PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
   PetscValidScalarPointer(A,3);
   if (PetscUnlikely(der < 0 || der > prb->order)) SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=der<=%D, got der=%D",prb->order,der);
   if (PetscUnlikely(!prb->arrayA)) SETERRQ(((PetscObject)prb->iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGAProbeSetVec() first");
-  if (prb->offprocess && !prb->collective) {
+  if (PetscUnlikely(prb->offprocess && !prb->collective)) {
     size_t n = (size_t)prb->dof * intpow[prb->dim][der];
     ierr = PetscMemzero(A,n*sizeof(PetscScalar));CHKERRQ(ierr);
   } else {
