@@ -9,35 +9,7 @@ extern void IGA_Basis_BSpline (PetscInt i,PetscReal u,PetscInt p,PetscInt d,cons
 extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 EXTERN_C_END
 
-EXTERN_C_BEGIN
-extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-EXTERN_C_END
-
-EXTERN_C_BEGIN
-extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-EXTERN_C_END
+#include "petigaftn.h"
 
 EXTERN_C_BEGIN
 extern void IGA_GetGeomMap(PetscInt nen,PetscInt nsd,const PetscReal N[],const PetscReal X[],PetscReal x[]);
@@ -373,18 +345,29 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     PetscReal *H0 = prb->hessX[0], *H1 = prb->hessX[1];
     PetscReal *I0 = prb->der3X[0], *I1 = prb->der3X[1];
     switch (prb->dim) {
-    case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,prb->X,
+    case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
+                               M[0],M[1],M[2],M[3],
+                               J,G0,G1,H0,H1,I0,I1); break;
+    case 2: IGA_GeometryMap_2D(prb->order,1,prb->nen,prb->X,
+                               M[0],M[1],M[2],M[3],
+                               J,G0,G1,H0,H1,I0,I1); break;
+    case 1: IGA_GeometryMap_1D(prb->order,1,prb->nen,prb->X,
+                               M[0],M[1],M[2],M[3],
+                               J,G0,G1,H0,H1,I0,I1); break;
+    }
+    switch (prb->dim) {
+    case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,
+                             G0,G1,H0,H1,I0,I1,
                              M[0],M[1],M[2],M[3],
-                             N[0],N[1],N[2],N[3],
-                             J,G0,G1,H0,H1,I0,I1); break;
-    case 2: IGA_ShapeFuns_2D(prb->order,1,prb->nen,prb->X,
+                             N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_ShapeFuns_2D(prb->order,1,prb->nen,
+                             G0,G1,H0,H1,I0,I1,
                              M[0],M[1],M[2],M[3],
-                             N[0],N[1],N[2],N[3],
-                             J,G0,G1,H0,H1,I0,I1); break;
-    case 1: IGA_ShapeFuns_1D(prb->order,1,prb->nen,prb->X,
+                             N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_ShapeFuns_1D(prb->order,1,prb->nen,
+                             G0,G1,H0,H1,I0,I1,
                              M[0],M[1],M[2],M[3],
-                             N[0],N[1],N[2],N[3],
-                             J,G0,G1,H0,H1,I0,I1); break;
+                             N[0],N[1],N[2],N[3]); break;
     }
   }
 

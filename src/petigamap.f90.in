@@ -1,0 +1,90 @@
+! -*- f90 -*-
+
+pure subroutine ShapeFunctions(&
+     order,&
+     nen,&
+     X1,E1,X2,E2,X3,E3,&
+     N0,N1,N2,N3,&
+     R0,R1,R2,R3)
+  use PetIGA
+  implicit none
+  !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N0(            nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N1(        dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N2(    dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N3(dim,dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R0(            nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R1(        dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R2(    dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: R3(dim,dim,dim,nen)
+
+  integer(kind=IGA_INTEGER_KIND)  :: node
+  integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
+  integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
+
+  ! 0th derivatives
+  R0 = N0
+
+  ! 1st derivatives
+  if (order < 1) return
+  R1 = 0 ! matmul(E1,N1)
+  do node = 1,nen
+     do i = 1,dim
+        do a = 1,dim
+           R1(i,node) = R1(i,node) + N1(a,node)*E1(i,a)
+        end do
+     end do
+  end do
+
+  ! 2nd derivatives
+  if (order < 2) return
+  R2 = 0
+  do node = 1,nen
+     do i = 1,dim
+        do j = 1,dim
+           do a = 1,dim
+              do b = 1,dim
+                 R2(j,i,node) = R2(j,i,node) + N2(b,a,node)*E1(i,a)*E1(j,b)
+              end do
+              R2(j,i,node) = R2(j,i,node) + N1(a,node)*E2(j,i,a)
+           end do
+        end do
+     end do
+  end do
+
+  ! 3rd derivatives
+  if (order < 3) return
+  R3 = 0
+  do node = 1,nen
+     do i = 1,dim
+        do j = 1,dim
+           do k = 1,dim
+              do a = 1,dim
+                 do b = 1,dim
+                    do c = 1,dim
+                       R3(k,j,i,node) = R3(k,j,i,node) &
+                            +N3(c,b,a,node)*E1(i,a)*E1(j,b)*E1(k,c)
+                    end do
+                    R3(k,j,i,node) = R3(k,j,i,node) &
+                         +N2(b,a,node)*( &
+                         +E1(i,a)*E2(k,j,b) &
+                         +E1(j,b)*E2(k,i,a) &
+                         +E1(k,b)*E2(j,i,a))
+                 end do
+                 R3(k,j,i,node) = R3(k,j,i,node) &
+                      +N1(a,node)*E3(k,j,i,a)
+              end do
+           end do
+        end do
+     end do
+  end do
+
+end subroutine ShapeFunctions

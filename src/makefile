@@ -19,6 +19,7 @@ SOURCEH = \
 ../include/petigaprobe.h \
 ../include/petscts2.h \
 petigabl.h \
+petigaftn.h \
 petigagrid.h \
 petigapart.h \
 
