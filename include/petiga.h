@@ -90,7 +90,6 @@ struct _n_IGABasis {
   PetscInt  nel;      /* number of elements */
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
-  PetscInt  p;        /* polynomial order */
 
   PetscInt  *offset;  /* [nel] basis offset   */
   PetscReal *detJ;    /* [nel]                */

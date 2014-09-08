@@ -46,7 +46,6 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   basis->nel = 0;
   basis->nqp = 0;
   basis->nen = 0;
-  basis->p   = 0;
   ierr = PetscFree(basis->offset);CHKERRQ(ierr);
   ierr = PetscFree(basis->detJ);CHKERRQ(ierr);
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
@@ -168,9 +167,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   basis->nel    = nel;
   basis->nqp    = nqp;
   basis->nen    = nen;
-  basis->p      = p;
   basis->offset = offset;
-
   basis->detJ   = detJ;
   basis->weight = weight;
   basis->point  = point;
@@ -251,9 +248,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   basis->nel    = nel;
   basis->nqp    = nqp;
   basis->nen    = nen;
-  basis->p      = p;
   basis->offset = offset;
-
   basis->detJ   = detJ;
   basis->weight = weight;
   basis->point  = point;
