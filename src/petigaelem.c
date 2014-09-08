@@ -788,25 +788,38 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
+    PetscInt  ord = element->parent->order;
     IGABasis  *BD = element->parent->basis;
     PetscInt  *ID = element->ID;
-    PetscInt  ord = element->parent->order;
-    PetscInt  rat = element->rational;
-    PetscReal *W  = element->rationalW;
     PetscReal **N = element->basis;
     switch (element->dim) {
-    case 3: IGA_BasisFuns_3D(ord,rat,W,
+    case 3: IGA_BasisFuns_3D(ord,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              IGA_BasisFuns_ARGS(ID,BD,2),
                              N[0],N[1],N[2],N[3]); break;
-    case 2: IGA_BasisFuns_2D(ord,rat,W,
+    case 2: IGA_BasisFuns_2D(ord,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              IGA_BasisFuns_ARGS(ID,BD,1),
                              N[0],N[1],N[2],N[3]); break;
-    case 1: IGA_BasisFuns_1D(ord,rat,W,
+    case 1: IGA_BasisFuns_1D(ord,
                              IGA_BasisFuns_ARGS(ID,BD,0),
                              N[0],N[1],N[2],N[3]); break;
+    }
+  }
+  if (element->rational) {
+    PetscInt  ord = element->parent->order;
+    PetscInt  nqp = element->nqp;
+    PetscInt  nen = element->nen;
+    PetscReal *W  = element->rationalW;
+    PetscReal **N = element->basis;
+    switch (element->dim) {
+    case 3: IGA_Rationalize_3D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_Rationalize_2D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_Rationalize_1D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
     }
   }
 
@@ -926,26 +939,24 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
+    PetscInt  ord = element->parent->order;
     IGABasis  *BD = element->parent->basis;
     PetscInt  *ID = element->ID;
-    PetscInt  ord = element->parent->order;
-    PetscInt  rat = element->rational;
-    PetscReal *W  = element->rationalW;
     PetscReal **N = element->basis;
     switch (element->dim) {
     case 3:
       switch (axis) {
-      case 0: IGA_BasisFuns_3D(ord,rat,W,
+      case 0: IGA_BasisFuns_3D(ord,
                                IGA_BasisFuns_BNDR(ID,BD,0,side),
                                IGA_BasisFuns_ARGS(ID,BD,1),
                                IGA_BasisFuns_ARGS(ID,BD,2),
                                N[0],N[1],N[2],N[3]); break;
-      case 1: IGA_BasisFuns_3D(ord,rat,W,
+      case 1: IGA_BasisFuns_3D(ord,
                                IGA_BasisFuns_ARGS(ID,BD,0),
                                IGA_BasisFuns_BNDR(ID,BD,1,side),
                                IGA_BasisFuns_ARGS(ID,BD,2),
                                N[0],N[1],N[2],N[3]); break;
-      case 2: IGA_BasisFuns_3D(ord,rat,W,
+      case 2: IGA_BasisFuns_3D(ord,
                                IGA_BasisFuns_ARGS(ID,BD,0),
                                IGA_BasisFuns_ARGS(ID,BD,1),
                                IGA_BasisFuns_BNDR(ID,BD,2,side),
@@ -953,32 +964,48 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
       } break;
     case 2:
       switch (axis) {
-      case 0: IGA_BasisFuns_2D(ord,rat,W,
+      case 0: IGA_BasisFuns_2D(ord,
                                IGA_BasisFuns_BNDR(ID,BD,0,side),
                                IGA_BasisFuns_ARGS(ID,BD,1),
                                N[0],N[1],N[2],N[3]); break;
-      case 1: IGA_BasisFuns_2D(ord,rat,W,
+      case 1: IGA_BasisFuns_2D(ord,
                                IGA_BasisFuns_ARGS(ID,BD,0),
                                IGA_BasisFuns_BNDR(ID,BD,1,side),
                                N[0],N[1],N[2],N[3]); break;
       } break;
     case 1:
       switch (axis) {
-      case 0: IGA_BasisFuns_1D(ord,rat,W,
+      case 0: IGA_BasisFuns_1D(ord,
                                IGA_BasisFuns_BNDR(ID,BD,0,side),
                                N[0],N[1],N[2],N[3]); break;
       } break;
     }
-    {
-      PetscInt q;
-      PetscInt nqp = element->nqp / element->parent->basis[axis]->nqp;
-      PetscInt dim = element->dim;
-      PetscReal *S = element->detS;
-      PetscReal *n = element->normal;
-      (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
-      for (q=0; q<nqp; q++) S[q] = 1.0;
-      for (q=0; q<nqp; q++) n[q*dim+axis] = side ? 1.0 : -1.0;
+  }
+  if (element->rational) {
+    PetscInt  ord = element->parent->order;
+    PetscInt  nqp = element->nqp / element->parent->basis[axis]->nqp;
+    PetscInt  nen = element->nen;
+    PetscReal *W  = element->rationalW;
+    PetscReal **N = element->basis;
+    switch (element->dim) {
+    case 3: IGA_Rationalize_3D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_Rationalize_2D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_Rationalize_1D(ord,nqp,nen,W,
+                               N[0],N[1],N[2],N[3]); break;
     }
+  }
+
+  {
+    PetscInt q;
+    PetscInt nqp = element->nqp / element->parent->basis[axis]->nqp;
+    PetscInt dim = element->dim;
+    PetscReal *S = element->detS;
+    PetscReal *n = element->normal;
+    (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
+    for (q=0; q<nqp; q++) S[q] = 1.0;
+    for (q=0; q<nqp; q++) n[q*dim+axis] = side ? 1.0 : -1.0;
   }
 
   if (element->dim == element->nsd) /* XXX */

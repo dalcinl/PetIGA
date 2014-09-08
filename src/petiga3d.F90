@@ -31,7 +31,6 @@ end subroutine IGA_Quadrature_3D
 
 pure subroutine IGA_BasisFuns_3D(&
      order,                      &
-     rational,W,                 &
      inq,ina,iN,                 &
      jnq,jna,jN,                 &
      knq,kna,kN,                 &
@@ -41,11 +40,9 @@ pure subroutine IGA_BasisFuns_3D(&
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: rational
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq, kna
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: W(ina*jna*kna)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:3,jna,jnq)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:3,kna,knq)
@@ -70,21 +67,10 @@ pure subroutine IGA_BasisFuns_3D(&
                 N1(:,:,iq,jq,kq),&
                 N2(:,:,iq,jq,kq),&
                 N3(:,:,iq,jq,kq))
-           if (rational /= 0) then
-              call Rationalize(&
-                   order,&
-                   nen,W,&
-                   N0(  :,iq,jq,kq),&
-                   N1(:,:,iq,jq,kq),&
-                   N2(:,:,iq,jq,kq),&
-                   N3(:,:,iq,jq,kq))
-           end if
         end do
      end do
   end do
-
 contains
-
 pure subroutine TensorBasisFuns(&
      order,&
      ina,iN,&
@@ -162,10 +148,38 @@ pure subroutine TensorBasisFuns(&
   end do; end do; end do
   !
 end subroutine TensorBasisFuns
-
-include 'petigarat.f90.in'
-
 end subroutine IGA_BasisFuns_3D
+
+
+pure subroutine IGA_Rationalize_3D(&
+     order,                      &
+     nqp,nen,W,                  &
+     N0,N1,N2,N3)                &
+  bind(C, name="IGA_Rationalize_3D")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
+  real   (kind=IGA_REAL_KIND   ), intent(in)    :: W(nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: N0(dim**0,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: N1(dim**1,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: N2(dim**2,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: N3(dim**3,nen,nqp)
+  integer(kind=IGA_INTEGER_KIND)  :: q
+  do q=1,nqp
+     call Rationalize(&
+          order,&
+          nen,W,&
+          N0(:,:,q),&
+          N1(:,:,q),&
+          N2(:,:,q),&
+          N3(:,:,q))
+  end do
+contains
+include 'petigarat.f90.in'
+end subroutine IGA_Rationalize_3D
 
 
 pure subroutine IGA_GeometryMap_3D(&

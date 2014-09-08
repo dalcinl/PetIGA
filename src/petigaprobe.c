@@ -318,21 +318,33 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
 
   /* Tensor product 1D basis functions */
   {
-    PetscInt  rational = prb->arrayW ? 1 : 0;
     PetscReal **M = prb->basis;
     switch (prb->dim) {
-    case 3: IGA_BasisFuns_3D(prb->order,rational,prb->W,
+    case 3: IGA_BasisFuns_3D(prb->order,
                              1,prb->p[0]+1,prb->BD[0],
                              1,prb->p[1]+1,prb->BD[1],
                              1,prb->p[2]+1,prb->BD[2],
                              M[0],M[1],M[2],M[3]); break;
-    case 2: IGA_BasisFuns_2D(prb->order,rational,prb->W,
+    case 2: IGA_BasisFuns_2D(prb->order,
                              1,prb->p[0]+1,prb->BD[0],
                              1,prb->p[1]+1,prb->BD[1],
                              M[0],M[1],M[2],M[3]); break;
-    case 1: IGA_BasisFuns_1D(prb->order,rational,prb->W,
+    case 1: IGA_BasisFuns_1D(prb->order,
                              1,prb->p[0]+1,prb->BD[0],
                              M[0],M[1],M[2],M[3]); break;
+    }
+  }
+
+  /* Rationalize basis functions */
+  if (prb->arrayW) {
+    PetscReal **N = prb->basis;
+    switch (prb->dim) {
+    case 3: IGA_Rationalize_3D(prb->order,1,prb->nen,prb->W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 2: IGA_Rationalize_2D(prb->order,1,prb->nen,prb->W,
+                               N[0],N[1],N[2],N[3]); break;
+    case 1: IGA_Rationalize_1D(prb->order,1,prb->nen,prb->W,
+                               N[0],N[1],N[2],N[3]); break;
     }
   }
 

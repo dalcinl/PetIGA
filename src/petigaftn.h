@@ -17,18 +17,28 @@ EXTERN_C_END
 
 
 EXTERN_C_BEGIN
-extern void IGA_BasisFuns_1D(PetscInt,PetscInt,const PetscReal[],
+extern void IGA_BasisFuns_1D(PetscInt,
                              PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_BasisFuns_2D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
-                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
-extern void IGA_BasisFuns_3D(PetscInt,PetscInt,const PetscReal[],
-                             PetscInt,PetscInt,const PetscReal[],
+extern void IGA_BasisFuns_2D(PetscInt,
                              PetscInt,PetscInt,const PetscReal[],
                              PetscInt,PetscInt,const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_BasisFuns_3D(PetscInt,
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscInt,PetscInt,const PetscReal[],
+                             PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+EXTERN_C_END
+
+
+EXTERN_C_BEGIN
+extern void IGA_Rationalize_1D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_Rationalize_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_Rationalize_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 
