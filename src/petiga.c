@@ -1048,7 +1048,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
   PetscValidPointer(dm,3);
-  IGACheckSetUpStage2(iga,1);
+  IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDMDA(iga,bs,iga->node_sizes,iga->node_lwidth,
                        NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -1236,6 +1236,36 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
     }
   }
 
+  { /* node partitioning */
+    PetscInt *node_sizes  = iga->node_sizes;
+    PetscInt *node_lstart = iga->node_lstart;
+    PetscInt *node_lwidth = iga->node_lwidth;
+    PetscInt *node_gstart = iga->node_gstart;
+    PetscInt *node_gwidth = iga->node_gwidth;
+    for (i=0; i<dim; i++) {
+      PetscInt size = iga->proc_sizes[i];
+      PetscInt rank = iga->proc_ranks[i];
+      node_sizes[i]  = iga->axis[i]->nnp; /* XXX */
+      node_lstart[i] = iga->geom_lstart[i];
+      node_lwidth[i] = iga->geom_lwidth[i];
+      node_gstart[i] = iga->geom_gstart[i];
+      node_gwidth[i] = iga->geom_gwidth[i];
+      if (rank == 0 && node_lstart[i] < 0) {
+        node_lwidth[i] += node_lstart[i];
+        node_lstart[i] = 0;
+      }
+      if (rank == size-1)
+        node_lwidth[i] = node_sizes[i] - node_lstart[i];
+    }
+    for (i=dim; i<3; i++) {
+      node_sizes[i]  = 1;
+      node_lstart[i] = 0;
+      node_lwidth[i] = 1;
+      node_gstart[i] = 0;
+      node_gwidth[i] = 1;
+    }
+  }
+
   iga->rational = PETSC_FALSE;
   iga->geometry = 0;
   iga->property = 0;
@@ -1257,42 +1287,11 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
 #define __FUNCT__ "IGASetUp_Stage2"
 static PetscErrorCode IGASetUp_Stage2(IGA iga)
 {
-  PetscInt       i;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (iga->setupstage >= 2) PetscFunctionReturn(0);
   iga->setupstage = 2;
-
-  { /* node partitioning */
-    PetscInt *node_sizes  = iga->node_sizes;
-    PetscInt *node_lstart = iga->node_lstart;
-    PetscInt *node_lwidth = iga->node_lwidth;
-    PetscInt *node_gstart = iga->node_gstart;
-    PetscInt *node_gwidth = iga->node_gwidth;
-    for (i=0; i<iga->dim; i++) {
-      PetscInt size = iga->proc_sizes[i];
-      PetscInt rank = iga->proc_ranks[i];
-      node_sizes[i]  = iga->axis[i]->nnp; /* XXX */
-      node_lstart[i] = iga->geom_lstart[i];
-      node_lwidth[i] = iga->geom_lwidth[i];
-      node_gstart[i] = iga->geom_gstart[i];
-      node_gwidth[i] = iga->geom_gwidth[i];
-      if (rank == 0 && node_lstart[i] < 0) {
-        node_lwidth[i] += node_lstart[i];
-        node_lstart[i] = 0;
-      }
-      if (rank == size-1)
-        node_lwidth[i] = node_sizes[i] - node_lstart[i];
-    }
-    for (i=iga->dim; i<3; i++) {
-      node_sizes[i]  = 1;
-      node_lstart[i] = 0;
-      node_lwidth[i] = 1;
-      node_gstart[i] = 0;
-      node_gwidth[i] = 1;
-    }
-  }
 
   if (iga->dof < 1) iga->dof = 1;  /* XXX Error ? */
 
@@ -1509,6 +1508,11 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
     newiga->geom_lwidth[i] = iga->geom_lwidth[i];
     newiga->geom_gstart[i] = iga->geom_gstart[i];
     newiga->geom_gwidth[i] = iga->geom_gwidth[i];
+    newiga->node_sizes[i]  = iga->node_sizes[i];
+    newiga->node_lstart[i] = iga->node_lstart[i];
+    newiga->node_lwidth[i] = iga->node_lwidth[i];
+    newiga->node_gstart[i] = iga->node_gstart[i];
+    newiga->node_gwidth[i] = iga->node_gwidth[i];
   }
   newiga->setupstage = 1;
 
