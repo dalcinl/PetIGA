@@ -1358,6 +1358,7 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (iga->dim < 1) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE, "Must call IGASetDim() first");
   ierr = IGASetUp_Stage1(iga);;CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
