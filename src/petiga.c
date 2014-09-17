@@ -1493,6 +1493,8 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
   ierr = IGACreate(comm,&newiga);CHKERRQ(ierr);
   *_newiga = newiga;
 
+  newiga->collocation = iga->collocation;
+
   newiga->dim = iga->dim;
   for (i=0; i<3; i++) {
     ierr = IGAAxisCopy(iga->axis[i],newiga->axis[i]);CHKERRQ(ierr);
@@ -1508,8 +1510,7 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
     newiga->geom_gstart[i] = iga->geom_gstart[i];
     newiga->geom_gwidth[i] = iga->geom_gwidth[i];
   }
-  newiga->collocation = iga->collocation;
-  iga->setupstage = 1;
+  newiga->setupstage = 1;
 
   n  = iga->geom_gwidth[0];
   n *= iga->geom_gwidth[1];
