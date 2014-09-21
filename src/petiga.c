@@ -1250,10 +1250,6 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
       node_lwidth[i] = iga->geom_lwidth[i];
       node_gstart[i] = iga->geom_gstart[i];
       node_gwidth[i] = iga->geom_gwidth[i];
-      if (rank == 0 && node_lstart[i] < 0) {
-        node_lwidth[i] += node_lstart[i];
-        node_lstart[i] = 0;
-      }
       if (rank == size-1)
         node_lwidth[i] = node_sizes[i] - node_lstart[i];
     }
