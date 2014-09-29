@@ -91,15 +91,14 @@ struct _n_IGABasis {
   PetscInt  nqp;      /* number of quadrature points */
   PetscInt  nen;      /* number of local basis functions */
 
-  PetscInt  *offset;  /* [nel] basis offset   */
-  PetscReal *detJ;    /* [nel]                */
-  PetscReal *weight;  /* [nqp]                */
-  PetscReal *point;   /* [nel][nqp]           */
-  PetscReal *value;   /* [nel][nqp][nen][4]   */
+  PetscInt  *offset;  /* [nel] basis offset */
+  PetscReal *detJac;  /* [nel] element length */
+  PetscReal *weight;  /* [nqp] quadrature weight */
+  PetscReal *point;   /* [nel][nqp] quadrature point */
+  PetscReal *value;   /* [nel][nqp][nen][4] basis derivatives */
 
-  PetscInt   bnd_offset[2];
-  PetscReal  bnd_detJ[2];
-  PetscReal  bnd_weight[2];
+  PetscReal  bnd_detJac;
+  PetscReal  bnd_weight;
   PetscReal  bnd_point[2];
   PetscReal *bnd_value[2]; /* [nen][4] */
 };

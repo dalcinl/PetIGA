@@ -254,7 +254,7 @@ static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
     PetscInt *ID = p->parent->ID;
     IGABasis *BD = p->parent->parent->basis;
     for (i=0; i<dim; i++)
-      L[i] = BD[i]->detJ[ID[i]];
+      L[i] = BD[i]->detJac[ID[i]];
   }
   PetscFunctionReturn(0);
 }

@@ -47,7 +47,7 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   basis->nqp = 0;
   basis->nen = 0;
   ierr = PetscFree(basis->offset);CHKERRQ(ierr);
-  ierr = PetscFree(basis->detJ);CHKERRQ(ierr);
+  ierr = PetscFree(basis->detJac);CHKERRQ(ierr);
   ierr = PetscFree(basis->weight);CHKERRQ(ierr);
   ierr = PetscFree(basis->point);CHKERRQ(ierr);
   ierr = PetscFree(basis->value);CHKERRQ(ierr);
@@ -94,7 +94,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   PetscInt       iqp,nqp;
   PetscInt       nen,d,ndr=4;
   PetscInt       *offset;
-  PetscReal      *detJ;
+  PetscReal      *detJac;
   PetscReal      *weight;
   PetscReal      *point;
   PetscReal      *value;
@@ -140,27 +140,26 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   }
 
   ierr = PetscMalloc1(nel,&offset);CHKERRQ(ierr);
-  ierr = PetscMalloc1(nel,&detJ);CHKERRQ(ierr);
+  ierr = PetscMalloc1(nel,&detJac);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp*nen*ndr,&value);CHKERRQ(ierr);
 
-  for (iqp=0; iqp<nqp; iqp++) {
-    weight[iqp] = W[iqp];
-  }
   for (iel=0; iel<nel; iel++) {
     PetscInt  k = span[iel];
     PetscReal u0 = U[k], u1 = U[k+1];
     PetscReal J = (u1-u0)/2;
     PetscReal *u = &point[iel*nqp];
     PetscReal *N = &value[iel*nqp*nen*ndr];
-    detJ[iel] = J;
     for (iqp=0; iqp<nqp; iqp++) {
       u[iqp] = (X[iqp] + 1) * J + u0;
       ComputeBasis(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
     }
     offset[iel] = k-p;
+    detJac[iel] = J;
   }
+  for (iqp=0; iqp<nqp; iqp++)
+    weight[iqp] = W[iqp];
 
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
 
@@ -168,25 +167,23 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->offset = offset;
-  basis->detJ   = detJ;
+  basis->detJac = detJac;
   basis->weight = weight;
   basis->point  = point;
   basis->value  = value;
 
   {
-    PetscInt  o0 = offset[0], o1 = offset[nel-1];
-    PetscInt  k0 = span[0],   k1 = span[nel-1];
-    PetscReal u0 = U[k0],     u1 = U[k1+1];
+    PetscInt  k0 = span[0], k1 = span[nel-1];
+    PetscReal u0 = U[k0],   u1 = U[k1+1];
     ierr = PetscMalloc1(nen*ndr,&basis->bnd_value[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*ndr,&basis->bnd_value[1]);CHKERRQ(ierr);
-    basis->bnd_offset[0] =  o0; basis->bnd_offset[1] =  o1;
-    basis->bnd_detJ  [0] = 1.0; basis->bnd_detJ  [1] = 1.0;
-    basis->bnd_weight[0] = 1.0; basis->bnd_weight[1] = 1.0;
-    basis->bnd_point [0] =  u0; basis->bnd_point [1] =  u1;
+    basis->bnd_detJac = 1.0;
+    basis->bnd_weight = 1.0;
+    basis->bnd_point[0] = u0;
+    basis->bnd_point[1] = u1;
     ComputeBasis(k0,u0,p,d,U,basis->bnd_value[0]);
     ComputeBasis(k1,u1,p,d,U,basis->bnd_value[1]);
   }
-
   PetscFunctionReturn(0);
 }
 
@@ -205,7 +202,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   PetscInt       iqp,nqp;
   PetscInt       nen,d,ndr=4;
   PetscInt       *offset;
-  PetscReal      *detJ;
+  PetscReal      *detJac;
   PetscReal      *weight;
   PetscReal      *point;
   PetscReal      *value;
@@ -225,23 +222,22 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   d = PetscMin(p,3);
 
   ierr = PetscMalloc1(nel,&offset);CHKERRQ(ierr);
-  ierr = PetscMalloc1(nel,&detJ);CHKERRQ(ierr);
+  ierr = PetscMalloc1(nel,&detJac);CHKERRQ(ierr);
   ierr = PetscMalloc1(nqp,&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp,&point);CHKERRQ(ierr);
   ierr = PetscMalloc1(nel*nqp*nen*ndr,&value);CHKERRQ(ierr);
 
-  for (iqp=0; iqp<nqp; iqp++) {
-    weight[iqp] = 1.0;
-  }
   for (iel=0; iel<nel; iel++) {
     PetscReal u = IGA_Greville(iel,p,U);
     PetscInt  k = IGA_FindSpan(n,p,u,U);
     PetscReal *N = &value[iel*nen*ndr];
     offset[iel] = k-p;
-    detJ[iel]   = U[k+1]-U[k];
+    detJac[iel] = U[k+1]-U[k];
     point[iel]  = u;
     IGA_Basis_BSpline(k,u,p,d,U,N);
   }
+  for (iqp=0; iqp<nqp; iqp++)
+    weight[iqp] = 1.0;
 
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
 
@@ -249,7 +245,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   basis->nqp    = nqp;
   basis->nen    = nen;
   basis->offset = offset;
-  basis->detJ   = detJ;
+  basis->detJac = detJac;
   basis->weight = weight;
   basis->point  = point;
   basis->value  = value;
@@ -259,10 +255,10 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
     PetscReal u0 = U[p], u1 = U[n+1];
     ierr = PetscMalloc1(nen*ndr,&basis->bnd_value[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*ndr,&basis->bnd_value[1]);CHKERRQ(ierr);
-    basis->bnd_offset[0] = k0-p; basis->bnd_offset[1] =  k1-p;
-    basis->bnd_detJ  [0] =  1.0; basis->bnd_detJ  [1] =   1.0;
-    basis->bnd_weight[0] =  1.0; basis->bnd_weight[1] =   1.0;
-    basis->bnd_point [0] =   u0; basis->bnd_point [1] =    u1;
+    basis->bnd_detJac = 1.0;
+    basis->bnd_weight = 1.0;
+    basis->bnd_point[0] = u0;
+    basis->bnd_point[1] = u1;
     IGA_Basis_BSpline(k0,u0,p,d,U,basis->bnd_value[0]);
     IGA_Basis_BSpline(k1,u1,p,d,U,basis->bnd_value[1]);
   }

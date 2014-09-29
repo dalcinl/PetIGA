@@ -745,7 +745,7 @@ PetscErrorCode IGAElementBuildClosure(IGAElement element)
 #include "petigaftn.h"
 
 #define IGA_Quadrature_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight,BD[i]->detJ+ID[i]
+  BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight,BD[i]->detJac+ID[i]
 
 #define IGA_BasisFuns_ARGS(ID,BD,i) \
   BD[i]->nqp,BD[i]->nen,BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*4
@@ -872,7 +872,7 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
 }
 
 #define IGA_Quadrature_BNDR(ID,BD,i,s) \
-  1,&BD[i]->bnd_point[s],&BD[i]->bnd_weight[s],&BD[i]->bnd_detJ[s]
+  1,&BD[i]->bnd_point[s],&BD[i]->bnd_weight,&BD[i]->bnd_detJac
 
 #define IGA_BasisFuns_BNDR(ID,BD,i,s) \
   1,BD[i]->nen,BD[i]->bnd_value[s]
@@ -1159,7 +1159,7 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
   if (dim == 1) return A;
   for (i=0; i<dim; i++)
     if (i != dir) {
-      PetscReal L = BD[i]->detJ[ID[i]];
+      PetscReal L = BD[i]->detJac[ID[i]];
       PetscInt  n = BD[i]->nen;
       A *= L/n;
     }
