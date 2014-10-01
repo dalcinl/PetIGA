@@ -3,7 +3,7 @@
 pure subroutine ShapeFunctions(&
      order,&
      nen,&
-     X1,E1,X2,E2,X3,E3,&
+     E1,E2,E3,&
      N0,N1,N2,N3,&
      R0,R1,R2,R3)
   use PetIGA
@@ -11,11 +11,8 @@ pure subroutine ShapeFunctions(&
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: order
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim,dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim,dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N0(            nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N1(        dim,nen)

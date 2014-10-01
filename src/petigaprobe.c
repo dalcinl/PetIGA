@@ -352,32 +352,32 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   if (prb->arrayX) {
     PetscReal **M = prb->basis;
     PetscReal **N = prb->shape;
-    PetscReal *J  = prb->detX;
-    PetscReal *G0 = prb->gradX[0], *G1 = prb->gradX[1];
-    PetscReal *H0 = prb->hessX[0], *H1 = prb->hessX[1];
-    PetscReal *I0 = prb->der3X[0], *I1 = prb->der3X[1];
+    PetscReal *dX = prb->detX;
+    PetscReal *X1 = prb->gradX[0], *E1 = prb->gradX[1];
+    PetscReal *X2 = prb->hessX[0], *E2 = prb->hessX[1];
+    PetscReal *X3 = prb->der3X[0], *E3 = prb->der3X[1];
     switch (prb->dim) {
     case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],
-                               J,G0,G1,H0,H1,I0,I1); break;
+                               dX,X1,E1,X2,E2,X3,E3); break;
     case 2: IGA_GeometryMap_2D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],
-                               J,G0,G1,H0,H1,I0,I1); break;
+                               dX,X1,E1,X2,E2,X3,E3); break;
     case 1: IGA_GeometryMap_1D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],
-                               J,G0,G1,H0,H1,I0,I1); break;
+                               dX,X1,E1,X2,E2,X3,E3); break;
     }
     switch (prb->dim) {
     case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,
-                             G0,G1,H0,H1,I0,I1,
+                             E1,E2,E3,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 2: IGA_ShapeFuns_2D(prb->order,1,prb->nen,
-                             G0,G1,H0,H1,I0,I1,
+                             E1,E2,E3,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 1: IGA_ShapeFuns_1D(prb->order,1,prb->nen,
-                             G0,G1,H0,H1,I0,I1,
+                             E1,E2,E3,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     }

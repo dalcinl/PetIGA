@@ -159,7 +159,7 @@ end subroutine IGA_GeometryMap_1D
 pure subroutine IGA_ShapeFuns_1D(&
      order,                      &
      nqp,nen,                    &
-     G0,G1,H0,H1,I0,I1,          &
+     E1,E2,E3,                   &
      M0,M1,M2,M3,                &
      N0,N1,N2,N3)                &
   bind(C, name="IGA_ShapeFuns_1D")
@@ -169,12 +169,9 @@ pure subroutine IGA_ShapeFuns_1D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: G0(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: G1(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: H0(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: H1(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: I0(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: I1(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(dim**2,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim**3,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim**4,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen,nqp)
@@ -187,9 +184,7 @@ pure subroutine IGA_ShapeFuns_1D(&
   do q=1,nqp
      call ShapeFunctions(&
           order,nen,&
-          G0(:,q),G1(:,q),&
-          H0(:,q),H1(:,q),&
-          I0(:,q),I1(:,q),&
+          E1(:,q),E2(:,q),E3(:,q),&
           M0(:,:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
           N0(:,:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q))
   end do

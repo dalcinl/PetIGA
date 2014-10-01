@@ -855,15 +855,15 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 2: IGA_ShapeFuns_2D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 1: IGA_ShapeFuns_1D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     }
@@ -1044,15 +1044,15 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 2: IGA_ShapeFuns_2D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     case 1: IGA_ShapeFuns_1D(ord,nqp,nen,
-                             G0,G1,H0,H1,I0,I1,
+                             G1,H1,I1,
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     }

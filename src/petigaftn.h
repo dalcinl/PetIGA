@@ -57,15 +57,15 @@ EXTERN_C_END
 
 EXTERN_C_BEGIN
 extern void IGA_ShapeFuns_1D(PetscInt,PetscInt,PetscInt,
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],
                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_ShapeFuns_2D(PetscInt,PetscInt,PetscInt,
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],
                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_ShapeFuns_3D(PetscInt,PetscInt,PetscInt,
-                             const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                             const PetscReal[],const PetscReal[],const PetscReal[],
                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
                              PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
