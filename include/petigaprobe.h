@@ -64,7 +64,7 @@ PETSC_EXTERN PetscErrorCode IGAProbeSetVec(IGAProbe prb,Vec A);
 PETSC_EXTERN PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[]);
 
 PETSC_EXTERN PetscErrorCode IGAProbeGeomMap  (IGAProbe prb,PetscReal x[]);
-PETSC_EXTERN PetscErrorCode IGAProbeEvaluate (IGAProbe prb,PetscInt der,PetscReal A[]);
+PETSC_EXTERN PetscErrorCode IGAProbeEvaluate (IGAProbe prb,PetscInt der,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormValue(IGAProbe prb,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormGrad (IGAProbe prb,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormHess (IGAProbe prb,PetscScalar A[]);
