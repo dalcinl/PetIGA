@@ -5,7 +5,7 @@ const char *const IGABasisTypes[] = {
   "BERNSTEIN",
   "LAGRANGE",
   /* */
-  "IGABasisType","IGA_BASIS_",0};
+  "IGABasisType","IGA_BASIS_",NULL};
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisCreate"
