@@ -57,8 +57,18 @@ PETSC_EXTERN PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const Pet
 PETSC_EXTERN PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal Uf,PetscInt C);
 PETSC_EXTERN PetscErrorCode IGAAxisSetUp(IGAAxis axis);
 
+typedef enum {
+  IGA_RULE_LEGENDRE=0, /* Gauss-Legendre */
+  IGA_RULE_LOBATTO,    /* Gauss-Lobatto  */
+  IGA_RULE_USER        /* User-defined   */
+} IGARuleType;
+
+PETSC_EXTERN const char *const IGARuleTypes[];
+
 struct _n_IGARule {
   PetscInt refct;
+  /**/
+  IGARuleType type;   /* rule type */
   /**/
   PetscInt  nqp;      /* number of quadrature points */
   PetscReal *point;   /* [nqp] quadrature points  */
@@ -70,6 +80,7 @@ PETSC_EXTERN PetscErrorCode IGARuleReset(IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleReference(IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleCopy(IGARule base,IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule);
+PETSC_EXTERN PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type);
 PETSC_EXTERN PetscErrorCode IGARuleInit(IGARule rule,PetscInt q);
 PETSC_EXTERN PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[]);
 PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[]);
@@ -377,6 +388,7 @@ PETSC_EXTERN PetscErrorCode IGASetOrder(IGA iga,PetscInt order);
 PETSC_EXTERN PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order);
 PETSC_EXTERN PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors);
 PETSC_EXTERN PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type);
+PETSC_EXTERN PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type);
 PETSC_EXTERN PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q);
 PETSC_EXTERN PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation);
 

@@ -466,6 +466,23 @@ PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetRuleType"
+PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type)
+{
+  IGARule        rule;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,i,2);
+  PetscValidLogicalCollectiveEnum(iga,type,3);
+  ierr = IGAGetRule(iga,i,&rule);CHKERRQ(ierr);
+  if (rule->type == type) PetscFunctionReturn(0);
+  ierr = IGARuleSetType(rule,type);CHKERRQ(ierr);
+  iga->setup = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetQuadrature"
 PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
 {
@@ -696,6 +713,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     PetscInt  i,nw,nl;
     const char *prefix = NULL;
     PetscBool collocation = iga->collocation;
+    IGARuleType  rtype[3] = {IGA_RULE_LEGENDRE,IGA_RULE_LEGENDRE,IGA_RULE_LEGENDRE};
     IGABasisType btype[3] = {IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE,IGA_BASIS_BSPLINE};
     PetscBool    wraps[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE };
     PetscInt  np,procs[3] = {PETSC_DECIDE,PETSC_DECIDE,PETSC_DECIDE};
@@ -815,19 +833,26 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsInt("-iga_order","Maximum available derivative order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
+    /* Basis Type */
+    ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
+    if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
+    if (flg) for (i=0; i<dim; i++) {
+        ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
+      }
+
+    /* Rule Type */
+    ierr = PetscOptionsEnum("-iga_rule_type","Rule type","IGASetRuleType",IGARuleTypes,(PetscEnum)btype[0],(PetscEnum*)&rtype[0],&flg);CHKERRQ(ierr);
+    if (flg) for (i=1; i<dim; i++) rtype[i] = rtype[0]; /* XXX */
+    if (flg) for (i=0; i<dim; i++) {
+        ierr = IGASetRuleType(iga,i,rtype[i]);CHKERRQ(ierr);
+      }
+
     /* Quadrature */
     for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGASetQuadrature",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<nq) ? quadr[i] : quadr[0];
         if (q > 0) {ierr = IGASetQuadrature(iga,i,q);CHKERRQ(ierr);}
-      }
-
-    /* Basis Type */
-    ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
-    if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
-    if (flg) for (i=0; i<dim; i++) {
-        ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
       }
 
     /* Matrix and Vector type */

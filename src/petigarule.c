@@ -1,5 +1,12 @@
 #include "petiga.h"
 
+const char *const IGARuleTypes[] = {
+  "LEGENDRE",
+  "LOBATTO",
+  "USER",
+  /* */
+  "IGARuleType","IGA_RULE_",NULL};
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGARuleCreate"
 PetscErrorCode IGARuleCreate(IGARule *rule)
@@ -74,6 +81,7 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
     ierr = PetscMalloc1(base->nqp,&rule->weight);CHKERRQ(ierr);
     ierr = PetscMemcpy(rule->weight,base->weight,base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   }
+  rule->type = base->type;
   PetscFunctionReturn(0);
 }
 
@@ -91,27 +99,48 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
   PetscFunctionReturn(0);
 }
 
-static PetscErrorCode GaussLegendreRule(PetscInt q,PetscReal X[],PetscReal W[]);
-/*
-static PetscErrorCode GaussLobattoRule(PetscInt q,PetscReal X[],PetscReal W[]);
-*/
+#undef  __FUNCT__
+#define __FUNCT__ "IGARuleSetType"
+PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(rule,1);
+  if (rule->type != type) {ierr = IGARuleReset(rule);CHKERRQ(ierr);}
+  rule->type = type;
+  PetscFunctionReturn(0);
+}
+
+static PetscErrorCode IGA_Rule_GaussLegendre (PetscInt q,PetscReal X[],PetscReal W[]);
+static PetscErrorCode IGA_Rule_GaussLobatto  (PetscInt q,PetscReal X[],PetscReal W[]);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARuleInit"
 PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
 {
   PetscReal      *point,*weight;
+  PetscErrorCode (*ComputeRule)(PetscInt,PetscReal[],PetscReal[]) = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(rule,1);
   if (nqp < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points must be greater than zero, got %D",nqp);
-  ierr = PetscMalloc1(nqp,&point);CHKERRQ(ierr);
-  ierr = PetscMalloc1(nqp,&weight);CHKERRQ(ierr);
-  if (GaussLegendreRule(nqp,point,weight) != 0)
+
+  ierr = PetscCalloc1(nqp,&point);CHKERRQ(ierr);
+  ierr = PetscCalloc1(nqp,&weight);CHKERRQ(ierr);
+  switch (rule->type) {
+  case IGA_RULE_LEGENDRE:
+    ComputeRule = IGA_Rule_GaussLegendre; break;
+  case IGA_RULE_LOBATTO:
+    ComputeRule = IGA_Rule_GaussLobatto; break;
+  case IGA_RULE_USER:
+    ComputeRule = NULL; break;
+  }
+  if (ComputeRule && ComputeRule(nqp,point,weight) != 0)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points %D not implemented",nqp);
+
   ierr = IGARuleReset(rule);CHKERRQ(ierr);
   rule->nqp = nqp;
   rule->point = point;
@@ -141,6 +170,7 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
   rule->nqp = q;
   rule->point = xx;
   rule->weight = ww;
+  rule->type = IGA_RULE_USER;
   PetscFunctionReturn(0);
 }
 
@@ -169,7 +199,7 @@ PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal 
 #define Q(constant) constant##Q
 #endif
 
-static PetscErrorCode GaussLegendreRule(PetscInt q,PetscReal X[],PetscReal W[])
+static PetscErrorCode IGA_Rule_GaussLegendre(PetscInt q,PetscReal X[],PetscReal W[])
 {
   switch (q)  {
   case (1): /* p = 1 */
@@ -286,49 +316,61 @@ static PetscErrorCode GaussLegendreRule(PetscInt q,PetscReal X[],PetscReal W[])
   return 0;
 }
 
-#if 0
-static PetscErrorCode GaussLobattoRule(PetscInt q,PetscReal X[],PetscReal W[])
+static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W[])
 {
   switch (q)  {
   case (2): /* p = 1 */
-    X[0] = -1.0;
+    X[0] = -Q(1.0);
     X[1] = -X[0];
-    W[0] =  1.0;
+    W[0] =  Q(1.0);
     W[1] =  W[0];
     break;
   case (3): /* p = 3 */
-    X[0] = -1.0;
-    X[1] =  0.0;
+    X[0] = -Q(1.0);
+    X[1] =  Q(0.0);
     X[2] = -X[0];
-    W[0] =  0.33333333333333333333333333333333333; /* 1/3 */
-    W[1] =  1.33333333333333333333333333333333333; /* 4/3 */
+    W[0] =  Q(0.333333333333333333333333333333333333); /* 1/3 */
+    W[1] =  Q(1.333333333333333333333333333333333333); /* 4/3 */
     W[2] =  W[0];
     break;
   case (4): /* p = 5 */
-    X[0] = -1.0;
-    X[1] = -0.44721359549995793928183473374625525; /* 1/sqrt(5) */
+    X[0] = -Q(1.0);
+    X[1] = -Q(0.447213595499957939281834733746255246); /* 1/sqrt(5) */
     X[2] = -X[1];
     X[3] = -X[0];
-    W[0] =  0.16666666666666666666666666666666667; /* 1/6 */
-    W[1] =  0.83333333333333333333333333333333333; /* 5/6 */
+    W[0] =  Q(0.166666666666666666666666666666666667); /* 1/6 */
+    W[1] =  Q(0.833333333333333333333333333333333333); /* 5/6 */
     W[2] =  W[1];
     W[3] =  W[0];
     break;
   case (5): /* p = 7 */
-    X[0] = -1.0;
-    X[1] = -0.65465367070797714379829245624685835; /* sqrt(3/7) */
-    X[2] =  0.0;
+    X[0] = -Q(1.0);
+    X[1] = -Q(0.654653670707977143798292456246858356); /* sqrt(3/7) */
+    X[2] =  Q(0.0);
     X[3] = -X[1];
     X[4] = -X[0];
-    W[0] =  0.10000000000000000000000000000000000; /*  1/10 */
-    W[1] =  0.54444444444444444444444444444444444; /* 49/90 */
-    W[2] =  0.71111111111111111111111111111111111; /* 32/45 */
+    W[0] =  Q(0.100000000000000000000000000000000000); /*  1/10 */
+    W[1] =  Q(0.544444444444444444444444444444444444); /* 49/90 */
+    W[2] =  Q(0.711111111111111111111111111111111111); /* 32/45 */
     W[3] =  W[1];
     W[4] =  W[0];
+    break;
+  case (6): /* p = 9 */
+    X[0] = -Q(1.0);
+    X[1] = -Q(0.765055323929464692851002973959338150); /* sqrt((7+2*sqrt(7))/21) */
+    X[2] = -Q(0.285231516480645096314150994040879072); /* sqrt((7-2*sqrt(7))/21) */
+    X[3] = -X[2];
+    X[4] = -X[1];
+    X[5] = -X[0];
+    W[0] =  Q(0.066666666666666666666666666666666667); /* 1/15 */
+    W[1] =  Q(0.378474956297846980316612808212024652); /* (14-sqrt(7))/30 */
+    W[2] =  Q(0.554858377035486353016720525121308681); /* (14+sqrt(7))/30 */
+    W[3] =  W[2];
+    W[4] =  W[1];
+    W[5] =  W[0];
     break;
   default:
     return -1;
   }
   return 0;
 }
-#endif
