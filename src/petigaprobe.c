@@ -7,6 +7,7 @@ EXTERN_C_END
 EXTERN_C_BEGIN
 extern void IGA_Basis_BSpline (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal B[]);
 extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
+extern void IGA_Basis_Spectral(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 EXTERN_C_END
 
 #include "petigaftn.h"
@@ -311,6 +312,8 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
         ComputeBasis = IGA_Basis_BSpline;  break;
       case IGA_BASIS_LAGRANGE:
         ComputeBasis = IGA_Basis_Lagrange; break;
+      case IGA_BASIS_SPECTRAL:
+        ComputeBasis = IGA_Basis_Spectral; break;
       }
       ComputeBasis(prb->ID[i],prb->point[i],prb->p[i],prb->order,prb->U[i],prb->BD[i]);
     }

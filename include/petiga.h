@@ -86,9 +86,10 @@ PETSC_EXTERN PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscRe
 PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[]);
 
 typedef enum {
-  IGA_BASIS_BSPLINE=0,
-  IGA_BASIS_BERNSTEIN,
-  IGA_BASIS_LAGRANGE
+  IGA_BASIS_BSPLINE=0, /* B-Spline basis functions */
+  IGA_BASIS_BERNSTEIN, /* Bernstein polynomials (C^0 B-Spline basis) */
+  IGA_BASIS_LAGRANGE,  /* Lagrange polynomials in Newton-Cotes points */
+  IGA_BASIS_SPECTRAL   /* Lagrange polynomials in Gauss-Lobatto points */
 } IGABasisType;
 
 PETSC_EXTERN const char *const IGABasisTypes[];
