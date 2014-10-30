@@ -735,6 +735,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       procs[i] = iga->proc_sizes[i];
       wraps[i] = iga->axis[i]->periodic;
       btype[i] = iga->basis[i]->type;
+      rtype[i] = iga->rule[i]->type;
       if (iga->rule[i]->nqp > 0)
         quadr[i] = iga->rule[i]->nqp;
     }
