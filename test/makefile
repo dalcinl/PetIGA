@@ -16,6 +16,7 @@ include ${PETIGA_DIR}/conf/petigarules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
+
 IGACreate: IGACreate.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
@@ -35,10 +36,11 @@ runex1b_mpi:
 	-@${MPIEXEC} -n 4 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,0,1 -iga_degree 4,3
 	-@${MPIEXEC} -n 6 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,0 -iga_degree 4,3
 	-@${MPIEXEC} -n 8 ./IGACreate ${OPTS} -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,1 -iga_degree 4,3
-IGACreate = IGACreate.PETSc \
-	    runex1a_seq runex1a_mpi \
-	    runex1b_seq runex1b_mpi \
-	    IGACreate.rm
+IGACreate = \
+IGACreate.PETSc \
+runex1a_seq runex1a_mpi \
+runex1b_seq runex1b_mpi \
+IGACreate.rm
 
 
 IGAInputOutput: IGAInputOutput.o chkopts
@@ -56,46 +58,52 @@ runex2a_8:
 	-@${MPIEXEC} -n 8 ./IGAInputOutput ${OPTS} -iga_dim 3 -N 13,11,7 -p 3,2,1
 runex2a.rm:
 	-@${RM} -f iga*.dat iga*.dat.info
-IGAInputOutput = IGAInputOutput.PETSc \
-		 runex2a_1 runex2a_2 runex2a_3 runex2a_4 runex2a_8 \
-		 runex2a.rm IGAInputOutput.rm
+IGAInputOutput = \
+IGAInputOutput.PETSc \
+runex2a_1 runex2a_2 runex2a_3 runex2a_4 runex2a_8 \
+runex2a.rm IGAInputOutput.rm
 
-GeometryMap: GeometryMap.o chkopts
+
+IGAGeometryMap: IGAGeometryMap.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 runex3a_2:
-	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 2
+	-@${MPIEXEC} -n 1 ./IGAGeometryMap ${OPTS} -dim 2
 runex3a_3:
-	-@${MPIEXEC} -n 1 ./GeometryMap ${OPTS} -dim 3
-GeometryMap = GeometryMap.PETSc \
-	      runex3a_2 runex3a_3 \
-	      GeometryMap.rm
+	-@${MPIEXEC} -n 1 ./IGAGeometryMap ${OPTS} -dim 3
+IGAGeometryMap = \
+IGAGeometryMap.PETSc \
+runex3a_2 runex3a_3 \
+IGAGeometryMap.rm
 
-FixTable: FixTable.o chkopts
+
+IGAFixTable: IGAFixTable.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 runex4a_1:
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 1 -pc_type lu -check_error 1e-6
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 1 -pc_type lu -check_error 1e-6
 runex4a_2:
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 2 -pc_type lu -check_error 1e-6
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 2 -pc_type lu -check_error 1e-6
 runex4a_3:
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
-	-@${MPIEXEC} -n 1 ./FixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 4
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 1
+	-@${MPIEXEC} -n 1 ./IGAFixTable ${OPTS} -iga_dim 3 -pc_type lu -check_error 1e-6 -iga_elements 4
 runex4b_1:
-	-@${MPIEXEC} -n 2 ./FixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
-	-@${MPIEXEC} -n 3 ./FixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 2 ./IGAFixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 3 ./IGAFixTable ${OPTS} -iga_dim 1 -ksp_rtol 1e-7 -check_error 1e-6
 runex4b_2:
-	-@${MPIEXEC} -n 4 ./FixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
-	-@${MPIEXEC} -n 9 ./FixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 4 ./IGAFixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 9 ./IGAFixTable ${OPTS} -iga_dim 2 -ksp_rtol 1e-7 -check_error 1e-6
 runex4b_3:
-	-@${MPIEXEC} -n  8 ./FixTable ${OPTS} -iga_dim 3 -iga_elements  8,8,8 -ksp_rtol 1e-7 -check_error 1e-6
-	-@${MPIEXEC} -n 12 ./FixTable ${OPTS} -iga_dim 3 -iga_elements 12,8,8 -ksp_rtol 1e-7 -check_error 1e-6
-FixTable = FixTable.PETSc \
-           runex4a_1 runex4a_2 runex4a_3 \
-           runex4b_1 runex4b_2 runex4b_3 \
-           FixTable.rm
+	-@${MPIEXEC} -n  8 ./IGAFixTable ${OPTS} -iga_dim 3 -iga_elements  8,8,8 -ksp_rtol 1e-7 -check_error 1e-6
+	-@${MPIEXEC} -n 12 ./IGAFixTable ${OPTS} -iga_dim 3 -iga_elements 12,8,8 -ksp_rtol 1e-7 -check_error 1e-6
+IGAFixTable = \
+IGAFixTable.PETSc \
+runex4a_1 runex4a_2 runex4a_3 \
+runex4b_1 runex4b_2 runex4b_3 \
+IGAFixTable.rm
+
 
 IGAProbe: IGAProbe.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
@@ -109,9 +117,10 @@ runex5a_2:
 	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 2
 runex5a_3:
 	-@${MPIEXEC} -n 4 ./IGAProbe ${OPTS} -iga_dim 3 -iga_elements 8
-IGAProbe = IGAProbe.PETSc \
-	   runex5a_1 runex5a_2 runex5a_3 \
-	   IGAProbe.rm
+IGAProbe = \
+IGAProbe.PETSc \
+runex5a_1 runex5a_2 runex5a_3 \
+IGAProbe.rm
 
 
 Test_SNES_2D: Test_SNES_2D.o chkopts
@@ -149,14 +158,14 @@ runex0e_1:
 	-@${MPIEXEC} -n 1 ./Test_SNES_2D ${OPTS} -p 2 -iga_collocation
 runex0e_4:
 	-@${MPIEXEC} -n 4 ./Test_SNES_2D ${OPTS} -p 4 -iga_collocation
-
-Test_SNES_2D = Test_SNES_2D.PETSc  \
-	       runex0a_1 runex0a_4 \
-	       runex0b_1 runex0b_4 \
-	       runex0c_1 runex0c_4 \
-	       runex0d_1 runex0d_4 \
-	       runex0e_1 runex0e_4 \
-	       Test_SNES_2D.rm
+Test_SNES_2D = \
+Test_SNES_2D.PETSc  \
+runex0a_1 runex0a_4 \
+runex0b_1 runex0b_4 \
+runex0c_1 runex0c_4 \
+runex0d_1 runex0d_4 \
+runex0e_1 runex0e_4 \
+Test_SNES_2D.rm
 
 
 Oscillator: Oscillator.o chkopts
@@ -168,30 +177,34 @@ runex20b:
 	-@./Oscillator ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
 runex20c:
 	-@./Oscillator ${OPTS} -damping 0.1
-Oscillator = Oscillator.PETSc \
-	     runex20a runex20b runex20c \
-	     Oscillator.rm
+Oscillator = \
+Oscillator.PETSc \
+runex20a runex20b runex20c \
+Oscillator.rm
 
 
 ConvTest: ConvTest.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 
+
 TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAInputOutput) \
-		 $(FixTable) \
-		 $(GeometryMap) \
+		 $(IGAFixTable) \
+		 $(IGAGeometryMap) \
 		 $(IGAProbe) \
 		 $(Test_SNES_2D) \
 		 $(Oscillator)
 TESTEXAMPLES_FORTRAN =
+
+.PHONY: test-all
 test-all:
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@if [ "${FC}" != "" ]; then \
           ${OMAKE} tree ACTION=testexamples_Fortran PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
           fi
-.PHONY: test-all
 
+.PHONY: test-build
 test-build: Test_SNES_2D.PETSc
 	-@if [ "${PETSC_WITH_BATCH}" != "" ]; then \
 	    echo "Running with batch filesystem; to test run test/Test_SNES_2D with" ; \
@@ -207,6 +220,5 @@ test-build: Test_SNES_2D.PETSc
 	    fi; \
 	    ${OMAKE} Test_SNES_2D.rm PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
 	   fi
-.PHONY:test-build
 
 include ${PETIGA_DIR}/conf/petigatest

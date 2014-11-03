@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   PetscBool check_error = PETSC_FALSE;
   PetscReal error_tol   = 1e-4;
   PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","FixTable Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAFixTable Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-check_error","Checks the L2 error of the solution",__FILE__,error_tol,&error_tol,&check_error);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
