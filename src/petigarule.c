@@ -341,13 +341,13 @@ static PetscErrorCode IGA_Rule_GaussLegendre(PetscInt q,PetscReal X[],PetscReal 
 static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W[])
 {
   switch (q)  {
-  case (2): /* p = 1 */
+  case (2): /* p <= 1 */
     X[0] = -Q(1.0);
     X[1] = -X[0];
     W[0] =  Q(1.0);
     W[1] =  W[0];
     break;
-  case (3): /* p = 3 */
+  case (3): /* p <= 3 */
     X[0] = -Q(1.0);
     X[1] =  Q(0.0);
     X[2] = -X[0];
@@ -355,7 +355,7 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[1] =  Q(1.333333333333333333333333333333333333); /* 4/3 */
     W[2] =  W[0];
     break;
-  case (4): /* p = 5 */
+  case (4): /* p <= 5 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.447213595499957939281834733746255247); /* 1/sqrt(5) */
     X[2] = -X[1];
@@ -365,7 +365,7 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[2] =  W[1];
     W[3] =  W[0];
     break;
-  case (5): /* p = 7 */
+  case (5): /* p <= 7 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.654653670707977143798292456246858356); /* sqrt(3/7) */
     X[2] =  Q(0.0);
@@ -377,7 +377,7 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[3] =  W[1];
     W[4] =  W[0];
     break;
-  case (6): /* p = 9 */
+  case (6): /* p <= 9 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.765055323929464692851002973959338150); /* sqrt((7+2*sqrt(7))/21) */
     X[2] = -Q(0.285231516480645096314150994040879072); /* sqrt((7-2*sqrt(7))/21) */
@@ -391,7 +391,7 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[4] =  W[1];
     W[5] =  W[0];
     break;
-  case (7): /* p = 11 */
+  case (7): /* p <= 11 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.830223896278566929872032213967465140);
     X[2] = -Q(0.468848793470714213803771881908766329);
@@ -403,11 +403,11 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[1] =  Q(0.276826047361565948010700406290066293);
     W[2] =  Q(0.431745381209862623417871022281362278);
     W[3] =  Q(0.487619047619047619047619047619047619);
-    W[4] =  W[2]; 
+    W[4] =  W[2];
     W[5] =  W[1];
     W[6] =  W[0];
     break;
-  case (8): /* p = 13 */
+  case (8): /* p <= 13 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.871740148509606615337445761220663438);
     X[2] = -Q(0.591700181433142302144510731397953190);
@@ -425,7 +425,7 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[6] =  W[1];
     W[7] =  W[0];
     break;
-  case (9): /* p = 15 */
+  case (9): /* p <= 15 */
     X[0] = -Q(1.0);
     X[1] = -Q(0.899757995411460157312345244418337958);
     X[2] = -Q(0.677186279510737753445885427091342451);
@@ -444,6 +444,28 @@ static PetscErrorCode IGA_Rule_GaussLobatto(PetscInt q,PetscReal X[],PetscReal W
     W[6] =  W[2];
     W[7] =  W[1];
     W[8] =  W[0];
+    break;
+  case (10): /* p <= 17 */
+    X[0] = -Q(1.0);
+    X[1] = -Q(0.919533908166458813828932660822338134);
+    X[2] = -Q(0.738773865105505075003106174859830725);
+    X[3] = -Q(0.477924949810444495661175092731257998);
+    X[4] = -Q(0.165278957666387024626219765958173533);
+    X[5] = -X[4];
+    X[6] = -X[3];
+    X[7] = -X[2];
+    X[8] = -X[1];
+    X[9] = -X[0];
+    W[0] =  Q(0.022222222222222222222222222222222222);
+    W[1] =  Q(0.133305990851070111126227170755392898);
+    W[2] =  Q(0.224889342063126452119457821731047843);
+    W[3] =  Q(0.292042683679683757875582257374443892);
+    W[4] =  Q(0.327539761183897456656510527916893145);
+    W[5] =  W[4];
+    W[6] =  W[3];
+    W[7] =  W[2];
+    W[8] =  W[1];
+    W[9] =  W[0];
     break;
   default:
     return -1;
