@@ -107,12 +107,12 @@ struct _n_IGABasis {
   PetscReal *detJac;  /* [nel] element length */
   PetscReal *weight;  /* [nqp] quadrature weight */
   PetscReal *point;   /* [nel][nqp] quadrature point */
-  PetscReal *value;   /* [nel][nqp][nen][4] basis derivatives */
+  PetscReal *value;   /* [nel][nqp][nen][5] basis derivatives */
 
   PetscReal  bnd_detJac;
   PetscReal  bnd_weight;
   PetscReal  bnd_point[2];
-  PetscReal *bnd_value[2]; /* [nen][4] */
+  PetscReal *bnd_value[2]; /* [nen][5] */
 };
 
 PETSC_EXTERN PetscErrorCode IGABasisCreate(IGABasis *basis);
@@ -489,10 +489,11 @@ struct _n_IGAElement {
   PetscReal *weight;   /*   [nqp]                     */
   PetscReal *detJac;   /*   [nqp]                     */
 
-  PetscReal *basis[4]; /*0: [nqp][nen]                */
+  PetscReal *basis[5]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][dim]           */
                        /*2: [nqp][nen][dim][dim]      */
                        /*3: [nqp][nen][dim][dim][dim] */
+                       /*4: [nqp][nen][dim][dim][dim][dim] */
 
   PetscReal *detX;     /*   [nqp]                     */
   PetscReal *gradX[2]; /*0: [nqp][nsd][dim]           */
@@ -501,13 +502,16 @@ struct _n_IGAElement {
                        /*1: [nqp][dim][nsd][nsd]      */
   PetscReal *der3X[2]; /*0: [nqp][nsd][dim][dim][dim] */
                        /*1: [nqp][dim][nsd][nsd][nsd] */
+  PetscReal *der4X[2]; /*0: [nqp][nsd][dim][dim][dim][dim] */
+                       /*1: [nqp][dim][nsd][nsd][nsd][nsd] */
   PetscReal *detS;     /*   [nqp]                     */
   PetscReal *normal;   /*   [nqp][dim]                */
 
-  PetscReal *shape[4]; /*0: [nqp][nen]                */
+  PetscReal *shape[5]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][nsd]           */
                        /*2: [nqp][nen][nsd][nsd]      */
                        /*3: [nqp][nen][nsd][nsd][nsd] */
+                       /*4: [nqp][nen][nsd][nsd][nsd][nsd] */
 
   IGA      parent;
   IGAPoint iterator;
@@ -602,10 +606,11 @@ struct _n_IGAPoint {
   PetscReal *weight;   /*   [1]   */
   PetscReal *detJac;   /*   [1]   */
 
-  PetscReal *basis[4]; /*0: [nen] */
+  PetscReal *basis[5]; /*0: [nen] */
                        /*1: [nen][dim] */
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
+                       /*4: [nen][dim][dim][dim][dim] */
 
   PetscReal *detX;     /*   [1] */
   PetscReal *gradX[2]; /*0: [nsd][dim] */
@@ -614,13 +619,16 @@ struct _n_IGAPoint {
                        /*1: [dim][nsd][nsd] */
   PetscReal *der3X[2]; /*0: [nsd][dim][dim][dim] */
                        /*1: [dim][nsd][nsd][nsd] */
+  PetscReal *der4X[2]; /*0: [nsd][dim][dim][dim][dim] */
+                       /*1: [dim][nsd][nsd][nsd][nsd] */
   PetscReal *detS;     /*   [1] */
   PetscReal *normal;   /*   [dim] */
 
-  PetscReal *shape[4]; /*0: [nen]  */
+  PetscReal *shape[5]; /*0: [nen]  */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
+                       /*3: [nen][nsd][nsd][nsd][nsd] */
 
   IGAElement parent;
 
@@ -657,6 +665,7 @@ PETSC_EXTERN PetscErrorCode IGAPointFormGrad (IGAPoint p,const PetscScalar U[],P
 PETSC_EXTERN PetscErrorCode IGAPointFormHess (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormDel2 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 PETSC_EXTERN PetscErrorCode IGAPointFormDer3 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
+PETSC_EXTERN PetscErrorCode IGAPointFormDer4 (IGAPoint p,const PetscScalar U[],PetscScalar u[]);
 
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[]);
 PETSC_EXTERN PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[]);

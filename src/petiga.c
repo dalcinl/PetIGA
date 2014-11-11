@@ -432,7 +432,7 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
              "Order must be nonnegative, got %D",order);
   order = PetscMax(order,1);
-  order = PetscMin(order,3);
+  order = PetscMin(order,4);
   iga->order = order;
   PetscFunctionReturn(0);
 }
@@ -834,7 +834,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Order */
     if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
-    order = PetscMax(order,1); order = PetscMin(order,3);
+    order = PetscMax(order,1); order = PetscMin(order,4);
     ierr = PetscOptionsInt("-iga_order","Maximum available derivative order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 

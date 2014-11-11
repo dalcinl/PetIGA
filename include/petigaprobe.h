@@ -36,10 +36,11 @@ struct _n_IGAProbe {
   PetscReal point[3];
   PetscInt  ID[3];
   PetscReal *BD[3];
-  PetscReal *basis[4]; /*0: [nen]                */
+  PetscReal *basis[5]; /*0: [nen]                */
                        /*1: [nen][dim]           */
                        /*2: [nen][dim][dim]      */
                        /*3: [nen][dim][dim][dim] */
+                       /*4: [nen][dim][dim][dim][dim] */
   PetscReal *detX;     /*                        */
   PetscReal *gradX[2]; /*0: [nsd][dim]           */
                        /*1: [dim][nsd]           */
@@ -47,10 +48,13 @@ struct _n_IGAProbe {
                        /*1: [dim][nsd][nsd]      */
   PetscReal *der3X[2]; /*0: [nsd][dim][dim][dim] */
                        /*1: [dim][nsd][nsd][nsd] */
-  PetscReal *shape[4]; /*0: [nen]                */
+  PetscReal *der4X[2]; /*0: [nsd][dim][dim][dim][dim] */
+                       /*1: [dim][nsd][nsd][nsd][nsd] */
+  PetscReal *shape[5]; /*0: [nen]                */
                        /*1: [nen][nsd]           */
                        /*2: [nen][nsd][nsd]      */
                        /*3: [nen][nsd][nsd][nsd] */
+                       /*4: [nen][nsd][nsd][nsd][nsd] */
 };
 
 PETSC_EXTERN PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *prb);
@@ -69,5 +73,6 @@ PETSC_EXTERN PetscErrorCode IGAProbeFormValue(IGAProbe prb,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormGrad (IGAProbe prb,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormHess (IGAProbe prb,PetscScalar A[]);
 PETSC_EXTERN PetscErrorCode IGAProbeFormDer3 (IGAProbe prb,PetscScalar A[]);
+PETSC_EXTERN PetscErrorCode IGAProbeFormDer4 (IGAProbe prb,PetscScalar A[]);
 
 #endif/*PETIGAPROBE_H*/

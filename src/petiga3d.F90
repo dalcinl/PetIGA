@@ -34,7 +34,7 @@ pure subroutine IGA_BasisFuns_3D(&
      inq,ina,iN,                 &
      jnq,jna,jN,                 &
      knq,kna,kN,                 &
-     N0,N1,N2,N3)                &
+     N0,N1,N2,N3,N4)             &
   bind(C, name="IGA_BasisFuns_3D")
   use PetIGA
   implicit none
@@ -43,13 +43,14 @@ pure subroutine IGA_BasisFuns_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: inq, ina
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jnq, jna
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: knq, kna
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina,inq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:3,jna,jnq)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:3,kna,knq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(       ina*jna*kna,inq,jnq,knq)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(   dim,ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:4,ina,inq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:4,jna,jnq)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:4,kna,knq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(dim**0,ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(dim**1,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,ina*jna*kna,inq,jnq,knq)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4,ina*jna*kna,inq,jnq,knq)
   integer(kind=IGA_INTEGER_KIND)  :: ia, iq
   integer(kind=IGA_INTEGER_KIND)  :: ja, jq
   integer(kind=IGA_INTEGER_KIND)  :: ka, kq
@@ -63,10 +64,11 @@ pure subroutine IGA_BasisFuns_3D(&
                 ina,iN(:,:,iq),&
                 jna,jN(:,:,jq),&
                 kna,kN(:,:,kq),&
-                N0(  :,iq,jq,kq),&
+                N0(:,:,iq,jq,kq),&
                 N1(:,:,iq,jq,kq),&
                 N2(:,:,iq,jq,kq),&
-                N3(:,:,iq,jq,kq))
+                N3(:,:,iq,jq,kq),&
+                N4(:,:,iq,jq,kq))
         end do
      end do
   end do
@@ -76,20 +78,21 @@ pure subroutine TensorBasisFuns(&
      ina,iN,&
      jna,jN,&
      kna,kN,&
-     N0,N1,N2,N3)
+     N0,N1,N2,N3,N4)
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: ina
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: jna
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: kna
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:3,ina)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:3,jna)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:3,kna)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(            ina,jna,kna)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(        dim,ina,jna,kna)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(    dim,dim,ina,jna,kna)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim,dim,dim,ina,jna,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: iN(0:4,ina)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: jN(0:4,jna)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: kN(0:4,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(                ina,jna,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(            dim,ina,jna,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(        dim,dim,ina,jna,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(    dim,dim,dim,ina,jna,kna)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim,dim,dim,dim,ina,jna,kna)
   integer(kind=IGA_INTEGER_KIND)  :: ia, ja, ka
   !
   do ka=1,kna; do ja=1,jna; do ia=1,ina
@@ -154,7 +157,7 @@ end subroutine IGA_BasisFuns_3D
 pure subroutine IGA_Rationalize_3D(&
      order,                      &
      nqp,nen,W,                  &
-     N0,N1,N2,N3)                &
+     N0,N1,N2,N3,N4)             &
   bind(C, name="IGA_Rationalize_3D")
   use PetIGA
   implicit none
@@ -167,6 +170,7 @@ pure subroutine IGA_Rationalize_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: N1(dim**1,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: N2(dim**2,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(inout) :: N3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: N4(dim**4,nen,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call Rationalize(&
@@ -175,7 +179,8 @@ pure subroutine IGA_Rationalize_3D(&
           N0(:,:,q),&
           N1(:,:,q),&
           N2(:,:,q),&
-          N3(:,:,q))
+          N3(:,:,q),&
+          N4(:,:,q))
   end do
 contains
 include 'petigarat.f90.in'
@@ -185,8 +190,8 @@ end subroutine IGA_Rationalize_3D
 pure subroutine IGA_GeometryMap_3D(&
      order,                        &
      nqp,nen,X,                    &
-     M0,M1,M2,M3,                  &
-     dX,G0,G1,H0,H1,I0,I1)         &
+     M0,M1,M2,M3,M4,               &
+     dX,G0,G1,H0,H1,I0,I1,J0,J1)   &
   bind(C, name="IGA_GeometryMap_3D")
   use PetIGA
   implicit none
@@ -199,6 +204,7 @@ pure subroutine IGA_GeometryMap_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: dX(nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: G0(dim**2,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: G1(dim**2,nqp)
@@ -206,16 +212,19 @@ pure subroutine IGA_GeometryMap_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: H1(dim**3,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: I0(dim**4,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: I1(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: J0(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: J1(dim**5,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call GeometryMap(&
           order,nen,X,&
           M0(:,:,q),M1(:,:,q),&
-          M2(:,:,q),M3(:,:,q),&
+          M2(:,:,q),M3(:,:,q),M4(:,:,q),&
           dX(q),&
           G0(:,q),G1(:,q),&
           H0(:,q),H1(:,q),&
-          I0(:,q),I1(:,q))
+          I0(:,q),I1(:,q),&
+          J0(:,q),J1(:,q))
   end do
 contains
 include 'petigageo.f90.in'
@@ -225,9 +234,9 @@ end subroutine IGA_GeometryMap_3D
 pure subroutine IGA_ShapeFuns_3D(&
      order,                      &
      nqp,nen,                    &
-     E1,E2,E3,                   &
-     M0,M1,M2,M3,                &
-     N0,N1,N2,N3)                &
+     E1,E2,E3,E4,                &
+     M0,M1,M2,M3,M4,             &
+     N0,N1,N2,N3,N4)             &
   bind(C, name="IGA_ShapeFuns_3D")
   use PetIGA
   implicit none
@@ -238,21 +247,24 @@ pure subroutine IGA_ShapeFuns_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(dim**2,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim**3,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(dim**5,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(dim**0,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(dim**1,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4,nen,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call ShapeFunctions(&
           order,nen,&
-          E1(:,q),E2(:,q),E3(:,q),&
-          M0(:,:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),&
-          N0(:,:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q))
+          E1(:,q),E2(:,q),E3(:,q),E4(:,q),&
+          M0(:,:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),M4(:,:,q),&
+          N0(:,:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),N4(:,:,q))
   end do
 contains
 include 'petigamap.f90.in'
@@ -278,8 +290,8 @@ pure subroutine IGA_BoundaryArea_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)        :: Cw(    m(1),m(2),m(3))
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: inqp, inen
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: jnqp, jnen
-  real   (kind=IGA_REAL_KIND   ), intent(in)        :: iW(inqp), iN(0:3,inen,inqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)        :: jW(jnqp), jN(0:3,jnen,jnqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: iW(inqp), iN(0:4,inen,inqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: jW(jnqp), jN(0:4,jnen,jnqp)
   real   (kind=IGA_REAL_KIND   ), intent(out)       :: dS
   integer(kind=IGA_INTEGER_KIND)  :: k, nen, iq, jq, ia, ja
   real   (kind=IGA_REAL_KIND   )  :: N0(inen,jnen), N1(dim,inen,jnen), detJ

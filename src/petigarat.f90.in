@@ -3,17 +3,18 @@
 pure subroutine Rationalize(&
      order,&
      nen,W,&
-     R0,R1,R2,R3)
+     R0,R1,R2,R3,R4)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter     :: dim = 1,2,3
   integer(kind=IGA_INTEGER_KIND), intent(in)    :: order
   integer(kind=IGA_INTEGER_KIND), intent(in)    :: nen
   real   (kind=IGA_REAL_KIND   ), intent(in)    :: W(nen)
-  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R0(            nen)
-  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R1(        dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R2(    dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R3(dim,dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R0(                nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R1(            dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R2(        dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R3(    dim,dim,dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(inout) :: R4(dim,dim,dim,dim,nen)
   !
   integer(kind=IGA_INTEGER_KIND)  :: a, i, j, k
   real   (kind=IGA_REAL_KIND   )  :: W0
@@ -50,5 +51,9 @@ pure subroutine Rationalize(&
                  - R2(j,k,:)*W1(i) - R2(i,k,:)*W1(j) - R2(i,j,:)*W1(k)
   end do; end do; end do
   R3 = R3 / W0
+  !
+  if (order < 3) return
+  R4 = 0 ! XXX Implement
+  R4 = R4 / W0
   !
 end subroutine Rationalize

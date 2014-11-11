@@ -94,7 +94,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   const PetscReal*U,*X,*W;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
-  PetscInt       nen,d,ndr=4;
+  PetscInt       nen,d,ndr=5;
   PetscInt       *offset;
   PetscReal      *detJac;
   PetscReal      *weight;
@@ -132,7 +132,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   span = axis->span;
   nen  = p+1;
 
-  d = PetscMin(p,3);
+  d = PetscMin(p,4);
 
   switch (basis->type) {
   case IGA_BASIS_BSPLINE:
@@ -203,7 +203,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   const PetscReal*U;
   PetscInt       inp,nnp,shift;
   PetscInt       iqp,nqp;
-  PetscInt       nen,d,ndr=4;
+  PetscInt       nen,d,ndr=5;
   PetscInt       *offset;
   PetscReal      *detJac;
   PetscReal      *weight;
@@ -230,7 +230,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
 
   shift = (n + 1 - nnp)/2;
 
-  d = PetscMin(p,3);
+  d = PetscMin(p,4);
 
   ierr = PetscMalloc1(nnp,&offset);CHKERRQ(ierr);
   ierr = PetscMalloc1(nnp,&detJac);CHKERRQ(ierr);

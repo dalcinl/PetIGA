@@ -7,7 +7,7 @@ subroutine IGA_Basis_BSpline(k,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: k, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:4,0:p)
   real   (kind=IGA_REAL_KIND   )  :: ders(0:p,0:d)
   call BasisFunsDers(k,uu,p,d,U,ders)
   B = 0; B(0:d,:) = transpose(ders)
@@ -84,7 +84,7 @@ subroutine IGA_Basis_Lagrange(k,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: k, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+1)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:4,0:p)
   real   (kind=IGA_REAL_KIND   )  :: X(0:p)
   if (p == 0) then
      B(0,0) = 1
@@ -105,7 +105,7 @@ subroutine IGA_Basis_Spectral(k,uu,p,d,U,B) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: k, p, d
   real   (kind=IGA_REAL_KIND   ), intent(in),value :: uu
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+1)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:3,0:p)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:4,0:p)
   real   (kind=IGA_REAL_KIND   )  :: X(0:p)
   if (p == 0) then
      B(0,0) = 1

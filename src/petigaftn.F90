@@ -87,14 +87,15 @@ module PetIGA
      type(C_PTR) :: point
      type(C_PTR) :: weight
      type(C_PTR) :: detJac
-     type(C_PTR) :: basis(0:3)
+     type(C_PTR) :: basis(0:4)
      type(C_PTR) :: detX
      type(C_PTR) :: gradX(0:1)
      type(C_PTR) :: hessX(0:1)
      type(C_PTR) :: der3X(0:1)
+     type(C_PTR) :: der4X(0:1)
      type(C_PTR) :: detS
      type(C_PTR) :: normal
-     type(C_PTR) :: shape(0:3)
+     type(C_PTR) :: shape(0:4)
   end type IGAPoint
 
 
