@@ -84,6 +84,11 @@ pure subroutine TensorBasisFuns(&
      N3(1,1,1,ia) = iN(3,ia)
   end do
   !
+  if (order < 4) return
+  do ia=1,ina
+     N4(1,1,1,1,ia) = iN(4,ia)
+  end do
+  !
 end subroutine TensorBasisFuns
 end subroutine IGA_BasisFuns_1D
 

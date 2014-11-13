@@ -111,6 +111,26 @@ pure subroutine TensorBasisFuns(&
      N3(2,2,2,ia,ja) = iN(0,ia) * jN(3,ja)
   end do; end do
   !
+  if (order < 4) return ! XXX Optimize!
+  do ja=1,jna; do ia=1,ina
+     N4(1,1,1,1,ia,ja) = iN(4,ia) * jN(0,ja)
+     N4(2,1,1,1,ia,ja) = iN(3,ia) * jN(1,ja)
+     N4(1,2,1,1,ia,ja) = iN(3,ia) * jN(1,ja)
+     N4(2,2,1,1,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(1,1,2,1,ia,ja) = iN(3,ia) * jN(1,ja)
+     N4(2,1,2,1,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(1,2,2,1,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(2,2,2,1,ia,ja) = iN(1,ia) * jN(3,ja)
+     N4(1,1,1,2,ia,ja) = iN(3,ia) * jN(1,ja)
+     N4(2,1,1,2,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(1,2,1,2,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(2,2,1,2,ia,ja) = iN(1,ia) * jN(3,ja)
+     N4(1,1,2,2,ia,ja) = iN(2,ia) * jN(2,ja)
+     N4(2,1,2,2,ia,ja) = iN(1,ia) * jN(3,ja)
+     N4(1,2,2,2,ia,ja) = iN(1,ia) * jN(3,ja)
+     N4(2,2,2,2,ia,ja) = iN(0,ia) * jN(4,ja)
+  end do; end do
+  !
 end subroutine TensorBasisFuns
 end subroutine IGA_BasisFuns_2D
 
