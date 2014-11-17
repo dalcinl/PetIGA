@@ -110,10 +110,12 @@ int main(int argc, char *argv[]) {
 
   PetscBool print_error = PETSC_FALSE;
   PetscBool check_error = PETSC_FALSE;
+  PetscBool save = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Neumann Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-print_error","Prints the error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-save","Save the solution to file",__FILE__,save,&save,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
@@ -162,22 +164,26 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  Vec Q;
-  ierr = IGACreateVec(iga,&Q);CHKERRQ(ierr);
-  ierr = IGASetFormVector(iga,MassVector,NULL);CHKERRQ(ierr);
-  ierr = IGAComputeVector(iga,Q);CHKERRQ(ierr);
-  PetscScalar mean;
-  ierr = VecDot(Q,x,&mean);CHKERRQ(ierr);
-  ierr = VecShift(x,-mean);CHKERRQ(ierr);
-  ierr = VecDestroy(&Q);CHKERRQ(ierr);
+  if (!iga->collocation) {
+    Vec Q; PetscScalar mean;
+    ierr = IGACreateVec(iga,&Q);CHKERRQ(ierr);
+    ierr = IGASetFormVector(iga,MassVector,NULL);CHKERRQ(ierr);
+    ierr = IGAComputeVector(iga,Q);CHKERRQ(ierr);
+    ierr = VecDot(Q,x,&mean);CHKERRQ(ierr);
+    ierr = VecShift(x,-mean);CHKERRQ(ierr);
+    ierr = VecDestroy(&Q);CHKERRQ(ierr);
+  }
 
   PetscScalar error;
   ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error=%g\n",(double)error);CHKERRQ(ierr);}
-  if (check_error) {if (PetscRealPart(error)>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
+  if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
+
+  if (save) {ierr = IGAWrite   (iga,  "Neumann-geometry.dat");CHKERRQ(ierr);}
+  if (save) {ierr = IGAWriteVec(iga,x,"Neumann-solution.dat");CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);

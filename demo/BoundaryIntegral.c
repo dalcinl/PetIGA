@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsInt ("-axis","Neuman BC direction",__FILE__,user.axis,&user.axis,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-print_error","Prints the error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-check_error","Checks the error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
@@ -221,8 +221,8 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
   error = PetscSqrtReal(PetscRealPart(error));
 
-  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)error);CHKERRQ(ierr);}
-  if (check_error) {if (PetscRealPart(error)>1e-4) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%g\n",(double)error);}
+  if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error = %g\n",(double)error);CHKERRQ(ierr);}
+  if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

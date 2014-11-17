@@ -118,17 +118,17 @@ TwoPhaseTwoComponent: TwoPhaseTwoComponent.o chkopts
 OPTS=-nox -malloc_debug -malloc_dump
 
 runex1a_1:
-	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 1 -check_error
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -check_error -d 1
 runex1a_4:
-	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 1 -check_error
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -check_error -d 1
 runex1b_1:
-	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 2 -check_error
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -check_error -d 2
 runex1b_4:
-	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 2 -check_error
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -check_error -d 2
 runex1c_1:
-	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -d 3 -p 1 -check_error
+	-@${MPIEXEC} -n 1 ./L2Projection ${OPTS} -check_error -d 3 -p 1
 runex1c_4:
-	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -d 3 -p 1 -check_error
+	-@${MPIEXEC} -n 4 ./L2Projection ${OPTS} -check_error -d 3 -p 1
 runex2a_1:
 	-@${MPIEXEC} -n 1 ./Poisson1D ${OPTS}
 runex2a_4:
@@ -141,6 +141,22 @@ runex2c_1:
 	-@${MPIEXEC} -n 1 ./Poisson3D ${OPTS}
 runex2c_4:
 	-@${MPIEXEC} -n 4 ./Poisson3D ${OPTS}
+runex3a_1:
+	-@${MPIEXEC} -n 1 ./Laplace ${OPTS} -check_error -iga_dim 1
+runex3a_4:
+	-@${MPIEXEC} -n 4 ./Laplace ${OPTS} -check_error -iga_dim 1
+runex3b_1:
+	-@${MPIEXEC} -n 1 ./Laplace ${OPTS} -check_error -iga_dim 2
+runex3b_4:
+	-@${MPIEXEC} -n 4 ./Laplace ${OPTS} -check_error -iga_dim 2
+runex3c_1:
+	-@${MPIEXEC} -n 1 ./Laplace ${OPTS} -check_error -iga_dim 3 -iga_elements 8
+runex3c_4:
+	-@${MPIEXEC} -n 4 ./Laplace ${OPTS} -check_error -iga_dim 3 -iga_elements 8
+runex3d_1:
+	-@${MPIEXEC} -n 1 ./Laplace ${OPTS} -check_error -iga_dim 1 -iga_collocation -iga_degree 2
+runex3d_4:
+	-@${MPIEXEC} -n 4 ./Laplace ${OPTS} -check_error -iga_dim 2 -iga_collocation -iga_degree 4,6
 runex4_1:
 	-@${MPIEXEC} -n 1 ./CahnHilliard2D ${OPTS} -ts_max_steps 2
 runex4_4:
@@ -180,15 +196,19 @@ runex6e_1:
 runex6e_4:
 	-@${MPIEXEC} -n 4 ./Bratu ${OPTS} -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color
 runex7a_1:
-	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 1
+	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -check_error -iga_dim 1 -pc_type icc
 runex7a_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 1
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -check_error -iga_dim 1 -sub_pc_type icc
 runex7b_1:
-	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -iga_dim 2
+	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -check_error -iga_dim 2 -pc_type icc
 runex7b_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 2
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -check_error -iga_dim 2 -sub_pc_type icc
 runex7c_4:
-	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -iga_dim 3
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -check_error -iga_dim 3 -sub_pc_type icc
+runex7d_1:
+	-@${MPIEXEC} -n 1 ./Neumann ${OPTS} -check_error -iga_dim 1 -iga_collocation -iga_degree 4 -pc_factor_shift_type nonzero
+runex7d_4:
+	-@${MPIEXEC} -n 4 ./Neumann ${OPTS} -check_error -iga_dim 2 -iga_collocation -iga_degree 6
 runex8_1:
 	-@${MPIEXEC} -n 1 ./ElasticRod ${OPTS} -ts_max_steps 10
 runex8_4:
@@ -204,6 +224,10 @@ L2Projection.rm
 
 Laplace := \
 Laplace.PETSc \
+runex3a_1 runex3a_4 \
+runex3b_1 runex3b_4 \
+runex3c_1 runex3c_4 \
+runex3d_1 runex3d_4 \
 Laplace.rm
 
 Poisson1D := Poisson1D.PETSc runex2a_1 runex2a_4 Poisson1D.rm
@@ -214,7 +238,9 @@ Poisson   := $(Poisson1D) $(Poisson2D) $(Poisson3D)
 Neumann := \
 Neumann.PETSc \
 runex7a_1 runex7a_4 \
-runex7b_1 runex7b_4 runex7c_4 \
+runex7b_1 runex7b_4 \
+runex7c_4 \
+runex7d_1 runex7d_4 \
 Neumann.rm
 
 Bratu := \
