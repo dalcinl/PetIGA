@@ -1559,6 +1559,7 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
     newiga->geom_lwidth[i] = iga->geom_lwidth[i];
     newiga->geom_gstart[i] = iga->geom_gstart[i];
     newiga->geom_gwidth[i] = iga->geom_gwidth[i];
+    newiga->node_shift[i]  = iga->node_shift[i];
     newiga->node_sizes[i]  = iga->node_sizes[i];
     newiga->node_lstart[i] = iga->node_lstart[i];
     newiga->node_lwidth[i] = iga->node_lwidth[i];
