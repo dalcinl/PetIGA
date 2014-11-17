@@ -851,7 +851,6 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
                                M[0],M[1],M[2],M[3],
                                J,G0,G1,H0,H1,I0,I1); break;
     }
-    for (q=0; q<nqp; q++) element->detJac[q] *= J[q];
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
@@ -867,6 +866,9 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     }
+    /* */
+    if (PetscLikely(!element->parent->collocation))
+      for (q=0; q<nqp; q++) element->detJac[q] *= J[q];
   }
   PetscFunctionReturn(0);
 }
@@ -1040,7 +1042,6 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
                                J,G0,G1,H0,H1,I0,I1); break;
     }
     for (q=0; q<nqp; q++) IGA_GetNormal(dim,axis,side,&G0[q*dim*dim],&S[q],&n[q*dim]);
-    for (q=0; q<nqp; q++) element->detJac[q] *= S[q];
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
@@ -1056,6 +1057,9 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
                              M[0],M[1],M[2],M[3],
                              N[0],N[1],N[2],N[3]); break;
     }
+    /* */
+    if (PetscLikely(!element->parent->collocation))
+      for (q=0; q<nqp; q++) element->detJac[q] *= S[q];
   }
   PetscFunctionReturn(0);
 }

@@ -245,7 +245,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
     point[inp] = u;
     IGA_Basis_BSpline(k,u,p,d,U,N);
     offset[inp] = k-p-shift;
-    detJac[inp] = U[k+1]-U[k];
+    detJac[inp] = 1.0;
   }
   for (iqp=0; iqp<nqp; iqp++)
     weight[iqp] = 1.0;
