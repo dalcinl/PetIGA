@@ -57,6 +57,7 @@ PETSC_EXTERN PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
                                                    const PetscInt[],
                                                    const PetscInt[],
                                                    const PetscInt[],
+                                                   const PetscInt[],
                                                    Vec*,VecScatter*,VecScatter*);
 
 #endif/*PETIGAGRID_H*/

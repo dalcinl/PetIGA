@@ -151,14 +151,15 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
     PetscScalar *uval;
     PetscInt is,iw,js,jw,ks,kw;
     PetscInt c,i,j,k,xpos=0,upos=0;
+    const PetscInt *shift = iga->node_shift;
     ierr = DMDAGetCorners(da,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
     ierr = PetscMalloc1(dof,&uval);CHKERRQ(ierr);
     for (k=ks; k<ks+kw; k++) {
-      uvw[2] = Parameter(k,iga->axis[2]);
+      uvw[2] = Parameter(k+shift[2],iga->axis[2]);
       for (j=js; j<js+jw; j++) {
-        uvw[1] = Parameter(j,iga->axis[1]);
+        uvw[1] = Parameter(j+shift[1],iga->axis[1]);
         for (i=is; i<is+iw; i++) {
-          uvw[0] = Parameter(i,iga->axis[0]);
+          uvw[0] = Parameter(i+shift[0],iga->axis[0]);
           {
             ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
             ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);

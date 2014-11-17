@@ -316,6 +316,7 @@ struct _p_IGA {
   PetscInt  geom_gstart[3];
   PetscInt  geom_gwidth[3];
 
+  PetscInt  node_shift[3];
   PetscInt  node_sizes[3];
   PetscInt  node_lstart[3];
   PetscInt  node_lwidth[3];

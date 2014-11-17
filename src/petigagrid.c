@@ -555,6 +555,7 @@ PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid g,Vec gvec,Vec nvec)
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_NewScatterApp"
 PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
+                                      const PetscInt shift[],
                                       const PetscInt sizes[],
                                       const PetscInt start[],
                                       const PetscInt width[],
@@ -598,9 +599,9 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* local non-ghosted grid */
     const PetscInt *lstart = g->local_start;
     const PetscInt *lwidth = g->local_width;
-    PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
-    PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
-    PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
+    PetscInt ilstart = shift[0]+lstart[0], ilend = shift[0]+lstart[0]+lwidth[0];
+    PetscInt jlstart = shift[1]+lstart[1], jlend = shift[1]+lstart[1]+lwidth[1];
+    PetscInt klstart = shift[2]+lstart[2], klend = shift[2]+lstart[2]+lwidth[2];
     /* */
     PetscInt nlocal = lwidth[0]*lwidth[1]*lwidth[2];
     PetscInt i,j,k,pos = 0;
@@ -628,9 +629,9 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* local ghosted grid */
     const PetscInt *gstart = g->ghost_start;
     const PetscInt *gwidth = g->ghost_width;
-    PetscInt igstart = gstart[0], igend = gstart[0]+gwidth[0];
-    PetscInt jgstart = gstart[1], jgend = gstart[1]+gwidth[1];
-    PetscInt kgstart = gstart[2], kgend = gstart[2]+gwidth[2];
+    PetscInt igstart = shift[0]+gstart[0], igend = shift[0]+gstart[0]+gwidth[0];
+    PetscInt jgstart = shift[1]+gstart[1], jgend = shift[1]+gstart[1]+gwidth[1];
+    PetscInt kgstart = shift[2]+gstart[2], kgend = shift[2]+gstart[2]+gwidth[2];
     /* */
     PetscInt nlocal = width[0]*width[1]*width[2];
     PetscInt i,j,k,pos = 0,index = 0;
