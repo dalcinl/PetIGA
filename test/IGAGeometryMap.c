@@ -23,9 +23,9 @@ static PetscReal PY[3][3] = {
 };
 static PetscReal PW[3][3] = {
 #define sqrt2 1.4142135623730951
-  { 1., sqrt2/2., 1. },
-  { 1., sqrt2/2., 1. },
-  { 1., sqrt2/2., 1. },
+  { 1.0, sqrt2/2, 1.0 },
+  { 1.0, sqrt2/2, 1.0 },
+  { 1.0, sqrt2/2, 1.0 },
 #undef  sqrt2
 };
 
@@ -427,17 +427,78 @@ PetscErrorCode System(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
     return Domain(p,A,b,ctx);
 }
 
-
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Scalar"
+PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
-  S[0] = 1.0;
+  PetscBool b = p->atboundary;
+  if (b) S[1] = 1.0; /* contribution to boundary area */
+  else   S[0] = 1.0; /* contribution to domain volume  */
   return 0;
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAComputeScalarFull"
+PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
+                                    PetscInt n,PetscScalar S[],
+                                    IGAFormScalar Scalar,void *ctx)
+{
+  MPI_Comm          comm;
+  Vec               localU;
+  const PetscScalar *arrayU;
+  PetscScalar       *localS,*workS;
+  IGAElement        element;
+  IGAPoint          point;
+  PetscScalar       *U;
+  PetscErrorCode    ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
+  PetscValidScalarPointer(S,3);
+  IGACheckSetUp(iga,1);
 
-#undef __FUNCT__
+  ierr = PetscCalloc1(n,&localS);CHKERRQ(ierr);
+  ierr = PetscMalloc1(n,&workS);CHKERRQ(ierr);
+
+  /* Get local vector U and array */
+  ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  ierr = PetscLogEventBegin(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
+
+  /* Element loop */
+  ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
+  while (IGANextElement(iga,element)) {
+    ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    /* Form loop */
+    while (IGAElementNextForm(element,element->parent->form->visit)) {
+      /* Quadrature loop */
+      ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
+      while (IGAElementNextPoint(element,point)) {
+        ierr = PetscMemzero(workS,n*sizeof(PetscScalar));CHKERRQ(ierr);
+        ierr = Scalar(point,U,n,workS,ctx);CHKERRQ(ierr);
+        ierr = IGAPointAddArray(point,n,workS,localS);CHKERRQ(ierr);
+      }
+      ierr = IGAElementEndPoint(element,&point);CHKERRQ(ierr);
+    }
+  }
+  ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
+
+  ierr = PetscLogEventEnd(IGA_FormScalar,iga,vecU,0,0);CHKERRQ(ierr);
+
+  /* Restore local vector U and array */
+  ierr = IGARestoreLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
+
+  /* Assemble global scalars S */
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(localS,S,n,MPIU_SCALAR,MPIU_SUM,comm);CHKERRQ(ierr);
+
+  ierr = PetscFree(localS);CHKERRQ(ierr);
+  ierr = PetscFree(workS);CHKERRQ(ierr);
+
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
@@ -466,9 +527,9 @@ int main(int argc, char *argv[]) {
   ierr = IGAAxisSetDegree(axis,1);CHKERRQ(ierr);
   ierr = IGAAxisInitUniform(axis,1,0.0,1.0,0);CHKERRQ(ierr);
 
-  ierr = IGASetQuadrature(iga,0,7);CHKERRQ(ierr);
-  ierr = IGASetQuadrature(iga,1,9);CHKERRQ(ierr);
-  ierr = IGASetQuadrature(iga,2,8);CHKERRQ(ierr);
+  ierr = IGASetQuadrature(iga,0, 9);CHKERRQ(ierr);
+  ierr = IGASetQuadrature(iga,1,10);CHKERRQ(ierr);
+  ierr = IGASetQuadrature(iga,2, 8);CHKERRQ(ierr);
 
   ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
   ierr = IGASetOrder(iga,3);CHKERRQ(ierr);
@@ -476,8 +537,8 @@ int main(int argc, char *argv[]) {
 
   ierr = IGASetGeometryDim(iga,dim);CHKERRQ(ierr);
   iga->rational = PETSC_TRUE;
-  ierr = PetscMalloc(3*3*(dim-1)*sizeof(PetscReal),&iga->rationalW);CHKERRQ(ierr);
-  ierr = PetscMalloc(3*3*(dim-1)*dim*sizeof(PetscReal),&iga->geometryX);CHKERRQ(ierr);
+  ierr = PetscMalloc1(3*3*(dim-1),&iga->rationalW);CHKERRQ(ierr);
+  ierr = PetscMalloc1(3*3*(dim-1)*dim,&iga->geometryX);CHKERRQ(ierr);
   {
     PetscInt i,j,k,m=dim-1;
     PetscInt posx=0,posw=0;
@@ -515,18 +576,23 @@ int main(int argc, char *argv[]) {
     ierr = MatDestroy(&A);CHKERRQ(ierr);
     ierr = VecDestroy(&b);CHKERRQ(ierr);
   }
+
   {
-    PetscReal   h  = (dim==2)?1.0:2.0;
     PetscReal   pi = M_PI;
+    PetscReal   h  = 2.0;
     PetscReal   Ri = 1.0;
     PetscReal   Ro = 2.0;
-    PetscReal   V  = h*pi*(Ro*Ro-Ri*Ri)/4;
-    PetscScalar vol;
+    PetscReal   A = pi*(Ro*Ro-Ri*Ri)/4;
+    PetscReal   P = 2*(Ro-Ri)+pi*(Ro+Ri)/2;
+    PetscReal   V = (dim==2) ? A : (h*A);
+    PetscReal   S = (dim==2) ? P : (2*A+h*P);
+    PetscScalar scalar[2];
     Vec x;
     ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
-    ierr = IGAComputeScalar(iga,x,1,&vol,Error,NULL);CHKERRQ(ierr);
+    ierr = IGAComputeScalarFull(iga,x,2,scalar,Scalar,NULL);CHKERRQ(ierr);
     ierr = VecDestroy(&x);CHKERRQ(ierr);
-    AssertEQUAL(V, PetscRealPart(vol));
+    AssertEQUAL(V, PetscRealPart(scalar[0]));
+    AssertEQUAL(S, PetscRealPart(scalar[1]));
   }
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
