@@ -259,7 +259,7 @@ include 'petigamap.f90.in'
 end subroutine IGA_ShapeFuns_3D
 
 
-subroutine IGA_BoundaryArea_3D(&
+pure subroutine IGA_BoundaryArea_3D(&
      m,axis,side,              &
      geometry,Cx,              &
      rational,Cw,              &
@@ -274,8 +274,8 @@ subroutine IGA_BoundaryArea_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in)        :: m(3)
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: axis, side
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: geometry, rational
-  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cx(nsd,m(1),m(2),m(3))
-  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cw(    m(1),m(2),m(3))
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: Cx(nsd,m(1),m(2),m(3))
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: Cw(    m(1),m(2),m(3))
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: inqp, inen
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: jnqp, jnen
   real   (kind=IGA_REAL_KIND   ), intent(in)        :: iW(inqp), iN(0:3,inen,inqp)
@@ -283,21 +283,21 @@ subroutine IGA_BoundaryArea_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(out)       :: dS
   integer(kind=IGA_INTEGER_KIND)  :: k, nen, iq, jq, ia, ja
   real   (kind=IGA_REAL_KIND   )  :: N0(inen,jnen), N1(dim,inen,jnen), detJ
-  real   (kind=IGA_REAL_KIND   ), pointer :: Xx(:,:,:), Xw(:,:)
+  real   (kind=IGA_REAL_KIND   )  :: Xw(inen,jnen), Xx(nsd,inen,jnen)
   nen = inen*jnen
   select case (axis)
   case (0)
      if (side==0) k=1
      if (side==1) k=m(1)
-     Xx => Cx(:,k,:,:); Xw => Cw(k,:,:)
+     Xx = Cx(:,k,:,:); Xw = Cw(k,:,:)
   case (1)
      if (side==0) k=1
      if (side==1) k=m(2)
-     Xx => Cx(:,:,k,:); Xw => Cw(:,k,:)
+     Xx = Cx(:,:,k,:); Xw = Cw(:,k,:)
   case (2)
      if (side==0) k=1
      if (side==1) k=m(3)
-     Xx => Cx(:,:,:,k); Xw => Cw(:,:,k)
+     Xx = Cx(:,:,:,k); Xw = Cw(:,:,k)
   end select
   detJ = 1
   dS = 0
@@ -310,13 +310,9 @@ subroutine IGA_BoundaryArea_3D(&
            N1(1,ia,ja) = iN(1,ia,iq) * jN(0,ja,jq)
            N1(2,ia,ja) = iN(0,ia,iq) * jN(1,ja,jq)
         end do; end do
-        if (rational /= 0) then
-           call Rationalize(nen,Xw,N0,N1)
-        end if
-        if (geometry /= 0) then
-           call Jacobian(nen,N1,Xx,detJ)
-        end if
-        dS = dS + detJ * (iW(iq)*jW(jq))
+        if (rational /= 0) call Rationalize(nen,Xw,N0,N1)
+        if (geometry /= 0) call Jacobian(nen,N1,Xx,detJ)
+        dS = dS + detJ * iW(iq)*jW(jq)
      end do
   end do
 contains

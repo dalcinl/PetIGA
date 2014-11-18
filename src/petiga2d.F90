@@ -220,7 +220,7 @@ include 'petigamap.f90.in'
 end subroutine IGA_ShapeFuns_2D
 
 
-subroutine IGA_BoundaryArea_2D(&
+pure subroutine IGA_BoundaryArea_2D(&
      m,axis,side,              &
      geometry,Cx,              &
      rational,Cw,              &
@@ -234,35 +234,31 @@ subroutine IGA_BoundaryArea_2D(&
   integer(kind=IGA_INTEGER_KIND), intent(in)        :: m(2)
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: axis, side
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: geometry, rational
-  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cx(nsd,m(1),m(2))
-  real   (kind=IGA_REAL_KIND   ), intent(in),target :: Cw(    m(1),m(2))
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: Cx(nsd,m(1),m(2))
+  real   (kind=IGA_REAL_KIND   ), intent(in)        :: Cw(    m(1),m(2))
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: nqp, nen
   real   (kind=IGA_REAL_KIND   ), intent(in)        :: W(nqp), N(0:3,nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out)       :: dS
   integer(kind=IGA_INTEGER_KIND)  :: k, q
   real   (kind=IGA_REAL_KIND   )  :: N0(nen), N1(dim,nen), detJ
-  real   (kind=IGA_REAL_KIND   ), pointer :: Xx(:,:), Xw(:)
+  real   (kind=IGA_REAL_KIND   )  :: Xw(nen), Xx(nsd,nen)
   select case (axis)
   case (0)
      if (side==0) k=1
      if (side==1) k=m(1)
-     Xx => Cx(:,k,:); Xw => Cw(k,:)
+     Xx = Cx(:,k,:); Xw = Cw(k,:)
   case (1)
      if (side==0) k=1
      if (side==1) k=m(2)
-     Xx => Cx(:,:,k); Xw => Cw(:,k)
+     Xx = Cx(:,:,k); Xw = Cw(:,k)
   end select
   detJ = 1
   dS = 0
   do q=1,nqp
      N0(  :) = N(0,:,q)
      N1(1,:) = N(1,:,q)
-     if (rational /= 0) then
-        call Rationalize(nen,Xw,N0,N1)
-     end if
-     if (geometry /= 0) then
-        call Jacobian(nen,N1,Xx,detJ)
-     end if
+     if (rational /= 0) call Rationalize(nen,Xw,N0,N1)
+     if (geometry /= 0) call Jacobian(nen,N1,Xx,detJ)
      dS = dS + detJ * W(q)
   end do
 contains
