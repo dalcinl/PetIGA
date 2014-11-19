@@ -69,6 +69,8 @@ cmake_cc_flags=-DCMAKE_C_FLAGS:STRING='${PCC_FLAGS} ${CFLAGS} ${CCPPFLAGS}'
 endif
 ifneq (${FC},)
 cmake_fc_path =-DCMAKE_Fortran_COMPILER:FILEPATH=${FC}
+endif
+ifneq (${FC_FLAGS},)
 cmake_fc_flags=-DCMAKE_Fortran_FLAGS:STRING='${FC_FLAGS} ${FFLAGS} ${FCPPFLAGS}'
 endif
 cmake_cc=${cmake_cc_path} ${cmake_cc_flags} ${cmake_cc_clang}

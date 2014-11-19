@@ -20,7 +20,14 @@ all : $(libpetiga)
 
 .SECONDEXPANSION: # to expand $$(@D)/.DIR
 
-# workarround old cygwin versions
+# check missing Fortran compiler
+ifeq ($(FC),)
+$(info GNU Make build requires PETSc with Fortran support)
+$(info Try using CMake build with 'make all-cmake')
+$(error '')
+endif
+
+# workarround old Cygwin versions
 ifeq ($(PETSC_CYGWIN_BROKEN_PIPE),1)
 ifeq ($(shell basename $(AR)),ar)
   V ?= 1
