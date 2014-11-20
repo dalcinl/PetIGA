@@ -805,11 +805,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
       ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     } else { /* set axis details */
+      PetscBool flg1,flg2;
       ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
       if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
       for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
-      ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg);CHKERRQ(ierr);
-      ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),NULL);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg1);CHKERRQ(ierr);
+      ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),&flg2);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),NULL);CHKERRQ(ierr);
       ierr = PetscOptionsRealArray("-iga_limits",    "Limits",    "IGAAxisInitUniform",&ulims[0][0],(nl=2*dim,&nl),NULL);CHKERRQ(ierr);
       for (nl/=2, i=0; i<dim; i++) {
@@ -821,7 +822,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         PetscInt   C = (i<nc) ? conts[i] : conts[0];
         if (p < 1) {if (axis->p > 0) p = axis->p;   else p =  2;}
         if (N < 1) {if (axis->m > 1) N = axis->nel; else N = 16;}
-        if (flg || (axis->p==0||axis->m==1)) {
+        if ((flg1||flg2) || (axis->p==0||axis->m==1)) {
           ierr = IGAAxisReset(axis);CHKERRQ(ierr);
           ierr = IGAAxisSetPeriodic(axis,w);CHKERRQ(ierr);
           ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
