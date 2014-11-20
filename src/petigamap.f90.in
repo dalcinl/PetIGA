@@ -4,8 +4,8 @@ pure subroutine ShapeFunctions(&
      order,&
      nen,&
      E1,E2,E3,E4,&
-     N0,N1,N2,N3,N4,&
-     R0,R1,R2,R3,R4)
+     N1,N2,N3,N4,&
+     R1,R2,R3,R4)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
@@ -15,12 +15,10 @@ pure subroutine ShapeFunctions(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim,dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(dim,dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: N0(                nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N1(            dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N2(        dim,dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N3(    dim,dim,dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: N4(dim,dim,dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: R0(                nen)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R1(            dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R2(        dim,dim,nen)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: R3(    dim,dim,dim,nen)
@@ -30,12 +28,9 @@ pure subroutine ShapeFunctions(&
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
   integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
 
-  ! 0th derivatives
-  R0 = N0
-
   ! 1st derivatives
   if (order < 1) return
-  R1 = 0 ! matmul(E1,N1)
+  R1 = 0 ! MATMUL(E1,N1)
   do node = 1,nen
      do i = 1,dim
         do a = 1,dim

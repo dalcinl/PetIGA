@@ -114,7 +114,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
-  ! V = matmul(N,transpose(U))
+  ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
      V = V + N(a) * U(:,a)
@@ -130,7 +130,7 @@ subroutine IGA_GetGrad(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, c
-  ! V = matmul(N,transpose(U))
+  ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
      do c = 1, dof
@@ -148,7 +148,7 @@ subroutine IGA_GetHess(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim*dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
-  ! V = matmul(N,transpose(U))
+  ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
      do i = 1, dof
@@ -185,7 +185,7 @@ subroutine IGA_GetDer3(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim*dim*dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
-  ! V = matmul(N,transpose(U))
+  ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
      do i = 1, dof
@@ -203,7 +203,7 @@ subroutine IGA_GetDer4(nen,dof,dim,N,U,V) &
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim*dim*dim*dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
-  ! V = matmul(N,transpose(U))
+  ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
      do i = 1, dof

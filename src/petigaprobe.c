@@ -372,13 +372,13 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     switch (prb->dim) {
     case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],M[4],
-                               dX,X1,E1,X2,E2,X3,E3,X4,E4); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 2: IGA_GeometryMap_2D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],M[4],
-                               dX,X1,E1,X2,E2,X3,E3,X4,E4); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 1: IGA_GeometryMap_1D(prb->order,1,prb->nen,prb->X,
                                M[0],M[1],M[2],M[3],M[4],
-                               dX,X1,E1,X2,E2,X3,E3,X4,E4); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     }
     switch (prb->dim) {
     case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,

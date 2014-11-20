@@ -276,7 +276,9 @@ pure subroutine IGA_GeometryMap_3D(&
      order,                        &
      nqp,nen,X,                    &
      M0,M1,M2,M3,M4,               &
-     dX,G0,G1,H0,H1,I0,I1,J0,J1)   &
+     dX,                           &
+     X1,X2,X3,X4,                  &
+     E1,E2,E3,E4)                  &
   bind(C, name="IGA_GeometryMap_3D")
   use PetIGA
   implicit none
@@ -285,31 +287,29 @@ pure subroutine IGA_GeometryMap_3D(&
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: dX(nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: G0(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: G1(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: H0(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: H1(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: I0(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: I1(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: J0(dim**5,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: J1(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim**2,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim**3,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim**2,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim**3,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(dim**5,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call GeometryMap(&
           order,nen,X,&
-          M0(:,:,q),M1(:,:,q),&
-          M2(:,:,q),M3(:,:,q),M4(:,:,q),&
+          M0(:,q),&
+          M1(:,q),M2(:,q),M3(:,q),M4(:,q),&
           dX(q),&
-          G0(:,q),G1(:,q),&
-          H0(:,q),H1(:,q),&
-          I0(:,q),I1(:,q),&
-          J0(:,q),J1(:,q))
+          X1(:,q),X2(:,q),X3(:,q),X4(:,q),&
+          E1(:,q),E2(:,q),E3(:,q),E4(:,q))
   end do
 contains
 include 'petigageo.f90.in'
@@ -333,23 +333,24 @@ pure subroutine IGA_ShapeFuns_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim**3,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim**4,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(dim**5,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(dim**0,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(dim**1,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4,nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(dim**0*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(dim**1*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4*nen,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
+  N0 = M0 ! 0th derivatives
   do q=1,nqp
      call ShapeFunctions(&
           order,nen,&
           E1(:,q),E2(:,q),E3(:,q),E4(:,q),&
-          M0(:,:,q),M1(:,:,q),M2(:,:,q),M3(:,:,q),M4(:,:,q),&
-          N0(:,:,q),N1(:,:,q),N2(:,:,q),N3(:,:,q),N4(:,:,q))
+          M1(:,q),M2(:,q),M3(:,q),M4(:,q),&
+          N1(:,q),N2(:,q),N3(:,q),N4(:,q))
   end do
 contains
 include 'petigamap.f90.in'

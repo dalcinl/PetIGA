@@ -853,46 +853,46 @@ PetscErrorCode IGAElementBuildShapeFuns(IGAElement element)
     PetscInt nen  = element->nen;
     PetscReal *X  = element->geometryX;
     PetscReal **M = element->basis;
-    PetscReal *J  = element->detX;
-    PetscReal *G0 = element->gradX[0];
-    PetscReal *G1 = element->gradX[1];
-    PetscReal *H0 = element->hessX[0];
-    PetscReal *H1 = element->hessX[1];
-    PetscReal *I0 = element->der3X[0];
-    PetscReal *I1 = element->der3X[1];
-    PetscReal *J0 = element->der4X[0];
-    PetscReal *J1 = element->der4X[1];
+    PetscReal *dX = element->detX;
+    PetscReal *X1 = element->gradX[0];
+    PetscReal *X2 = element->hessX[0];
+    PetscReal *X3 = element->der3X[0];
+    PetscReal *X4 = element->der4X[0];
+    PetscReal *E1 = element->gradX[1];
+    PetscReal *E2 = element->hessX[1];
+    PetscReal *E3 = element->der3X[1];
+    PetscReal *E4 = element->der4X[1];
     PetscReal **N = element->shape;
     /* */
     switch (element->dim) {
     case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 2: IGA_GeometryMap_2D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 1: IGA_GeometryMap_1D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     }
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     case 2: IGA_ShapeFuns_2D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     case 1: IGA_ShapeFuns_1D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     }
     /* */
     if (PetscLikely(!element->parent->collocation))
-      for (q=0; q<nqp; q++) element->detJac[q] *= J[q];
+      for (q=0; q<nqp; q++) element->detJac[q] *= dX[q];
   }
   PetscFunctionReturn(0);
 }
@@ -1043,15 +1043,15 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
     PetscInt nen  = element->nen;
     PetscReal *X  = element->geometryX;
     PetscReal **M = element->basis;
-    PetscReal *J  = element->detX;
-    PetscReal *G0 = element->gradX[0];
-    PetscReal *G1 = element->gradX[1];
-    PetscReal *H0 = element->hessX[0];
-    PetscReal *H1 = element->hessX[1];
-    PetscReal *I0 = element->der3X[0];
-    PetscReal *I1 = element->der3X[1];
-    PetscReal *J0 = element->der4X[0];
-    PetscReal *J1 = element->der4X[1];
+    PetscReal *dX = element->detX;
+    PetscReal *X1 = element->gradX[0];
+    PetscReal *X2 = element->hessX[0];
+    PetscReal *X3 = element->der3X[0];
+    PetscReal *X4 = element->der4X[0];
+    PetscReal *E1 = element->gradX[1];
+    PetscReal *E2 = element->hessX[1];
+    PetscReal *E3 = element->der3X[1];
+    PetscReal *E4 = element->der4X[1];
     PetscReal *S  = element->detS;
     PetscReal *n  = element->normal;
     PetscReal **N = element->shape;
@@ -1059,27 +1059,27 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
     switch (element->dim) {
     case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 2: IGA_GeometryMap_2D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     case 1: IGA_GeometryMap_1D(ord,nqp,nen,X,
                                M[0],M[1],M[2],M[3],M[4],
-                               J,G0,G1,H0,H1,I0,I1,J0,J1); break;
+                               dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
     }
-    for (q=0; q<nqp; q++) IGA_GetNormal(dim,axis,side,&G0[q*dim*dim],&S[q],&n[q*dim]);
+    for (q=0; q<nqp; q++) IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&S[q],&n[q*dim]);
     /* */
     switch (element->dim) {
     case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     case 2: IGA_ShapeFuns_2D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     case 1: IGA_ShapeFuns_1D(ord,nqp,nen,
-                             G1,H1,I1,J1,
+                             E1,E2,E3,E4,
                              M[0],M[1],M[2],M[3],M[4],
                              N[0],N[1],N[2],N[3],N[4]); break;
     }

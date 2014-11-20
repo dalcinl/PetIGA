@@ -420,7 +420,7 @@ module PetIGA
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:)   ! nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DOF)            ! dof
-      ! V = matmul(N,transpose(U))
+      ! V = MATMUL(N,transpose(U))
       integer a
       V = 0
       do a = 1, size(U,2) ! nen
@@ -433,7 +433,7 @@ module PetIGA
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)   ! nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM)            ! dim
-      !V = matmul(N,U)
+      ! V = MATMUL(N,U)
       integer a
       V = 0
       do a = 1, size(U,1) ! nen
@@ -446,7 +446,7 @@ module PetIGA
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dof,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V(DIM,DOF)        ! dim,dof
-      ! V = matmul(N,transpose(U))
+      ! V = MATMUL(N,transpose(U))
       integer a, c
       V = 0
       do a = 1, size(U,2) ! nen
