@@ -52,7 +52,7 @@ pure subroutine Rationalize(&
   end do; end do; end do
   R3 = R3 / W0
   !
-  if (order < 3) return
+  if (order < 4) return
   R4 = 0 ! XXX Implement
   R4 = R4 / W0
   !
