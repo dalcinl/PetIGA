@@ -305,10 +305,10 @@ static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
     ierr = PetscOptionsReal("-ts_alpha_gamma",  "algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_beta",   "algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   NULL);CHKERRQ(ierr);
     ierr = TSAlpha2SetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma,th->Beta);CHKERRQ(ierr);
+    ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
+    ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
   }
   ierr = PetscOptionsTail();CHKERRQ(ierr);
-  ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
-  ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
