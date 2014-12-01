@@ -9,6 +9,7 @@
 
 #include <petsc.h>
 #include <petsc-private/petscimpl.h>
+#include <petscts1.h>
 #include <petscts2.h>
 
 typedef ISLocalToGlobalMapping LGMap;

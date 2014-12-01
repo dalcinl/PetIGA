@@ -168,19 +168,33 @@ runex0e_1 runex0e_4 \
 Test_SNES_2D.rm
 
 
-Oscillator: Oscillator.o chkopts
+Oscillator1: Oscillator1.o chkopts
 	${CLINKER} -o $@ $< ${PETIGA_LIB}
 	${RM} -f $<
 runex20a:
-	-@./Oscillator ${OPTS} -ts_max_steps 10
+	-@./Oscillator1 ${OPTS} -ts_max_steps 10
 runex20b:
-	-@./Oscillator ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
+	-@./Oscillator1 ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
 runex20c:
-	-@./Oscillator ${OPTS} -damping 0.1
-Oscillator = \
-Oscillator.PETSc \
+	-@./Oscillator1 ${OPTS} -ts_alpha_adapt -damping 0.1
+Oscillator1 = \
+Oscillator1.PETSc \
 runex20a runex20b runex20c \
-Oscillator.rm
+Oscillator1.rm
+
+Oscillator2: Oscillator2.o chkopts
+	${CLINKER} -o $@ $< ${PETIGA_LIB}
+	${RM} -f $<
+runex21a:
+	-@./Oscillator2 ${OPTS} -ts_max_steps 10
+runex21b:
+	-@./Oscillator2 ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
+runex21c:
+	-@./Oscillator2 ${OPTS} -damping 0.1
+Oscillator2 = \
+Oscillator2.PETSc \
+runex20a runex20b runex20c \
+Oscillator2.rm
 
 
 ConvTest: ConvTest.o chkopts
@@ -194,7 +208,8 @@ TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAGeometryMap) \
 		 $(IGAProbe) \
 		 $(Test_SNES_2D) \
-		 $(Oscillator)
+		 $(Oscillator1) \
+		 $(Oscillator2)
 TESTEXAMPLES_FORTRAN =
 
 .PHONY: test-all

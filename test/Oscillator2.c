@@ -126,7 +126,6 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
   TSConvergedReason reason;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  if (i<0) PetscFunctionReturn(0); /*XXX temporary petsc-dev fix */
 
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
   ierr = TSGetSolution2(ts,&X,&V);CHKERRQ(ierr);
@@ -164,7 +163,7 @@ int main(int argc, char *argv[]) {
 
   user.Omega = 1.0;
   user.Xi    = 0.0;
-  ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator Options","TS");CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator2 Options","TS");CHKERRQ(ierr);
   ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-damping",  "Damping",  __FILE__,user.Xi,   &user.Xi,   NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-output","Output",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
@@ -190,9 +189,7 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&R);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 
-  if (output[0]) {
-    ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);
-  }
+  if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&X);CHKERRQ(ierr);
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&V);CHKERRQ(ierr);
