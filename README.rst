@@ -46,7 +46,7 @@ the code and build the PetIGA library::
 
 
 Scripting Support
---------------
+-----------------
 
 PetIGA is designed to be efficient and as such, we do not directly do
 things like output VTK files suitable for viewing the solution. We do
@@ -60,7 +60,7 @@ found `here <https://petiga-igakit.readthedocs.org>`_.
 
 
 Citation
-------
+--------
 
 If you find PetIGA helpful in conducting research projects, we would
 appreciate a citation to the following article::
