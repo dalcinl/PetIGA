@@ -2,6 +2,7 @@
   Code for timestepping with implicit generalized-\alpha method
   for first order systems.
 */
+#include <petscts1.h>
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
 
 static PetscBool  cited = PETSC_FALSE;
@@ -35,16 +36,15 @@ static PetscErrorCode TSRollBack_Alpha(TS);
 
 typedef struct {
 
-  Vec X0,Xa,X1;
-  Vec V0,Va,V1;
-  Vec vec_sol_prev;
+  PetscReal stage_time;
+  PetscReal shift;
+  Vec       X0,Xa,X1;
+  Vec       V0,Va,V1;
+  Vec       vec_sol_prev;
 
   PetscReal Alpha_m;
   PetscReal Alpha_f;
   PetscReal Gamma;
-
-  PetscReal stage_time;
-  PetscReal shift;
 
   PetscBool    adapt;
   PetscInt     order;
@@ -56,11 +56,11 @@ typedef struct {
 #define __FUNCT__ "TSStep_Alpha"
 static PetscErrorCode TSStep_Alpha(TS ts)
 {
-  TS_Alpha            *th = (TS_Alpha*)ts->data;
-  PetscInt            its,lits,reject,next_scheme;
-  PetscReal           next_time_step;
-  PetscBool           stageok,accept = PETSC_TRUE;
-  PetscErrorCode      ierr;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscInt       its,lits,reject,next_scheme;
+  PetscReal      next_time_step;
+  PetscBool      stageok,accept = PETSC_TRUE;
+  PetscErrorCode ierr;
 
   PetscFunctionBegin;
   ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
@@ -129,7 +129,7 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool 
   } else if (order && order == th->order-1) {
     PetscReal dt = ts->time_step;
     PetscReal dt_prev = ts->steps ? ts->time_step_prev : ts->time_step;
-    PetscReal a = (dt+dt_prev)/dt;
+    PetscReal a = 1 + dt_prev/dt;
     PetscScalar scals[3]; Vec vecs[3];
     scals[0] = (a+1)/a;   vecs[0] = th->X1;
     scals[1] = -a/(a-1);  vecs[1] = th->X0;
@@ -167,8 +167,6 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
   ierr = VecAXPY(X,(1-th->Gamma)*dt,th->V0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-/*------------------------------------------------------------*/
 
 #undef __FUNCT__
 #define __FUNCT__ "TSReset_Alpha"
@@ -290,15 +288,17 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
   PetscFunctionBegin;
   ierr = PetscOptionsHead("Alpha ODE solver options");CHKERRQ(ierr);
   {
-    PetscBool flag;
+    PetscBool flg;
     PetscReal radius = 1.0;
-    ierr = PetscOptionsReal("-ts_alpha_radius","spectral radius","TSAlphaSetRadius",radius,&radius,&flag);CHKERRQ(ierr);
-    if (flag) { ierr = TSAlphaSetRadius(ts,radius);CHKERRQ(ierr); }
+    PetscBool adapt  = th->adapt;
+    ierr = PetscOptionsReal("-ts_alpha_radius","Spectral radius (high-frequency dissipation)","TSAlphaSetRadius",radius,&radius,&flg);CHKERRQ(ierr);
+    if (flg) { ierr = TSAlphaSetRadius(ts,radius);CHKERRQ(ierr); }
     ierr = PetscOptionsReal("-ts_alpha_alpha_m","Algoritmic parameter alpha_m","TSAlphaSetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_alpha_f","Algoritmic parameter alpha_f","TSAlphaSetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_gamma","Algoritmic parameter gamma","TSAlphaSetParams",th->Gamma,&th->Gamma,NULL);CHKERRQ(ierr);
     ierr = TSAlphaSetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma);CHKERRQ(ierr);
-    ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","",th->adapt,&th->adapt,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","TSAlpha2UseAdapt",adapt,&adapt,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = TSAlphaUseAdapt(ts,adapt);CHKERRQ(ierr);}
     ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
     ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
   }
@@ -311,12 +311,12 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
 static PetscErrorCode TSView_Alpha(TS ts,PetscViewer viewer)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscBool      iascii;
+  PetscBool      ascii;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&iascii);CHKERRQ(ierr);
-  if (iascii)   {ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%g, Alpha_f=%g, Gamma=%g\n",(double)th->Alpha_m,(double)th->Alpha_f,(double)th->Gamma);CHKERRQ(ierr);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&ascii);CHKERRQ(ierr);
+  if (ascii)    {ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%g, Alpha_f=%g, Gamma=%g\n",(double)th->Alpha_m,(double)th->Alpha_f,(double)th->Gamma);CHKERRQ(ierr);}
   if (ts->snes) {ierr = SNESView(ts->snes,viewer);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
@@ -382,6 +382,7 @@ static PetscErrorCode TSAlphaGetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal 
 }
 
 /* ------------------------------------------------------------ */
+
 /*MC
       TSALPHA - DAE solver using the implicit Generalized-Alpha
                 method for first-order systems
@@ -399,12 +400,12 @@ static PetscErrorCode TSAlphaGetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal 
   Dynamics with Improved Numerical Dissipation: The Generalized-alpha
   Method" ASME Journal of Applied Mechanics, 60, 371:375, 1993.
 
-.seealso:  TSCreate(), TS, TSSetType()
-
+.seealso:  TS, TSCreate(), TSSetType()
 M*/
+EXTERN_C_BEGIN
 #undef __FUNCT__
 #define __FUNCT__ "TSCreate_Alpha1"
-PETSC_EXTERN PetscErrorCode TSCreate_Alpha1(TS ts)
+PetscErrorCode TSCreate_Alpha1(TS ts)
 {
   TS_Alpha       *th;
   PetscErrorCode ierr;
@@ -414,13 +415,13 @@ PETSC_EXTERN PetscErrorCode TSCreate_Alpha1(TS ts)
   ts->ops->destroy        = TSDestroy_Alpha;
   ts->ops->view           = TSView_Alpha;
   ts->ops->setup          = TSSetUp_Alpha;
+  ts->ops->setfromoptions = TSSetFromOptions_Alpha;
   ts->ops->step           = TSStep_Alpha;
   ts->ops->evaluatestep   = TSEvaluateStep_Alpha;
 #if 0==PETSC_VERSION_LT(3,5,0)
   ts->ops->rollback       = TSRollBack_Alpha;
 #endif
   ts->ops->interpolate    = TSInterpolate_Alpha;
-  ts->ops->setfromoptions = TSSetFromOptions_Alpha;
   ts->ops->snesfunction   = SNESTSFormFunction_Alpha;
   ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha;
 
@@ -443,8 +444,13 @@ PETSC_EXTERN PetscErrorCode TSCreate_Alpha1(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaSetParams_C",TSAlphaSetParams_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaGetParams_C",TSAlphaGetParams_Alpha);CHKERRQ(ierr);
 
+#if PETSC_VERSION_LE(3,3,0)
+  if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
+#endif
+
   PetscFunctionReturn(0);
 }
+EXTERN_C_END
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlphaUseAdapt"
