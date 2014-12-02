@@ -11,8 +11,10 @@ PETSC_EXTERN PetscErrorCode TSComputeIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscRe
 PETSC_EXTERN PetscErrorCode TSSetSolution2(TS,Vec,Vec);
 PETSC_EXTERN PetscErrorCode TSGetSolution2(TS,Vec*,Vec*);
 PETSC_EXTERN PetscErrorCode TSSolve2(TS,Vec,Vec);
+PETSC_EXTERN PetscErrorCode TSInterpolate2(TS,PetscReal,Vec,Vec);
 
 #define TSALPHA2 "alpha2"
+PETSC_EXTERN PetscErrorCode TSAlpha2UseAdapt(TS,PetscBool);
 PETSC_EXTERN PetscErrorCode TSAlpha2SetRadius(TS,PetscReal);
 PETSC_EXTERN PetscErrorCode TSAlpha2SetParams(TS,PetscReal,PetscReal,PetscReal,PetscReal);
 PETSC_EXTERN PetscErrorCode TSAlpha2GetParams(TS,PetscReal*,PetscReal*,PetscReal*,PetscReal*);

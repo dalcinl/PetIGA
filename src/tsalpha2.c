@@ -1,7 +1,35 @@
+/*
+  Code for timestepping with implicit generalized-\alpha method
+  for second order systems.
+*/
 #include <petscts2.h>
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
 
+static PetscBool  cited = PETSC_FALSE;
+static const char citation[] =
+  "@article{Chung1993,\n"
+  "  title   = {A Time Integration Algorithm for Structural Dynamics with Improved Numerical Dissipation: The Generalized-$\\alpha$ Method},\n"
+  "  author  = {J. Chung, G. M. Hubert},\n"
+  "  journal = {ASME Journal of Applied Mechanics},\n"
+  "  volume  = {60},\n"
+  "  number  = {2},\n"
+  "  pages   = {371--375},\n"
+  "  year    = {1993},\n"
+  "  issn    = {0021-8936},\n"
+  "  doi     = {http://dx.doi.org/10.1115/1.2900803}\n}\n";
+
+#if PETSC_VERSION_LT(3,5,0)
+#define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
+#define TSPostStage(ts,t,n,x) 0
+static PetscErrorCode TSRollBack_Alpha2(TS);
+#define TSRollBack(ts) \
+  TSRollBack_Alpha2(ts); \
+  ts->ptime -= next_time_step; \
+  ts->time_step = next_time_step;
+#endif
+
 #if PETSC_VERSION_LT(3,4,0)
+#define PetscObjectComm(o) ((o)->comm)
 #define PetscObjectComposeFunction(o,n,f) \
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
 #endif
@@ -17,23 +45,197 @@ typedef struct {
   Vec       X0,Xa,X1;
   Vec       V0,Va,V1;
   Vec       A0,Aa,A1;
-  int      (*StageTime)(TS);
-  int      (*StageVecs)(TS,Vec);
-
-  TSIFunction2 Function;
-  void         *FunCtx;
-  TSIJacobian2 Jacobian;
-  void         *JacCtx;
+  Vec       vec_sol_prev;
 
   PetscReal Alpha_m;
   PetscReal Alpha_f;
   PetscReal Beta;
   PetscReal Gamma;
 
+  PetscBool    adapt;
+  PetscInt     order;
+  TSStepStatus status;
+
+  TSIFunction2 Function;
+  void         *FunCtx;
+  TSIJacobian2 Jacobian;
+  void         *JacCtx;
+
 } TS_Alpha2;
 
-PETSC_EXTERN PetscLogEvent TS_FunctionEval;
-PETSC_EXTERN PetscLogEvent TS_JacobianEval;
+#undef __FUNCT__
+#define __FUNCT__ "TSAlpha2_StageTime"
+static PetscErrorCode TSAlpha2_StageTime(TS ts)
+{
+  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  PetscReal t  = ts->ptime;
+  PetscReal dt = ts->time_step;
+  PetscReal Gamma   = th->Gamma;
+  PetscReal Beta    = th->Beta;
+  PetscReal Alpha_m = th->Alpha_m;
+  PetscReal Alpha_f = th->Alpha_f;
+
+  PetscFunctionBegin;
+  th->stage_time = t + Alpha_f*dt;
+  th->scale_F = 1/Alpha_f;
+  th->shift_V = Gamma/(dt*Beta);
+  th->shift_A = Alpha_m/(Alpha_f*dt*dt*Beta);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSAlpha2_StageVecs"
+static PetscErrorCode TSAlpha2_StageVecs(TS ts,Vec X)
+{
+  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  Vec            X1 = X,      V1 = th->V1, A1 = th->A1;
+  Vec            Xa = th->Xa, Va = th->Va, Aa = th->Aa;
+  Vec            X0 = th->X0, V0 = th->V0, A0 = th->A0;
+  PetscReal      dt = ts->time_step;
+  PetscReal      Gamma   = th->Gamma;
+  PetscReal      Beta    = th->Beta;
+  PetscReal      Alpha_m = th->Alpha_m;
+  PetscReal      Alpha_f = th->Alpha_f;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  /* A1 = ... */
+  ierr = VecWAXPY(A1,-1.0,X0,X1);CHKERRQ(ierr);
+  ierr = VecAXPY (A1,-dt,V0);CHKERRQ(ierr);
+  ierr = VecAXPBY(A1,-(1-2*Beta)/(2*Beta),1/(dt*dt*Beta),A0);CHKERRQ(ierr);
+  /* V1 = ... */
+  ierr = VecWAXPY(V1,(1.0-Gamma)/Gamma,A0,A1);CHKERRQ(ierr);
+  ierr = VecAYPX (V1,dt*Gamma,V0);CHKERRQ(ierr);
+  /* Xa = X0 + Alpha_f*(X1-X0) */
+  ierr = VecWAXPY(Xa,-1.0,X0,X1);CHKERRQ(ierr);
+  ierr = VecAYPX (Xa,Alpha_f,X0);CHKERRQ(ierr);
+  /* Va = V0 + Alpha_f*(V1-V0) */
+  ierr = VecWAXPY(Va,-1.0,V0,V1);CHKERRQ(ierr);
+  ierr = VecAYPX (Va,Alpha_f,V0);CHKERRQ(ierr);
+  /* Aa = A0 + Alpha_m*(A1-A0) */
+  ierr = VecWAXPY(Aa,-1.0,A0,A1);CHKERRQ(ierr);
+  ierr = VecAYPX (Aa,Alpha_m,A0);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSStep_Alpha2"
+static PetscErrorCode TSStep_Alpha2(TS ts)
+{
+  TS_Alpha2      *th    = (TS_Alpha2*)ts->data;
+  PetscInt       its,lits,reject,next_scheme;
+  PetscReal      next_time_step;
+  PetscBool      stageok,accept = PETSC_TRUE;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
+
+  if (th->vec_sol_prev) {ierr = VecCopy(ts->steps ? th->X0 : ts->vec_sol,th->vec_sol_prev);CHKERRQ(ierr);}
+
+  next_time_step = ts->time_step;
+  th->status = TS_STEP_INCOMPLETE;
+  ierr = VecCopy(th->vec_sol_X,th->X0);CHKERRQ(ierr);
+  ierr = VecCopy(th->vec_sol_V,th->V0);CHKERRQ(ierr);
+  ierr = VecCopy(th->A1,th->A0);CHKERRQ(ierr);
+
+  for (reject=0; reject<ts->max_reject && !ts->reason && th->status != TS_STEP_COMPLETE; reject++) {
+
+    ierr = TSAlpha2_StageTime(ts);CHKERRQ(ierr);
+    ierr = TSPreStep(ts);CHKERRQ(ierr);
+
+    ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
+    ierr = VecCopy(th->X0,th->X1);CHKERRQ(ierr);
+    ierr = VecCopy(th->V0,th->V1);CHKERRQ(ierr);
+    ierr = SNESSolve(ts->snes,NULL,th->X1);CHKERRQ(ierr);
+    ierr = SNESGetIterationNumber(ts->snes,&its);CHKERRQ(ierr);
+    ierr = SNESGetLinearSolveIterations(ts->snes,&lits);CHKERRQ(ierr);
+    ts->snes_its += its; ts->ksp_its += lits;
+    ierr = TSPostStage(ts,th->stage_time,0,&th->X1);CHKERRQ(ierr);
+    ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
+    if (!stageok) {accept = PETSC_FALSE; ts->reject++; continue;}
+
+    ierr = VecCopy(th->X1,th->vec_sol_X);CHKERRQ(ierr);
+    ierr = VecCopy(th->V1,th->vec_sol_V);CHKERRQ(ierr);
+    th->status = TS_STEP_PENDING;
+
+    ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
+    ierr = TSAdaptCandidateAdd(ts->adapt,"",th->order,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = TSAdaptChoose(ts->adapt,ts,ts->time_step,&next_scheme,&next_time_step,&accept);CHKERRQ(ierr);
+    if (!accept) {
+      ts->ptime += next_time_step;
+      th->status = TS_STEP_INCOMPLETE;
+      ierr = TSRollBack(ts);CHKERRQ(ierr);
+      ts->reject++; continue;
+    }
+
+    ts->ptime += ts->time_step;
+    ts->time_step = next_time_step;
+    th->status = TS_STEP_COMPLETE;
+    ts->steps++;
+  }
+
+  if (reject >= ts->max_reject) {
+    ts->reason = TS_DIVERGED_STEP_REJECTED;
+    ierr = PetscInfo3(ts,"Step=%D, step rejections %D greater than current TS allowed %D, stopping solve\n",ts->steps,reject,ts->max_reject);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSEvaluateStep_Alpha2"
+static PetscErrorCode TSEvaluateStep_Alpha2(TS ts,PetscInt order,Vec U,PetscBool *done)
+{
+  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  if (order == 0) SETERRQ(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"No time-step adaptivity implemented for 1st order alpha method; Run with -ts_adapt_type none");
+  if (order == th->order) {
+    ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
+  } else if (order && order == th->order-1) {
+    PetscReal dt = ts->time_step;
+    PetscReal dt_prev = ts->steps ? ts->time_step_prev : ts->time_step;
+    PetscReal a = 1 + dt_prev/dt;
+    PetscScalar scals[3]; Vec vecs[3];
+    scals[0] = (a+1)/a;   vecs[0] = th->X1;
+    scals[1] = -a/(a-1);  vecs[1] = th->X0;
+    scals[2] = 1/a/(a-1); vecs[2] = th->vec_sol_prev;
+    ierr = VecCopy(th->X0,U);CHKERRQ(ierr);
+    ierr = VecMAXPY(U,3,scals,vecs);CHKERRQ(ierr);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSRollBack_Alpha2"
+static PetscErrorCode TSRollBack_Alpha2(TS ts)
+{
+  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = VecCopy(th->X0,th->vec_sol_X);CHKERRQ(ierr);
+  ierr = VecCopy(th->V0,th->vec_sol_V);CHKERRQ(ierr);
+  th->status = TS_STEP_INCOMPLETE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSInterpolate_Alpha2"
+static PetscErrorCode TSInterpolate_Alpha2(TS ts,PetscReal t,Vec X)
+{
+  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  Vec            V;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = VecDuplicate(th->vec_sol_V,&V);CHKERRQ(ierr);
+  ierr = TSInterpolate2(ts,t,X,V);CHKERRQ(ierr);
+  ierr = VecDestroy(&V);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormFunction_Alpha2"
@@ -43,7 +245,7 @@ static PetscErrorCode SNESTSFormFunction_Alpha2(PETSC_UNUSED SNES snes,Vec X,Vec
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = th->StageVecs(ts,X);CHKERRQ(ierr);
+  ierr = TSAlpha2_StageVecs(ts,X);CHKERRQ(ierr);
   if (th->Function) {
     /* F = Function(ta,Xa,Va,Aa) */
     PetscReal ta = th->stage_time;
@@ -72,8 +274,8 @@ static PetscErrorCode SNESTSFormJacobian_Alpha2(PETSC_UNUSED SNES snes,
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
-  ierr = th->StageVecs(ts,X);CHKERRQ(ierr);
   if (th->Jacobian) {
     /* J,P = Jacobian(ta,Xa,Va,Aa) */
     PetscReal ta = th->stage_time;
@@ -100,128 +302,15 @@ static PetscErrorCode SNESTSFormJacobian_Alpha2(PETSC_UNUSED SNES snes,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSStep_Alpha2"
-static PetscErrorCode TSStep_Alpha2(TS ts)
-{
-  TS_Alpha2           *th    = (TS_Alpha2*)ts->data;
-  PetscInt            its,lits,reject;
-  PetscReal           next_time_step;
-  SNESConvergedReason snesreason = SNES_CONVERGED_ITERATING;
-  PetscErrorCode      ierr;
-  PetscFunctionBegin;
-
-  if (ts->steps == 0) {
-    ierr = VecSet(th->A0,0.0);CHKERRQ(ierr);
-  } else {
-    ierr = VecCopy(th->A1,th->A0);CHKERRQ(ierr);
-  }
-  ierr = VecCopy(th->vec_sol_X,th->X0);CHKERRQ(ierr);
-  ierr = VecCopy(th->vec_sol_V,th->V0);CHKERRQ(ierr);
-  ierr = TSPreStep(ts);CHKERRQ(ierr);
-
-  next_time_step = ts->time_step;
-  for (reject=0; reject<ts->max_reject; reject++,ts->reject++) {
-    ts->time_step  = next_time_step;
-    ierr = th->StageTime(ts);CHKERRQ(ierr);
-    ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
-    /* nonlinear solve R(X,V,A) = 0 */
-    ierr = VecCopy(th->X0,th->X1);CHKERRQ(ierr);
-    ierr = SNESSolve(ts->snes,NULL,th->X1);CHKERRQ(ierr);
-    ierr = th->StageVecs(ts,th->X1);CHKERRQ(ierr);
-    /* nonlinear solve convergence */
-    ierr = SNESGetConvergedReason(ts->snes,&snesreason);CHKERRQ(ierr);
-    if (snesreason < 0 /*&& !th->adapt*/) break;
-    ierr = SNESGetIterationNumber(ts->snes,&its);CHKERRQ(ierr);
-    ierr = SNESGetLinearSolveIterations(ts->snes,&lits);CHKERRQ(ierr);
-    ts->snes_its += its; ts->ksp_its += lits;
-    ts->snes_its += its; ts->ksp_its += lits;
-    ierr = PetscInfo3(ts,"step=%D, nonlinear solve iterations=%D, linear solve iterations=%D\n",ts->steps,its,lits);CHKERRQ(ierr);
-    /* time step adaptativity */
-    break; /* XXX Implement time adaptativity !!! */
-  }
-  if (snesreason < 0 && ts->max_snes_failures > 0 && ++ts->num_snes_failures >= ts->max_snes_failures) {
-    ts->reason = TS_DIVERGED_NONLINEAR_SOLVE;
-    ierr = PetscInfo2(ts,"Step=%D, nonlinear solve solve failures %D greater than current TS allowed, stopping solve\n",ts->steps,ts->num_snes_failures);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
-  }
-  if (reject >= ts->max_reject) {
-    ts->reason = TS_DIVERGED_STEP_REJECTED;
-    ierr = PetscInfo2(ts,"Step=%D, step rejections %D greater than current TS allowed, stopping solve\n",ts->steps,reject);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
-  }
-
-  ierr = VecCopy(th->X1,th->vec_sol_X);CHKERRQ(ierr);
-  ierr = VecCopy(th->V1,th->vec_sol_V);CHKERRQ(ierr);
-  ts->ptime += ts->time_step;
-  ts->time_step = next_time_step;
-  ts->steps++;
-
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSUpdateStageTime_Alpha2"
-static PetscErrorCode TSUpdateStageTime_Alpha2(TS ts)
-{
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
-  PetscReal t = ts->ptime;
-  PetscReal dt = ts->time_step;
-  PetscReal Gamma   = th->Gamma;
-  PetscReal Beta    = th->Beta;
-  PetscReal Alpha_m = th->Alpha_m;
-  PetscReal Alpha_f = th->Alpha_f;
-  PetscFunctionBegin;
-  th->stage_time = t + Alpha_f*dt;
-  th->scale_F = 1/Alpha_f;
-  th->shift_V = Gamma/(dt*Beta);
-  th->shift_A = Alpha_m/(Alpha_f*dt*dt*Beta);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSUpdateStageVecs_Alpha2"
-static PetscErrorCode TSUpdateStageVecs_Alpha2(TS ts,Vec X)
-{
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
-  Vec            X1 = X,      V1 = th->V1, A1 = th->A1;
-  Vec            Xa = th->Xa, Va = th->Va, Aa = th->Aa;
-  Vec            X0 = th->X0, V0 = th->V0, A0 = th->A0;
-  PetscReal      dt = ts->time_step;
-  PetscReal      Gamma   = th->Gamma;
-  PetscReal      Beta    = th->Beta;
-  PetscReal      Alpha_m = th->Alpha_m;
-  PetscReal      Alpha_f = th->Alpha_f;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-
-  /* A1 = ... */
-  ierr = VecWAXPY(A1,-1.0,X0,X1);CHKERRQ(ierr);
-  ierr = VecAXPY (A1,-dt,V0);CHKERRQ(ierr);
-  ierr = VecAXPBY(A1,-(1-2*Beta)/(2*Beta),1/(dt*dt*Beta),A0);CHKERRQ(ierr);
-  /* V1 = ... */
-  ierr = VecWAXPY(V1,(1.0-Gamma)/Gamma,A0,A1);CHKERRQ(ierr);
-  ierr = VecAYPX (V1,dt*Gamma,V0);CHKERRQ(ierr);
-
-  /* Xa = X0 + Alpha_f*(X1-X0) */
-  ierr = VecWAXPY(Xa,-1.0,X0,X1);CHKERRQ(ierr);
-  ierr = VecAYPX (Xa,Alpha_f,X0);CHKERRQ(ierr);
-  /* Va = V0 + Alpha_f*(V1-V0) */
-  ierr = VecWAXPY(Va,-1.0,V0,V1);CHKERRQ(ierr);
-  ierr = VecAYPX (Va,Alpha_f,V0);CHKERRQ(ierr);
-  /* Aa = A0 + Alpha_m*(A1-A0) */
-  ierr = VecWAXPY(Aa,-1.0,A0,A1);CHKERRQ(ierr);
-  ierr = VecAYPX (Aa,Alpha_m,A0);CHKERRQ(ierr);
-
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "TSReset_Alpha2"
 static PetscErrorCode TSReset_Alpha2(TS ts)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
+  ierr = VecDestroy(&th->vec_sol_X);CHKERRQ(ierr);
+  ierr = VecDestroy(&th->vec_sol_V);CHKERRQ(ierr);
   ierr = VecDestroy(&th->X0);CHKERRQ(ierr);
   ierr = VecDestroy(&th->Xa);CHKERRQ(ierr);
   ierr = VecDestroy(&th->X1);CHKERRQ(ierr);
@@ -231,8 +320,7 @@ static PetscErrorCode TSReset_Alpha2(TS ts)
   ierr = VecDestroy(&th->A0);CHKERRQ(ierr);
   ierr = VecDestroy(&th->Aa);CHKERRQ(ierr);
   ierr = VecDestroy(&th->A1);CHKERRQ(ierr);
-  ierr = VecDestroy(&th->vec_sol_X);CHKERRQ(ierr);
-  ierr = VecDestroy(&th->vec_sol_V);CHKERRQ(ierr);
+  ierr = VecDestroy(&th->vec_sol_prev);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -241,6 +329,7 @@ static PetscErrorCode TSReset_Alpha2(TS ts)
 static PetscErrorCode TSDestroy_Alpha2(TS ts)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = TSReset_Alpha2(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
@@ -252,7 +341,9 @@ static PetscErrorCode TSDestroy_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",NULL);CHKERRQ(ierr);
   /* */
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
@@ -283,6 +374,14 @@ static PetscErrorCode TSSetUp_Alpha2(TS ts)
   ierr = VecDuplicate(ts->vec_sol,&th->A0);CHKERRQ(ierr);
   ierr = VecDuplicate(ts->vec_sol,&th->Aa);CHKERRQ(ierr);
   ierr = VecDuplicate(ts->vec_sol,&th->A1);CHKERRQ(ierr);
+  if (!th->adapt) {
+    ierr = TSAdaptDestroy(&ts->adapt);CHKERRQ(ierr);
+    ierr = TSGetAdapt(ts,&ts->adapt);CHKERRQ(ierr);
+    ierr = TSAdaptSetType(ts->adapt,TSADAPTNONE);CHKERRQ(ierr);
+  } else {
+    ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_prev);CHKERRQ(ierr);
+  }
+  ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -298,13 +397,16 @@ static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
   {
     PetscBool flg;
     PetscReal radius = 1.0;
-    ierr = PetscOptionsReal("-ts_alpha_radius", "spectral radius (high-frequency dissipation)","TSAlpha2SetRadius",radius,&radius,&flg);CHKERRQ(ierr);
+    PetscBool adapt  = th->adapt;
+    ierr = PetscOptionsReal("-ts_alpha_radius", "Spectral radius (high-frequency dissipation)","TSAlpha2SetRadius",radius,&radius,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlpha2SetRadius(ts,radius);CHKERRQ(ierr);}
-    ierr = PetscOptionsReal("-ts_alpha_alpha_m","algoritmic parameter alpha_m","TSAlpha2SetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_alpha_f","algoritmic parameter alpha_f","TSAlpha2SetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_gamma",  "algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_beta",   "algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_alpha_m","Algoritmic parameter alpha_m","TSAlpha2SetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_alpha_f","Algoritmic parameter alpha_f","TSAlpha2SetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_gamma",  "Algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_beta",   "Algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   NULL);CHKERRQ(ierr);
     ierr = TSAlpha2SetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma,th->Beta);CHKERRQ(ierr);
+    ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","TSAlpha2UseAdapt",adapt,&adapt,&flg);CHKERRQ(ierr);
+    if (flg) {ierr = TSAlpha2UseAdapt(ts,adapt);CHKERRQ(ierr);}
     ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
     ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
   }
@@ -322,20 +424,16 @@ static PetscErrorCode TSView_Alpha2(TS ts,PetscViewer viewer)
 
   PetscFunctionBegin;
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&ascii);CHKERRQ(ierr);
-  if (ascii) {
-    ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%g, Alpha_f=%g, Gamma=%g, Beta=%g\n",(double)th->Alpha_m,(double)th->Alpha_f,(double)th->Gamma,(double)th->Beta);CHKERRQ(ierr);
-  }
-  ierr = SNESView(ts->snes,viewer);CHKERRQ(ierr);
+  if (ascii)    {ierr = PetscViewerASCIIPrintf(viewer,"  Alpha_m=%g, Alpha_f=%g, Gamma=%g, Beta=%g\n",(double)th->Alpha_m,(double)th->Alpha_f,(double)th->Gamma,(double)th->Beta);CHKERRQ(ierr);}
+  if (ts->snes) {ierr = SNESView(ts->snes,viewer);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
 /* ------------------------------------------------------------ */
 
-EXTERN_C_BEGIN
-
 #undef __FUNCT__
 #define __FUNCT__ "TSSetIFunction2_Alpha2"
-PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ctx)
+static PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ctx)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -348,7 +446,7 @@ PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSetIJacobian2_Alpha2"
-PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx)
+static PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -361,7 +459,7 @@ PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIFunction2_Alpha2"
-PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
+static PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -378,7 +476,7 @@ PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Ve
 
 #undef __FUNCT__
 #define __FUNCT__ "TSComputeIJacobian2_Alpha2"
-PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
+static PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
@@ -395,10 +493,11 @@ PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Pe
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSetSolution2_Alpha2"
-PetscErrorCode TSSetSolution2_Alpha2(TS ts,Vec X,Vec V)
+static PetscErrorCode TSSetSolution2_Alpha2(TS ts,Vec X,Vec V)
 {
   TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = TSSetSolution(ts,X);CHKERRQ(ierr);
   /* set X */
@@ -414,10 +513,11 @@ PetscErrorCode TSSetSolution2_Alpha2(TS ts,Vec X,Vec V)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSGetSolution2_Alpha2"
-PetscErrorCode TSGetSolution2_Alpha2(TS ts,Vec *X, Vec *V)
+static PetscErrorCode TSGetSolution2_Alpha2(TS ts,Vec *X, Vec *V)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   if (X && !th->vec_sol_X && ts->vec_sol) {
     ierr = PetscObjectReference((PetscObject)ts->vec_sol);CHKERRQ(ierr);
@@ -433,9 +533,10 @@ PetscErrorCode TSGetSolution2_Alpha2(TS ts,Vec *X, Vec *V)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSolve2_Alpha2"
-PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
+static PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
 #if PETSC_VERSION_LE(3,3,0)
@@ -446,41 +547,76 @@ PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
   PetscFunctionReturn(0);
 }
 
-EXTERN_C_END
+#undef __FUNCT__
+#define __FUNCT__ "TSInterpolate2_Alpha2"
+static PetscErrorCode TSInterpolate2_Alpha2(TS ts,PetscReal t,Vec X,Vec V)
+{
+  TS_Alpha2     *th = (TS_Alpha2*)ts->data;
+  PetscReal      dt  = ts->ptime - t;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = VecCopy(th->vec_sol_V,V);CHKERRQ(ierr);
+  ierr = VecAXPY(V,-dt*(1-th->Gamma),th->A0);CHKERRQ(ierr);
+  ierr = VecAXPY(V,-dt*th->Gamma,th->A1);CHKERRQ(ierr);
+  ierr = VecCopy(th->vec_sol_X,X);CHKERRQ(ierr);
+  ierr = VecAXPY(X,-dt,V);CHKERRQ(ierr);
+  ierr = VecAXPY(X,-dt*dt*(0.5-th->Beta),th->A0);CHKERRQ(ierr);
+  ierr = VecAXPY(X,-dt*dt*th->Beta,th->A1);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 /* ------------------------------------------------------------ */
 
-EXTERN_C_BEGIN
+#undef __FUNCT__
+#define __FUNCT__ "TSAlpha2UseAdapt_Alpha2"
+static PetscErrorCode TSAlpha2UseAdapt_Alpha2(TS ts,PetscBool use)
+{
+  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+
+  PetscFunctionBegin;
+  if (use == th->adapt) PetscFunctionReturn(0);
+  if (ts->setupcalled) SETERRQ(PetscObjectComm((PetscObject)ts),PETSC_ERR_ORDER,"Cannot change adaptivity after TSSetUp()");
+  th->adapt = use;
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlpha2SetRadius_Alpha2"
-PetscErrorCode TSAlpha2SetRadius_Alpha2(TS ts,PetscReal radius)
+static PetscErrorCode TSAlpha2SetRadius_Alpha2(TS ts,PetscReal radius)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  PetscReal      alpha_m,alpha_f,gamma,beta;
+  PetscErrorCode ierr;
+
   PetscFunctionBegin;
-  th->Alpha_m = (2-radius)/(1+radius);
-  th->Alpha_f = 1/(1+radius);
-  th->Gamma   = 0.5 + th->Alpha_m - th->Alpha_f;
-  th->Beta    = 0.5 * (1 + th->Alpha_m - th->Alpha_f); th->Beta *= th->Beta;
+  alpha_m = (2-radius)/(1+radius);
+  alpha_f = 1/(1+radius);
+  gamma   = 0.5 + alpha_m - alpha_f;
+  beta    = 0.5 * (1 + alpha_m - alpha_f); beta *= beta;
+  ierr = TSAlpha2SetParams(ts,alpha_m,alpha_f,gamma,beta);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlpha2SetParams_Alpha2"
-PetscErrorCode TSAlpha2SetParams_Alpha2(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma,PetscReal beta)
+static PetscErrorCode TSAlpha2SetParams_Alpha2(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma,PetscReal beta)
 {
   TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  PetscReal tol = 100*PETSC_MACHINE_EPSILON;
+  PetscReal res = gamma - (0.5 + alpha_m - alpha_f);
+
   PetscFunctionBegin;
   th->Alpha_m = alpha_m;
   th->Alpha_f = alpha_f;
   th->Gamma   = gamma;
   th->Beta    = beta;
+  th->order   = (PetscAbsReal(res) < tol) ? 2 : 1;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlpha2GetParams_Alpha2"
-PetscErrorCode TSAlpha2GetParams_Alpha2(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,PetscReal *gamma,PetscReal *beta)
+static PetscErrorCode TSAlpha2GetParams_Alpha2(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,PetscReal *gamma,PetscReal *beta)
 {
   TS_Alpha2 *th = (TS_Alpha2*)ts->data;
   PetscFunctionBegin;
@@ -490,8 +626,6 @@ PetscErrorCode TSAlpha2GetParams_Alpha2(TS ts,PetscReal *alpha_m,PetscReal *alph
   if (beta)    *beta    = th->Beta;
   PetscFunctionReturn(0);
 }
-
-EXTERN_C_END
 
 /* ------------------------------------------------------------ */
 /*MC
@@ -505,8 +639,7 @@ EXTERN_C_END
   Dynamics with Improved Numerical Dissipation: The Generalized-alpha
   Method" ASME Journal of Applied Mechanics, 60, 371:375, 1993.
 
-.seealso:  TSCreate(), TS, TSSetType()
-
+.seealso:  TS, TSCreate(), TSSetType()
 M*/
 EXTERN_C_BEGIN
 #undef __FUNCT__
@@ -517,14 +650,19 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   PetscErrorCode ierr;
   PetscFunctionBegin;
 
-  ts->ops->step           = TSStep_Alpha2;
-  ts->ops->snesfunction   = SNESTSFormFunction_Alpha2;
-  ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha2;
   ts->ops->reset          = TSReset_Alpha2;
   ts->ops->destroy        = TSDestroy_Alpha2;
-  ts->ops->setup          = TSSetUp_Alpha2;
   ts->ops->view           = TSView_Alpha2;
+  ts->ops->setup          = TSSetUp_Alpha2;
   ts->ops->setfromoptions = TSSetFromOptions_Alpha2;
+  ts->ops->step           = TSStep_Alpha2;
+  ts->ops->evaluatestep   = TSEvaluateStep_Alpha2;
+#if 0==PETSC_VERSION_LT(3,5,0)
+  ts->ops->rollback       = TSRollBack_Alpha2;
+#endif
+  ts->ops->interpolate    = TSInterpolate_Alpha2;
+  ts->ops->snesfunction   = SNESTSFormFunction_Alpha2;
+  ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha2;
 
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",TSSetIFunction2_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",TSSetIJacobian2_Alpha2);CHKERRQ(ierr);
@@ -533,6 +671,7 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",TSInterpolate2_Alpha2);CHKERRQ(ierr);
 
 #if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(ts,TS_Alpha2,&th);CHKERRQ(ierr);
@@ -540,12 +679,16 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscNewLog(ts,&th);CHKERRQ(ierr);
 #endif
   ts->data = (void*)th;
+
   th->Alpha_m = 0.5;
   th->Alpha_f = 0.5;
   th->Gamma   = 0.5;
   th->Beta    = 0.25;
-  th->StageTime = TSUpdateStageTime_Alpha2;
-  th->StageVecs = TSUpdateStageVecs_Alpha2;
+
+  th->adapt = PETSC_FALSE;
+  th->order = 2;
+
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",TSAlpha2UseAdapt_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",TSAlpha2SetRadius_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
@@ -585,9 +728,9 @@ $  fun(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,Vec F,ctx);
 
    Level: beginner
 
-.keywords: TS, timestep, set, ODE, DAE, Jacobian
+.keywords: TS, TSALPHA2, timestep, set, ODE, DAE, Function
 
-.seealso: TSSetIJacobian2()
+.seealso: TSALPHA2, TSSetIJacobian2()
 @*/
 PetscErrorCode TSSetIFunction2(TS ts,Vec F,TSIFunction2 fun,void *ctx)
 {
@@ -639,10 +782,9 @@ $  jac(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,PetscReal v,PetscReal a,Mat *J,M
 
    Level: beginner
 
-.keywords: TS, timestep, DAE, Jacobian
+.keywords: TS, TSALPHA2, timestep, set, ODE, DAE, Jacobian
 
-.seealso: TSSetIFunction2()
-
+.seealso: TSALPHA2, TSSetIFunction2()
 @*/
 PetscErrorCode TSSetIJacobian2(TS ts,Mat J,Mat P,TSIJacobian2 jac,void *ctx)
 {
@@ -666,6 +808,7 @@ PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,Pet
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
   PetscValidHeaderSpecific(A,VEC_CLASSID,5);
   PetscValidHeaderSpecific(F,VEC_CLASSID,6);
+  PetscValidLogicalCollectiveBool(ts,imex,7);
   ierr = PetscUseMethod(ts,"TSComputeIFunction2_C",
                         (TS,PetscReal,Vec,Vec,Vec,Vec,PetscBool),
                         (ts,t,X,V,A,F,imex));CHKERRQ(ierr);
@@ -684,6 +827,7 @@ PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
   PetscValidHeaderSpecific(A,VEC_CLASSID,5);
   PetscValidHeaderSpecific(J,MAT_CLASSID,8);
   PetscValidHeaderSpecific(P,MAT_CLASSID,9);
+  PetscValidLogicalCollectiveBool(ts,imex,7);
   ierr = PetscUseMethod(ts,"TSComputeIJacobian2_C",
                         (TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,PetscBool),
                         (ts,t,X,V,A,shiftV,shiftA,J,P,imex));CHKERRQ(ierr);
@@ -692,6 +836,21 @@ PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSetSolution2"
+/*@
+   TSSetSolution2 - Sets the initial solution and time-derivative vectors
+   for use by the TSALPHA2 routines.
+
+   Logically Collective on TS and Vec
+
+   Input Parameters:
++  ts - the TS context
+.  X - the solution vector
+-  V - the time-derivative vector
+
+   Level: beginner
+
+.keywords: TS, TSALPHA2, timestep, set, solution, initial conditions
+@*/
 PetscErrorCode TSSetSolution2(TS ts,Vec X,Vec V)
 {
   PetscErrorCode ierr;
@@ -705,6 +864,28 @@ PetscErrorCode TSSetSolution2(TS ts,Vec X,Vec V)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSGetSolution2"
+/*@
+   TSGetSolution2 - Returns the solution and time-derivative vectors
+   at the present timestep. It is valid to call this routine inside
+   the function that you are evaluating in order to move to the new
+   timestep. This vector not changed until the solution at the next
+   timestep has been calculated.
+
+   Not Collective, but Vec returned is parallel if TS is parallel
+
+   Input Parameter:
+.  ts - the TS context
+
+   Output Parameter:
++  X - the vector containing the solution
+-  V - the vector containing the time-derivative
+
+   Level: intermediate
+
+.seealso: TSGetTimeStep()
+
+.keywords: TS, TSALPHA2, timestep, get, solution
+@*/
 PetscErrorCode TSGetSolution2(TS ts,Vec *X, Vec *V)
 {
   PetscErrorCode ierr;
@@ -718,6 +899,22 @@ PetscErrorCode TSGetSolution2(TS ts,Vec *X, Vec *V)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSolve2"
+/*@
+   TSSolve2 - Steps the requested number of timesteps.
+
+   Collective on TS
+
+   Input Parameter:
++  ts - the TS context
+.  X - the solution vector (can be null if TSSetSolution2() was used, otherwise must contain the initial conditions)
+-  V - the time-derivative vector (can be null if TSSetSolution2() was used, otherwise must contain the initial conditions)
+
+   Level: beginner
+
+.keywords: TS, TSALPHA2, timestep, solve
+
+.seealso: TSALPHA2, TSSetSolution2()
+@*/
 PetscErrorCode TSSolve2(TS ts,Vec X,Vec V)
 {
   PetscErrorCode ierr;
@@ -729,7 +926,67 @@ PetscErrorCode TSSolve2(TS ts,Vec X,Vec V)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "TSInterpolate2"
+/*@
+   TSInterpolate2 - Interpolate the solution computed during the previous step to an arbitrary location in the interval
+
+   Collective on TS
+
+   Input Argument:
++  ts - time stepping context
+-  t - time to interpolate to
+
+   Output Argument:
++  X - solution at given time
+-  V - time-derivative at given time
+
+.keywords: TS, TSALPHA2, timestep, solve
+
+.seealso: TSALPHA2, TSSolve2(), TSGetSolution2()
+@*/
+PetscErrorCode TSInterpolate2(TS ts,PetscReal t,Vec X,Vec V)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
+  if (t < ts->ptime - ts->time_step_prev || t > ts->ptime) SETERRQ3(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"Requested time %g not in last time steps [%g,%g]",t,(double)(ts->ptime-ts->time_step_prev),(double)ts->ptime);
+  ierr = PetscUseMethod(ts,"TSInterpolate2_C",(TS,PetscReal,Vec,Vec),(ts,t,X,V));CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 /* ------------------------------------------------------------ */
+
+#undef __FUNCT__
+#define __FUNCT__ "TSAlpha2UseAdapt"
+/*@
+  TSAlpha2UseAdapt - Use time-step adaptivity with the Alpha method
+
+  Logically Collective on TS
+
+  Input Parameter:
++  ts - timestepping context
+-  use - flag to use adaptivity
+
+  Options Database:
+.  -ts_alpha_adapt
+
+  Level: intermediate
+
+.seealso: TSAdapt
+@*/
+PetscErrorCode TSAlpha2UseAdapt(TS ts,PetscBool use)
+{
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  PetscValidLogicalCollectiveBool(ts,use,2);
+  ierr = PetscTryMethod(ts,"TSAlpha2UseAdapt_C",(TS,PetscBool),(ts,use));CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlpha2SetRadius"
