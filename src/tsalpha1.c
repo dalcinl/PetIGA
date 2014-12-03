@@ -65,7 +65,33 @@ static PetscErrorCode TSStep_Alpha(TS ts)
   PetscFunctionBegin;
   ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
 
-  if (th->vec_sol_prev) {ierr = VecCopy(ts->steps ? th->X0 : ts->vec_sol,th->vec_sol_prev);CHKERRQ(ierr);}
+  if (ts->steps == 0) {
+    PetscReal alpha_m,alpha_f,gamma;
+    ierr = TSAlphaGetParams(ts,&alpha_m,&alpha_f,&gamma);CHKERRQ(ierr);
+    ierr = TSAlphaSetParams(ts,1,1,1);CHKERRQ(ierr);
+    for (reject=0; reject<ts->max_reject && !ts->reason; reject++) {
+      th->stage_time = ts->ptime + ts->time_step;
+      th->shift      = 1/ts->time_step;
+      ierr = TSPreStep(ts);CHKERRQ(ierr);
+      ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
+      ierr = VecZeroEntries(th->V0);CHKERRQ(ierr);
+      ierr = VecCopy(ts->vec_sol,th->X0);CHKERRQ(ierr);
+      ierr = VecCopy(ts->vec_sol,th->X1);CHKERRQ(ierr);
+      ierr = SNESSolve(ts->snes,NULL,th->X1);CHKERRQ(ierr);
+      ierr = SNESGetIterationNumber(ts->snes,&its);CHKERRQ(ierr);
+      ierr = SNESGetLinearSolveIterations(ts->snes,&lits);CHKERRQ(ierr);
+      ts->snes_its += its; ts->ksp_its += lits;
+      ierr = TSPostStage(ts,th->stage_time,0,&th->X1);CHKERRQ(ierr);
+      ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
+      if (stageok) break;
+    }
+    ierr = TSAlphaSetParams(ts,alpha_m,alpha_f,gamma);CHKERRQ(ierr);
+    if (reject >= ts->max_reject) {
+      ts->reason = TS_DIVERGED_STEP_REJECTED;
+      ierr = PetscInfo3(ts,"Step=%D, step rejections %D greater than current TS allowed %D, stopping solve\n",ts->steps,reject,ts->max_reject);CHKERRQ(ierr);
+      PetscFunctionReturn(0);
+    }
+  }
 
   next_time_step = ts->time_step;
   th->status = TS_STEP_INCOMPLETE;
@@ -112,6 +138,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = PetscInfo3(ts,"Step=%D, step rejections %D greater than current TS allowed %D, stopping solve\n",ts->steps,reject,ts->max_reject);CHKERRQ(ierr);
     PetscFunctionReturn(0);
   }
+  if (th->vec_sol_prev) {ierr = VecCopy(th->X0,th->vec_sol_prev);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -130,12 +157,13 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool 
     PetscReal dt = ts->time_step;
     PetscReal dt_prev = ts->steps ? ts->time_step_prev : ts->time_step;
     PetscReal a = 1 + dt_prev/dt;
-    PetscScalar scals[3]; Vec vecs[3];
+    PetscInt  n = 3; PetscScalar scals[3]; Vec vecs[3];
     scals[0] = (a+1)/a;   vecs[0] = th->X1;
     scals[1] = -a/(a-1);  vecs[1] = th->X0;
     scals[2] = 1/a/(a-1); vecs[2] = th->vec_sol_prev;
+    if (ts->steps == 0) {n = 1; scals[0] = dt; vecs[0] = th->V0;}
     ierr = VecCopy(th->X0,U);CHKERRQ(ierr);
-    ierr = VecMAXPY(U,3,scals,vecs);CHKERRQ(ierr);
+    ierr = VecMAXPY(U,n,scals,vecs);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

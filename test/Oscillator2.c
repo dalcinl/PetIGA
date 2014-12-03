@@ -2,6 +2,7 @@
 #include <petscts2.h>
 
 #if PETSC_VERSION_LE(3,3,0)
+#define TSSolve(ts,x)   TSSolve(ts,x,NULL)
 #define TSRegister(s,f) TSRegister(s,0,0,f)
 #endif
 
@@ -14,25 +15,24 @@ typedef struct {
 #define __FUNCT__ "Residual1"
 PetscErrorCode Residual1(TS ts,PetscReal t,Vec X,Vec A,Vec R,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega;
-  PetscScalar *x,*a,*r;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
+  UserParams        *user = (UserParams*)ctx;
+  PetscReal         Omega = user->Omega;
+  const PetscScalar *x,*a;
+  PetscScalar       *r;
+  PetscErrorCode    ierr;
 
-  ierr = VecGetArray(X,&x);CHKERRQ(ierr);
-  ierr = VecGetArray(A,&a);CHKERRQ(ierr);
+  PetscFunctionBegin;
+  ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(A,&a);CHKERRQ(ierr);
   ierr = VecGetArray(R,&r);CHKERRQ(ierr);
 
   r[0] = a[0] + (Omega*Omega)*x[0];
 
-  ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
-  ierr = VecRestoreArray(A,&a);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(A,&a);CHKERRQ(ierr);
   ierr = VecRestoreArray(R,&r);CHKERRQ(ierr);
-
   ierr = VecAssemblyBegin(R);CHKERRQ(ierr);
   ierr = VecAssemblyEnd  (R);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -40,10 +40,11 @@ PetscErrorCode Residual1(TS ts,PetscReal t,Vec X,Vec A,Vec R,void *ctx)
 #define __FUNCT__ "Tangent1"
 PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega;
-  PetscReal T = 0;
+  UserParams     *user = (UserParams*)ctx;
+  PetscReal      Omega = user->Omega;
+  PetscReal      T = 0;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
 
   T = shiftA + (Omega*Omega);
@@ -55,7 +56,6 @@ PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat J,Mat
     ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-
   PetscFunctionReturn(0);
 }
 #if PETSC_VERSION_LT(3,5,0)
@@ -68,27 +68,26 @@ PetscErrorCode Tangent1_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat
 #define __FUNCT__ "Residual2"
 PetscErrorCode Residual2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec R,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega, Xi = user->Xi;
-  PetscScalar *x,*v,*a,*r;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
+  UserParams         *user = (UserParams*)ctx;
+  PetscReal          Omega = user->Omega, Xi = user->Xi;
+  const PetscScalar *x,*v,*a;
+  PetscScalar       *r;
+  PetscErrorCode    ierr;
 
-  ierr = VecGetArray(X,&x);CHKERRQ(ierr);
-  ierr = VecGetArray(V,&v);CHKERRQ(ierr);
-  ierr = VecGetArray(A,&a);CHKERRQ(ierr);
+  PetscFunctionBegin;
+  ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(V,&v);CHKERRQ(ierr);
+  ierr = VecGetArrayRead(A,&a);CHKERRQ(ierr);
   ierr = VecGetArray(R,&r);CHKERRQ(ierr);
 
   r[0] = a[0] + (2*Xi*Omega)*v[0] + (Omega*Omega)*x[0];
 
-  ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
-  ierr = VecRestoreArray(V,&v);CHKERRQ(ierr);
-  ierr = VecRestoreArray(A,&a);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(V,&v);CHKERRQ(ierr);
+  ierr = VecRestoreArrayRead(A,&a);CHKERRQ(ierr);
   ierr = VecRestoreArray(R,&r);CHKERRQ(ierr);
-
   ierr = VecAssemblyBegin(R);CHKERRQ(ierr);
   ierr = VecAssemblyEnd  (R);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -96,10 +95,11 @@ PetscErrorCode Residual2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec R,void *ctx)
 #define __FUNCT__ "Tangent2"
 PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega, Xi = user->Xi;
-  PetscReal T = 0;
+  UserParams     *user = (UserParams*)ctx;
+  PetscReal      Omega = user->Omega, Xi = user->Xi;
+  PetscReal      T = 0;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
 
   T = shiftA + shiftV * (2*Xi*Omega) + (Omega*Omega);
@@ -111,7 +111,6 @@ PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,Pet
     ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatAssemblyEnd(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   }
-
   PetscFunctionReturn(0);
 }
 
@@ -119,14 +118,14 @@ PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,Pet
 #define __FUNCT__ "Monitor"
 PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 {
-  const char *filename = (const char *)ctx;
-  static FILE *fp = 0;
-  Vec X,V;
+  const char        *filename = (const char*)ctx;
+  static FILE       *fp = NULL;
+  Vec               X,V;
   const PetscScalar *x,*v;
   TSConvergedReason reason;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
+  PetscErrorCode    ierr;
 
+  PetscFunctionBegin;
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
   ierr = TSGetSolution2(ts,&X,&V);CHKERRQ(ierr);
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
@@ -135,13 +134,12 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
   ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(V,&v);CHKERRQ(ierr);
   ierr = TSGetConvergedReason(ts,&reason); CHKERRQ(ierr);
-  if (reason) {ierr = PetscFClose(PETSC_COMM_SELF,fp);CHKERRQ(ierr); fp=0;}
-
+  if (reason) {ierr = PetscFClose(PETSC_COMM_SELF,fp);CHKERRQ(ierr); fp = NULL;}
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
-PetscErrorCode TSCreate_Alpha2(TS);
+extern PetscErrorCode TSCreate_Alpha2(TS);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -153,7 +151,9 @@ int main(int argc, char *argv[]) {
   Mat            J;
   Vec            X,V;
   PetscScalar    *x,*v;
-  UserParams     user;
+  UserParams     user = {/*Omega=*/ 1, /*Xi=*/ 0};
+  PetscInt       ninit = 2;
+  PetscReal      initial[2] = {1, 0};
   PetscBool      out;
   char           output[PETSC_MAX_PATH_LEN] = {0};
   PetscErrorCode ierr;
@@ -161,42 +161,40 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
 
-  user.Omega = 1.0;
-  user.Xi    = 0.0;
   ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator2 Options","TS");CHKERRQ(ierr);
+  ierr = PetscOptionsRealArray("-initial","Initial condition",__FILE__,initial,&ninit,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-damping",  "Damping",  __FILE__,user.Xi,   &user.Xi,   NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-output","Output",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-damping","Damping",__FILE__,user.Xi,&user.Xi,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-output","Output filename",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (out && !output[0]) {ierr = PetscStrcpy(output,"Oscillator.out");CHKERRQ(ierr);}
 
   ierr = TSCreate(PETSC_COMM_SELF,&ts);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA2);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,PETSC_MAX_INT,2*M_PI * 5);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,PETSC_MAX_INT,5*(2*PETSC_PI));CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
+  if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&R);CHKERRQ(ierr);
   ierr = VecSetUp(R);CHKERRQ(ierr);
   ierr = MatCreateSeqDense(PETSC_COMM_SELF,1,1,NULL,&J);CHKERRQ(ierr);
   ierr = MatSetUp(J);CHKERRQ(ierr);
-  if (user.Xi <= 0.0) {
-    ierr = TSSetIFunction(ts,R,Residual1,&user);CHKERRQ(ierr);
-    ierr = TSSetIJacobian(ts,J,J,Tangent1,&user);CHKERRQ(ierr);
-  } else {
+  if (user.Xi) {
     ierr = TSSetIFunction2(ts,R,Residual2,&user);CHKERRQ(ierr);
     ierr = TSSetIJacobian2(ts,J,J,Tangent2,&user);CHKERRQ(ierr);
+  } else {
+    ierr = TSSetIFunction(ts,R,Residual1,&user);CHKERRQ(ierr);
+    ierr = TSSetIJacobian(ts,J,J,Tangent1,&user);CHKERRQ(ierr);
   }
   ierr = VecDestroy(&R);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
-
-  if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&X);CHKERRQ(ierr);
   ierr = VecCreateSeq(PETSC_COMM_SELF,1,&V);CHKERRQ(ierr);
   ierr = VecGetArray(X,&x);CHKERRQ(ierr);
   ierr = VecGetArray(V,&v);CHKERRQ(ierr);
-  x[0] = 1.0;
-  v[0] = 0.0;
+  x[0] = initial[0];
+  v[0] = initial[1];
   ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
   ierr = VecRestoreArray(V,&v);CHKERRQ(ierr);
 

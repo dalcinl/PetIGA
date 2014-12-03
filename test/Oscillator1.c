@@ -15,13 +15,13 @@ typedef struct {
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega, Xi = user->Xi;
+  UserParams        *user = (UserParams *)ctx;
+  PetscReal         Omega = user->Omega, Xi = user->Xi;
   const PetscScalar *x,*x_t;
-  PetscScalar *r;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
+  PetscScalar       *r;
+  PetscErrorCode    ierr;
 
+  PetscFunctionBegin;
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecGetArrayRead(V,&x_t);CHKERRQ(ierr);
   ierr = VecGetArray(R,&r);CHKERRQ(ierr);
@@ -32,10 +32,8 @@ PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
   ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(V,&x_t);CHKERRQ(ierr);
   ierr = VecRestoreArray(R,&r);CHKERRQ(ierr);
-
   ierr = VecAssemblyBegin(R);CHKERRQ(ierr);
   ierr = VecAssemblyEnd  (R);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -43,17 +41,16 @@ PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
 #define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(TS ts,PetscReal t,Vec X,Vec A,PetscReal shift,Mat J,Mat P,void *ctx)
 {
-  UserParams *user = (UserParams *)ctx;
-  PetscReal Omega = user->Omega, Xi = user->Xi;
-  PetscReal T[2][2] = {{0,0},{0,0}};
-  PetscInt i,j;
+  UserParams     *user = (UserParams*)ctx;
+  PetscReal      Omega = user->Omega, Xi = user->Xi;
+  PetscReal      T[2][2] = {{0,0},{0,0}};
+  PetscInt       i,j;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
 
-  T[0][0] = shift;
-  T[0][1] = -1;
-  T[1][0] = Omega*Omega;
-  T[1][1] = shift + 2*Xi*Omega;
+  T[0][0] = shift;       T[0][1] = -1;
+  T[1][0] = Omega*Omega; T[1][1] = shift + 2*Xi*Omega;
 
   for (i=0; i<2; i++)
     for (j=0; j<2; j++)
@@ -77,27 +74,26 @@ PetscErrorCode Tangent_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat 
 #define __FUNCT__ "Monitor"
 PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 {
-  const char *filename = (const char *)ctx;
-  static FILE *fp = 0;
-  Vec X;
+  const char        *filename = (const char*)ctx;
+  static FILE       *fp = NULL;
+  Vec               X;
   const PetscScalar *x;
   TSConvergedReason reason;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
+  PetscErrorCode    ierr;
 
+  PetscFunctionBegin;
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
   ierr = TSGetSolution(ts,&X);CHKERRQ(ierr);
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
   ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%g %g %g\n",(double)t,(double)x[0],(double)x[1]);CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
   ierr = TSGetConvergedReason(ts,&reason); CHKERRQ(ierr);
-  if (reason) {ierr = PetscFClose(PETSC_COMM_SELF,fp);CHKERRQ(ierr); fp=0;}
-
+  if (reason) {ierr = PetscFClose(PETSC_COMM_SELF,fp);CHKERRQ(ierr); fp = NULL;}
   PetscFunctionReturn(0);
 }
 
 EXTERN_C_BEGIN
-PetscErrorCode TSCreate_Alpha1(TS);
+extern PetscErrorCode TSCreate_Alpha1(TS);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -109,7 +105,9 @@ int main(int argc, char *argv[]) {
   Mat            J;
   Vec            X;
   PetscScalar    *x;
-  UserParams     user;
+  UserParams     user = {/*Omega=*/ 1, /*Xi=*/ 0};
+  PetscInt       ninit = 2;
+  PetscReal      initial[2] = {1, 0};
   PetscBool      out;
   char           output[PETSC_MAX_PATH_LEN] = {0};
   PetscErrorCode ierr;
@@ -117,19 +115,19 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
 
-  user.Omega = 1.0;
-  user.Xi    = 0.0;
   ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator1 Options","TS");CHKERRQ(ierr);
+  ierr = PetscOptionsRealArray("-initial","Initial condition",__FILE__,initial,&ninit,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-damping",  "Damping",  __FILE__,user.Xi,   &user.Xi,   NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsString("-output","Output",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-damping","Damping",__FILE__,user.Xi,&user.Xi,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsString("-output","Output filename",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (out && !output[0]) {ierr = PetscStrcpy(output,"Oscillator.out");CHKERRQ(ierr);}
 
   ierr = TSCreate(PETSC_COMM_SELF,&ts);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,PETSC_MAX_INT,2*M_PI * 5);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,PETSC_MAX_INT,5*(2*PETSC_PI));CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
+  if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,2,&R);CHKERRQ(ierr);
   ierr = VecSetUp(R);CHKERRQ(ierr);
@@ -140,12 +138,10 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&R);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 
-  if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
-
   ierr = VecCreateSeq(PETSC_COMM_SELF,2,&X);CHKERRQ(ierr);
   ierr = VecGetArray(X,&x);CHKERRQ(ierr);
-  x[0] = 1.0;
-  x[1] = 0.0;
+  x[0] = initial[0];
+  x[1] = initial[1];
   ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
 
   ierr = TSSetSolution(ts,X);CHKERRQ(ierr);
