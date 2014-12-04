@@ -2,20 +2,72 @@
 #include <petscts1.h>
 
 #if PETSC_VERSION_LE(3,3,0)
-#define TSSolve(ts,x)   TSSolve(ts,x,NULL)
-#define TSRegister(s,f) TSRegister(s,0,0,f)
+#define TSSolve(ts,x) TSSolve(ts,x,NULL)
+#define TSRegister(ts,f) TSRegister(ts,0,0,f)
+#define TSSetSolutionFunction(ts,f,c) 0
 #endif
 
 typedef struct {
-  PetscReal Omega; /* frequency */
-  PetscReal Xi;    /* damping   */
+  PetscReal Omega;   /* natural frequency */
+  PetscReal Xi;      /* damping coefficient  */
+  PetscReal init[2]; /* initial conditions */
 } UserParams;
+
+static void Exact(double t,
+                  double omega,double xi,double u0,double v0,
+                  double *ut,double *vt)
+{
+  double u,v;
+  if (xi < 1) {
+    double a  = xi*omega;
+    double w  = sqrt(1-xi*xi)*omega;
+    double C1 = (v0 + a*u0)/w;
+    double C2 = u0;
+    u = exp(-a*t) * (C1*sin(w*t) + C2*cos(w*t));
+    v = (- a * exp(-a*t) * (C1*sin(w*t) + C2*cos(w*t))
+         + w * exp(-a*t) * (C1*cos(w*t) - C2*sin(w*t)));
+  } else if (xi > 1) {
+    double w  = sqrt(xi*xi-1)*omega;
+    double C1 = (w*u0 + xi*u0 + v0)/(2*w);
+    double C2 = (w*u0 - xi*u0 - v0)/(2*w);
+    u = C1*exp((-xi+w)*t) + C2*exp((-xi-w)*t);
+    v = C1*(-xi+w)*exp((-xi+w)*t) + C2*(-xi-w)*exp((-xi-w)*t);
+  } else {
+    double a  = xi*omega;
+    double C1 = v0 + a*u0;
+    double C2 = u0;
+    u = (C1*t + C2) * exp(-a*t);
+    v = (C1 - a*(C1*t + C2)) * exp(-a*t);
+  }
+  if (ut) *ut = u;
+  if (vt) *vt = v;
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "Solution"
+PetscErrorCode Solution(TS ts,PetscReal t,Vec X,void *ctx)
+{
+  UserParams     *user = (UserParams*)ctx;
+  double         Omega = (double)user->Omega;
+  double         Xi    = (double)user->Xi;
+  double         u,u0  = (double)user->init[0];
+  double         v,v0  = (double)user->init[1];
+  PetscScalar    *x;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  Exact(t,Omega,Xi,u0,v0,&u,&v);
+  ierr = VecGetArray(X,&x);CHKERRQ(ierr);
+  x[0] = u; x[1] = v;
+  ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
 PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
 {
-  UserParams        *user = (UserParams *)ctx;
+  UserParams        *user = (UserParams*)ctx;
   PetscReal         Omega = user->Omega, Xi = user->Xi;
   const PetscScalar *x,*x_t;
   PetscScalar       *r;
@@ -105,9 +157,8 @@ int main(int argc, char *argv[]) {
   Mat            J;
   Vec            X;
   PetscScalar    *x;
-  UserParams     user = {/*Omega=*/ 1, /*Xi=*/ 0};
-  PetscInt       ninit = 2;
-  PetscReal      initial[2] = {1, 0};
+  PetscInt       n = 2;
+  UserParams     user = {/*Omega=*/ 1, /*Xi=*/ 0, /*u0,v0=*/ {1, 0}};
   PetscBool      out;
   char           output[PETSC_MAX_PATH_LEN] = {0};
   PetscErrorCode ierr;
@@ -116,9 +167,9 @@ int main(int argc, char *argv[]) {
   ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
 
   ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator1 Options","TS");CHKERRQ(ierr);
-  ierr = PetscOptionsRealArray("-initial","Initial condition",__FILE__,initial,&ninit,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-damping","Damping",__FILE__,user.Xi,&user.Xi,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsRealArray("-initial","Initial conditions",__FILE__,user.init,&n,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-output","Output filename",__FILE__,output,output,sizeof(output),&out);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (out && !output[0]) {ierr = PetscStrcpy(output,"Oscillator.out");CHKERRQ(ierr);}
@@ -137,11 +188,12 @@ int main(int argc, char *argv[]) {
   ierr = TSSetIJacobian(ts,J,J,Tangent,&user);CHKERRQ(ierr);
   ierr = VecDestroy(&R);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
+  ierr = TSSetSolutionFunction(ts,Solution,&user);CHKERRQ(ierr);
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,2,&X);CHKERRQ(ierr);
   ierr = VecGetArray(X,&x);CHKERRQ(ierr);
-  x[0] = initial[0];
-  x[1] = initial[1];
+  x[0] = user.init[0];
+  x[1] = user.init[1];
   ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
 
   ierr = TSSetSolution(ts,X);CHKERRQ(ierr);

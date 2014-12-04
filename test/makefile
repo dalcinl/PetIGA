@@ -190,7 +190,7 @@ runex21a:
 runex21b:
 	-@./Oscillator2 ${OPTS} -ts_max_steps 10 -ts_alpha_radius 0.8
 runex21c:
-	-@./Oscillator2 ${OPTS} -ts_max_steps 10 -damping 0.1
+	-@./Oscillator2 ${OPTS} -ts_max_steps 10 -ts_alpha_adapt -damping 0.1
 Oscillator2 = \
 Oscillator2.PETSc \
 runex20a runex20b runex20c \
