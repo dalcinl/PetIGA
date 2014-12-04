@@ -295,6 +295,7 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
   ierr = VecDuplicate(ts->vec_sol,&th->V0);CHKERRQ(ierr);
   ierr = VecDuplicate(ts->vec_sol,&th->Va);CHKERRQ(ierr);
   ierr = VecDuplicate(ts->vec_sol,&th->V1);CHKERRQ(ierr);
+  ierr = TSGetAdapt(ts,&ts->adapt);CHKERRQ(ierr);
   if (!th->adapt) {
     ierr = TSAdaptDestroy(&ts->adapt);CHKERRQ(ierr);
     ierr = TSGetAdapt(ts,&ts->adapt);CHKERRQ(ierr);
@@ -327,7 +328,6 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
     ierr = TSAlphaSetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma);CHKERRQ(ierr);
     ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","TSAlpha2UseAdapt",adapt,&adapt,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlphaUseAdapt(ts,adapt);CHKERRQ(ierr);}
-    ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
     ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
   }
   ierr = PetscOptionsTail();CHKERRQ(ierr);
