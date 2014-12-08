@@ -336,8 +336,8 @@ PetscErrorCode IGASetFixTable(IGA iga,Vec U)
   ierr = IGAGetLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
   ierr = VecGetSize(local,&nlocal);CHKERRQ(ierr);
   iga->fixtable = PETSC_TRUE;
-  ierr = PetscMalloc1(nlocal,&iga->fixtableU);CHKERRQ(ierr);
-  ierr = PetscMemcpy(iga->fixtableU,vlocal,nlocal*sizeof(PetscScalar));CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)nlocal,&iga->fixtableU);CHKERRQ(ierr);
+  ierr = PetscMemcpy(iga->fixtableU,vlocal,(size_t)nlocal*sizeof(PetscScalar));CHKERRQ(ierr);
   ierr = IGARestoreLocalVecArray(iga,U,&local,&vlocal);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

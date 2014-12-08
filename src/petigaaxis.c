@@ -116,14 +116,14 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
   axis->p = base->p;
   axis->m = base->m;
   ierr = PetscFree(axis->U);CHKERRQ(ierr);
-  ierr = PetscMalloc1(axis->m+1,&axis->U);CHKERRQ(ierr);
-  ierr = PetscMemcpy(axis->U,base->U,(axis->m+1)*sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)(axis->m+1),&axis->U);CHKERRQ(ierr);
+  ierr = PetscMemcpy(axis->U,base->U,(size_t)(axis->m+1)*sizeof(PetscReal));CHKERRQ(ierr);
 
   axis->nnp = base->nnp;
   axis->nel = base->nel;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
-  ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
-  ierr = PetscMemcpy(axis->span,base->span,axis->nel*sizeof(PetscInt));CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
+  ierr = PetscMemcpy(axis->span,base->span,(size_t)axis->nel*sizeof(PetscInt));CHKERRQ(ierr);
 
   PetscFunctionReturn(0);
 }
@@ -254,12 +254,12 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 
   if (m != axis->m) {
     PetscReal *V;
-    ierr = PetscMalloc1(m+1,&V);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)(m+1),&V);CHKERRQ(ierr);
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = V;
   }
-  ierr = PetscMemcpy(axis->U,U,(m+1)*sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemcpy(axis->U,U,(size_t)(m+1)*sizeof(PetscReal));CHKERRQ(ierr);
 
   axis->nel = 0;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
@@ -333,7 +333,7 @@ PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
     PetscInt m = axis->m;
     PetscInt n = m - p - 1;
     axis->nel = IGA_SpanCount(n,p,axis->U);
-    ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
     (void)IGA_SpanIndex(n,p,axis->U,axis->span);
   }
   if (nel)  *nel  = axis->nel;
@@ -391,7 +391,7 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   n = m - p - 1; /* last basis function index */
 
   if (m != axis->m) {
-    ierr = PetscMalloc1(m+1,&U);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)(m+1),&U);CHKERRQ(ierr);
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = U;
@@ -416,7 +416,7 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
 
   axis->nel = r;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
-  ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
   for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
 
   axis->nnp = axis->periodic ? n-C : n+1;
@@ -477,7 +477,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   n = m - p - 1; /* last basis function index */
 
   if (m != axis->m) {
-    ierr = PetscMalloc1(m+1,&U);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)(m+1),&U);CHKERRQ(ierr);
     ierr = PetscFree(axis->U);CHKERRQ(ierr);
     axis->m = m;
     axis->U = U;
@@ -502,7 +502,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
 
   axis->nel = r;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
-  ierr = PetscMalloc1(axis->nel,&axis->span);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
   for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
 
   axis->nnp = axis->periodic ? n-C : n+1;

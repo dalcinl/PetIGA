@@ -102,7 +102,7 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
   { /* */
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
-    size_t i, nv = element->nen * element->dof, nm = nv*nv;
+    size_t i, nv = (size_t)(element->nen * element->dof), nm = nv*nv;
     for (i=0; i<MAX_WORK_VEC; i++)
       {ierr = PetscMalloc1(nv,&point->wvec[i]);CHKERRQ(ierr);}
     for (i=0; i<MAX_WORK_MAT; i++)
@@ -290,7 +290,7 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     if (dim == nsd) {
-      (void)PetscMemcpy(F,p->gradX[0],nsd*dim*sizeof(PetscReal));
+      (void)PetscMemcpy(F,p->gradX[0],(size_t)(nsd*dim)*sizeof(PetscReal));
     } else {
       const PetscReal *X = p->geometry;
       IGA_GetGradGeomMap(p->nen,nsd,dim,p->basis[1],X,F);
@@ -300,7 +300,7 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
         F[i*dim+a] *= L[a];
   } else {
     PetscInt i,dim = p->dim;
-    (void)PetscMemzero(F,dim*dim*sizeof(PetscReal));
+    (void)PetscMemzero(F,(size_t)(dim*dim)*sizeof(PetscReal));
     for (i=0; i<dim; i++) F[i*(dim+1)] = L[i];
   }
   PetscFunctionReturn(0);
@@ -319,7 +319,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     if (dim == nsd) {
-      (void)PetscMemcpy(G,p->gradX[1],dim*nsd*sizeof(PetscReal));
+      (void)PetscMemcpy(G,p->gradX[1],(size_t)(dim*nsd)*sizeof(PetscReal));
     } else {
       const PetscReal *X = p->geometry;
       IGA_GetInvGradGeomMap(p->nen,nsd,dim,p->basis[1],X,G);
@@ -329,7 +329,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
         G[a*nsd+i] /= L[a];
   } else {
     PetscInt i,dim = p->dim;
-    (void)PetscMemzero(G,dim*dim*sizeof(PetscReal));
+    (void)PetscMemzero(G,(size_t)(dim*dim)*sizeof(PetscReal));
     for (i=0; i<dim; i++) G[i*(dim+1)] = 1/L[i];
   }
   PetscFunctionReturn(0);
@@ -483,7 +483,7 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
   {
     size_t m = (size_t)(point->neq * point->dof);
     *V = point->wvec[point->nvec++];
-    ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*V,(size_t)m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -504,7 +504,7 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
     size_t m = (size_t)(point->neq * point->dof);
     size_t n = (size_t)(point->nen * point->dof);
     *M = point->wmat[point->nmat++];
-    ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemzero(*M,(size_t)(m*n)*sizeof(PetscScalar));CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }

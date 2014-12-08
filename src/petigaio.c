@@ -46,7 +46,7 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
       PetscReal *U;
       ierr = PetscViewerBinaryRead(viewer,&p,1,PETSC_INT);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,&m,1,PETSC_INT);CHKERRQ(ierr);
-      ierr = PetscMalloc1(m,&U);CHKERRQ(ierr);
+      ierr = PetscMalloc1((size_t)m,&U);CHKERRQ(ierr);
       ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisInit(axis,p,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
@@ -268,8 +268,8 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
     const PetscScalar *Xw;
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
     n /= (nsd+1);
-    ierr = PetscMalloc1(n*nsd,&iga->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,&iga->rationalW);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)(n*nsd),&iga->geometryX);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)n,&iga->rationalW);CHKERRQ(ierr);
     X = iga->geometryX; W = iga->rationalW;
     ierr = VecGetArrayRead(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
@@ -460,9 +460,9 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
   {
     PetscInt n; const PetscScalar *A;
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,&iga->propertyA);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)n,&iga->propertyA);CHKERRQ(ierr);
     ierr = VecGetArrayRead(lvec,&A);CHKERRQ(ierr);
-    ierr = PetscMemcpy(iga->propertyA,A,n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemcpy(iga->propertyA,A,(size_t)n*sizeof(PetscScalar));CHKERRQ(ierr);
     ierr = VecRestoreArrayRead(lvec,&A);CHKERRQ(ierr);
   }
 
@@ -517,7 +517,7 @@ PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer)
     PetscInt n; PetscScalar *A;
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
     ierr = VecGetArray(lvec,&A);CHKERRQ(ierr);
-    ierr = PetscMemcpy(A,iga->propertyA,n*sizeof(PetscScalar));CHKERRQ(ierr);
+    ierr = PetscMemcpy(A,iga->propertyA,(size_t)n*sizeof(PetscScalar));CHKERRQ(ierr);
     ierr = VecRestoreArray(lvec,&A);CHKERRQ(ierr);
   }
   /* local -> global */
@@ -658,7 +658,7 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
       n = 1;
       for (i=1; i<size; i++)
         n = PetscMax(n,range[i+1] - range[i]);
-      ierr = PetscMalloc(n*sizeof(PetscScalar),&work);CHKERRQ(ierr);
+      ierr = PetscMalloc1((size_t)n,&work);CHKERRQ(ierr);
       for (i=1; i<size; i++) {
         n = range[i+1] - range[i];
         ierr = PetscMPIIntCast(n,&count);CHKERRQ(ierr);

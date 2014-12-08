@@ -73,13 +73,13 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
   rule->nqp = base->nqp;
   ierr = PetscFree(rule->point);CHKERRQ(ierr);
   if (base->point && base->nqp > 0) {
-    ierr = PetscMalloc1(base->nqp,&rule->point);CHKERRQ(ierr);
-    ierr = PetscMemcpy(rule->point,base->point,base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)base->nqp,&rule->point);CHKERRQ(ierr);
+    ierr = PetscMemcpy(rule->point,base->point,(size_t)base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   }
   ierr = PetscFree(rule->weight);CHKERRQ(ierr);
   if (base->weight && base->nqp > 0) {
-    ierr = PetscMalloc1(base->nqp,&rule->weight);CHKERRQ(ierr);
-    ierr = PetscMemcpy(rule->weight,base->weight,base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)base->nqp,&rule->weight);CHKERRQ(ierr);
+    ierr = PetscMemcpy(rule->weight,base->weight,(size_t)base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   }
   rule->type = base->type;
   PetscFunctionReturn(0);
@@ -127,8 +127,8 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points must be greater than zero, got %D",nqp);
 
-  ierr = PetscCalloc1(nqp,&point);CHKERRQ(ierr);
-  ierr = PetscCalloc1(nqp,&weight);CHKERRQ(ierr);
+  ierr = PetscCalloc1((size_t)nqp,&point);CHKERRQ(ierr);
+  ierr = PetscCalloc1((size_t)nqp,&weight);CHKERRQ(ierr);
   switch (rule->type) {
   case IGA_RULE_LEGENDRE:
     ComputeRule = IGA_Rule_GaussLegendre; break;
@@ -161,10 +161,10 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
   if (q < 1)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points must be greater than zero, got %D",q);
-  ierr = PetscMalloc1(q,&xx);CHKERRQ(ierr);
-  ierr = PetscMalloc1(q,&ww);CHKERRQ(ierr);
-  ierr = PetscMemcpy(xx,x,q*sizeof(PetscReal));CHKERRQ(ierr);
-  ierr = PetscMemcpy(ww,w,q*sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)q,&xx);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)q,&ww);CHKERRQ(ierr);
+  ierr = PetscMemcpy(xx,x,(size_t)q*sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemcpy(ww,w,(size_t)q*sizeof(PetscReal));CHKERRQ(ierr);
   ierr = PetscFree(rule->point);CHKERRQ(ierr);
   ierr = PetscFree(rule->weight);CHKERRQ(ierr);
   rule->nqp = q;

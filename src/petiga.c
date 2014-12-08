@@ -376,7 +376,7 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   if (field < 0 || field >= iga->dof)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Field number must be in range [0,%D], got %D",iga->dof-1,field);
-  if (!iga->fieldname) {ierr = PetscCalloc1(iga->dof+1,&iga->fieldname);CHKERRQ(ierr);}
+  if (!iga->fieldname) {ierr = PetscCalloc1((size_t)(iga->dof+1),&iga->fieldname);CHKERRQ(ierr);}
   ierr = PetscStrallocpy(name,&fname);CHKERRQ(ierr);
   ierr = PetscFree(iga->fieldname[field]);CHKERRQ(ierr);
   iga->fieldname[field] = fname;
@@ -992,7 +992,7 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   }
   ierr = IGACreateSubComms1D(iga,subcomms);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
-    ierr = PetscMalloc1(procs[i],&ranges[i]);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)procs[i],&ranges[i]);CHKERRQ(ierr);
     ierr = MPI_Allgather(&width[i],1,MPIU_INT,ranges[i],1,MPIU_INT,subcomms[i]);CHKERRQ(ierr);
     ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
   }

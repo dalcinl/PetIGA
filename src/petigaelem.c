@@ -190,12 +190,12 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     element->nqp   = nqp;
   }
   { /**/
-    PetscInt nen = element->nen;
-    PetscInt nsd = element->nsd;
-    PetscInt npd = element->npd;
+    size_t nen = (size_t)element->nen;
+    size_t nsd = (size_t)element->nsd;
+    size_t npd = (size_t)element->npd;
     ierr = PetscMalloc1(nen,&element->mapping);CHKERRQ(ierr);
     if (!element->collocation) {
-      element->neq = nen;
+      element->neq = element->nen;
       element->rowmap = element->mapping;
     } else {
       element->neq = 1;
@@ -207,9 +207,9 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nen*npd,&element->propertyA);CHKERRQ(ierr);
   }
   { /* */
-    PetscInt nqp = element->nqp;
-    PetscInt nen = element->nen;
-    PetscInt dim = element->dim;
+    size_t nqp = (size_t)element->nqp;
+    size_t nen = (size_t)element->nen;
+    size_t dim = (size_t)element->dim;
 
     ierr = PetscMalloc1(nqp*dim,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,&element->weight);CHKERRQ(ierr);
@@ -243,7 +243,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
     size_t MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
     size_t MAX_WORK_MAT = sizeof(element->wmat)/sizeof(PetscScalar*);
-    size_t i, n = element->nen * element->dof;
+    size_t i, n = (size_t)element->nen * (size_t)element->dof;
     for (i=0; i<MAX_WORK_VAL; i++)
       {ierr = PetscMalloc1(n,&element->wval[i]);CHKERRQ(ierr);}
     for (i=0; i<MAX_WORK_VEC; i++)
@@ -252,8 +252,8 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
       {ierr = PetscMalloc1(n*n,&element->wmat[i]);CHKERRQ(ierr);}
   }
   { /* */
-    PetscInt nen = element->nen;
-    PetscInt dof = element->dof;
+    size_t nen = (size_t)element->nen;
+    size_t dof = (size_t)element->dof;
     element->nfix = 0;
     ierr = PetscMalloc1(nen*dof,&element->ifix);CHKERRQ(ierr);
     ierr = PetscMalloc1(nen*dof,&element->vfix);CHKERRQ(ierr);
@@ -300,16 +300,16 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   element->geometry = iga->geometry ? PETSC_TRUE : PETSC_FALSE;
   element->property = iga->property ? PETSC_TRUE : PETSC_FALSE;
   { /* */
-    PetscInt nen = element->nen;
-    PetscInt nsd = iga->geometry ? iga->geometry : iga->dim;
-    PetscInt npd = iga->property;
-    if (element->nsd != nsd) {
-      element->nsd = nsd;
+    size_t nen = (size_t)element->nen;
+    size_t nsd = iga->geometry ? (size_t)iga->geometry : (size_t)iga->dim;
+    size_t npd = (size_t)iga->property;
+    if (element->nsd != (PetscInt)nsd) {
+      element->nsd = (PetscInt)nsd;
       ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
       ierr = PetscMalloc1(nen*nsd,&element->geometryX);CHKERRQ(ierr);
     }
-    if (element->npd != npd) {
-      element->npd = npd;
+    if (element->npd != (PetscInt)npd) {
+      element->npd = (PetscInt)npd;
       ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
       ierr = PetscMalloc1(nen*npd,&element->propertyA);CHKERRQ(ierr);
     }
@@ -318,10 +318,10 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     ierr = PetscMemzero(element->propertyA,sizeof(PetscReal)*nen*npd);CHKERRQ(ierr);
   }
   { /* */
-    PetscInt q,i;
-    PetscInt dim = element->dim;
-    PetscInt nen = element->nen;
-    PetscInt nqp = element->nqp;
+    size_t q,i;
+    size_t dim = (size_t)element->dim;
+    size_t nen = (size_t)element->nen;
+    size_t nqp = (size_t)element->nqp;
     /* */
     ierr = PetscMemzero(element->point,   sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->weight,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
@@ -602,8 +602,10 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
   *point = NULL;
   /* XXX */
   if (PetscUnlikely(element->atboundary)) {
-    PetscInt  nqp = element->nqp,  dim = element->dim;
-    PetscReal *S  = element->detS, *n  = element->normal;
+    size_t    nqp = (size_t)element->nqp;
+    size_t    dim = (size_t)element->dim;
+    PetscReal *S  = element->detS;
+    PetscReal *n  = element->normal;
     ierr = PetscMemzero(S,nqp*sizeof(PetscReal));CHKERRQ(ierr);
     ierr = PetscMemzero(n,nqp*dim*sizeof(PetscReal));CHKERRQ(ierr);
     if (PetscUnlikely(element->collocation)) {
@@ -1029,7 +1031,7 @@ PetscErrorCode IGAElementBuildShapeFunsAtBoundary(IGAElement element,PetscInt ax
     PetscInt dim = element->dim;
     PetscReal *S = element->detS;
     PetscReal *n = element->normal;
-    (void)PetscMemzero(n,nqp*dim*sizeof(PetscReal));
+    (void)PetscMemzero(n,(size_t)(nqp*dim)*sizeof(PetscReal));
     for (q=0; q<nqp; q++) S[q] = 1.0;
     for (q=0; q<nqp; q++) n[q*dim+axis] = side ? 1.0 : -1.0;
   }
@@ -1105,7 +1107,7 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
   if (PetscUnlikely((size_t)element->nvec >= sizeof(element->wvec)/sizeof(PetscScalar*)))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work vectors requested");
   {
-    size_t m = (size_t)(element->neq * element->dof);
+    size_t m = (size_t)element->neq * (size_t)element->dof;
     *V = element->wvec[element->nvec++];
     ierr = PetscMemzero(*V,m*sizeof(PetscScalar));CHKERRQ(ierr);
   }
@@ -1125,8 +1127,8 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
   if (PetscUnlikely((size_t)element->nmat >= sizeof(element->wmat)/sizeof(PetscScalar*)))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Too many work matrices requested");
   {
-    size_t m = (size_t)(element->neq * element->dof);
-    size_t n = (size_t)(element->nen * element->dof);
+    size_t m = (size_t)element->neq * (size_t)element->dof;
+    size_t n = (size_t)element->nen * (size_t)element->dof;
     *M = element->wmat[element->nmat++];
     ierr = PetscMemzero(*M,m*n*sizeof(PetscScalar));CHKERRQ(ierr);
   }

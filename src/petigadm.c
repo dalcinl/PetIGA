@@ -408,7 +408,7 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields
     ierr = PetscLayoutGetBlockSize(iga->map,&bs);CHKERRQ(ierr);
     ierr = PetscLayoutGetRange(iga->map,&start,&end);CHKERRQ(ierr);
     start /= bs; end /= bs; n = end-start;
-    ierr = PetscMalloc1(n*numFields,&indices);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)(n*numFields),&indices);CHKERRQ(ierr);
     for (j=start; j<end; j++)
       for (i=0; i<numFields; i++)
         indices[count++] = j*bs + fields[i];
@@ -437,7 +437,7 @@ static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fiel
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   if (numFields) *numFields = dof;
   if (fieldNames) {
-    ierr = PetscMalloc1(dof,fieldNames);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)dof,fieldNames);CHKERRQ(ierr);
     for (i=0; i<dof; i++) {
       const char *fieldname; char buf[256];
       ierr = IGAGetFieldName(iga,i,&fieldname);CHKERRQ(ierr);
@@ -455,7 +455,7 @@ static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fiel
     ierr = PetscLayoutGetBlockSize(iga->map,&bs);CHKERRQ(ierr);
     ierr = PetscLayoutGetRange(iga->map,&start,&end);CHKERRQ(ierr);
     start /= bs; end /= bs; n = end-start;
-    ierr = PetscMalloc1(dof,fields);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)dof,fields);CHKERRQ(ierr);
     for (i=0; i<bs; i++) {ierr = ISCreateStride(comm,n,start+i,bs,&(*fields)[i]);CHKERRQ(ierr);}
   }
   PetscFunctionReturn(0);
@@ -471,7 +471,7 @@ static PetscErrorCode DMCreateFieldDecomposition_IGA(DM dm,PetscInt *len,char **
   ierr = DMCreateFieldIS_IGA(dm,&numFields,namelist,islist);CHKERRQ(ierr);
   if (len) *len = numFields;
   if (dmlist) {
-    ierr = PetscMalloc1(numFields,dmlist);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)numFields,dmlist);CHKERRQ(ierr);
     for (i=0; i<numFields; i++) {
       PetscInt *fields = &i;
       ierr = DMCreateSubDM_IGA(dm,1,fields,NULL,&(*dmlist)[i]);CHKERRQ(ierr);

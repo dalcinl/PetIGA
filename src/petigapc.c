@@ -89,8 +89,8 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
 
   /* Allocate arrays to store the adjacency graph */
   nvtx *= bs; nadj *= bs; /* adjust for block size */
-  ierr = PetscMalloc((nvtx+1)*sizeof(PetscInt),&xadj);CHKERRQ(ierr);
-  ierr = PetscMalloc(nadj*sizeof(PetscInt),&adjy);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)(nvtx+1),&xadj);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)nadj,&adjy);CHKERRQ(ierr);
 
   /* Fill the adjacency graph */
   pos = 0; xadj[pos++] = 0;
@@ -187,13 +187,13 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
                 }
               }
 
-  ierr = PetscMalloc(ndirichlet*sizeof(PetscInt),&idirichlet);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)ndirichlet,&idirichlet);CHKERRQ(ierr);
   for (pos=0,i=0; i<m; i++) if (PetscBTLookup(Dmask,i)) idirichlet[pos++] = i;
   ierr = PetscBTDestroy(&Dmask);CHKERRQ(ierr);
   *_ndirichlet = ndirichlet;
   *_idirichlet = idirichlet;
 
-  ierr = PetscMalloc(nneumann*sizeof(PetscInt),&ineumann);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)nneumann,&ineumann);CHKERRQ(ierr);
   for (pos=0,i=0; i<m; i++) if (PetscBTLookup(Nmask,i)) ineumann[pos++] = i;
   ierr = PetscBTDestroy(&Nmask);CHKERRQ(ierr);
   *_nneumann = nneumann;

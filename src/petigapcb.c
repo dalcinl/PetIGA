@@ -217,13 +217,13 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     for (n=dof, i=0; i<dim; n *= (2*overlap[i++] + 1));
 
     ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n,&indices);CHKERRQ(ierr);
-    ierr = PetscMalloc1(n*n,&values);CHKERRQ(ierr);
-    ierr = PetscMalloc1(m,&ipiv);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)n,&indices);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)n*(size_t)n,&values);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)m,&ipiv);CHKERRQ(ierr);
     lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
     lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
-    ierr = PetscMalloc1(lwork,&work);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)lwork,&work);CHKERRQ(ierr);
 
     for (k=start[2]; k<start[2]+width[2]; k++)
       for (j=start[1]; j<start[1]+width[1]; j++)

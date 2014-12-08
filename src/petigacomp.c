@@ -53,8 +53,8 @@ PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
   PetscValidScalarPointer(S,3);
   IGACheckSetUp(iga,1);
 
-  ierr = PetscCalloc1(n,&localS);CHKERRQ(ierr);
-  ierr = PetscMalloc1(n,&workS);CHKERRQ(ierr);
+  ierr = PetscCalloc1((size_t)n,&localS);CHKERRQ(ierr);
+  ierr = PetscMalloc1((size_t)n,&workS);CHKERRQ(ierr);
 
   /* Get local vector U and array */
   ierr = IGAGetLocalVecArray(iga,vecU,&localU,&arrayU);CHKERRQ(ierr);
@@ -68,7 +68,7 @@ PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
     /* Quadrature loop */
     ierr = IGAElementBeginPoint(element,&point);CHKERRQ(ierr);
     while (IGAElementNextPoint(element,point)) {
-      ierr = PetscMemzero(workS,n*sizeof(PetscScalar));CHKERRQ(ierr);
+      ierr = PetscMemzero(workS,(size_t)n*sizeof(PetscScalar));CHKERRQ(ierr);
       ierr = Scalar(point,U,n,workS,ctx);CHKERRQ(ierr);
       ierr = IGAPointAddArray(point,n,workS,localS);CHKERRQ(ierr);
     }

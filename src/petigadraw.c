@@ -153,7 +153,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
     PetscInt c,i,j,k,xpos=0,upos=0;
     const PetscInt *shift = iga->node_shift;
     ierr = DMDAGetCorners(da,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
-    ierr = PetscMalloc1(dof,&uval);CHKERRQ(ierr);
+    ierr = PetscMalloc1((size_t)dof,&uval);CHKERRQ(ierr);
     for (k=ks; k<ks+kw; k++) {
       uvw[2] = Parameter(k+shift[2],iga->axis[2]);
       for (j=js; j<js+jw; j++) {
