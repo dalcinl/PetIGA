@@ -34,6 +34,10 @@ static PetscErrorCode TSRollBack_Alpha(TS);
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
 #endif
 
+#ifndef PetscValidRealPointer
+#define PetscValidRealPointer PetscValidDoublePointer
+#endif
+
 typedef struct {
 
   PetscReal stage_time;
@@ -68,6 +72,33 @@ static PetscErrorCode TSAlpha_StageTime(TS ts)
   th->stage_time = t + Alpha_f*dt;
   th->shift = Alpha_m/(Alpha_f*Gamma*dt);
   th->scale = 1/Alpha_f;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSAlpha_StageVecs"
+static PetscErrorCode TSAlpha_StageVecs(TS ts,Vec X)
+{
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
+  Vec            X1 = X,      V1 = th->V1;
+  Vec            Xa = th->Xa, Va = th->Va;
+  Vec            X0 = th->X0, V0 = th->V0;
+  PetscReal      dt = ts->time_step;
+  PetscReal      Alpha_m = th->Alpha_m;
+  PetscReal      Alpha_f = th->Alpha_f;
+  PetscReal      Gamma   = th->Gamma;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  /* V1 = 1/(Gamma*dT)*(X1-X0) + (1-1/Gamma)*V0 */
+  ierr = VecWAXPY(V1,-1.0,X0,X1);CHKERRQ(ierr);
+  ierr = VecAXPBY(V1,1-1/Gamma,1/(Gamma*dt),V0);CHKERRQ(ierr);
+  /* Xa = X0 + Alpha_f*(X1-X0) */
+  ierr = VecWAXPY(Xa,-1.0,X0,X1);CHKERRQ(ierr);
+  ierr = VecAYPX(Xa,Alpha_f,X0);CHKERRQ(ierr);
+  /* Va = V0 + Alpha_m*(V1-V0) */
+  ierr = VecWAXPY(Va,-1.0,V0,V1);CHKERRQ(ierr);
+  ierr = VecAYPX(Va,Alpha_m,V0);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -259,6 +290,46 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SNESTSFormFunction_Alpha"
+static PetscErrorCode SNESTSFormFunction_Alpha(SNES snes,Vec X,Vec F,TS ts)
+{
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = TSAlpha_StageVecs(ts,X);CHKERRQ(ierr);
+  /* F = Function(ta,Xa,Va) */
+  ierr = TSComputeIFunction(ts,th->stage_time,th->Xa,th->Va,F,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = VecScale(F,th->scale);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SNESTSFormJacobian_Alpha"
+static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
+                                               PETSC_UNUSED Vec X,
+#if PETSC_VERSION_LT(3,5,0)
+                                               Mat *J,Mat *P,MatStructure *m,
+#else
+                                               Mat J,Mat P,
+#endif
+                                               TS ts)
+{
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  /* A,B = Jacobian(ta,Xa,Va) */
+#if PETSC_VERSION_LT(3,5,0)
+  *m = SAME_NONZERO_PATTERN;
+  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
+#else
+  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,J,P,PETSC_FALSE);CHKERRQ(ierr);
+#endif
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "TSReset_Alpha"
 static PetscErrorCode TSReset_Alpha(TS ts)
 {
@@ -290,56 +361,6 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaSetRadius_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaSetParams_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaGetParams_C",NULL);CHKERRQ(ierr);
-
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SNESTSFormFunction_Alpha"
-static PetscErrorCode SNESTSFormFunction_Alpha(SNES snes,Vec x,Vec y,TS ts)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  Vec            X0  = th->X0, V0 = th->V0;
-  Vec            X1  = x, V1 = th->V1, R = y;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  /* V1 = 1/(Gamma*dT)*(X1-X0) + (1-1/Gamma)*V0 */
-  ierr = VecWAXPY(V1,-1,X0,X1);CHKERRQ(ierr);
-  ierr = VecAXPBY(V1,1-1/th->Gamma,1/(th->Gamma*ts->time_step),V0);CHKERRQ(ierr);
-  /* Xa = X0 + Alpha_f*(X1-X0) */
-  ierr = VecWAXPY(th->Xa,-1,X0,X1);CHKERRQ(ierr);
-  ierr = VecAYPX(th->Xa,th->Alpha_f,X0);CHKERRQ(ierr);
-  /* Va = V0 + Alpha_m*(V1-V0) */
-  ierr = VecWAXPY(th->Va,-1,V0,V1);CHKERRQ(ierr);
-  ierr = VecAYPX(th->Va,th->Alpha_m,V0);CHKERRQ(ierr);
-  /* F = Function(ta,Xa,Va) */
-  ierr = TSComputeIFunction(ts,th->stage_time,th->Xa,th->Va,R,PETSC_FALSE);CHKERRQ(ierr);
-  ierr = VecScale(R,th->scale);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SNESTSFormJacobian_Alpha"
-static PetscErrorCode SNESTSFormJacobian_Alpha(SNES snes,Vec x,
-#if PETSC_VERSION_LT(3,5,0)
-                                               Mat *A,Mat *B,MatStructure *m,
-#else
-                                               Mat A,Mat B,
-#endif
-                                               TS ts)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  /* A,B = Jacobian(ta,Xa,Va) */
-#if PETSC_VERSION_LT(3,5,0)
-  *m = SAME_NONZERO_PATTERN;
-  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,A,B,m,PETSC_FALSE);CHKERRQ(ierr);
-#else
-  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,A,B,PETSC_FALSE);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -377,13 +398,13 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsHead("Alpha ODE solver options");CHKERRQ(ierr);
+  ierr = PetscOptionsHead("Generalized-Alpha ODE solver options");CHKERRQ(ierr);
   {
     PetscBool flg;
-    PetscReal radius = 1.0;
+    PetscReal radius = 1;
     PetscBool adapt  = th->adapt;
     ierr = PetscOptionsReal("-ts_alpha_radius","Spectral radius (high-frequency dissipation)","TSAlphaSetRadius",radius,&radius,&flg);CHKERRQ(ierr);
-    if (flg) { ierr = TSAlphaSetRadius(ts,radius);CHKERRQ(ierr); }
+    if (flg) {ierr = TSAlphaSetRadius(ts,radius);CHKERRQ(ierr);}
     ierr = PetscOptionsReal("-ts_alpha_alpha_m","Algoritmic parameter alpha_m","TSAlphaSetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_alpha_f","Algoritmic parameter alpha_f","TSAlphaSetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_gamma","Algoritmic parameter gamma","TSAlphaSetParams",th->Gamma,&th->Gamma,NULL);CHKERRQ(ierr);
@@ -411,7 +432,7 @@ static PetscErrorCode TSView_Alpha(TS ts,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-/*------------------------------------------------------------*/
+/* ------------------------------------------------------------ */
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlphaUseAdapt_Alpha"
@@ -474,8 +495,8 @@ static PetscErrorCode TSAlphaGetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal 
 /* ------------------------------------------------------------ */
 
 /*MC
-      TSALPHA - DAE solver using the implicit Generalized-Alpha
-                method for first-order systems
+      TSALPHA - DAE solver using the implicit Generalized-Alpha method
+                for first-order systems
 
   Level: beginner
 
@@ -537,10 +558,11 @@ PetscErrorCode TSCreate_Alpha1(TS ts)
 #if PETSC_VERSION_LE(3,3,0)
   if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
 #endif
-
   PetscFunctionReturn(0);
 }
 EXTERN_C_END
+
+/* ------------------------------------------------------------ */
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlphaUseAdapt"
@@ -585,8 +607,8 @@ PetscErrorCode TSAlphaUseAdapt(TS ts,PetscBool use)
   generalized-\alpha method can be computed in terms of a specified
   spectral radius \rho in [0,1] for infinite time step in order to
   control high-frequency numerical damping:
-    alpha_m = 0.5*(3-\rho)/(1+\rho)
-    alpha_f = 1/(1+\rho)
+    \alpha_m = 0.5*(3-\rho)/(1+\rho)
+    \alpha_f = 1/(1+\rho)
 
   Input Parameter:
 +  ts - timestepping context
@@ -606,6 +628,7 @@ PetscErrorCode TSAlphaSetRadius(TS ts,PetscReal radius)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidLogicalCollectiveReal(ts,radius,2);
+  if (radius < 0 || radius > 1) SETERRQ1(((PetscObject)ts)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Radius %g not in range [0,1]",(double)radius);
   ierr = PetscTryMethod(ts,"TSAlphaSetRadius_C",(TS,PetscReal),(ts,radius));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -636,7 +659,7 @@ PetscErrorCode TSAlphaSetRadius(TS ts,PetscReal radius)
    Options Database:
 +  -ts_alpha_alpha_m <alpha_m>
 .  -ts_alpha_alpha_f <alpha_f>
--  -ts_alpha_gamma <gamma>
+-  -ts_alpha_gamma   <gamma>
 
   Note:
   Use of this function is normally only required to hack TSALPHA to
@@ -692,9 +715,9 @@ PetscErrorCode TSAlphaGetParams(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,Pets
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (alpha_m) PetscValidPointer(alpha_m,2);
-  if (alpha_f) PetscValidPointer(alpha_f,3);
-  if (gamma)   PetscValidPointer(gamma,4);
+  if (alpha_m) PetscValidRealPointer(alpha_m,2);
+  if (alpha_f) PetscValidRealPointer(alpha_f,3);
+  if (gamma)   PetscValidRealPointer(gamma,4);
   ierr = PetscUseMethod(ts,"TSAlphaGetParams_C",(TS,PetscReal*,PetscReal*,PetscReal*),(ts,alpha_m,alpha_f,gamma));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

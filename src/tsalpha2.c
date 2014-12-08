@@ -21,9 +21,9 @@ static const char citation[] =
 #if PETSC_VERSION_LT(3,5,0)
 #define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
 #define TSPostStage(ts,t,n,x) 0
-static PetscErrorCode TSRollBack_Alpha2(TS);
+static PetscErrorCode TSRollBack_Alpha(TS);
 #define TSRollBack(ts) \
-  TSRollBack_Alpha2(ts); \
+  TSRollBack_Alpha(ts); \
   ts->ptime -= next_time_step; \
   ts->time_step = next_time_step;
 #endif
@@ -32,6 +32,10 @@ static PetscErrorCode TSRollBack_Alpha2(TS);
 #define PetscObjectComm(o) ((o)->comm)
 #define PetscObjectComposeFunction(o,n,f) \
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
+#endif
+
+#ifndef PetscValidRealPointer
+#define PetscValidRealPointer PetscValidDoublePointer
 #endif
 
 typedef struct {
@@ -61,13 +65,13 @@ typedef struct {
   TSIJacobian2 Jacobian;
   void         *JacCtx;
 
-} TS_Alpha2;
+} TS_Alpha;
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAlpha_StageTime"
 static PetscErrorCode TSAlpha_StageTime(TS ts)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  TS_Alpha  *th = (TS_Alpha*)ts->data;
   PetscReal t  = ts->ptime;
   PetscReal dt = ts->time_step;
   PetscReal Alpha_m = th->Alpha_m;
@@ -87,7 +91,7 @@ static PetscErrorCode TSAlpha_StageTime(TS ts)
 #define __FUNCT__ "TSAlpha_StageVecs"
 static PetscErrorCode TSAlpha_StageVecs(TS ts,Vec X)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   Vec            X1 = X,      V1 = th->V1, A1 = th->A1;
   Vec            Xa = th->Xa, Va = th->Va, Aa = th->Aa;
   Vec            X0 = th->X0, V0 = th->V0, A0 = th->A0;
@@ -137,7 +141,7 @@ static PetscErrorCode TS_SNESSolve(TS ts,Vec b,Vec x)
 #define __FUNCT__ "TSAlpha_InitStep"
 static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscReal      alpha_m,alpha_f,gamma,beta,time_step;
   Vec            X0 = th->vec_sol_X, X1, X2 = th->X1;
   Vec            V0 = th->vec_sol_V, V1, V2 = th->V1;
@@ -200,10 +204,10 @@ static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSStep_Alpha2"
-static PetscErrorCode TSStep_Alpha2(TS ts)
+#define __FUNCT__ "TSStep_Alpha"
+static PetscErrorCode TSStep_Alpha(TS ts)
 {
-  TS_Alpha2      *th    = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscInt       reject,next_scheme;
   PetscReal      next_time_step;
   PetscBool      stageok,accept = PETSC_TRUE;
@@ -261,10 +265,10 @@ static PetscErrorCode TSStep_Alpha2(TS ts)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSEvaluateStep_Alpha2"
-static PetscErrorCode TSEvaluateStep_Alpha2(TS ts,PetscInt order,Vec U,PetscBool *done)
+#define __FUNCT__ "TSEvaluateStep_Alpha"
+static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool *done)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -288,10 +292,10 @@ static PetscErrorCode TSEvaluateStep_Alpha2(TS ts,PetscInt order,Vec U,PetscBool
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSRollBack_Alpha2"
-static PetscErrorCode TSRollBack_Alpha2(TS ts)
+#define __FUNCT__ "TSRollBack_Alpha"
+static PetscErrorCode TSRollBack_Alpha(TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -302,10 +306,10 @@ static PetscErrorCode TSRollBack_Alpha2(TS ts)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSInterpolate_Alpha2"
-static PetscErrorCode TSInterpolate_Alpha2(TS ts,PetscReal t,Vec X)
+#define __FUNCT__ "TSInterpolate_Alpha"
+static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   Vec            V;
   PetscErrorCode ierr;
 
@@ -317,10 +321,10 @@ static PetscErrorCode TSInterpolate_Alpha2(TS ts,PetscReal t,Vec X)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SNESTSFormFunction_Alpha2"
-static PetscErrorCode SNESTSFormFunction_Alpha2(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
+#define __FUNCT__ "SNESTSFormFunction_Alpha"
+static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -341,17 +345,17 @@ static PetscErrorCode SNESTSFormFunction_Alpha2(PETSC_UNUSED SNES snes,Vec X,Vec
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SNESTSFormJacobian_Alpha2"
-static PetscErrorCode SNESTSFormJacobian_Alpha2(PETSC_UNUSED SNES snes,
-                                                Vec X,
+#define __FUNCT__ "SNESTSFormJacobian_Alpha"
+static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
+                                               PETSC_UNUSED Vec X,
 #if PETSC_VERSION_LT(3,5,0)
-                                                Mat *J,Mat *P,MatStructure *m,
+                                               Mat *J,Mat *P,MatStructure *m,
 #else
-                                                Mat J,Mat P,
+                                               Mat J,Mat P,
 #endif
-                                                TS ts)
+                                               TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -381,10 +385,10 @@ static PetscErrorCode SNESTSFormJacobian_Alpha2(PETSC_UNUSED SNES snes,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSReset_Alpha2"
-static PetscErrorCode TSReset_Alpha2(TS ts)
+#define __FUNCT__ "TSReset_Alpha"
+static PetscErrorCode TSReset_Alpha(TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -404,15 +408,20 @@ static PetscErrorCode TSReset_Alpha2(TS ts)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSDestroy_Alpha2"
-static PetscErrorCode TSDestroy_Alpha2(TS ts)
+#define __FUNCT__ "TSDestroy_Alpha"
+static PetscErrorCode TSDestroy_Alpha(TS ts)
 {
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = TSReset_Alpha2(ts);CHKERRQ(ierr);
+  ierr = TSReset_Alpha(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
-  /* */
+
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
+
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",NULL);CHKERRQ(ierr);
@@ -421,19 +430,14 @@ static PetscErrorCode TSDestroy_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",NULL);CHKERRQ(ierr);
-  /* */
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetUp_Alpha2"
-static PetscErrorCode TSSetUp_Alpha2(TS ts)
+#define __FUNCT__ "TSSetUp_Alpha"
+static PetscErrorCode TSSetUp_Alpha(TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -466,10 +470,10 @@ static PetscErrorCode TSSetUp_Alpha2(TS ts)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetFromOptions_Alpha2"
-static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
+#define __FUNCT__ "TSSetFromOptions_Alpha"
+static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -478,12 +482,12 @@ static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
     PetscBool flg;
     PetscReal radius = 1;
     PetscBool adapt  = th->adapt;
-    ierr = PetscOptionsReal("-ts_alpha_radius", "Spectral radius (high-frequency dissipation)","TSAlpha2SetRadius",radius,&radius,&flg);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_radius","Spectral radius (high-frequency dissipation)","TSAlpha2SetRadius",radius,&radius,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlpha2SetRadius(ts,radius);CHKERRQ(ierr);}
     ierr = PetscOptionsReal("-ts_alpha_alpha_m","Algoritmic parameter alpha_m","TSAlpha2SetParams",th->Alpha_m,&th->Alpha_m,NULL);CHKERRQ(ierr);
     ierr = PetscOptionsReal("-ts_alpha_alpha_f","Algoritmic parameter alpha_f","TSAlpha2SetParams",th->Alpha_f,&th->Alpha_f,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_gamma",  "Algoritmic parameter gamma",  "TSAlpha2SetParams",th->Gamma,  &th->Gamma,  NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsReal("-ts_alpha_beta",   "Algoritmic parameter beta",   "TSAlpha2SetParams",th->Beta,   &th->Beta,   NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_gamma","Algoritmic parameter gamma","TSAlpha2SetParams",th->Gamma,&th->Gamma,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsReal("-ts_alpha_beta","Algoritmic parameter beta","TSAlpha2SetParams",th->Beta,&th->Beta,NULL);CHKERRQ(ierr);
     ierr = TSAlpha2SetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma,th->Beta);CHKERRQ(ierr);
     ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","TSAlpha2UseAdapt",adapt,&adapt,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlpha2UseAdapt(ts,adapt);CHKERRQ(ierr);}
@@ -494,10 +498,10 @@ static PetscErrorCode TSSetFromOptions_Alpha2(TS ts)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSView_Alpha2"
-static PetscErrorCode TSView_Alpha2(TS ts,PetscViewer viewer)
+#define __FUNCT__ "TSView_Alpha"
+static PetscErrorCode TSView_Alpha(TS ts,PetscViewer viewer)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscBool      ascii;
   PetscErrorCode ierr;
 
@@ -511,10 +515,10 @@ static PetscErrorCode TSView_Alpha2(TS ts,PetscViewer viewer)
 /* ------------------------------------------------------------ */
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetIFunction2_Alpha2"
-static PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ctx)
+#define __FUNCT__ "TSSetIFunction2_Alpha"
+static PetscErrorCode TSSetIFunction2_Alpha(TS ts,Vec F,TSIFunction2 f,void *ctx)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = TSSetIFunction(ts,F,NULL,NULL);CHKERRQ(ierr);
@@ -524,10 +528,10 @@ static PetscErrorCode TSSetIFunction2_Alpha2(TS ts,Vec F,TSIFunction2 f,void *ct
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetIJacobian2_Alpha2"
-static PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx)
+#define __FUNCT__ "TSSetIJacobian2_Alpha"
+static PetscErrorCode TSSetIJacobian2_Alpha(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = TSSetIJacobian(ts,J,P,NULL,NULL);CHKERRQ(ierr);
@@ -537,10 +541,10 @@ static PetscErrorCode TSSetIJacobian2_Alpha2(TS ts,Mat J,Mat P,TSIJacobian2 j,vo
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSComputeIFunction2_Alpha2"
-static PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
+#define __FUNCT__ "TSComputeIFunction2_Alpha"
+static PetscErrorCode TSComputeIFunction2_Alpha(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -554,10 +558,10 @@ static PetscErrorCode TSComputeIFunction2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,V
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSComputeIJacobian2_Alpha2"
-static PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
+#define __FUNCT__ "TSComputeIJacobian2_Alpha"
+static PetscErrorCode TSComputeIJacobian2_Alpha(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -571,10 +575,10 @@ static PetscErrorCode TSComputeIJacobian2_Alpha2(TS ts,PetscReal t,Vec X,Vec V,V
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetSolution2_Alpha2"
-static PetscErrorCode TSSetSolution2_Alpha2(TS ts,Vec X,Vec V)
+#define __FUNCT__ "TSSetSolution2_Alpha"
+static PetscErrorCode TSSetSolution2_Alpha(TS ts,Vec X,Vec V)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -591,10 +595,10 @@ static PetscErrorCode TSSetSolution2_Alpha2(TS ts,Vec X,Vec V)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSGetSolution2_Alpha2"
-static PetscErrorCode TSGetSolution2_Alpha2(TS ts,Vec *X, Vec *V)
+#define __FUNCT__ "TSGetSolution2_Alpha"
+static PetscErrorCode TSGetSolution2_Alpha(TS ts,Vec *X, Vec *V)
 {
-  TS_Alpha2      *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -611,8 +615,8 @@ static PetscErrorCode TSGetSolution2_Alpha2(TS ts,Vec *X, Vec *V)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSolve2_Alpha2"
-static PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
+#define __FUNCT__ "TSSolve2_Alpha"
+static PetscErrorCode TSSolve2_Alpha(TS ts,Vec X,Vec V)
 {
   PetscErrorCode ierr;
 
@@ -627,10 +631,10 @@ static PetscErrorCode TSSolve2_Alpha2(TS ts,Vec X,Vec V)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSInterpolate2_Alpha2"
-static PetscErrorCode TSInterpolate2_Alpha2(TS ts,PetscReal t,Vec X,Vec V)
+#define __FUNCT__ "TSInterpolate2_Alpha"
+static PetscErrorCode TSInterpolate2_Alpha(TS ts,PetscReal t,Vec X,Vec V)
 {
-  TS_Alpha2     *th = (TS_Alpha2*)ts->data;
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscReal      dt  = ts->ptime - t;
   PetscErrorCode ierr;
 
@@ -648,10 +652,10 @@ static PetscErrorCode TSInterpolate2_Alpha2(TS ts,PetscReal t,Vec X,Vec V)
 /* ------------------------------------------------------------ */
 
 #undef __FUNCT__
-#define __FUNCT__ "TSAlpha2UseAdapt_Alpha2"
-static PetscErrorCode TSAlpha2UseAdapt_Alpha2(TS ts,PetscBool use)
+#define __FUNCT__ "TSAlpha2UseAdapt_Alpha"
+static PetscErrorCode TSAlpha2UseAdapt_Alpha(TS ts,PetscBool use)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  TS_Alpha *th = (TS_Alpha*)ts->data;
 
   PetscFunctionBegin;
   if (use == th->adapt) PetscFunctionReturn(0);
@@ -661,13 +665,14 @@ static PetscErrorCode TSAlpha2UseAdapt_Alpha2(TS ts,PetscBool use)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSAlpha2SetRadius_Alpha2"
-static PetscErrorCode TSAlpha2SetRadius_Alpha2(TS ts,PetscReal radius)
+#define __FUNCT__ "TSAlpha2SetRadius_Alpha"
+static PetscErrorCode TSAlpha2SetRadius_Alpha(TS ts,PetscReal radius)
 {
   PetscReal      alpha_m,alpha_f,gamma,beta;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+  if (radius < 0 || radius > 1) SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"Radius %g not in range [0,1]",(double)radius);
   alpha_m = (2-radius)/(1+radius);
   alpha_f = 1/(1+radius);
   gamma   = (PetscReal)0.5 + alpha_m - alpha_f;
@@ -677,10 +682,10 @@ static PetscErrorCode TSAlpha2SetRadius_Alpha2(TS ts,PetscReal radius)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSAlpha2SetParams_Alpha2"
-static PetscErrorCode TSAlpha2SetParams_Alpha2(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma,PetscReal beta)
+#define __FUNCT__ "TSAlpha2SetParams_Alpha"
+static PetscErrorCode TSAlpha2SetParams_Alpha(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma,PetscReal beta)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  TS_Alpha  *th = (TS_Alpha*)ts->data;
   PetscReal tol = 100*PETSC_MACHINE_EPSILON;
   PetscReal res = ((PetscReal)0.5 + alpha_m - alpha_f) - gamma;
 
@@ -694,10 +699,11 @@ static PetscErrorCode TSAlpha2SetParams_Alpha2(TS ts,PetscReal alpha_m,PetscReal
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSAlpha2GetParams_Alpha2"
-static PetscErrorCode TSAlpha2GetParams_Alpha2(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,PetscReal *gamma,PetscReal *beta)
+#define __FUNCT__ "TSAlpha2GetParams_Alpha"
+static PetscErrorCode TSAlpha2GetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,PetscReal *gamma,PetscReal *beta)
 {
-  TS_Alpha2 *th = (TS_Alpha2*)ts->data;
+  TS_Alpha *th = (TS_Alpha*)ts->data;
+
   PetscFunctionBegin;
   if (alpha_m) *alpha_m = th->Alpha_m;
   if (alpha_f) *alpha_f = th->Alpha_f;
@@ -725,35 +731,36 @@ EXTERN_C_BEGIN
 #define __FUNCT__ "TSCreate_Alpha2"
 PetscErrorCode TSCreate_Alpha2(TS ts)
 {
-  TS_Alpha2      *th;
+  TS_Alpha       *th;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
 
-  ts->ops->reset          = TSReset_Alpha2;
-  ts->ops->destroy        = TSDestroy_Alpha2;
-  ts->ops->view           = TSView_Alpha2;
-  ts->ops->setup          = TSSetUp_Alpha2;
-  ts->ops->setfromoptions = TSSetFromOptions_Alpha2;
-  ts->ops->step           = TSStep_Alpha2;
-  ts->ops->evaluatestep   = TSEvaluateStep_Alpha2;
+  ts->ops->reset          = TSReset_Alpha;
+  ts->ops->destroy        = TSDestroy_Alpha;
+  ts->ops->view           = TSView_Alpha;
+  ts->ops->setup          = TSSetUp_Alpha;
+  ts->ops->setfromoptions = TSSetFromOptions_Alpha;
+  ts->ops->step           = TSStep_Alpha;
+  ts->ops->evaluatestep   = TSEvaluateStep_Alpha;
 #if 0==PETSC_VERSION_LT(3,5,0)
-  ts->ops->rollback       = TSRollBack_Alpha2;
+  ts->ops->rollback       = TSRollBack_Alpha;
 #endif
-  ts->ops->interpolate    = TSInterpolate_Alpha2;
-  ts->ops->snesfunction   = SNESTSFormFunction_Alpha2;
-  ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha2;
+  ts->ops->interpolate    = TSInterpolate_Alpha;
+  ts->ops->snesfunction   = SNESTSFormFunction_Alpha;
+  ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha;
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",TSSetIFunction2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",TSSetIJacobian2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",TSComputeIFunction2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",TSComputeIJacobian2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",TSInterpolate2_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",TSSetIFunction2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",TSSetIJacobian2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",TSComputeIFunction2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",TSComputeIJacobian2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",TSInterpolate2_Alpha);CHKERRQ(ierr);
 
 #if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(ts,TS_Alpha2,&th);CHKERRQ(ierr);
+  ierr = PetscNewLog(ts,TS_Alpha,&th);CHKERRQ(ierr);
 #else
   ierr = PetscNewLog(ts,&th);CHKERRQ(ierr);
 #endif
@@ -767,15 +774,14 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   th->adapt = PETSC_FALSE;
   th->order = 2;
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",TSAlpha2UseAdapt_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",TSAlpha2SetRadius_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha2);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha2);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",TSAlpha2UseAdapt_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",TSAlpha2SetRadius_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha);CHKERRQ(ierr);
 
 #if PETSC_VERSION_LE(3,3,0)
   if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
 #endif
-
   PetscFunctionReturn(0);
 }
 EXTERN_C_END
@@ -1096,6 +1102,7 @@ PetscErrorCode TSAlpha2UseAdapt(TS ts,PetscBool use)
 PetscErrorCode TSAlpha2SetRadius(TS ts,PetscReal radius)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidLogicalCollectiveReal(ts,radius,2);
@@ -1109,7 +1116,7 @@ PetscErrorCode TSAlpha2SetRadius(TS ts,PetscReal radius)
 /*@
   TSAlpha2SetParams - sets the algorithmic parameters for TSALPHA2
 
-  Not Collective
+  Logically Collective on TS
 
   Second-order accuracy can be obtained so long as:
     \gamma = 1/2 + alpha_m - alpha_f
@@ -1133,7 +1140,7 @@ PetscErrorCode TSAlpha2SetRadius(TS ts,PetscReal radius)
 -  -ts_alpha_beta    <beta>
 
   Note:
-  Use of this function is normally only required to hack TSGALPHA to
+  Use of this function is normally only required to hack TSALPHA2 to
   use a modified integration scheme. Users should call
   TSAlpha2SetRadius() to set the desired spectral radius of the methods
   (i.e. high-frequency damping) in order so select optimal values for
@@ -1146,12 +1153,13 @@ PetscErrorCode TSAlpha2SetRadius(TS ts,PetscReal radius)
 PetscErrorCode TSAlpha2SetParams(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma,PetscReal beta)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidLogicalCollectiveReal(ts,alpha_m,2);
   PetscValidLogicalCollectiveReal(ts,alpha_f,3);
-  PetscValidLogicalCollectiveReal(ts,gamma,  4);
-  PetscValidLogicalCollectiveReal(ts,beta,   5);
+  PetscValidLogicalCollectiveReal(ts,gamma,4);
+  PetscValidLogicalCollectiveReal(ts,beta,5);
   ierr = PetscTryMethod(ts,"TSAlpha2SetParams_C",(TS,PetscReal,PetscReal,PetscReal,PetscReal),(ts,alpha_m,alpha_f,gamma,beta));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -1171,7 +1179,7 @@ PetscErrorCode TSAlpha2SetParams(TS ts,PetscReal alpha_m,PetscReal alpha_f,Petsc
 -  \beta    - algorithmic parameter
 
   Note:
-  Use of this function is normally only required to hack TSGALPHA to
+  Use of this function is normally only required to hack TSALPHA2 to
   use a modified integration scheme. Users should call
   TSAlpha2SetRadius() to set the high-frequency damping (i.e. spectral
   radius of the method) in order so select optimal values for these
@@ -1184,12 +1192,13 @@ PetscErrorCode TSAlpha2SetParams(TS ts,PetscReal alpha_m,PetscReal alpha_f,Petsc
 PetscErrorCode TSAlpha2GetParams(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,PetscReal *gamma,PetscReal *beta)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (alpha_m) PetscValidPointer(alpha_m,2);
-  if (alpha_f) PetscValidPointer(alpha_f,3);
-  if (gamma)   PetscValidPointer(gamma,4);
-  if (beta)    PetscValidPointer(beta,5);
+  if (alpha_m) PetscValidRealPointer(alpha_m,2);
+  if (alpha_f) PetscValidRealPointer(alpha_f,3);
+  if (gamma)   PetscValidRealPointer(gamma,4);
+  if (beta)    PetscValidRealPointer(beta,5);
   ierr = PetscUseMethod(ts,"TSAlpha2GetParams_C",(TS,PetscReal*,PetscReal*,PetscReal*,PetscReal*),(ts,alpha_m,alpha_f,gamma,beta));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
