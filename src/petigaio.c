@@ -615,6 +615,19 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LE(3,3,0)
+#undef __FUNCT__
+#define __FUNCT__ "PetscMPIIntCast"
+PETSC_STATIC_INLINE PetscErrorCode PetscMPIIntCast(PetscInt a,PetscMPIInt *b)
+{
+  PetscFunctionBegin;
+  *b =  (PetscMPIInt)(a);
+#if defined(PETSC_USE_64BIT_INDICES)
+  if ((a) > PETSC_MPI_INT_MAX) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Array too long for MPI");
+#endif
+  PetscFunctionReturn(0);
+}
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "VecLoad_Binary_SkipHeader"
