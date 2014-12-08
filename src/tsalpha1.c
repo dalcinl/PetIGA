@@ -255,7 +255,7 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool 
       ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
       ierr = VecMAXPY(U,3,scal,vecs);CHKERRQ(ierr);
     } else {
-      ierr = VecWAXPY(U,1,th->vec_sol_prev,th->X1);CHKERRQ(ierr);
+      ierr = VecWAXPY(U,1.0,th->vec_sol_prev,th->X1);CHKERRQ(ierr);
     }
   }
   PetscFunctionReturn(0);

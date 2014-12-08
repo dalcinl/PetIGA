@@ -49,7 +49,8 @@ typedef struct {
   Vec       X0,Xa,X1;
   Vec       V0,Va,V1;
   Vec       A0,Aa,A1;
-  Vec       vec_sol_prev;
+  Vec       vec_sol_X_prev;
+  Vec       vec_sol_V_prev;
 
   PetscReal Alpha_m;
   PetscReal Alpha_f;
@@ -186,11 +187,17 @@ static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
   ierr = VecAXPY(th->A0,-3/ts->time_step,V0);CHKERRQ(ierr);
   ierr = VecAXPY(th->A0,+4/ts->time_step,V1);CHKERRQ(ierr);
   ierr = VecAXPY(th->A0,-1/ts->time_step,V2);CHKERRQ(ierr);
-  if (th->vec_sol_prev) {
-    ierr = VecZeroEntries(th->vec_sol_prev);CHKERRQ(ierr);
-    ierr = VecAXPY(th->vec_sol_prev,+2,X2);CHKERRQ(ierr);
-    ierr = VecAXPY(th->vec_sol_prev,-4,X1);CHKERRQ(ierr);
-    ierr = VecAXPY(th->vec_sol_prev,+2,X0);CHKERRQ(ierr);
+  if (th->vec_sol_X_prev) {
+    ierr = VecZeroEntries(th->vec_sol_X_prev);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_X_prev,+2,X2);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_X_prev,-4,X1);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_X_prev,+2,X0);CHKERRQ(ierr);
+  }
+  if (th->vec_sol_V_prev) {
+    ierr = VecZeroEntries(th->vec_sol_V_prev);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_V_prev,+2,V2);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_V_prev,-4,V1);CHKERRQ(ierr);
+    ierr = VecAXPY(th->vec_sol_V_prev,+2,V0);CHKERRQ(ierr);
   }
 
  finally:
@@ -241,8 +248,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
     if (!stageok) {accept = PETSC_FALSE; continue;}
 
-    ierr = VecCopy(th->X1,th->vec_sol_X);CHKERRQ(ierr);
-    ierr = VecCopy(th->V1,th->vec_sol_V);CHKERRQ(ierr);
+    ierr = TSEvaluateStep2(ts,th->order,th->vec_sol_X,th->vec_sol_V,NULL);CHKERRQ(ierr);
     th->status = TS_STEP_PENDING;
 
     ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
@@ -260,7 +266,8 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     th->status = TS_STEP_COMPLETE; break;
   }
 
-  if (th->vec_sol_prev && !ts->reason) {ierr = VecCopy(th->X0,th->vec_sol_prev);CHKERRQ(ierr);}
+  if (th->vec_sol_X_prev && !ts->reason) {ierr = VecCopy(th->X0,th->vec_sol_X_prev);CHKERRQ(ierr);}
+  if (th->vec_sol_V_prev && !ts->reason) {ierr = VecCopy(th->V0,th->vec_sol_V_prev);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -281,11 +288,11 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool 
       PetscReal a = 1 + ts->time_step_prev/ts->time_step;
       scal[0] = +1/a;         vecs[0] = th->X1;
       scal[1] = -1/(a-1);     vecs[1] = th->X0;
-      scal[2] = +1/(a*(a-1)); vecs[2] = th->vec_sol_prev;
+      scal[2] = +1/(a*(a-1)); vecs[2] = th->vec_sol_X_prev;
       ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
       ierr = VecMAXPY(U,3,scal,vecs);CHKERRQ(ierr);
     } else {
-      ierr = VecWAXPY(U,1,th->vec_sol_prev,th->X1);CHKERRQ(ierr);
+      ierr = VecWAXPY(U,1.0,th->vec_sol_X_prev,th->X1);CHKERRQ(ierr);
     }
   }
   PetscFunctionReturn(0);
@@ -403,7 +410,8 @@ static PetscErrorCode TSReset_Alpha(TS ts)
   ierr = VecDestroy(&th->A0);CHKERRQ(ierr);
   ierr = VecDestroy(&th->Aa);CHKERRQ(ierr);
   ierr = VecDestroy(&th->A1);CHKERRQ(ierr);
-  ierr = VecDestroy(&th->vec_sol_prev);CHKERRQ(ierr);
+  ierr = VecDestroy(&th->vec_sol_X_prev);CHKERRQ(ierr);
+  ierr = VecDestroy(&th->vec_sol_V_prev);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -430,6 +438,7 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSEvaluateStep2_C",NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -463,7 +472,8 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
     ierr = TSGetAdapt(ts,&ts->adapt);CHKERRQ(ierr);
     ierr = TSAdaptSetType(ts->adapt,TSADAPTNONE);CHKERRQ(ierr);
   } else {
-    ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_prev);CHKERRQ(ierr);
+    ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_X_prev);CHKERRQ(ierr);
+    ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_V_prev);CHKERRQ(ierr);
   }
   ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -649,6 +659,37 @@ static PetscErrorCode TSInterpolate2_Alpha(TS ts,PetscReal t,Vec X,Vec V)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "TSEvaluateStep2_Alpha"
+static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PetscBool *done)
+{
+  TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  if (order == 0) SETERRQ(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"No time-step adaptivity implemented for 1st order alpha method; Run with -ts_adapt_type none");
+  if (order == th->order) {
+    ierr = VecCopy(th->X1,X);CHKERRQ(ierr);
+    ierr = VecCopy(th->V1,V);CHKERRQ(ierr);
+  } else if (order == th->order-1) {
+    if (ts->steps > 0) {
+      PetscScalar scal[3]; Vec vecX[3],vecV[3]; 
+      PetscReal a = 1 + ts->time_step_prev/ts->time_step;
+      scal[0] = +1/a;   scal[1] = -1/(a-1); scal[2] = +1/(a*(a-1));
+      vecX[0] = th->X1; vecX[1] = th->X0;   vecX[2] = th->vec_sol_X_prev;
+      vecV[0] = th->V1; vecV[1] = th->V0;   vecV[2] = th->vec_sol_V_prev;
+      ierr = VecCopy(th->X1,X);CHKERRQ(ierr);
+      ierr = VecMAXPY(X,3,scal,vecX);CHKERRQ(ierr);
+      ierr = VecCopy(th->V1,V);CHKERRQ(ierr);
+      ierr = VecMAXPY(V,3,scal,vecV);CHKERRQ(ierr);
+    } else {
+      ierr = VecWAXPY(X,1.0,th->vec_sol_X_prev,th->X1);CHKERRQ(ierr);
+      ierr = VecWAXPY(V,1.0,th->vec_sol_V_prev,th->V1);CHKERRQ(ierr);
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
 /* ------------------------------------------------------------ */
 
 #undef __FUNCT__
@@ -758,6 +799,7 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",TSInterpolate2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSEvaluateStep2_C",TSEvaluateStep2_Alpha);CHKERRQ(ierr);
 
 #if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(ts,TS_Alpha,&th);CHKERRQ(ierr);
@@ -1039,6 +1081,41 @@ PetscErrorCode TSInterpolate2(TS ts,PetscReal t,Vec X,Vec V)
   PetscValidHeaderSpecific(V,VEC_CLASSID,4);
   if (t < ts->ptime - ts->time_step_prev || t > ts->ptime) SETERRQ3(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"Requested time %g not in last time steps [%g,%g]",t,(double)(ts->ptime-ts->time_step_prev),(double)ts->ptime);
   ierr = PetscUseMethod(ts,"TSInterpolate2_C",(TS,PetscReal,Vec,Vec),(ts,t,X,V));CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSEvaluateStep2"
+/*@
+   TSEvaluateStep - Evaluate the solution at the end of a time step with a given order of accuracy.
+
+   Collective on TS
+
+   Input Arguments:
++  ts - time stepping context
+.  order - desired order of accuracy
+-  done - whether the step was evaluated at this order (pass NULL to generate an error if not available)
+
+   Output Arguments:
++  X - solution at the end of the current step
+-  V - derivative at the end of the current step
+
+   Level: advanced
+
+   Notes:
+   This function cannot be called until all stages have been evaluated.
+   It is normally called by adaptive controllers before a step has been accepted and may also be called by the user after TSStep() has returned.
+
+.seealso: TSStep(), TSAdapt
+@*/
+PetscErrorCode TSEvaluateStep2(TS ts,PetscInt order,Vec X,Vec V,PetscBool *done)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
+  ierr = PetscUseMethod(ts,"TSEvaluateStep2_C",(TS,PetscInt,Vec,Vec,PetscBool*),(ts,order,X,V,done));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

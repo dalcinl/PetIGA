@@ -12,6 +12,7 @@ PETSC_EXTERN PetscErrorCode TSSetSolution2(TS,Vec,Vec);
 PETSC_EXTERN PetscErrorCode TSGetSolution2(TS,Vec*,Vec*);
 PETSC_EXTERN PetscErrorCode TSSolve2(TS,Vec,Vec);
 PETSC_EXTERN PetscErrorCode TSInterpolate2(TS,PetscReal,Vec,Vec);
+PETSC_EXTERN PetscErrorCode TSEvaluateStep2(TS,PetscInt,Vec,Vec,PetscBool*);
 
 #define TSALPHA2 "alpha2"
 PETSC_EXTERN PetscErrorCode TSAlpha2UseAdapt(TS,PetscBool);
