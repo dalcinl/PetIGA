@@ -238,13 +238,13 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
               LAPACKgetrf_(&m,&m,values,&m,ipiv,&info);
               if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetrf_");
               if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
-              ierr = PetscLogFlops((1/3.*n*n*n         +2/3.*n));CHKERRQ(ierr); /* multiplications */
-              ierr = PetscLogFlops((1/3.*n*n*n-1/2.*n*n+1/6.*n));CHKERRQ(ierr); /* additions */
+              ierr = PetscLogFlops((PetscLogDouble)(1*n*n*n      +2*n)/3);CHKERRQ(ierr); /* multiplications */
+              ierr = PetscLogFlops((PetscLogDouble)(2*n*n*n-3*n*n+1*n)/6);CHKERRQ(ierr); /* additions */
               LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
               if (info<0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_LIB,"Bad argument to LAPACKgetri_");
               if (info>0) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_MAT_LU_ZRPVT,"Zero-pivot in LU factorization");
-              ierr = PetscLogFlops((2/3.*n*n*n+1/2.*n*n+5/6.*n));CHKERRQ(ierr); /* multiplications */
-              ierr = PetscLogFlops((2/3.*n*n*n-3/2.*n*n+5/6.*n));CHKERRQ(ierr); /* additions */
+              ierr = PetscLogFlops((PetscLogDouble)(4*n*n*n+3*n*n+5*n)/6);CHKERRQ(ierr); /* multiplications */
+              ierr = PetscLogFlops((PetscLogDouble)(4*n*n*n-9*n*n+5*n)/6);CHKERRQ(ierr); /* additions */
             } else if (PetscLikely(n == 1)) {
               if (values[0] != (PetscScalar)0.0) values[0] = (PetscScalar)1.0/values[0];
               ierr = PetscLogFlops(1);CHKERRQ(ierr);
