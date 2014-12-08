@@ -51,6 +51,7 @@ typedef struct {
   Vec       A0,Aa,A1;
   Vec       vec_sol_X_prev;
   Vec       vec_sol_V_prev;
+  Vec       work;
 
   PetscReal Alpha_m;
   PetscReal Alpha_f;
@@ -280,21 +281,8 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool 
 
   PetscFunctionBegin;
   if (order == 0) SETERRQ(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"No time-step adaptivity implemented for 1st order alpha method; Run with -ts_adapt_type none");
-  if (order == th->order) {
-    ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
-  } else if (order == th->order-1) {
-    if (ts->steps > 0) {
-      Vec       vecs[3]; PetscScalar scal[3];
-      PetscReal a = 1 + ts->time_step_prev/ts->time_step;
-      scal[0] = +1/a;         vecs[0] = th->X1;
-      scal[1] = -1/(a-1);     vecs[1] = th->X0;
-      scal[2] = +1/(a*(a-1)); vecs[2] = th->vec_sol_X_prev;
-      ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
-      ierr = VecMAXPY(U,3,scal,vecs);CHKERRQ(ierr);
-    } else {
-      ierr = VecWAXPY(U,1.0,th->vec_sol_X_prev,th->X1);CHKERRQ(ierr);
-    }
-  }
+  if (!th->work) {ierr = VecDuplicate(th->vec_sol_X,&th->work);CHKERRQ(ierr);}
+  ierr = TSEvaluateStep2(ts,order,U,th->work,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -317,13 +305,11 @@ static PetscErrorCode TSRollBack_Alpha(TS ts)
 static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
-  Vec            V;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = VecDuplicate(th->vec_sol_V,&V);CHKERRQ(ierr);
-  ierr = TSInterpolate2(ts,t,X,V);CHKERRQ(ierr);
-  ierr = VecDestroy(&V);CHKERRQ(ierr);
+  if (!th->work) {ierr = VecDuplicate(th->vec_sol_X,&th->work);CHKERRQ(ierr);}
+  ierr = TSInterpolate2(ts,t,X,th->work);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -412,6 +398,7 @@ static PetscErrorCode TSReset_Alpha(TS ts)
   ierr = VecDestroy(&th->A1);CHKERRQ(ierr);
   ierr = VecDestroy(&th->vec_sol_X_prev);CHKERRQ(ierr);
   ierr = VecDestroy(&th->vec_sol_V_prev);CHKERRQ(ierr);
+  ierr = VecDestroy(&th->work);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
