@@ -616,6 +616,7 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
 }
 
 #if PETSC_VERSION_LE(3,3,0)
+#undef PetscMPIIntCast
 #undef __FUNCT__
 #define __FUNCT__ "PetscMPIIntCast"
 PETSC_STATIC_INLINE PetscErrorCode PetscMPIIntCast(PetscInt a,PetscMPIInt *b)
