@@ -89,7 +89,7 @@ EXTERN_C_END
 PETSC_STATIC_INLINE
 PetscReal GrevilleParameter(PetscInt index,IGAAxis axis)
 {
-  if (PetscUnlikely(axis->p == 0)) return 0.0;
+  if (PetscUnlikely(axis->p == 0)) return 0;
   return IGA_Greville(index,axis->p,axis->U);
 }
 
@@ -98,7 +98,7 @@ PetscReal LagrangeParameter(PetscInt index,IGAAxis axis)
 {
   PetscInt p,e,i,k;
   PetscReal u0,u1;
-  if (PetscUnlikely(axis->p == 0)) return 0.0;
+  if (PetscUnlikely(axis->p == 0)) return 0;
   p = axis->p;
   e = index / p;
   i = index % p;
@@ -107,7 +107,7 @@ PetscReal LagrangeParameter(PetscInt index,IGAAxis axis)
   k  = axis->span[e];
   u0 = axis->U[k];
   u1 = axis->U[k+1];
-  return u0 + i*(u1-u0)/p;
+  return u0 + (PetscReal)i/(PetscReal)p*(u1-u0);
 }
 
 #undef  __FUNCT__

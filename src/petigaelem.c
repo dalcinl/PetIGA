@@ -1182,7 +1182,7 @@ EXTERN_C_END
 
 static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
 {
-  PetscReal A = 1.0;
+  PetscReal A = 1;
   PetscInt *ID = element->ID;
   IGABasis *BD = element->parent->basis;
   PetscInt i,dim = element->dim;
@@ -1191,14 +1191,14 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
     if (i != dir) {
       PetscReal L = BD[i]->detJac[ID[i]];
       PetscInt  n = BD[i]->nen;
-      A *= L/n;
+      A *= L/(PetscReal)n;
     }
   if (!element->geometry) {
     A *= (dim==2) ? 2 : 4; /* sum(W) = 2 */
   } else {
     PetscInt shape[3] = {1,1,1};
     PetscInt k,nqp[3],nen[3];
-    PetscReal *W[3],*N[3],dS = 1.0;
+    PetscReal *W[3],*N[3],dS = 1;
     for (i=0; i<dim; i++)
       shape[i] = BD[i]->nen;
     for (k=0,i=0; i<dim; i++) {
@@ -1281,7 +1281,7 @@ static void BuildFix(IGAElement element,PetscInt dir,PetscInt side)
   IGAFormBC bcv  = form->value[dir][side];
   IGAFormBC bcl  = form->load [dir][side];
   if (bcv->count || bcl->count) {
-    PetscReal Area = bcl->count ? BoundaryArea(element,dir,side) : 1.0;
+    PetscReal Area = bcl->count ? BoundaryArea(element,dir,side) : 1;
     IGABasis *BD = element->parent->basis;
     PetscInt S[3]={0,0,0},E[3]={1,1,1};
     PetscInt ia,ja,ka,jstride,kstride,a;

@@ -491,7 +491,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   }
   for (i=1; i<=r-1; i++) { /* (N-1) breaks */
     for (j=1; j<=s; j++)     /* s times */
-      U[k++] = Ui + i * ((Uf-Ui)/N);
+      U[k++] = Ui + (PetscReal)i/(PetscReal)N * (Uf-Ui);
   }
   if (axis->periodic) {
     for (k=0; k<=C; k++) { /* periodic part */

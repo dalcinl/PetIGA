@@ -176,20 +176,20 @@ int main(int argc, char *argv[]) {
   PetscInt dir,side;
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
-      PetscScalar field = 1;
+      PetscInt    field = 1;
       PetscScalar value = 1.0;
       ierr = IGAFormSetBoundaryValue(form,dir,side,field,value);CHKERRQ(ierr);
     }
   }
   for (dir=0; dir<2; dir++) {
-    PetscScalar field = 2;
+    PetscInt    field = 2;
     PetscScalar value = 0.0;
     ierr = IGAFormSetBoundaryValue(form,dir,side=0,field,value);CHKERRQ(ierr);
     ierr = IGAFormSetBoundaryValue(form,dir,side=1,field,value);CHKERRQ(ierr);
   }
   for (dir=0; dir<2; dir++) {
     for (side=0; side<2; side++) {
-      PetscScalar field = 3;
+      PetscInt    field = 3;
       PetscScalar value = 0.0;
       ierr = IGAFormSetBoundaryValue(form,dir,side,field,value);CHKERRQ(ierr);
     }

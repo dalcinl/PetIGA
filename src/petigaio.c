@@ -276,7 +276,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
       for (i=0; i<nsd; i++)
         X[i+a*nsd] = PetscRealPart(Xw[pos++]);
       W[a] = PetscRealPart(Xw[pos++]);
-      if (W[a] != 0.0)
+      if (W[a] != 0)
         for (i=0; i<nsd; i++)
           X[i+a*nsd] /= W[a];
     }
@@ -339,7 +339,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
     n /= (nsd+1);
     ierr = VecGetArray(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
-      PetscReal w = (W[a] != 0.0) ? W[a] : 1.0;
+      PetscReal w = (W[a] != 0) ? W[a] : 1;
       for (i=0; i<nsd; i++)
         Xw[pos++] = X[i+a*nsd] * w;
       Xw[pos++] = W[a];
@@ -621,7 +621,7 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
 static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
 {
   MPI_Comm       comm;
-  PetscMPIInt    i,rank,size,tag;
+  PetscMPIInt    i,rank,size,tag,count;
   int            fd;
   PetscInt       n;
   const PetscInt *range;
@@ -646,15 +646,17 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
         n = PetscMax(n,range[i+1] - range[i]);
       ierr = PetscMalloc(n*sizeof(PetscScalar),&work);CHKERRQ(ierr);
       for (i=1; i<size; i++) {
-        n   = range[i+1] - range[i];
-        ierr = PetscBinaryRead(fd,work,n,PETSC_SCALAR);CHKERRQ(ierr);
-        ierr = MPI_Send(work,n,MPIU_SCALAR,i,tag,comm);CHKERRQ(ierr);
+        n = range[i+1] - range[i];
+        ierr = PetscMPIIntCast(n,&count);CHKERRQ(ierr);
+        ierr = PetscBinaryRead(fd,work,count,PETSC_SCALAR);CHKERRQ(ierr);
+        ierr = MPI_Send(work,count,MPIU_SCALAR,i,tag,comm);CHKERRQ(ierr);
       }
       ierr = PetscFree(work);CHKERRQ(ierr);
     }
   } else {
     MPI_Status status;
-    ierr = MPI_Recv(array,n,MPIU_SCALAR,0,tag,comm,&status);CHKERRQ(ierr);
+    ierr = PetscMPIIntCast(n,&count);CHKERRQ(ierr);
+    ierr = MPI_Recv(array,count,MPIU_SCALAR,0,tag,comm,&status);CHKERRQ(ierr);
   }
   ierr = VecRestoreArray(vec,&array);CHKERRQ(ierr);
 

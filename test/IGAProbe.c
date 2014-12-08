@@ -10,13 +10,13 @@ static void Function(PetscReal xyz[3],PetscReal *F)
   PetscReal x = xyz[0];
   PetscReal y = xyz[1];
   PetscReal z = xyz[2];
-  *F  = 0.0;
+  *F  = 0;
   *F += x*x*x;
   *F += y*y*y;
   *F += z*z*z;
   *F += x*x + y*y + z*z;
   *F += x*y + x*z + y*z;
-  *F += 1.0;
+  *F += 1;
 }
 static void Gradient(PetscReal xyz[3],PetscReal G[3])
 {
@@ -32,9 +32,9 @@ static void Hessian(PetscReal xyz[3],PetscReal H[3][3])
   PetscReal x = xyz[0];
   PetscReal y = xyz[1];
   PetscReal z = xyz[2];
-  H[0][0] = 6*x+2.0; H[0][1] = 1.0;     H[0][2] = 1.0;
-  H[1][0] = 1.0;     H[1][1] = 6*y+2.0; H[1][2] = 1.0;
-  H[2][0] = 1.0;     H[2][1] = 1.0;     H[2][2] = 6*z+2.0;
+  H[0][0] = 6*x+2; H[0][1] = 1;     H[0][2] = 1;
+  H[1][0] = 1;     H[1][1] = 6*y+2; H[1][2] = 1;
+  H[2][0] = 1;     H[2][1] = 1;     H[2][2] = 6*z+2;
 }
 static void ThirdDer(PetscReal xyz[3],PetscReal D[3][3][3])
 {
@@ -42,10 +42,10 @@ static void ThirdDer(PetscReal xyz[3],PetscReal D[3][3][3])
   for (i=0; i<3; i++)
     for (j=0; j<3; j++)
       for (k=0; k<3; k++)
-        D[i][j][k] = 0.0;
-  D[0][0][0] = 6.0;
-  D[1][1][1] = 6.0;
-  D[2][2][2] = 6.0;
+        D[i][j][k] = 0;
+  D[0][0][0] = 6;
+  D[1][1][1] = 6;
+  D[2][2][2] = 6;
 }
 
 #undef  __FUNCT__
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
     ierr = KSPSetType(ksp,KSPCG);CHKERRQ(ierr);
     ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
-    ierr = KSPSetTolerances(ksp,0.0,1e-10,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
+    ierr = KSPSetTolerances(ksp,0.0,100*PETSC_MACHINE_EPSILON,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
     ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
     ierr = KSPSolve(ksp,b,vec);CHKERRQ(ierr);
 

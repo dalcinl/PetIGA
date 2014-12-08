@@ -154,7 +154,8 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
     while (IGANextElement(iga,element)) {
       ierr = IGAElementGetClosure(element,&nen,&mapping);CHKERRQ(ierr);
-      m = n = ComputeOwnedGlobalIndices(ltogmap,dof,start,end,nen,mapping,indices);
+      n = ComputeOwnedGlobalIndices(ltogmap,dof,start,end,nen,mapping,indices);
+      ierr = PetscBLASIntCast(n,&m);CHKERRQ(ierr);
       /* get element matrix from global matrix */
       ierr = MatGetValues(A,n,indices,n,indices,values);CHKERRQ(ierr);
       /* compute inverse of element matrix */
@@ -170,7 +171,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
       ierr = PetscLogFlops((2/3.*n*n*n-3/2.*n*n+5/6.*n));CHKERRQ(ierr); /* additions */
       /* add values back into preconditioner matrix */
       ierr = MatSetValues(B,n,indices,n,indices,values,ADD_VALUES);CHKERRQ(ierr);
-      ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
+      ierr = PetscLogFlops((PetscLogDouble)(n*n));CHKERRQ(ierr);
     }
     ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 

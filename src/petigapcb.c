@@ -251,7 +251,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
             }
             /* add values back into preconditioner matrix */
             ierr = MatSetValues(B,n,indices,n,indices,values,ADD_VALUES);CHKERRQ(ierr);
-            ierr = PetscLogFlops(n*n);CHKERRQ(ierr);
+            ierr = PetscLogFlops((PetscLogDouble)(n*n));CHKERRQ(ierr);
           }
 
 #if PETSC_VERSION_LT(3,5,0)

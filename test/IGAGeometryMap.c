@@ -11,6 +11,10 @@
       SETERRQ2(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
   } while(0)
 
+#define sqrt2      ((PetscReal)1.41421356237309504880)
+#define hypot(x,y) ((PetscReal)hypot((double)(x),(double)(y)))
+#define pow(x,y)   ((PetscReal)pow((double)(x),(double)(y)))
+
 static PetscReal PX[3][3] = {
   { 1.0, 1.0, 0.0 },
   { 1.5, 1.5, 0.0 },
@@ -22,11 +26,9 @@ static PetscReal PY[3][3] = {
   { 0.0, 2.0, 2.0 },
 };
 static PetscReal PW[3][3] = {
-#define sqrt2 1.4142135623730951
   { 1.0, sqrt2/2, 1.0 },
   { 1.0, sqrt2/2, 1.0 },
   { 1.0, sqrt2/2, 1.0 },
-#undef  sqrt2
 };
 
 #undef  __FUNCT__
@@ -36,15 +38,15 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   PetscInt dim = p->dim;
   PetscReal u = p->point[0];
   PetscReal v = p->point[1];
-  PetscReal w = (dim==3)?p->point[2]:0.;
-  PetscReal X[3] = {0.,0.,0.};
+  PetscReal w = (dim==3) ? p->point[2] : 0;
+  PetscReal X[3] = {0,0,0};
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = IGAPointFormGeomMap(p,&X[0]);CHKERRQ(ierr);
   {
-    PetscReal xw = (1+u)*(v*v*(-1+sqrt(2)) + v*(-sqrt(2)+2) - 1);
-    PetscReal yw = (1+u)*(v*v*(-1+sqrt(2)) - v*sqrt(2));
-    PetscReal ww = v*v*(-2+sqrt(2)) + v*(-sqrt(2)+2) - 1;
+    PetscReal xw = (1+u)*(v*v*(-1+sqrt2) + v*(-sqrt2+2) - 1);
+    PetscReal yw = (1+u)*(v*v*(-1+sqrt2) - v*sqrt2);
+    PetscReal ww = v*v*(-2+sqrt2) + v*(-sqrt2+2) - 1;
     PetscReal x = xw / ww;
     PetscReal y = yw / ww;
     PetscReal z = 2*w;
@@ -54,8 +56,8 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   }
   {
     PetscReal detX = p->detX[0];
-    PetscReal Jw = sqrt(2)*(1+u);
-    PetscReal ww = (2-sqrt(2))*v*v + (-2+sqrt(2))*v + 1;
+    PetscReal Jw = sqrt2*(1+u);
+    PetscReal ww = (2-sqrt2)*v*v + (-2+sqrt2)*v + 1;
     PetscReal J = Jw/ww;
     if (dim==3) J *= 2;
     AssertEQUAL(detX, J);
@@ -63,11 +65,11 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   if (dim==2) {
     PetscReal F[2][2],ww,F00,F01,F10,F11;
     ierr = PetscMemcpy(&F[0][0],p->gradX[0],sizeof(F));CHKERRQ(ierr);
-    ww  = (v*v*(-2+sqrt(2))+v*(-sqrt(2)+2)-1);
-    F00 = (v*v*(-1+sqrt(2))+v*(-sqrt(2)+2)-1)/ww;
-    F01 = (-v*(u + 1)*(-2*v + sqrt(2)*v + 2))/(ww*ww);
-    F10 = (v*v*(-1+sqrt(2))-v*sqrt(2))/ww;
-    F11 = ((u+1)*(v-1)*(-2*v+sqrt(2)*v-sqrt(2)))/(ww*ww);
+    ww  = (v*v*(-2+sqrt2)+v*(-sqrt2+2)-1);
+    F00 = (v*v*(-1+sqrt2)+v*(-sqrt2+2)-1)/ww;
+    F01 = (-v*(u + 1)*(-2*v + sqrt2*v + 2))/(ww*ww);
+    F10 = (v*v*(-1+sqrt2)-v*sqrt2)/ww;
+    F11 = ((u+1)*(v-1)*(-2*v+sqrt2*v-sqrt2))/(ww*ww);
     AssertEQUAL(F[0][0], F00);
     AssertEQUAL(F[0][1], F01);
     AssertEQUAL(F[1][0], F10);
@@ -76,11 +78,11 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   if (dim==3) {
     PetscReal F[3][3],ww,F00,F01,F10,F11;
     ierr = PetscMemcpy(&F[0][0],p->gradX[0],sizeof(F));CHKERRQ(ierr);
-    ww  = (v*v*(-2+sqrt(2))+v*(-sqrt(2)+2)-1);
-    F00 = (v*v*(-1+sqrt(2))+v*(-sqrt(2)+2)-1)/ww;
-    F01 = (-v*(u + 1)*(-2*v + sqrt(2)*v + 2))/(ww*ww);
-    F10 = (v*v*(-1+sqrt(2))-v*sqrt(2))/ww;
-    F11 = ((u+1)*(v-1)*(-2*v+sqrt(2)*v-sqrt(2)))/(ww*ww);
+    ww  = (v*v*(-2+sqrt2)+v*(-sqrt2+2)-1);
+    F00 = (v*v*(-1+sqrt2)+v*(-sqrt2+2)-1)/ww;
+    F01 = (-v*(u + 1)*(-2*v + sqrt2*v + 2))/(ww*ww);
+    F10 = (v*v*(-1+sqrt2)-v*sqrt2)/ww;
+    F11 = ((u+1)*(v-1)*(-2*v+sqrt2*v-sqrt2))/(ww*ww);
     AssertEQUAL(F[0][0], F00);
     AssertEQUAL(F[0][1], F01);
     AssertEQUAL(F[0][2], 0.0);
@@ -371,11 +373,11 @@ PetscErrorCode Boundary_20(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionBegin;
   ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
-    PetscInt dim = p->dim;
+    PetscReal d  = (PetscReal)p->dim;
     PetscReal dV = p->detX[0];
     PetscReal dS = p->detS[0];
     PetscReal *n = p->normal;
-    AssertEQUAL(dS, dV/(dim-1));
+    AssertEQUAL(dS, dV/(d-1));
     AssertEQUAL(n[0],  0.0);
     AssertEQUAL(n[1],  0.0);
     AssertEQUAL(n[2], -1.0);
@@ -391,11 +393,11 @@ PetscErrorCode Boundary_21(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionBegin;
   ierr = TestGeometryMap(p);CHKERRQ(ierr);
   {
-    PetscInt dim = p->dim;
+    PetscReal d  = (PetscReal)p->dim;
     PetscReal dV = p->detX[0];
     PetscReal dS = p->detS[0];
     PetscReal *n = p->normal;
-    AssertEQUAL(dS, dV/(dim-1));
+    AssertEQUAL(dS, dV/(d-1));
     AssertEQUAL(n[0],  0.0);
     AssertEQUAL(n[1],  0.0);
     AssertEQUAL(n[2], +1.0);
@@ -490,7 +492,7 @@ PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
 
   /* Assemble global scalars S */
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = MPI_Allreduce(localS,S,n,MPIU_SCALAR,MPIU_SUM,comm);CHKERRQ(ierr);
+  ierr = MPI_Allreduce(localS,S,(PetscMPIInt)n,MPIU_SCALAR,MPIU_SUM,comm);CHKERRQ(ierr);
 
   ierr = PetscFree(localS);CHKERRQ(ierr);
   ierr = PetscFree(workS);CHKERRQ(ierr);
@@ -551,7 +553,7 @@ int main(int argc, char *argv[]) {
           X[posx++] = PX[i][j];
           X[posx++] = PY[i][j];
           if (dim==3)
-            X[posx++] = (PetscReal)2*k;
+            X[posx++] = 2*(PetscReal)k;
         }
       }
     }
@@ -578,7 +580,7 @@ int main(int argc, char *argv[]) {
   }
 
   {
-    PetscReal   pi = M_PI;
+    PetscReal   pi = PETSC_PI;
     PetscReal   h  = 2.0;
     PetscReal   Ri = 1.0;
     PetscReal   Ro = 2.0;

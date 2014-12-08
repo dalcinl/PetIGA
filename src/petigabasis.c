@@ -298,5 +298,5 @@ PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[])
   PetscInt j;
   PetscReal u = 0.0;
   for (j=0; j<p; j++) u += U[i+j+1];
-  return PetscLikely(p>0) ? u/p : (U[0]+U[1])/2;
+  return PetscLikely(p>0) ? u/(PetscReal)p : (U[0]+U[1])/2;
 }

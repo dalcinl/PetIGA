@@ -135,7 +135,7 @@ PetscErrorCode FindBestKnotToInsert(PetscInt dim,PetscInt idim,PetscInt p,PetscI
   for(i=0;i<N[idim]-1;i++){  
     for(j=0;j<N[idim]+1;j++){
       if(j<=i)   Ur[idim][j] = U[idim][j]; 
-      if(j==i+1) Ur[idim][j] = 0.5*(U[idim][j-1]+U[idim][j]);
+      if(j==i+1) Ur[idim][j] = (U[idim][j-1]+U[idim][j])/2;
       if(j>i+1)  Ur[idim][j] = U[idim][j-1]; 
     }
     PetscReal error;
