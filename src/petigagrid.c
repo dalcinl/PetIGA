@@ -127,7 +127,7 @@ PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid g,PetscInt bs,PetscInt *nlocal,Pet
     PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
     PetscInt c,i,j,k,pos = 0;
     nloc = bs*lwidth[0]*lwidth[1]*lwidth[2];
-    ierr = PetscMalloc(nloc*sizeof(PetscInt),&iloc);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nloc*sizeof(PetscInt),&iloc);CHKERRQ(ierr);
     for (k=klstart; k<klend; k++)
       for (j=jlstart; j<jlend; j++)
         for (i=ilstart; i<ilend; i++)
@@ -165,7 +165,7 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
     /* compute local ghosted indices in global natural numbering */
     PetscInt c,i,j,k,pos = 0;
     nght = bs*gwidth[0]*gwidth[1]*gwidth[2];
-    ierr = PetscMalloc(nght*sizeof(PetscInt),&ight);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nght*sizeof(PetscInt),&ight);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++) {
@@ -438,7 +438,7 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
     /* */
     PetscInt nlocal = lwidth[0]*lwidth[1]*lwidth[2],*ilocal,start;
     PetscInt i,j,k,pos = 0,index = 0;
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&ilocal);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nlocal*sizeof(PetscInt),&ilocal);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++, index++)
@@ -606,7 +606,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     PetscInt nlocal = lwidth[0]*lwidth[1]*lwidth[2];
     PetscInt i,j,k,pos = 0;
     ierr = VecGetOwnershipRange(gvec,&gstart,NULL);CHKERRQ(ierr);
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=klstart; k<klend; k++)
       for (j=jlstart; j<jlend; j++)
         for (i=ilstart; i<ilend; i++)
@@ -635,8 +635,8 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     /* */
     PetscInt nlocal = width[0]*width[1]*width[2];
     PetscInt i,j,k,pos = 0,index = 0;
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&iglobal);CHKERRQ(ierr);
-    ierr = PetscMalloc(nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nlocal*sizeof(PetscInt),&iglobal);CHKERRQ(ierr);
+    ierr = PetscMalloc((size_t)nlocal*sizeof(PetscInt),&inatural);CHKERRQ(ierr);
     for (k=kgstart; k<kgend; k++)
       for (j=jgstart; j<jgend; j++)
         for (i=igstart; i<igend; i++, index++)
