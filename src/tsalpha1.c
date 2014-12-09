@@ -180,9 +180,9 @@ static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
 static PetscErrorCode TSStep_Alpha(TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscInt       reject,next_scheme;
-  PetscReal      next_time_step;
   PetscBool      stageok,accept = PETSC_TRUE;
+  PetscInt       next_scheme,rejections = 0;
+  PetscReal      next_time_step;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -192,16 +192,11 @@ static PetscErrorCode TSStep_Alpha(TS ts)
   ierr = VecCopy(th->V1,th->V0);CHKERRQ(ierr);
   th->status = TS_STEP_INCOMPLETE;
 
-  for (reject=0; !ts->reason && th->status != TS_STEP_COMPLETE; reject++,ts->reject++) {
-    if (reject > ts->max_reject && ts->max_reject >= 0) {
-      ierr = PetscInfo2(ts,"Step=%D, step rejections %D greater than current TS allowed, stopping solve\n",ts->steps,reject);CHKERRQ(ierr);
-      ts->reason = TS_DIVERGED_STEP_REJECTED; break;
-    }
-
+  while (!ts->reason && th->status != TS_STEP_COMPLETE) {
     ierr = TSPreStep(ts);CHKERRQ(ierr);
     if (ts->steps == 0) {
       ierr = TSAlpha_InitStep(ts,&stageok);CHKERRQ(ierr);
-      if (!stageok) {accept = PETSC_FALSE; continue;}
+      if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
     }
 
     ierr = TSAlpha_StageTime(ts);CHKERRQ(ierr);
@@ -210,7 +205,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = TS_SNESSolve(ts,NULL,th->X1);CHKERRQ(ierr);
     ierr = TSPostStage(ts,th->stage_time,0,&th->X1);CHKERRQ(ierr);
     ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
-    if (!stageok) {accept = PETSC_FALSE; continue;}
+    if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
 
     ierr = TSEvaluateStep(ts,th->order,ts->vec_sol,NULL);CHKERRQ(ierr);
     th->status = TS_STEP_PENDING;
@@ -221,13 +216,21 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     if (!accept) {
       ts->ptime += next_time_step;
       ierr = TSRollBack(ts);CHKERRQ(ierr);
-      th->status = TS_STEP_INCOMPLETE; continue;
+      th->status = TS_STEP_INCOMPLETE;
+      goto reject_step;
     }
 
     ts->ptime += ts->time_step;
     ts->time_step = next_time_step;
     ts->steps++;
     th->status = TS_STEP_COMPLETE; break;
+
+  reject_step:
+    ts->reject++;
+    if (!ts->reason && ++rejections > ts->max_reject && ts->max_reject >= 0) {
+      ts->reason = TS_DIVERGED_STEP_REJECTED;
+      ierr = PetscInfo2(ts,"Step=%D, step rejections %D greater than current TS allowed, stopping solve\n",ts->steps,rejections);CHKERRQ(ierr);
+    }
   }
 
   if (th->vec_sol_prev && !ts->reason) {ierr = VecCopy(th->X0,th->vec_sol_prev);CHKERRQ(ierr);}
