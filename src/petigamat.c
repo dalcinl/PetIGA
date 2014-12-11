@@ -10,6 +10,23 @@ typedef const char* MatType;
 #define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
 #endif
 
+#ifndef PetscCalloc2
+#define PetscCalloc2(m1,r1,m2,r2)             \
+  (PetscMalloc1((m1),(r1))                 || \
+   PetscMalloc1((m2),(r2))                 || \
+   PetscMemzero(*(r1),(m1)*sizeof(**(r1))) || \
+   PetscMemzero(*(r2),(m2)*sizeof(**(r2))))
+#endif
+
+#undef  MatPreallocateInitialize
+#define MatPreallocateInitialize(comm,nrows,ncols,dnz,onz) 0; \
+{ \
+  PetscErrorCode _4_ierr; PetscInt __nrows = (nrows),__ctmp = (ncols),__rstart,__start,__end; \
+  _4_ierr = PetscCalloc2((size_t)__nrows,&dnz,(size_t)__nrows,&onz);CHKERRQ(_4_ierr); \
+  __start = 0; __end = __start;                                         \
+  _4_ierr = MPI_Scan(&__ctmp,&__end,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __start = __end - __ctmp;\
+  _4_ierr = MPI_Scan(&__nrows,&__rstart,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __rstart = __rstart - __nrows;
+
 PETSC_EXTERN PetscErrorCode MatHeaderReplace(Mat,Mat);
 static       PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static       PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
@@ -270,16 +287,6 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
   *cnt = n;
   PetscFunctionReturn(0);
 }
-
-#undef  MatPreallocateInitialize
-#define MatPreallocateInitialize(comm,nrows,ncols,dnz,onz) 0; \
-{ \
-  PetscErrorCode _4_ierr; PetscInt __nrows = (nrows),__ctmp = (ncols),__rstart,__start,__end; \
-  _4_ierr = PetscCalloc2((size_t)__nrows,&dnz,(size_t)__nrows,&onz);CHKERRQ(_4_ierr); \
-  __start = 0; __end = __start;                                         \
-  _4_ierr = MPI_Scan(&__ctmp,&__end,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __start = __end - __ctmp;\
-  _4_ierr = MPI_Scan(&__nrows,&__rstart,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __rstart = __rstart - __nrows;
-
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateMat"
