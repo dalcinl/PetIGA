@@ -641,8 +641,8 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
   const PetscInt *range;
   PetscScalar    *array,*work;
   PetscErrorCode ierr;
-  PetscFunctionBegin;
 
+  PetscFunctionBegin;
   ierr = PetscObjectGetComm((PetscObject)viewer,&comm);CHKERRQ(ierr);
   ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);

@@ -57,6 +57,7 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 {
   void (*f)(void) = NULL;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   *aij = *baij = *sbaij = PETSC_FALSE;
   if (!f) {ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPIAIJSetPreallocation_C",&f);CHKERRQ(ierr);}
@@ -82,8 +83,8 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
   MatType        mtype;
   Mat            mat;
   PetscErrorCode ierr;
-  PetscFunctionBegin;
 
+  PetscFunctionBegin;
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = MatGetType(A,&mtype);CHKERRQ(ierr);
   ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
@@ -128,8 +129,8 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
   IGA            iga = 0;
   Mat            A,B;
   PetscErrorCode ierr;
-  PetscFunctionBegin;
 
+  PetscFunctionBegin;
   A = pc->pmat;
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Matrix is missing the IGA context");
@@ -265,7 +266,6 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
   }
   ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -277,6 +277,7 @@ static PetscErrorCode PCSetFromOptions_BBB(PC pc)
   PetscBool      flg;
   PetscInt       i,no=3,overlap[3];
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
@@ -293,6 +294,7 @@ static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = MatMult(bbb->mat,x,y);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -304,6 +306,7 @@ static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = MatMultTranspose(bbb->mat,x,y);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -317,6 +320,7 @@ static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
   PetscInt       *ov = bbb->overlap;
   PetscBool      isascii;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&isascii);CHKERRQ(ierr);
   if (!isascii) PetscFunctionReturn(0);
@@ -337,6 +341,7 @@ static PetscErrorCode PCReset_BBB(PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = ISLocalToGlobalMappingDestroy(&bbb->lgmap);CHKERRQ(ierr);
   ierr = MatDestroy(&bbb->mat);CHKERRQ(ierr);
@@ -348,6 +353,7 @@ static PetscErrorCode PCReset_BBB(PC pc)
 static PetscErrorCode PCDestroy_BBB(PC pc)
 {
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = PCReset_BBB(pc);CHKERRQ(ierr);
   ierr = PetscFree(pc->data);CHKERRQ(ierr);
@@ -361,6 +367,7 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
 {
   PC_BBB         *bbb = NULL;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
 #if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(pc,PC_BBB,&bbb);CHKERRQ(ierr);
@@ -381,7 +388,6 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   pc->ops->view                = PCView_BBB;
   pc->ops->apply               = PCApply_BBB;
   pc->ops->applytranspose      = PCApplyTranspose_BBB;
-
   PetscFunctionReturn(0);
 }
 EXTERN_C_END

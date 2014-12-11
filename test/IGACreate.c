@@ -73,10 +73,10 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   PetscInt       dim,dof;
   IGA            iga,giga;
   PetscScalar    s;

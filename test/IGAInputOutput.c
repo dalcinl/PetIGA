@@ -1,9 +1,9 @@
 #include "petiga.h"
 
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   MPI_Comm       comm;
   IGA            iga,iga1;
   PetscViewer    viewer;
@@ -58,12 +58,12 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga1);CHKERRQ(ierr);
   ierr = IGADestroy(&iga1);CHKERRQ(ierr);
 
-  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_WRITE,&viewer);
+  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   ierr = IGASave(iga,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 
   ierr = IGACreate(comm,&iga1);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_READ,&viewer);
+  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   ierr = IGALoad(iga1,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   ierr = IGASetUp(iga1);CHKERRQ(ierr);

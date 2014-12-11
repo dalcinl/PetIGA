@@ -137,10 +137,10 @@ PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
   return 0;
 }
 
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   IGA             iga;
   IGAForm         form;
   PetscErrorCode  ierr;

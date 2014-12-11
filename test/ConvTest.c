@@ -59,11 +59,11 @@ PetscErrorCode Collocation1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
   PetscScalar omega  = 2.0*PETSC_PI*CONST;
   PetscScalar omega2 = omega*omega;
-  if(Dirichlet){
+  if (Dirichlet) {
     for (a=0; a<nen; a++) K[a] = N0[a];
     F[0] = 0.0;
-  }else{
-    for (a=0; a<nen; a++){
+  } else {
+    for (a=0; a<nen; a++) {
       K[a] = N0[a];
       for (i=0; i<dim; i++) K[a] += -N2[a][i][i];
     }
@@ -90,14 +90,14 @@ PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScal
   return 0;
 }
 
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  // Initialize the discretization
+  /* Initialize the discretization */
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
@@ -105,33 +105,34 @@ int main(int argc, char *argv[]) {
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  // Set boundary conditions
+  /* Set boundary conditions */
+
   PetscInt  dim,i;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  if(!iga->collocation){
+  if (!iga->collocation) {
     for (i=0; i<dim; i++) {
       ierr = IGASetBoundaryValue(iga,i,0,0,0.0);CHKERRQ(ierr);
       ierr = IGASetBoundaryValue(iga,i,1,0,0.0);CHKERRQ(ierr);
     }
   }
 
-  // Assemble
+  /* Assemble */
 
   Mat A;
   Vec x,b;
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  if (iga->collocation){
+  if (iga->collocation) {
     ierr = IGASetFormSystem(iga,Collocation1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-  }else{
+  } else {
     ierr = IGASetFormSystem(iga,Galerkin1,NULL);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
   }
 
-  // Solve
+  /* Solve */
 
   KSP ksp;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  // Various post-processing options
+  /* Various post-processing options */
 
   iga->collocation = PETSC_FALSE;
   PetscScalar error[2] = {0,0};
@@ -147,7 +148,7 @@ int main(int argc, char *argv[]) {
   error[0] = PetscSqrtReal(PetscRealPart(error[0]));
   ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %.16e\n",error[0]);CHKERRQ(ierr);
 
-  // Cleanup
+  /* Cleanup */
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);

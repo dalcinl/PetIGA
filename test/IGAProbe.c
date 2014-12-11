@@ -123,8 +123,10 @@ PetscErrorCode Test(IGAProbe prb,PetscReal u[])
   PetscFunctionReturn(0);
 }
 
-int main(int argc, char *argv[]) {
-
+#undef  __FUNCT__
+#define __FUNCT__ "main"
+int main(int argc, char *argv[])
+{
   PetscBool      collective = PETSC_TRUE;
   IGA            iga;
   Vec            vec;
@@ -132,11 +134,11 @@ int main(int argc, char *argv[]) {
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
   /*
-  ierr = IGAOptionsAlias("-dim",  "2", "-iga_dim");
-  ierr = IGAOptionsAlias("-N",   "16", "-iga_elements");
-  ierr = IGAOptionsAlias("-p",    "3", "-iga_degree");
-  ierr = IGAOptionsAlias("-C",   "-1", "-iga_continuity");
-  ierr = IGAOptionsAlias("-L",  "0,1", "-iga_limits");
+  ierr = IGAOptionsAlias("-dim",  "2", "-iga_dim");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-N",   "16", "-iga_elements");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-p",    "3", "-iga_degree");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-C",   "-1", "-iga_continuity");CHKERRQ(ierr);
+  ierr = IGAOptionsAlias("-L",  "0,1", "-iga_limits");CHKERRQ(ierr);
   */
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAProbe Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-collective","Collective evaluation",__FILE__,collective,&collective,NULL);CHKERRQ(ierr);

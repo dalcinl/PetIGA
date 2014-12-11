@@ -750,7 +750,6 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-
   ts->ops->reset          = TSReset_Alpha;
   ts->ops->destroy        = TSDestroy_Alpha;
   ts->ops->view           = TSView_Alpha;

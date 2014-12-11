@@ -86,10 +86,10 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   return 0;
 }
 
-#undef __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 

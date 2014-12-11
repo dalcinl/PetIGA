@@ -201,10 +201,8 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
     /* */
     for (i=0;i<dim;i++)
       for (j=0;j<dim;j++)
-        if (i==j)
-          AssertEQUAL(G[i][j], 1.0);
-        else
-          AssertEQUAL(G[i][j], 0.0);
+        if (i==j) AssertEQUAL(G[i][j], 1.0);
+        else      AssertEQUAL(G[i][j], 0.0);
     for (i=0;i<dim;i++)
       for (j=0;j<dim;j++)
         for (k=0;k<dim;k++)
@@ -423,10 +421,8 @@ PetscErrorCode Boundary(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 #define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
-  if (p->atboundary)
-    return Boundary(p,A,b,ctx);
-  else
-    return Domain(p,A,b,ctx);
+  if (p->atboundary) return Boundary(p,A,b,ctx);
+  else               return Domain  (p,A,b,ctx);
 }
 
 #undef  __FUNCT__
@@ -502,8 +498,8 @@ PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
 
 #undef  __FUNCT__
 #define __FUNCT__ "main"
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
   PetscInt        dim = 3;
   IGA             iga;
   IGAAxis         axis;
