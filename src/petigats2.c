@@ -41,6 +41,7 @@ PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
   void              *ctx;
   PetscScalar       *A,*V,*U,*F,*R;
   PetscErrorCode    ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecA,VEC_CLASSID,4);
@@ -93,7 +94,6 @@ PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
   /* Assemble global vector F */
   ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(vecF);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -117,6 +117,7 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
   void              *ctx;
   PetscScalar       *A,*V,*U,*J,*K;
   PetscErrorCode    ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecA,VEC_CLASSID,4);
@@ -171,7 +172,6 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
   /* Assemble global matrix J*/
   ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -187,6 +187,7 @@ PetscErrorCode IGATSFormIFunction2(TS ts,PetscReal t,Vec U,Vec V,Vec A,Vec F,voi
   IGA            iga = (IGA)ctx;
   PetscReal      dt,a=0,v=0;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,3);
@@ -194,6 +195,7 @@ PetscErrorCode IGATSFormIFunction2(TS ts,PetscReal t,Vec U,Vec V,Vec A,Vec F,voi
   PetscValidHeaderSpecific(A,VEC_CLASSID,5);
   PetscValidHeaderSpecific(F,VEC_CLASSID,6);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,7);
+
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   ierr = IGAComputeIFunction2(iga,dt,a,A,v,V,t,U,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -206,6 +208,7 @@ PetscErrorCode IGATSFormIJacobian2(TS ts,PetscReal t,Vec U,Vec V,Vec A,PetscReal
   IGA            iga = (IGA)ctx;
   PetscReal      dt,a=shiftA,v=shiftV;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,3);
@@ -214,6 +217,7 @@ PetscErrorCode IGATSFormIJacobian2(TS ts,PetscReal t,Vec U,Vec V,Vec A,PetscReal
   PetscValidHeaderSpecific(J,MAT_CLASSID,8);
   PetscValidHeaderSpecific(P,MAT_CLASSID,9);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,10);
+
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   ierr = IGAComputeIJacobian2(iga,dt,a,A,v,V,t,U,P);CHKERRQ(ierr);
   if (J != P) {
@@ -253,6 +257,7 @@ PetscErrorCode IGACreateTS2(IGA iga,TS *ts)
   Vec            F;
   Mat            J;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(ts,2);
@@ -278,6 +283,5 @@ PetscErrorCode IGACreateTS2(IGA iga,TS *ts)
   ierr = TSSetIJacobian (*ts,J,J,IGATSFormIJacobian,iga);CHKERRQ(ierr);
   ierr = TSSetIJacobian2(*ts,J,J,IGATSFormIJacobian2,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }

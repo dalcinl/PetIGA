@@ -32,6 +32,7 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   void              *ctx;
   PetscScalar       *U,*F,*R;
   PetscErrorCode    ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
@@ -77,7 +78,6 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   /* Assemble global vector F */
   ierr = VecAssemblyBegin(vecF);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(vecF);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -138,7 +138,6 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   /* Assemble global matrix J*/
   ierr = MatAssemblyBegin(matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd  (matJ,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
@@ -151,11 +150,13 @@ PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   PetscValidHeaderSpecific(F,VEC_CLASSID,3);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,4);
+
   ierr = IGAComputeFunction(iga,U,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -166,12 +167,14 @@ PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
   PetscValidHeaderSpecific(U,VEC_CLASSID,2);
   PetscValidHeaderSpecific(J,MAT_CLASSID,3);
   PetscValidHeaderSpecific(P,MAT_CLASSID,4);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,6);
+
   ierr = IGAComputeJacobian(iga,U,P);CHKERRQ(ierr);
   if (J != P) {
     ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -195,6 +198,7 @@ PetscErrorCode IGACreateSNES(IGA iga,SNES *snes)
   Vec            F;
   Mat            J;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(snes,2);
@@ -241,6 +245,7 @@ PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
 {
   KSP            ksp;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
   /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,NULL);CHKERRQ(ierr);*/
