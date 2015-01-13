@@ -4,8 +4,9 @@
 #define TSSolve(ts,x) TSSolve((ts),(x),NULL)
 #endif
 
-typedef struct { 
-  PetscReal theta,cbar,alpha;
+typedef struct {
+  PetscReal theta,alpha;
+  PetscReal cbar;
   PetscReal Eprev;
 } AppCtx;
 
@@ -49,7 +50,7 @@ PetscReal GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,AppCtx 
   return E;
 }
 
-#undef   __FUNCT__
+#undef  __FUNCT__
 #define __FUNCT__ "Stats"
 PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
@@ -257,9 +258,9 @@ int main(int argc, char *argv[]) {
 
   /* Define simulation specific parameters */
   AppCtx user;
-  user.cbar  = 0.63;   /* average concentration */
   user.alpha = 3000.0; /* interface thickess parameter */
   user.theta = 1.5;    /* temperature/critical temperature */
+  user.cbar  = 0.63;   /* average concentration */
 
   /* Set discretization options */
   PetscInt  N = 64;
