@@ -332,7 +332,6 @@ int main(int argc, char *argv[]) {
   }
   ierr = TSSolve(ts,C);CHKERRQ(ierr);
 
-  ierr = VecDestroy(&C);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
