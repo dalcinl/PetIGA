@@ -1,2 +1,3 @@
 # -*- makefile -*-
-include ${PETSC_DIR}/conf/test
+-include ${PETSC_DIR}/lib/petsc-conf/test
+-include ${PETSC_DIR}/conf/test

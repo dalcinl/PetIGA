@@ -1,5 +1,6 @@
 # -*- makefile -*-
-include ${PETSC_DIR}/conf/variables
+-include ${PETSC_DIR}/lib/petsc-conf/variables
+-include ${PETSC_DIR}/conf/variables
 
 PETIGA_INCLUDE = -I${PETIGA_DIR}/${PETSC_ARCH}/include -I${PETIGA_DIR}/include
 PETIGA_LIB_DIR = ${PETIGA_DIR}/${PETSC_ARCH}/lib
