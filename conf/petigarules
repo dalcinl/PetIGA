@@ -1,9 +1,0 @@
-# -*- makefile -*-
--include ${PETSC_DIR}/lib/petsc-conf/rules
--include ${PETSC_DIR}/conf/rules
-
-.SUFFIXES: .PETIGA
-.c.PETIGA .cpp.PETIGA .cxx.PETIGA .cc.PETIGA .C.PETIGA:
-	@${OMAKE} $*.o
-	${CLINKER} -o $* $*.o ${PETIGA_LIB}
-	${RM} $*.o

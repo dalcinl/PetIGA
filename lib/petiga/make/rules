@@ -1,0 +1,8 @@
+# -*- makefile -*-
+include $(PETSC_CONF_DIR)/rules
+
+.SUFFIXES: .PETIGA
+.c.PETIGA .cpp.PETIGA .cxx.PETIGA .cc.PETIGA .C.PETIGA:
+	@$(OMAKE) $*.o
+	$(CLINKER) -o $* $*.o $(PETIGA_LIB)
+	$(RM) $*.o

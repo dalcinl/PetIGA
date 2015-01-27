@@ -1,9 +1,9 @@
 TARGETS = \
 Mixed222Stable
 
-ALL: ${TARGETS}
+ALL: $(TARGETS)
 clean::
-	-@${RM} ${TARGETS}
+	-@$(RM) $(TARGETS)
 
 CFLAGS    =
 FFLAGS    =
@@ -16,11 +16,11 @@ MANSEC    = IGA
 
 topdir := $(shell cd ../.. && pwd)
 PETIGA_DIR ?= $(topdir)
-include ${PETIGA_DIR}/conf/petigavariables
-include ${PETIGA_DIR}/conf/petigarules
+include $(PETIGA_DIR)/lib/petiga/make/variables
+include $(PETIGA_DIR)/lib/petiga/make/rules
 
 Mixed222Stable: Mixed222Stable.o chkopts
-	${CLINKER} -o $@ $< ${PETIGA_LIB}
-	${RM} -f $<
+	$(CLINKER) -o $@ $< $(PETIGA_LIB)
+	$(RM) -f $<
 
-include ${PETIGA_DIR}/conf/petigatest
+include $(PETIGA_DIR)/lib/petiga/make/test

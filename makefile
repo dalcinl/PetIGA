@@ -1,11 +1,11 @@
 ALL: all
 LOCDIR = .
-DIRS   = include src docs demo test
+DIRS   = include src docs test demo
 
 PETIGA_DIR ?= $(CURDIR)
-include ${PETIGA_DIR}/conf/petigavariables
-include ${PETIGA_DIR}/conf/petigarules
-include ${PETIGA_DIR}/conf/petigatest
+include ${PETIGA_DIR}/lib/petiga/make/variables
+include ${PETIGA_DIR}/lib/petiga/make/rules
+include ${PETIGA_DIR}/lib/petiga/make/test
 
 all:
 	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
@@ -16,15 +16,15 @@ all:
 .PHONY: all
 
 
-${PETIGA_DIR}/${PETSC_ARCH}/conf:
-	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/conf
 ${PETIGA_DIR}/${PETSC_ARCH}/include:
 	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/include
 ${PETIGA_DIR}/${PETSC_ARCH}/lib:
 	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/lib
-arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/conf \
-           ${PETIGA_DIR}/${PETSC_ARCH}/include \
-           ${PETIGA_DIR}/${PETSC_ARCH}/lib
+${PETIGA_DIR}/${PETSC_ARCH}/log:
+	@${MKDIR} ${PETIGA_DIR}/${PETSC_ARCH}/log
+arch-tree: ${PETIGA_DIR}/${PETSC_ARCH}/include \
+           ${PETIGA_DIR}/${PETSC_ARCH}/lib \
+	   ${PETIGA_DIR}/${PETSC_ARCH}/log
 .PHONY: arch-tree
 
 
@@ -50,7 +50,7 @@ all-gmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "============================================="
-	@${GMAKE} gmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee -a ${PETSC_ARCH}/conf/make.log
+	@${GMAKE} gmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
 	-@echo "============================================="
 .PHONY: gmake-build gmake-clean all-gmake
 
@@ -102,7 +102,7 @@ all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "============================================="
-	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
 	-@echo "============================================="
 .PHONY: cmake-boot cmake-down cmake-build cmake-clean all-cmake
 
@@ -121,7 +121,7 @@ all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "============================================="
 	-@echo "Beginning to build PetIGA library"
-	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/make.log
+	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
 	-@echo "Completed building PetIGA library"
 	-@echo "============================================="
 .PHONY: legacy-build legacy-clean all-legacy
@@ -166,7 +166,7 @@ shlibs:
 
 # Delete PetIGA library
 deletelogs:
-	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/conf/*.log
+	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/log/*.log
 deletemods:
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/include/petiga*.mod
 deletestaticlibs:
@@ -196,9 +196,9 @@ testexamples:
 .PHONY: testexamples
 
 
-# Build test
+# Test build
 test:
-	-@${OMAKE} test-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/conf/test.log
+	-@${OMAKE} test-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/test.log
 test-build:
 	-@echo "Running test to verify correct installation"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
@@ -210,6 +210,10 @@ test-build:
 	-@echo "Completed test"
 .PHONY: test test-build
 
+
+#
+# Documentation
+#
 SRCDIR=${PETIGA_DIR}/src
 DOCDIR=${PETIGA_DIR}/docs/html
 doc:
@@ -225,6 +229,10 @@ deletedoc:
 	-@${RM} ${DOCDIR}/*.html
 .PHONY: doc deletedoc
 
+
+#
+# TAGS Generation
+#
 alletags:
 	-@${PYTHON} ${PETSC_DIR}/bin/maint/generateetags.py
 deleteetags:

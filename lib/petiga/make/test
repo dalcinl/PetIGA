@@ -1,0 +1,2 @@
+# -*- makefile -*-
+include $(PETSC_CONF_DIR)/test

@@ -1,6 +1,6 @@
 # -*- mode: makefile-gmake -*-
 
-include ./conf/petigavariables
+include ./lib/petiga/make/variables
 PETIGA_DIR ?= $(CURDIR)
 
 OBJDIR := $(PETSC_ARCH)/obj
