@@ -36,23 +36,25 @@ struct _n_IGAProbe {
   PetscReal point[3];
   PetscInt  ID[3];
   PetscReal *BD[3];
-  PetscReal *basis[5]; /*0: [nen]                */
-                       /*1: [nen][dim]           */
-                       /*2: [nen][dim][dim]      */
+  PetscReal *basis[5]; /*0: [nen] */
+                       /*1: [nen][dim] */
+                       /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
                        /*4: [nen][dim][dim][dim][dim] */
-  PetscReal *detX;     /*                        */
-  PetscReal *gradX[2]; /*0: [nsd][dim]           */
-                       /*1: [dim][nsd]           */
-  PetscReal *hessX[2]; /*0: [nsd][dim][dim]      */
-                       /*1: [dim][nsd][nsd]      */
-  PetscReal *der3X[2]; /*0: [nsd][dim][dim][dim] */
-                       /*1: [dim][nsd][nsd][nsd] */
-  PetscReal *der4X[2]; /*0: [nsd][dim][dim][dim][dim] */
-                       /*1: [dim][nsd][nsd][nsd][nsd] */
-  PetscReal *shape[5]; /*0: [nen]                */
-                       /*1: [nen][nsd]           */
-                       /*2: [nen][nsd][nsd]      */
+  PetscReal *detX;
+  PetscReal *mapX[5]; /*0: [nsd] */
+                      /*1: [nsd][dim] */
+                      /*2: [nsd][dim][dim] */
+                      /*3: [nsd][dim][dim][dim] */
+                      /*4: [nsd][dim][dim][dim][dim] */
+  PetscReal *mapU[5]; /*0: [dim] */
+                      /*1: [dim][nsd] */
+                      /*2: [dim][nsd][nsd] */
+                      /*3: [dim][nsd][nsd][nsd] */
+                      /*4: [dim][nsd][nsd][nsd][nsd] */
+  PetscReal *shape[5]; /*0: [nen] */
+                       /*1: [nen][nsd] */
+                       /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
                        /*4: [nen][nsd][nsd][nsd][nsd] */
 };

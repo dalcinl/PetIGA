@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
 
   if (iga->dim < 1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
-  ierr = IGASetOrder(iga,3);CHKERRQ(ierr);
+  ierr = IGASetOrder(iga,4);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
