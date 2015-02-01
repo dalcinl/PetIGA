@@ -462,15 +462,18 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,6,0)
+#define PetscOptionsHead(obj,head) PetscOptionsHead(head)
+#endif
 #undef __FUNCT__
 #define __FUNCT__ "TSSetFromOptions_Alpha"
-static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
+static PetscErrorCode TSSetFromOptions_Alpha(PetscOptions *PetscOptionsObject,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsHead("Generalized-Alpha ODE solver options");CHKERRQ(ierr);
+  ierr = PetscOptionsHead(PetscOptionsObject,"Generalized-Alpha ODE solver options");CHKERRQ(ierr);
   {
     PetscBool flg;
     PetscReal radius = 1;
@@ -489,6 +492,10 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts)
   ierr = PetscOptionsTail();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+#if PETSC_VERSION_LT(3,6,0)
+static PetscErrorCode TSSetFromOptions_Alpha_Legacy(TS ts) {return TSSetFromOptions_Alpha(NULL,ts);}
+#define TSSetFromOptions_Alpha TSSetFromOptions_Alpha_Legacy
+#endif
 
 #undef __FUNCT__
 #define __FUNCT__ "TSView_Alpha"

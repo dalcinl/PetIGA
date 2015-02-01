@@ -193,7 +193,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
 /*
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetFromOptions_EBE"
-static PetscErrorCode PCSetFromOptions_EBE(PC pc)
+static PetscErrorCode PCSetFromOptions_EBE(PetscOptions *PetscOptionsObject,PC pc)
 {
   PetscFunctionBegin;
   PetscFunctionReturn(0);

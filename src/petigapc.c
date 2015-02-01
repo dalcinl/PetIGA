@@ -340,7 +340,9 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *c
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
+#if PETSC_VERSION_LT(3,6,0)
   if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+#endif
   ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
   if (!mat) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(mat,MAT_CLASSID,1);

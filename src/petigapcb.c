@@ -271,7 +271,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetFromOptions_BBB"
-static PetscErrorCode PCSetFromOptions_BBB(PC pc)
+static PetscErrorCode PCSetFromOptions_BBB(PetscOptions *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscBool      flg;
@@ -287,6 +287,10 @@ static PetscErrorCode PCSetFromOptions_BBB(PC pc)
     }
   PetscFunctionReturn(0);
 }
+#if PETSC_VERSION_LT(3,6,0)
+static PetscErrorCode PCSetFromOptions_BBB_Legacy(PC pc) {return PCSetFromOptions_BBB(NULL,pc);}
+#define PCSetFromOptions_BBB PCSetFromOptions_BBB_Legacy
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCApply_BBB"
