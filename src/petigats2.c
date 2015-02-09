@@ -68,6 +68,8 @@ PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
     ierr = IGAElementGetValues(element,arrayA,&A);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementDelValues(element,A);CHKERRQ(ierr);
+    ierr = IGAElementDelValues(element,V);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     while (IGAElementNextFormIFunction(element,&IFunction,&ctx)) {
       /* Quadrature loop */
@@ -146,6 +148,8 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
     ierr = IGAElementGetValues(element,arrayA,&A);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayV,&V);CHKERRQ(ierr);
     ierr = IGAElementGetValues(element,arrayU,&U);CHKERRQ(ierr);
+    ierr = IGAElementDelValues(element,A);CHKERRQ(ierr);
+    ierr = IGAElementDelValues(element,V);CHKERRQ(ierr);
     ierr = IGAElementFixValues(element,U);CHKERRQ(ierr);
     while (IGAElementNextFormIJacobian(element,&IJacobian,&ctx)) {
       /* Quadrature loop */

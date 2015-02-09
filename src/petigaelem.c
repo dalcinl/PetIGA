@@ -1393,6 +1393,24 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGAElementDelValues"
+PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[])
+{
+  PetscFunctionBegin;
+  PetscValidPointer(element,1);
+  PetscValidScalarPointer(V,2);
+  {
+    PetscInt f,n,k;
+    n = element->nfix;
+    for (f=0; f<n; f++) {
+      k = element->ifix[f];
+      V[k] = (PetscScalar)0.0;
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGAElementFixValues"
 PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
 {
@@ -1400,10 +1418,10 @@ PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
   PetscValidPointer(element,1);
   PetscValidScalarPointer(U,2);
   {
-    PetscInt f,n;
+    PetscInt f,n,k;
     n = element->nfix;
     for (f=0; f<n; f++) {
-      PetscInt k = element->ifix[f];
+      k = element->ifix[f];
       element->ufix[f] = U[k];
       U[k] = element->vfix[f];
     }

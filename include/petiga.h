@@ -573,6 +573,7 @@ PETSC_EXTERN PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar 
 PETSC_EXTERN PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar *U[]);
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildFix(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[]);
 PETSC_EXTERN PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[]);
