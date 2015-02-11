@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   PetscScalar    s;
   PetscReal      xmin,xmax;
   Vec            b,x;
-  Mat            A;
+  Mat            A,B,C;
   KSP            ksp;
   SNES           snes;
   TS             ts;
@@ -104,6 +104,17 @@ int main(int argc, char *argv[])
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGAComputeScalar(iga,x,1,&s,Scalar,NULL);CHKERRQ(ierr);
   ierr = VecDestroy(&x);CHKERRQ(ierr);
+
+  ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
+  ierr = MatDuplicate(A,MAT_COPY_VALUES,&B);CHKERRQ(ierr);
+  ierr = MatDuplicate(B,MAT_COPY_VALUES,&C);CHKERRQ(ierr);
+  ierr = IGASetFormMatrix(iga,Matrix,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
+  ierr = IGAComputeMatrix(iga,B);CHKERRQ(ierr);
+  ierr = IGAComputeMatrix(iga,C);CHKERRQ(ierr);
+  ierr = MatDestroy(&A);CHKERRQ(ierr);
+  ierr = MatDestroy(&B);CHKERRQ(ierr);
+  ierr = MatDestroy(&C);CHKERRQ(ierr);
 
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);

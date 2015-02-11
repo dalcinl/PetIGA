@@ -6,6 +6,15 @@
 typedef const char* MatType;
 #endif
 
+#if PETSC_VERSION_LT(3,4,0)
+#define PetscObjectQueryFunction(o,n,f) \
+        PetscObjectQueryFunction(o,n,(PetscVoidFunction*)(f))
+#endif
+#if PETSC_VERSION_LT(3,4,0)
+#define PetscObjectComposeFunction(o,n,f) \
+        PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
+#endif
+
 #if PETSC_VERSION_LT(3,5,0)
 #define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
 #endif
@@ -147,6 +156,73 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,6,0)
+#undef  __FUNCT__
+#define __FUNCT__ "MatDuplicate_IS"
+static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
+{
+  IGA            iga;
+  MPI_Comm       comm;
+  PetscInt       bs,m,n,M,N;
+  Mat            A=mat,Alocal,B,Blocal;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
+  ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
+  ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
+  ierr = MatISGetLocalMat(A,&Alocal);CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+  ierr = MatCreateIS(comm,bs,m,n,M,N,iga->map->mapping,&B);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
+  ierr = MatSetLocalToGlobalMappingBlock(B,iga->map->bmapping,iga->map->bmapping);CHKERRQ(ierr);
+#endif
+  ierr = MatDuplicate(Alocal,op,&Blocal);CHKERRQ(ierr);
+  ierr = MatISSetLocalMat(B,Blocal);CHKERRQ(ierr);
+  ierr = MatDestroy(&Blocal);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  *newmat = B;
+  PetscFunctionReturn(0);
+}
+#endif
+
+#undef  __FUNCT__
+#define __FUNCT__ "MatDuplicate_IGA"
+static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
+{
+  MPI_Comm       comm;
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(A,MAT_CLASSID,1);
+  PetscValidPointer(B,3);
+  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+
+  { /* MatDuplicate */
+    PetscErrorCode (*matduplicate)(Mat,MatDuplicateOption,Mat*);
+    ierr = PetscObjectQueryFunction((PetscObject)A,"__IGA_MatDuplicate",&matduplicate);CHKERRQ(ierr);
+    ierr = matduplicate(A,op,B);CHKERRQ(ierr);
+    ierr = PetscObjectCompose((PetscObject)*B,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscObjectComposeFunction((PetscObject)*B,"__IGA_MatDuplicate",matduplicate);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(*B,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IGA);CHKERRQ(ierr);
+  }
+  {  /* MatView & MatLoad */
+    PetscErrorCode (*matview)(Mat,PetscViewer);
+    PetscErrorCode (*matload)(Mat,PetscViewer);
+    ierr = MatShellGetOperation(A,MATOP_VIEW,(PetscVoidFunction*)&matview);CHKERRQ(ierr);
+    ierr = MatShellGetOperation(A,MATOP_LOAD,(PetscVoidFunction*)&matload);CHKERRQ(ierr);
+    if (matview == MatView_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_VIEW,(PetscVoidFunction)matview);CHKERRQ(ierr);}
+    if (matload == MatLoad_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_LOAD,(PetscVoidFunction)matload);CHKERRQ(ierr);}
+  }
+  PetscFunctionReturn(0);
+}
 
 PETSC_STATIC_INLINE
 void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
@@ -310,6 +386,7 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 {
   MPI_Comm       comm;
+  PetscMPIInt    size;
   PetscBool      is,aij,baij,sbaij;
   PetscInt       i,j,k,dim;
   PetscInt       *lstart,*lwidth;
@@ -340,9 +417,24 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   *mat = A;
 
   { /* Check for MATIS matrix subtype */
-    void (*f)(void) = NULL;
+    PetscVoidFunction f = NULL;
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
     is = f ? PETSC_TRUE: PETSC_FALSE;
+#if PETSC_VERSION_LT(3,6,0)
+    if (is) {ierr = MatShellSetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IS);CHKERRQ(ierr);}
+#endif
+  }
+
+  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+  if (!is && size > 1) { /* Change MatView/MatLoad to handle matrix in natural ordering */
+    ierr = MatShellSetOperation(A,MATOP_VIEW,(PetscVoidFunction)MatView_MPI_IGA);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(A,MATOP_LOAD,(PetscVoidFunction)MatLoad_MPI_IGA);CHKERRQ(ierr);
+  }
+  { /* Change MatDuplicate to propagate composed objects and method overrides */
+    PetscErrorCode (*matduplicate)(Mat,MatDuplicateOption,Mat*);
+    ierr = MatShellGetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction*)&matduplicate);CHKERRQ(ierr);
+    ierr = PetscObjectComposeFunction((PetscObject)A,"__IGA_MatDuplicate",matduplicate);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IGA);CHKERRQ(ierr);
   }
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
@@ -355,13 +447,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
     ierr = MatSetType(A,mtype);CHKERRQ(ierr);
     ierr = MatSetFromOptions(A);CHKERRQ(ierr);
-  } else {
-    PetscMPIInt size;
-    ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
-    if (size > 1) { /* change viewer to display matrix in natural ordering */
-      ierr = MatShellSetOperation(A,MATOP_VIEW,(void (*)(void))MatView_MPI_IGA);CHKERRQ(ierr);
-      ierr = MatShellSetOperation(A,MATOP_LOAD,(void (*)(void))MatLoad_MPI_IGA);CHKERRQ(ierr);
-    }
   }
 
   ierr = InferMatrixType(A,&aij,&baij,&sbaij);CHKERRQ(ierr);
@@ -500,15 +585,15 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
           }
     ierr = PetscFree2(ubrows,ubcols);CHKERRQ(ierr);
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-    ierr = MatAssemblyEnd  (A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_NEW_NONZERO_LOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
     ierr = MatSetOption(A,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
-    /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
     /*ierr = MatSetOption(A,MAT_KEEP_NONZERO_PATTERN,PETSC_TRUE);CHKERRQ(ierr);*/
+    /*ierr = MatSetOption(A,MAT_STRUCTURALLY_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);*/
   }
 
   ierr = ISLocalToGlobalMappingDestroy(&ltog);CHKERRQ(ierr);
 
+  ierr = MatAssemblyBegin(*mat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd  (*mat,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

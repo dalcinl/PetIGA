@@ -36,10 +36,16 @@ runex1b_mpi:
 	-@$(MPIEXEC) -n 4 ./IGACreate $(OPTS) -iga_dim 2 -iga_dof 5 -iga_periodic 0,0,1 -iga_degree 4,3
 	-@$(MPIEXEC) -n 6 ./IGACreate $(OPTS) -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,0 -iga_degree 4,3
 	-@$(MPIEXEC) -n 8 ./IGACreate $(OPTS) -iga_dim 2 -iga_dof 5 -iga_periodic 0,1,1 -iga_degree 4,3
+runex1c_seq:
+runex1c_mpi:
+	-@$(MPIEXEC) -n 2 ./IGACreate $(OPTS) -iga_dim 2 -iga_dof 3 -iga_periodic 0,1   -iga_degree 1,2   -iga_mat_type is
+	-@$(MPIEXEC) -n 3 ./IGACreate $(OPTS) -iga_dim 2 -iga_dof 2 -iga_periodic 1,0   -iga_degree 1,2   -iga_mat_type is
+	-@$(MPIEXEC) -n 4 ./IGACreate $(OPTS) -iga_dim 3 -iga_dof 1 -iga_periodic 0,1,1 -iga_degree 1,2,1 -iga_mat_type is
 IGACreate = \
 IGACreate.PETSc \
 runex1a_seq runex1a_mpi \
 runex1b_seq runex1b_mpi \
+runex1c_seq runex1c_mpi \
 IGACreate.rm
 
 

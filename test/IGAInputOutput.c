@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
   }
 
   {
-    Mat         mat;
-    Vec         diag,diag2;
+    Mat         mat,mat1,mat2;
+    Vec         diag,diag1,diag2;
     PetscInt    r,rstart,rend;
     PetscScalar *d;
     PetscBool   match = PETSC_FALSE;
@@ -110,25 +110,39 @@ int main(int argc, char *argv[])
     for (r=rstart; r<rend; r++) d[r-rstart] = (PetscReal)r;
     ierr = VecRestoreArray(diag,&d);CHKERRQ(ierr);
 
+    ierr = VecDuplicate(diag,&diag1);CHKERRQ(ierr);
+    ierr = VecDuplicate(diag,&diag2);CHKERRQ(ierr);
+
     ierr = IGACreateMat(iga,&mat);CHKERRQ(ierr);
     ierr = MatDiagonalSet(mat,diag,INSERT_VALUES);CHKERRQ(ierr);
     ierr = PetscViewerBinaryOpen(comm,"igamat.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+    /*ierr = PetscViewerSetFormat(viewer,PETSC_VIEWER_NATIVE);CHKERRQ(ierr);*/
     ierr = MatView(mat,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     ierr = MatDestroy(&mat);CHKERRQ(ierr);
 
-    ierr = IGACreateMat(iga,&mat);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryOpen(comm,"igamat.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-    ierr = MatLoad(mat,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-    ierr = IGACreateVec(iga,&diag2);CHKERRQ(ierr);
-    ierr = MatGetDiagonal(mat,diag2);CHKERRQ(ierr);
-    ierr = MatDestroy(&mat);CHKERRQ(ierr);
+    ierr = IGACreateMat(iga,&mat1);CHKERRQ(ierr);
+    ierr = MatDuplicate(mat1,MAT_DO_NOT_COPY_VALUES,&mat2);CHKERRQ(ierr);
 
+    ierr = PetscViewerBinaryOpen(comm,"igamat.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    ierr = MatLoad(mat1,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    ierr = MatGetDiagonal(mat1,diag1);CHKERRQ(ierr);
+    ierr = MatDestroy(&mat1);CHKERRQ(ierr);
+    ierr = VecEqual(diag,diag1,&match);;CHKERRQ(ierr);
+    if (!match) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Mat does not match");
+    ierr = VecDestroy(&diag1);CHKERRQ(ierr);
+
+    ierr = PetscViewerBinaryOpen(comm,"igamat.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    ierr = MatLoad(mat2,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    ierr = MatGetDiagonal(mat2,diag2);CHKERRQ(ierr);
+    ierr = MatDestroy(&mat2);CHKERRQ(ierr);
     ierr = VecEqual(diag,diag2,&match);;CHKERRQ(ierr);
-    if (!match) SETERRQ(comm,PETSC_ERR_PLIB,"Bad Mat data in file");
-    ierr = VecDestroy(&diag);CHKERRQ(ierr);
+    if (!match) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Mat does not match");
     ierr = VecDestroy(&diag2);CHKERRQ(ierr);
+
+    ierr = VecDestroy(&diag);CHKERRQ(ierr);
   }
 
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
