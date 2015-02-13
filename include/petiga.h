@@ -126,46 +126,50 @@ PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
 
 /* ---------------------------------------------------------------- */
 
-typedef PetscErrorCode (*IGAFormScalar)(IGAPoint point,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx);
-typedef PetscErrorCode (*IGAFormVector)(IGAPoint point,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAFormMatrix)(IGAPoint point,PetscScalar *K,void *ctx);
-typedef PetscErrorCode (*IGAFormSystem)(IGAPoint point,PetscScalar *K,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAFormFunction)(IGAPoint point,const PetscScalar *U,PetscScalar *F,void *ctx);
-typedef PetscErrorCode (*IGAFormJacobian)(IGAPoint point,const PetscScalar *U,PetscScalar *J,void *ctx);
+typedef PetscErrorCode (*IGAFormScalar)(IGAPoint point,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx);
+typedef PetscErrorCode (*IGAFormVector)(IGAPoint point,PetscScalar F[],void *ctx);
+typedef PetscErrorCode (*IGAFormMatrix)(IGAPoint point,PetscScalar K[],void *ctx);
+typedef PetscErrorCode (*IGAFormSystem)(IGAPoint point,PetscScalar K[],PetscScalar F[],void *ctx);
+typedef PetscErrorCode (*IGAFormFunction)(IGAPoint point,
+                                          const PetscScalar U[],
+                                          PetscScalar F[],void *ctx);
+typedef PetscErrorCode (*IGAFormJacobian)(IGAPoint point,
+                                          const PetscScalar U[],
+                                          PetscScalar J[],void *ctx);
 typedef PetscErrorCode (*IGAFormIFunction)(IGAPoint point,PetscReal dt,
-                                           PetscReal a,const PetscScalar *V,
-                                           PetscReal t,const PetscScalar *U,
-                                           PetscScalar *F,void *ctx);
+                                           PetscReal a,const PetscScalar V[],
+                                           PetscReal t,const PetscScalar U[],
+                                           PetscScalar F[],void *ctx);
 typedef PetscErrorCode (*IGAFormIJacobian)(IGAPoint point,PetscReal dt,
-                                           PetscReal a,const PetscScalar *V,
-                                           PetscReal t,const PetscScalar *U,
-                                           PetscScalar *J,void *ctx);
+                                           PetscReal a,const PetscScalar V[],
+                                           PetscReal t,const PetscScalar U[],
+                                           PetscScalar J[],void *ctx);
 typedef PetscErrorCode (*IGAFormIFunction2)(IGAPoint point,PetscReal dt,
-                                            PetscReal a,const PetscScalar *A,
-                                            PetscReal v,const PetscScalar *V,
-                                            PetscReal t,const PetscScalar *U,
-                                            PetscScalar *F,void *ctx);
+                                            PetscReal a,const PetscScalar A[],
+                                            PetscReal v,const PetscScalar V[],
+                                            PetscReal t,const PetscScalar U[],
+                                            PetscScalar F[],void *ctx);
 typedef PetscErrorCode (*IGAFormIJacobian2)(IGAPoint point,PetscReal dt,
-                                            PetscReal a,const PetscScalar *A,
-                                            PetscReal v,const PetscScalar *V,
-                                            PetscReal t,const PetscScalar *U,
-                                            PetscScalar *J,void *ctx);
+                                            PetscReal a,const PetscScalar A[],
+                                            PetscReal v,const PetscScalar V[],
+                                            PetscReal t,const PetscScalar U[],
+                                            PetscScalar J[],void *ctx);
 typedef PetscErrorCode (*IGAFormIEFunction)(IGAPoint point,PetscReal dt,
-                                            PetscReal a,const PetscScalar *V,
-                                            PetscReal t,const PetscScalar *U,
-                                            PetscReal t0,const PetscScalar *U0,
-                                            PetscScalar *F,void *ctx);
+                                            PetscReal a,const PetscScalar V[],
+                                            PetscReal t,const PetscScalar U[],
+                                            PetscReal t0,const PetscScalar U0[],
+                                            PetscScalar F[],void *ctx);
 typedef PetscErrorCode (*IGAFormIEJacobian)(IGAPoint point,PetscReal dt,
-                                            PetscReal a,const PetscScalar *V,
-                                            PetscReal t,const PetscScalar *U,
-                                            PetscReal t0,const PetscScalar *U0,
-                                            PetscScalar *J,void *ctx);
+                                            PetscReal a,const PetscScalar V[],
+                                            PetscReal t,const PetscScalar U[],
+                                            PetscReal t0,const PetscScalar U0[],
+                                            PetscScalar J[],void *ctx);
 typedef PetscErrorCode (*IGAFormRHSFunction)(IGAPoint point,PetscReal dt,
-                                             PetscReal t,const PetscScalar *U,
-                                             PetscScalar *F,void *ctx);
+                                             PetscReal t,const PetscScalar U[],
+                                             PetscScalar F[],void *ctx);
 typedef PetscErrorCode (*IGAFormRHSJacobian)(IGAPoint point,PetscReal dt,
-                                             PetscReal t,const PetscScalar *U,
-                                             PetscScalar *J,void *ctx);
+                                             PetscReal t,const PetscScalar U[],
+                                             PetscScalar J[],void *ctx);
 
 typedef struct _IGAFormBC *IGAFormBC;
 struct _IGAFormBC {
