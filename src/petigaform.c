@@ -405,7 +405,7 @@ PetscErrorCode IGASetBoundaryForm(IGA iga,PetscInt axis,PetscInt side,PetscBool 
 -  VecCtx - user-defined context for evaluation routine (may be NULL)
 
    Details of Vector:
-$  PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx);
+$  PetscErrorCode Vector(IGAPoint p,PetscScalar F[],void *ctx);
 
 +  p - point at which to evaluate L(w)
 .  F - contribution to L(w)
@@ -438,7 +438,7 @@ PetscErrorCode IGASetFormVector(IGA iga,IGAFormVector Vector,void *VecCtx)
 -  MatCtx - user-defined context for evaluation routine (may be NULL)
 
    Details of System:
-$  PetscErrorCode System(IGAPoint p,PetscScalar *K,void *ctx);
+$  PetscErrorCode System(IGAPoint p,PetscScalar K[],void *ctx);
 
 +  p - point at which to evaluate a(w,u)
 .  K - contribution to a(w,u)
@@ -471,7 +471,7 @@ PetscErrorCode IGASetFormMatrix(IGA iga,IGAFormMatrix Matrix,void *MatCtx)
 -  SysCtx - user-defined context for evaluation routine (may be NULL)
 
    Details of System:
-$  PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx);
+$  PetscErrorCode System(IGAPoint p,PetscScalar K[],PetscScalar F[],void *ctx);
 
 +  p - point at which to evaluate a(w,u)=L(w)
 .  K - contribution to a(w,u)
@@ -505,11 +505,11 @@ PetscErrorCode IGASetFormSystem(IGA iga,IGAFormSystem System,void *SysCtx)
 -  FunCtx - user-defined context for private data for the function evaluation routine (may be NULL)
 
    Details of Function:
-$  PetscErrorCode Function(IGAPoint p,const PetscScalar *U,PetscScalar *R,void *ctx);
+$  PetscErrorCode Function(IGAPoint p,const PetscScalar U[],PetscScalar F[],void *ctx);
 
 +  p - point at which to compute the residual
 .  U - local state vector
-.  R - local contribution to global residual vector
+.  F - local contribution to global residual vector
 -  ctx - [optional] user-defined context for evaluation routine
 
    Level: normal
@@ -539,7 +539,7 @@ PetscErrorCode IGASetFormFunction(IGA iga,IGAFormFunction Function,void *FunCtx)
 -  JacCtx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
 
    Details of Jacobian:
-$  PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *U,PetscScalar *J,void *ctx);
+$  PetscErrorCode Jacobian(IGAPoint p,const PetscScalar U[],PetscScalar J[],void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  U - local state vector
@@ -574,9 +574,9 @@ PetscErrorCode IGASetFormJacobian(IGA iga,IGAFormJacobian Jacobian,void *JacCtx)
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *R,void *ctx);
+                            PetscReal a,const PetscScalar V[],
+                            PetscReal t,const PetscScalar U[],
+                            PetscScalar F[],void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -584,7 +584,7 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
 .  V - time derivative of the state vector
 .  t - time at step/stage being solved
 .  U - state vector
-.  R - function vector
+.  F - function vector
 -  ctx - [optional] user-defined context for evaluation routine
 
    Level: normal
@@ -616,9 +616,9 @@ PetscErrorCode IGASetFormIFunction(IGA iga,IGAFormIFunction IFunction,void *IFun
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *J,void *ctx);
+                            PetscReal a,const PetscScalar V[],
+                            PetscReal t,const PetscScalar U[],
+                            PetscScalar J[],void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
@@ -657,10 +657,10 @@ PetscErrorCode IGASetFormIJacobian(IGA iga,IGAFormIJacobian IJacobian,void *IJac
 
    Details of IFunction:
 $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *A,
-                            PetscReal v,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *F,void *ctx);
+                            PetscReal a,const PetscScalar A[],
+                            PetscReal v,const PetscScalar V[],
+                            PetscReal t,const PetscScalar U[],
+                            PetscScalar F[],void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -702,10 +702,10 @@ PetscErrorCode IGASetFormIFunction2(IGA iga,IGAFormIFunction2 IFunction,void *IF
 
    Details of IJacobian:
 $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
-                            PetscReal a,const PetscScalar *A,
-                            PetscReal v,const PetscScalar *V,
-                            PetscReal t,const PetscScalar *U,
-                            PetscScalar *J,void *ctx);
+                            PetscReal a,const PetscScalar A[],
+                            PetscReal v,const PetscScalar V[],
+                            PetscReal t,const PetscScalar U[],
+                            PetscScalar J[],void *ctx);
 
 +  p   - point at which to compute the Jacobian
 .  dt  - time step size
@@ -746,10 +746,10 @@ PetscErrorCode IGASetFormIJacobian2(IGA iga,IGAFormIJacobian2 IJacobian,void *IJ
 
    Details of IEFunction:
 $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
-                             PetscReal a, const PetscScalar *V,
-                             PetscReal t, const PetscScalar *U,
-                             PetscReal t0,const PetscScalar *U0,
-                             PetscScalar *R,void *ctx);
+                             PetscReal a, const PetscScalar V[],
+                             PetscReal t, const PetscScalar U[],
+                             PetscReal t0,const PetscScalar U0[],
+                             PetscScalar F[],void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
@@ -759,7 +759,7 @@ $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
 .  U - state vector at t
 .  t0 - time at current step
 .  U0 - state vector at t0
-.  R - function vector
+.  F - function vector
 -  ctx - [optional] user-defined context for evaluation routine
 
    Level: normal
@@ -791,10 +791,10 @@ PetscErrorCode IGASetFormIEFunction(IGA iga,IGAFormIEFunction IEFunction,void *I
 
    Details of IEJacobian:
 $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
-                             PetscReal a, const PetscScalar *V,
-                             PetscReal t, const PetscScalar *U,
-                             PetscReal t0,const PetscScalar *U0,
-                             PetscScalar *J,void *ctx);
+                             PetscReal a, const PetscScalar V[],
+                             PetscReal t, const PetscScalar U[],
+                             PetscReal t0,const PetscScalar U0[],
+                             PetscScalar J[],void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
@@ -836,14 +836,14 @@ PetscErrorCode IGASetFormIEJacobian(IGA iga,IGAFormIEJacobian IEJacobian,void *I
 
    Details of RHSFunction:
 $  PetscErrorCode RHSFunction(IGAPoint p,PetscReal dt,
-                              PetscReal t, const PetscScalar *U,
-                              PetscScalar *R,void *ctx);
+                              PetscReal t, const PetscScalar U[],
+                              PetscScalar F[],void *ctx);
 
 +  p - point at which to compute the residual
 .  dt - time step size
 .  t - time at step/stage being solved
 .  U - state vector at t
-.  R - function vector
+.  F - function vector
 -  ctx - [optional] user-defined context for evaluation routine
 
    Level: normal
@@ -875,8 +875,8 @@ PetscErrorCode IGASetFormRHSFunction(IGA iga,IGAFormRHSFunction RHSFunction,void
 
    Details of RHSJacobian:
 $  PetscErrorCode RHSJacobian(IGAPoint p,PetscReal dt,
-                              PetscReal t, const PetscScalar *U,
-                              PetscScalar *J,void *ctx);
+                              PetscReal t, const PetscScalar U[],
+                              PetscScalar J[],void *ctx);
 
 +  p - point at which to compute the Jacobian
 .  dt - time step size
