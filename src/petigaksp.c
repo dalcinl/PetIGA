@@ -218,6 +218,9 @@ PetscErrorCode IGAKSPComputeRHS(KSP ksp,Vec b,void *ctx)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  PetscValidHeaderSpecific(b,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,3);
   if (!iga->form->ops->System) {
     ierr = IGAComputeVector(iga,b);CHKERRQ(ierr);
   }
@@ -233,6 +236,10 @@ PetscErrorCode IGAKSPComputeOperators(KSP ksp,Mat A,Mat B,void *ctx)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  PetscValidHeaderSpecific(A,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(B,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,4);
   if (!iga->form->ops->System) {
     ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
   } else {
