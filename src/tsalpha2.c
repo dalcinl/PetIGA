@@ -277,7 +277,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSEvaluateStep_Alpha"
-static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool *done)
+static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PETSC_UNUSED PetscBool *done)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -463,7 +463,7 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
 }
 
 #if PETSC_VERSION_LT(3,6,0)
-#define PetscOptionsHead(obj,head) PetscOptionsHead(head)
+#define PetscOptionsHead(obj,head) ((void)(obj),PetscOptionsHead(head))
 #endif
 #undef __FUNCT__
 #define __FUNCT__ "TSSetFromOptions_Alpha"
@@ -642,7 +642,7 @@ static PetscErrorCode TSInterpolate2_Alpha(TS ts,PetscReal t,Vec X,Vec V)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSEvaluateStep2_Alpha"
-static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PetscBool *done)
+static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PETSC_UNUSED PetscBool *done)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;

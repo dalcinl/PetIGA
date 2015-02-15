@@ -280,7 +280,7 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
 
 #undef  __FUNCT__
 #define __FUNCT__ "DMSetFromOptions_IGA"
-static PetscErrorCode DMSetFromOptions_IGA(PetscOptions *PetscOptionsObject,DM dm)
+static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptions *PetscOptionsObject,DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;

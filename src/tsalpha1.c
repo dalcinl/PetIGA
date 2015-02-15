@@ -239,7 +239,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSEvaluateStep_Alpha"
-static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PetscBool *done)
+static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PETSC_UNUSED PetscBool *done)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -294,7 +294,7 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 
 #undef __FUNCT__
 #define __FUNCT__ "SNESTSFormFunction_Alpha"
-static PetscErrorCode SNESTSFormFunction_Alpha(SNES snes,Vec X,Vec F,TS ts)
+static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -394,7 +394,7 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
 }
 
 #if PETSC_VERSION_LT(3,6,0)
-#define PetscOptionsHead(obj,head) PetscOptionsHead(head)
+#define PetscOptionsHead(obj,head) ((void)(obj),PetscOptionsHead(head))
 #endif
 #undef __FUNCT__
 #define __FUNCT__ "TSSetFromOptions_Alpha"

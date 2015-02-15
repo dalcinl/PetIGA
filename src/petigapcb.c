@@ -271,7 +271,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetFromOptions_BBB"
-static PetscErrorCode PCSetFromOptions_BBB(PetscOptions *PetscOptionsObject,PC pc)
+static PetscErrorCode PCSetFromOptions_BBB(PETSC_UNUSED PetscOptions *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscBool      flg;
