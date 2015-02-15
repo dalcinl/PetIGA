@@ -171,6 +171,27 @@ typedef PetscErrorCode (*IGAFormRHSJacobian)(IGAPoint point,PetscReal dt,
                                              PetscReal t,const PetscScalar U[],
                                              PetscScalar J[],void *ctx);
 
+PETSC_EXTERN PetscErrorCode IGAFormJacobianFD(IGAPoint p,
+                                              const PetscScalar U[],
+                                              PetscScalar J[],void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormIJacobianFD(IGAPoint p,PetscReal dt,
+                                               PetscReal s,const PetscScalar V[],
+                                               PetscReal t,const PetscScalar U[],
+                                               PetscScalar J[],void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,PetscReal dt,
+                                                PetscReal s, const PetscScalar V[],
+                                                PetscReal t, const PetscScalar U[],
+                                                PetscReal t0,const PetscScalar U0[],
+                                                PetscScalar J[],void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
+                                                PetscReal a,const PetscScalar A[],
+                                                PetscReal v,const PetscScalar V[],
+                                                PetscReal t,const PetscScalar U[],
+                                                PetscScalar J[],void *ctx);
+PETSC_EXTERN PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,PetscReal dt,
+                                                 PetscReal t,const PetscScalar U[],
+                                                 PetscScalar F[],void *ctx);
+
 typedef struct _IGAFormBC *IGAFormBC;
 struct _IGAFormBC {
   PetscInt    count;

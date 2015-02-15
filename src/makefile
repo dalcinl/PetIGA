@@ -34,6 +34,7 @@ petigaaxis.c \
 petigarule.c \
 petigabasis.c \
 petigaform.c \
+petigafdjac.c \
 petigaelem.c \
 petigapoint.c \
 petigavec.c \

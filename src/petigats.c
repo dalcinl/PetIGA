@@ -539,7 +539,7 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscValidHeaderSpecific(iga,IGA_CLASSID,9);
 
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  if (iga->form->ops->IEJacobian) {
+  if (iga->form->ops->IEFunction) {
     ierr = TSGetTime(ts,&t0);CHKERRQ(ierr);
     ierr = TSGetSolution(ts,&U0);CHKERRQ(ierr);
     ierr = IGAComputeIEJacobian(iga,dt,a,V,t,U,t0,U0,P);CHKERRQ(ierr);
