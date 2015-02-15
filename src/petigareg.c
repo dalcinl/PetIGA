@@ -1,4 +1,7 @@
 #include "petiga.h"
+#include <petsc-private/pcimpl.h>
+#include <petsc-private/tsimpl.h>
+#include <petsc-private/dmimpl.h>
 
 #if PETSC_VERSION_LE(3,3,0)
 #define PetscFunctionList        PetscFList
