@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_GT(3,6,0)
+#define PETSC_HAVE_PCBDDC 1
+#endif
+
 #if PETSC_VERSION_LT(3,5,0)
 #define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
