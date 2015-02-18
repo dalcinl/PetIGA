@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_GT(3,6,0)
+#if PETSC_VERSION_GE(3,6,0)
 #define PETSC_HAVE_PCBDDC 1
 #endif
 
