@@ -19,7 +19,7 @@ typedef const char* MatType;
 #define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
 #endif
 
-#ifndef PetscCalloc2
+#if !defined(PetscCalloc2)
 #define PetscCalloc2(m1,r1,m2,r2)             \
   (PetscMalloc1((m1),(r1))                 || \
    PetscMalloc1((m2),(r2))                 || \

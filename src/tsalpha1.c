@@ -34,7 +34,7 @@ static PetscErrorCode TSRollBack_Alpha(TS);
         PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
 #endif
 
-#ifndef PetscValidRealPointer
+#if !defined(PetscValidRealPointer)
 #define PetscValidRealPointer PetscValidDoublePointer
 #endif
 
