@@ -271,7 +271,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
 #undef  __FUNCT__
 #define __FUNCT__ "PCSetFromOptions_BBB"
-static PetscErrorCode PCSetFromOptions_BBB(PETSC_UNUSED PetscOptions *PetscOptionsObject,PC pc)
+static PetscErrorCode PCSetFromOptions_BBB(PetscOptions *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscBool      flg;
@@ -279,6 +279,9 @@ static PetscErrorCode PCSetFromOptions_BBB(PETSC_UNUSED PetscOptions *PetscOptio
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
+#if PETSC_VERSION_LT(3,6,0)
+  (void)PetscOptionsObject;
+#endif
   for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
   if (flg) for (i=0; i<3; i++) {
