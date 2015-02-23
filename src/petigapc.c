@@ -1,5 +1,7 @@
 #include "petiga.h"
 
+/* ---------------------------------------------------------------- */
+
 #if PETSC_VERSION_LT(3,6,0)
 #if PETSC_VERSION_LT(3,5,0) || !defined(PETSC_HAVE_PCBDDC)
 #define PCBDDCSetPrimalVerticesLocalIS(pc,is) (0)
@@ -226,7 +228,13 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   Mat            mat;
   void           (*f)(void);
   const char     *prefix;
+#if PETSC_VERSION_LT(3,6,0)
+  PetscBool      primal = PETSC_FALSE;
   PetscBool      graph = PETSC_TRUE;
+#else
+  PetscBool      primal = PETSC_TRUE;
+  PetscBool      graph = PETSC_FALSE;
+#endif
   PetscBool      boundary = PETSC_TRUE;
   PetscBool      nullspace = PETSC_TRUE;
   PetscErrorCode ierr;
@@ -253,6 +261,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
 
@@ -278,6 +287,51 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     }
     ierr = IGAComputeBDDCGraph(dof,wrap,shape,start,width,&nvtx,&xadj,&adjy);CHKERRQ(ierr);
     ierr = PCBDDCSetLocalAdjacencyGraph(pc,nvtx,xadj,adjy,PETSC_OWN_POINTER);CHKERRQ(ierr);
+  }
+
+  if (primal) {
+    PetscInt  i,j,k;
+    PetscInt  dim,dof;
+    PetscBool wrap[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscInt  *rank = iga->proc_ranks;
+    PetscInt  *shape = iga->node_gwidth;
+    PetscInt  np=0,ip[8];
+    IS        isp;
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) wrap[i] = iga->axis[i]->periodic;
+#define forall1(a) for ((a)=0; (a)<2; (a)++)
+#define forall2(a,b) forall1(a) forall1(b)
+#define forall3(a,b,c) forall2(a,b) forall1(c)
+    {
+      PetscInt  vertex[2][2][2],*index = &vertex[0][0][0];
+      PetscInt  corner[3] = {0,0,0};
+      for (i=0; i<dim; i++) {
+        PetscInt lend = iga->node_lstart[i] + iga->node_lwidth[i];
+        PetscInt gend = iga->node_gstart[i] + iga->node_gwidth[i];
+        corner[i] = iga->node_gwidth[i] - (gend-lend)/2 - 1;
+      }
+      forall3(i,j,k) {
+        PetscInt a = i ? corner[0] : 0;
+        PetscInt b = j ? corner[1] : 0;
+        PetscInt c = k ? corner[2] : 0;
+        vertex[i][j][k] = Index(shape,a,b,c);
+      }
+      if (dim < 3) forall2(i,j) vertex[i][j][1] = -1;
+      if (dim < 2) forall1(i)   vertex[i][1][0] = -1;
+      if (rank[0] > 0 || wrap[0]) forall2(j,k) vertex[0][j][k] = -1;
+      if (rank[1] > 0 || wrap[1]) forall2(i,k) vertex[i][0][k] = -1;
+      if (rank[2] > 0 || wrap[2]) forall2(i,j) vertex[i][j][0] = -1;
+      for (i=0; i<8; i++) if (index[i] >= 0) ip[np++] = index[i];
+    }
+#undef forall1
+#undef forall2
+#undef forall3
+    ierr = PetscSortInt(np,ip);CHKERRQ(ierr);
+
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    ierr = ISCreateBlock(PETSC_COMM_SELF,dof,np,ip,PETSC_COPY_VALUES,&isp);CHKERRQ(ierr);
+    ierr = PCBDDCSetPrimalVerticesLocalIS(pc,isp);CHKERRQ(ierr);
+    ierr = ISDestroy(&isp);CHKERRQ(ierr);
   }
 
   if (boundary) {
