@@ -751,6 +751,7 @@ M*/
 EXTERN_C_BEGIN
 #undef __FUNCT__
 #define __FUNCT__ "TSCreate_Alpha2"
+PetscErrorCode TSCreate_Alpha2(TS ts);
 PetscErrorCode TSCreate_Alpha2(TS ts)
 {
   TS_Alpha       *th;

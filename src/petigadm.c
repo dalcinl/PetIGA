@@ -487,6 +487,7 @@ static PetscErrorCode DMCreateFieldDecomposition_IGA(DM dm,PetscInt *len,char **
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreate_IGA"
+PetscErrorCode DMCreate_IGA(DM dm);
 PetscErrorCode DMCreate_IGA(DM dm)
 {
   DM_IGA         *dd = NULL;

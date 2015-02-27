@@ -125,8 +125,10 @@ EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "PetscDLLibraryRegister_petiga"
 #if PETSC_VERSION_LE(3,3,0)
+PetscErrorCode PetscDLLibraryRegister_petiga(const char path[]);
 PetscErrorCode PetscDLLibraryRegister_petiga(const char path[])
 #else
+PetscErrorCode PetscDLLibraryRegister_petiga(void);
 PetscErrorCode PetscDLLibraryRegister_petiga(void)
 #endif
 {

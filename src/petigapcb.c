@@ -370,6 +370,7 @@ static PetscErrorCode PCDestroy_BBB(PC pc)
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "PCCreate_IGABBB"
+PetscErrorCode PCCreate_IGABBB(PC pc);
 PetscErrorCode PCCreate_IGABBB(PC pc)
 {
   PC_BBB         *bbb = NULL;
