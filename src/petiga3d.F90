@@ -54,24 +54,18 @@ pure subroutine IGA_BasisFuns_3D(&
   integer(kind=IGA_INTEGER_KIND)  :: ia, iq
   integer(kind=IGA_INTEGER_KIND)  :: ja, jq
   integer(kind=IGA_INTEGER_KIND)  :: ka, kq
-  integer(kind=IGA_INTEGER_KIND)  :: nen
-  nen = ina*jna*kna
-  do kq=1,knq
-     do jq=1,jnq
-        do iq=1,inq
-           call TensorBasisFuns(&
-                order,&
-                ina,iN(:,:,iq),&
-                jna,jN(:,:,jq),&
-                kna,kN(:,:,kq),&
-                N0(:,:,iq,jq,kq),&
-                N1(:,:,iq,jq,kq),&
-                N2(:,:,iq,jq,kq),&
-                N3(:,:,iq,jq,kq),&
-                N4(:,:,iq,jq,kq))
-        end do
-     end do
-  end do
+  do kq=1,knq; do jq=1,jnq; do iq=1,inq
+     call TensorBasisFuns(&
+          order,&
+          ina,iN(:,:,iq),&
+          jna,jN(:,:,jq),&
+          kna,kN(:,:,kq),&
+          N0(:,:,iq,jq,kq),&
+          N1(:,:,iq,jq,kq),&
+          N2(:,:,iq,jq,kq),&
+          N3(:,:,iq,jq,kq),&
+          N4(:,:,iq,jq,kq))
+  end do; end do; end do
 contains
 pure subroutine TensorBasisFuns(&
      order,&

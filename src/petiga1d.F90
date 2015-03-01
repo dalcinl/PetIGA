@@ -36,8 +36,6 @@ pure subroutine IGA_BasisFuns_1D(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,ina,inq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4,ina,inq)
   integer(kind=IGA_INTEGER_KIND)  :: ia, iq
-  integer(kind=IGA_INTEGER_KIND)  :: nen
-  nen = ina
   do iq=1,inq
      call TensorBasisFuns(&
           order,&

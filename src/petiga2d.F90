@@ -46,21 +46,17 @@ pure subroutine IGA_BasisFuns_2D(&
   integer(kind=IGA_INTEGER_KIND)  :: ia, iq
   integer(kind=IGA_INTEGER_KIND)  :: ja, jq
   integer(kind=IGA_INTEGER_KIND)  :: ka, kq
-  integer(kind=IGA_INTEGER_KIND)  :: nen
-  nen = ina*jna
-  do jq=1,jnq
-     do iq=1,inq
-        call TensorBasisFuns(&
-             order,&
-             ina,iN(:,:,iq),&
-             jna,jN(:,:,jq),&
-             N0(:,:,iq,jq),&
-             N1(:,:,iq,jq),&
-             N2(:,:,iq,jq),&
-             N3(:,:,iq,jq),&
-             N4(:,:,iq,jq))
-     end do
-  end do
+  do jq=1,jnq; do iq=1,inq
+     call TensorBasisFuns(&
+          order,&
+          ina,iN(:,:,iq),&
+          jna,jN(:,:,jq),&
+          N0(:,:,iq,jq),&
+          N1(:,:,iq,jq),&
+          N2(:,:,iq,jq),&
+          N3(:,:,iq,jq),&
+          N4(:,:,iq,jq))
+  end do; end do
 contains
 pure subroutine TensorBasisFuns(&
      order,&
