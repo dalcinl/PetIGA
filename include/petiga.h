@@ -106,7 +106,7 @@ struct _n_IGABasis {
 
   PetscInt  *offset;  /* [nel] basis offset */
   PetscReal *detJac;  /* [nel] element length */
-  PetscReal *weight;  /* [nqp] quadrature weight */
+  PetscReal *weight;  /* [nel][nqp] quadrature weight */
   PetscReal *point;   /* [nel][nqp] quadrature point */
   PetscReal *value;   /* [nel][nqp][nen][5] basis derivatives */
 

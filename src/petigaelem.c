@@ -769,10 +769,14 @@ PetscErrorCode IGAElementBuildClosure(IGAElement element)
 #include "petigaftn.h"
 
 #define IGA_Quadrature_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[i]->point+ID[i]*BD[i]->nqp,BD[i]->weight,BD[i]->detJac+ID[i]
+  BD[i]->nqp,                        \
+  BD[i]->point  + ID[i]*BD[i]->nqp,  \
+  BD[i]->weight + ID[i]*BD[i]->nqp,  \
+  BD[i]->detJac + ID[i]
 
 #define IGA_BasisFuns_ARGS(ID,BD,i) \
-  BD[i]->nqp,BD[i]->nen,BD[i]->value+ID[i]*BD[i]->nqp*BD[i]->nen*5
+  BD[i]->nqp, BD[i]->nen,           \
+  BD[i]->value + ID[i]*BD[i]->nqp*BD[i]->nen*5
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAElementBuildQuadrature"
@@ -1207,8 +1211,8 @@ static PetscReal BoundaryArea(IGAElement element,PetscInt dir,PetscInt side)
       if (i == dir) continue;
       nqp[k] = BD[i]->nqp;
       nen[k] = BD[i]->nen;
-      W[k]   = BD[i]->weight;
-      N[k]   = BD[i]->value+ID[i]*nqp[k]*nen[k]*5;
+      W[k]   = BD[i]->weight + ID[i]*nqp[k];
+      N[k]   = BD[i]->value  + ID[i]*nqp[k]*nen[k]*5;
       k++;
     }
     switch (dim) {
