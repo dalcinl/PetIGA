@@ -383,29 +383,34 @@ PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
   PetscInt *width = element->width;
   PetscInt *ID    = element->ID;
   PetscInt index,coord;
-  PetscErrorCode ierr;
-  /* */
+
+  PetscFunctionBegin;
   element->nval = 0;
   element->nvec = 0;
   element->nmat = 0;
-  /* */
+
   index = ++element->index;
-  if (PetscUnlikely(index >= element->count)) {
-    element->index = -1;
-    return PETSC_FALSE;
-  }
+  if (PetscUnlikely(index >= element->count)) goto stop;
+
   for (i=0; i<dim; i++) {
     coord = index % width[i];
     index = (index - coord) / width[i];
     ID[i] = coord + start[i];
   }
-  /* */
 #undef  CHKERRRETURN
-#define CHKERRRETURN(n,r) do { if (PetscUnlikely(n)) { CHKERRCONTINUE(n); return (r);} } while (0)
-  ierr = IGAElementBuildClosure(element);CHKERRRETURN(ierr,PETSC_FALSE);
-  ierr = IGAElementBuildFix(element);CHKERRRETURN(ierr,PETSC_FALSE);
+#define CHKERRRETURN(n) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);PetscFunctionReturn(PETSC_FALSE);}}while(0)
+  {
+    PetscErrorCode ierr;
+    ierr = IGAElementBuildClosure(element);CHKERRRETURN(ierr);
+    ierr = IGAElementBuildFix(element);CHKERRRETURN(ierr);
+  }
 #undef  CHKERRRETURN
-  return PETSC_TRUE;
+  PetscFunctionReturn(PETSC_TRUE);
+
+ stop:
+
+  element->index = -1;
+  PetscFunctionReturn(PETSC_FALSE);
 }
 
 #undef  __FUNCT__
@@ -430,6 +435,7 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
 PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[3][2])
 {
   PetscInt dim = element->dim;
+  PetscFunctionBegin;
   while (++element->boundary_id < 2*dim) {
     PetscInt i = element->boundary_id / 2;
     PetscInt s = element->boundary_id % 2;
@@ -437,15 +443,15 @@ PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[3][2])
     if (element->ID[i] != e) continue;
     if (!visit[i][s]) continue;
     element->atboundary = PETSC_TRUE;
-    return PETSC_TRUE;
+    PetscFunctionReturn(PETSC_TRUE);
   }
   if (element->boundary_id++ == 2*dim) {
     element->atboundary = PETSC_FALSE;
-    return PETSC_TRUE;
+    PetscFunctionReturn(PETSC_TRUE);
   }
   element->atboundary  = PETSC_FALSE;
   element->boundary_id = -1;
-  return PETSC_FALSE;
+  PetscFunctionReturn(PETSC_FALSE);
 }
 
 #undef  __FUNCT__
@@ -502,10 +508,11 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   PetscInt dim4 = dim*dim3;
   PetscInt dim5 = dim*dim4;
   PetscInt index;
-  /* */
+
+  PetscFunctionBegin;
   point->nvec = 0;
   point->nmat = 0;
-  /* */
+
   index = ++point->index;
   if (PetscUnlikely(index == 0))            goto start;
   if (PetscUnlikely(index >= point->count)) goto stop;
@@ -538,7 +545,7 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->shape[3] += nen*dim3;
   point->shape[4] += nen*dim4;
 
-  return PETSC_TRUE;
+  PetscFunctionReturn(PETSC_TRUE);
 
  start:
 
@@ -578,12 +585,12 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
     point->shape[4] = element->basis[4];
   }
 
-  return PETSC_TRUE;
+  PetscFunctionReturn(PETSC_TRUE);
 
  stop:
 
   point->index = -1;
-  return PETSC_FALSE;
+  PetscFunctionReturn(PETSC_FALSE);
 }
 
 #undef  __FUNCT__
