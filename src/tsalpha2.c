@@ -421,6 +421,71 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   PetscFunctionReturn(0);
 }
 
+typedef struct {
+  PetscBool always_accept;      /* always accept step */
+  PetscReal clip[2];            /* admissible decrease/increase factors */
+  PetscReal safety;             /* safety factor relative to target error */
+  PetscReal reject_safety;      /* extra safety factor if the last step was rejected */
+  Vec       Y;
+} TSAdapt_Basic;
+
+#define TSVecErrorNormWRMS(ts,X,Y,norm) 0; do {            \
+    Vec            _save = ts->vec_sol;                    \
+    PetscErrorCode _ierr_1;                                \
+    ts->vec_sol = X;                                       \
+    _ierr_1 = TSErrorNormWRMS(ts,Y,norm);CHKERRQ(_ierr_1); \
+    ts->vec_sol = _save;                                   \
+  } while(0)
+
+#undef __FUNCT__
+#define __FUNCT__ "TSAdaptChoose_Alpha"
+static PetscErrorCode TSAdaptChoose_Alpha(TSAdapt adapt,TS ts,PetscReal h,PetscInt *next_sc,PetscReal *next_h,PetscBool *accept,PetscReal *wlte)
+{
+  TSAdapt_Basic  *basic = (TSAdapt_Basic*)adapt->data;
+  PetscInt       order = adapt->candidates.order[0];
+  PetscReal      enorm,hfac_lte,h_lte,safety;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  {
+    TS_Alpha  *th = (TS_Alpha*)ts->data;
+    PetscReal enormX,enormV;
+    if (!basic->Y) {ierr = VecDuplicate(ts->vec_sol,&basic->Y);CHKERRQ(ierr);}
+    if (!th->work) {ierr = VecDuplicate(ts->vec_sol,&th->work);CHKERRQ(ierr);}
+    ierr = TSEvaluateStep2(ts,order-1,basic->Y,th->work,NULL);CHKERRQ(ierr);
+    ierr = TSVecErrorNormWRMS(ts,th->X1,basic->Y,&enormX);CHKERRQ(ierr);
+    ierr = TSVecErrorNormWRMS(ts,th->V1,th->work,&enormV);CHKERRQ(ierr);
+    enorm = PetscSqrtReal(PetscSqr(enormX)/2 + PetscSqr(enormV)/2);
+  }
+
+  safety = basic->safety;
+  if (enorm > 1.0) {
+    if (!*accept) safety *= basic->reject_safety; /* The last attempt also failed, shorten more aggressively */
+    if (h < (1 + PETSC_SQRT_MACHINE_EPSILON)*adapt->dt_min) {
+      ierr    = PetscInfo2(adapt,"Estimated scaled local truncation error %g, accepting because step size %g is at minimum\n",(double)enorm,(double)h);CHKERRQ(ierr);
+      *accept = PETSC_TRUE;
+    } else if (basic->always_accept) {
+      ierr    = PetscInfo2(adapt,"Estimated scaled local truncation error %g, accepting step of size %g because always_accept is set\n",(double)enorm,(double)h);CHKERRQ(ierr);
+      *accept = PETSC_TRUE;
+    } else {
+      ierr    = PetscInfo2(adapt,"Estimated scaled local truncation error %g, rejecting step of size %g\n",(double)enorm,(double)h);CHKERRQ(ierr);
+      *accept = PETSC_FALSE;
+    }
+  } else {
+    ierr    = PetscInfo2(adapt,"Estimated scaled local truncation error %g, accepting step of size %g\n",(double)enorm,(double)h);CHKERRQ(ierr);
+    *accept = PETSC_TRUE;
+  }
+
+  /* The optimal new step based purely on local truncation error for this step. */
+  hfac_lte = safety * PetscRealPart(PetscPowScalar((PetscScalar)enorm,(PetscReal)(-1./order)));
+  h_lte    = h * PetscClipInterval(hfac_lte,basic->clip[0],basic->clip[1]);
+
+  *next_sc = 0;
+  *next_h  = PetscClipInterval(h_lte,adapt->dt_min,adapt->dt_max);
+  *wlte    = enorm;
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "TSSetUp_Alpha"
 static PetscErrorCode TSSetUp_Alpha(TS ts)
@@ -445,6 +510,9 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
     ierr = TSGetAdapt(ts,&ts->adapt);CHKERRQ(ierr);
     ierr = TSAdaptSetType(ts->adapt,TSADAPTNONE);CHKERRQ(ierr);
   } else {
+    PetscBool match;
+    ierr = PetscObjectTypeCompare((PetscObject)ts->adapt,TSADAPTBASIC,&match);CHKERRQ(ierr);
+    if (match) {ts->adapt->ops->choose = TSAdaptChoose_Alpha;}
     ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_prev);CHKERRQ(ierr);
     ierr = VecDuplicate(ts->vec_sol,&th->vec_dot_prev);CHKERRQ(ierr);
   }
@@ -640,7 +708,7 @@ static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PET
     ierr = VecCopy(th->V1,V);CHKERRQ(ierr);
   } else if (order == th->order-1) {
     if (ts->steps > 0) {
-      PetscScalar scal[3]; Vec vecX[3],vecV[3]; 
+      PetscScalar scal[3]; Vec vecX[3],vecV[3];
       PetscReal a = 1 + ts->time_step_prev/ts->time_step;
       scal[0] = +1/a;   scal[1] = -1/(a-1); scal[2] = +1/(a*(a-1));
       vecX[0] = th->X1; vecX[1] = th->X0;   vecX[2] = th->vec_sol_prev;
