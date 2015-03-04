@@ -530,7 +530,7 @@ PetscErrorCode TSCreate_Alpha1(TS ts)
   ts->ops->setfromoptions = TSSetFromOptions_Alpha;
   ts->ops->step           = TSStep_Alpha;
   ts->ops->evaluatestep   = TSEvaluateStep_Alpha;
-#if 0==PETSC_VERSION_LT(3,5,0)
+#if PETSC_VERSION_GE(3,5,0)
   ts->ops->rollback       = TSRollBack_Alpha;
 #endif
   ts->ops->interpolate    = TSInterpolate_Alpha;
