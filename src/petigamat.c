@@ -1,20 +1,6 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-#if PETSC_VERSION_LE(3,3,0)
-#undef MatType
-typedef const char* MatType;
-#endif
-
-#if PETSC_VERSION_LT(3,4,0)
-#define PetscObjectQueryFunction(o,n,f) \
-        PetscObjectQueryFunction(o,n,(PetscVoidFunction*)(f))
-#endif
-#if PETSC_VERSION_LT(3,4,0)
-#define PetscObjectComposeFunction(o,n,f) \
-        PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
-#endif
-
 #if PETSC_VERSION_LT(3,5,0)
 #define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
 #endif

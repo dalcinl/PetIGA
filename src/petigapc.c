@@ -8,12 +8,10 @@
 #define PCBDDCSetNeumannBoundariesLocal(pc,is) (0)
 #define PCBDDCSetDirichletBoundariesLocal(pc,is) (0)
 #endif
-#if PETSC_VERSION_LT(3,4,0) || !defined(PETSC_HAVE_PCBDDC)
+#if !defined(PETSC_HAVE_PCBDDC)
 #define PCBDDCSetLocalAdjacencyGraph(pc,n,x,y,m) \
         (((m)==PETSC_OWN_POINTER) ? (PetscFree(x)||PetscFree(y)) : 0)
 #define PCBDDCSetNullSpace(pc,nsp) (0)
-#endif
-#if !defined(PETSC_HAVE_PCBDDC)
 #define PCBDDCSetNeumannBoundaries(pc,is) (0)
 #define PCBDDCSetDirichletBoundaries(pc,is) (0)
 #endif
@@ -147,20 +145,6 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LE(3,3,0)
-#include "petscbt.h"
-PETSC_STATIC_INLINE char PetscBTLookupClear(PetscBT array,PetscInt index)
-{
-  char      BT_mask,BT_c;
-  PetscInt  BT_idx;
-  return (BT_idx        = (index)/PETSC_BITS_PER_BYTE,
-          BT_c          = array[BT_idx],
-          BT_mask       = (char)1 << ((index)%PETSC_BITS_PER_BYTE),
-          array[BT_idx] = BT_c & (~BT_mask),
-          BT_c & BT_mask);
-}
-#endif
-
 static
 #undef  __FUNCT__
 #define __FUNCT__ "IGAComputeBDDCBoundary"
@@ -248,9 +232,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     Mat A,B;
     PetscBool useAmat = PETSC_FALSE;
     ierr = PCGetOperators(pc,&A,&B);CHKERRQ(ierr);
-#if PETSC_VERSION_GE(3,4,0)
     ierr = PCGetUseAmat(pc,&useAmat);CHKERRQ(ierr);
-#endif
     mat = useAmat ? A : B;
   }
 

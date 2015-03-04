@@ -3,20 +3,6 @@
 #include <petsc-private/tsimpl.h>
 #include <petsc-private/dmimpl.h>
 
-#if PETSC_VERSION_LE(3,3,0)
-#define PetscFunctionList        PetscFList
-#define PetscFunctionListDestroy PetscFListDestroy
-#endif
-
-#if PETSC_VERSION_LE(3,3,0)
-#define PCRegisterAll() PCRegisterAll(0)
-#define TSRegisterAll() TSRegisterAll(0)
-#define DMRegisterAll() DMRegisterAll(0)
-#define PCRegister(s,f) PCRegister(s,0,0,f)
-#define TSRegister(s,f) TSRegister(s,0,0,f)
-#define DMRegister(s,f) DMRegister(s,0,0,f)
-#endif
-
 PETSC_EXTERN PetscBool IGAPackageInitialized;
 PETSC_EXTERN PetscBool IGARegisterAllCalled;
 
@@ -84,12 +70,6 @@ PetscErrorCode IGAFinalizePackage(void)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LE(3,3,0)
-EXTERN_C_BEGIN
-extern PetscErrorCode SNESSetFromOptions_FDColor(SNES);
-EXTERN_C_END
-#endif
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAInitializePackage"
 PetscErrorCode IGAInitializePackage(void)
@@ -111,10 +91,6 @@ PetscErrorCode IGAInitializePackage(void)
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIFunction",IGA_CLASSID,&IGA_FormIFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIJacobian",IGA_CLASSID,&IGA_FormIJacobian);CHKERRQ(ierr);
-#if PETSC_VERSION_LE(3,3,0)
-  /* Additional SNES option handler to support -snes_fd_color */
-  ierr = SNESAddOptionsChecker(SNESSetFromOptions_FDColor);CHKERRQ(ierr);
-#endif
   /* Register finalization routine */
   ierr = PetscRegisterFinalize(IGAFinalizePackage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -124,13 +100,8 @@ PetscErrorCode IGAInitializePackage(void)
 EXTERN_C_BEGIN
 #undef  __FUNCT__
 #define __FUNCT__ "PetscDLLibraryRegister_petiga"
-#if PETSC_VERSION_LE(3,3,0)
-PetscErrorCode PetscDLLibraryRegister_petiga(const char path[]);
-PetscErrorCode PetscDLLibraryRegister_petiga(const char path[])
-#else
 PetscErrorCode PetscDLLibraryRegister_petiga(void);
 PetscErrorCode PetscDLLibraryRegister_petiga(void)
-#endif
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;

@@ -427,11 +427,7 @@ int main(int argc, char *argv[]) {
   PetscReal t=0; Vec U;
   ierr = IGACreateVec(iga,&U);CHKERRQ(ierr);
   ierr = FormInitialCondition(&user,iga,initial,t,U);CHKERRQ(ierr);
-#if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,U,NULL);CHKERRQ(ierr);
-#else
   ierr = TSSolve(ts,U);CHKERRQ(ierr);
-#endif
 
   ierr = VecDestroy(&U);CHKERRQ(ierr);
   ierr = TSDestroy(&ts);CHKERRQ(ierr);

@@ -1,30 +1,6 @@
 #include <petiga.h>
 #include "petsc-private/dmimpl.h"
 
-#if PETSC_VERSION_LE(3,3,0)
-#undef  __FUNCT__
-#define __FUNCT__ "VecSetDM"
-static PetscErrorCode VecSetDM(Vec v,DM dm)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(v,VEC_CLASSID,1);
-  if (dm) PetscValidHeaderSpecific(dm,DM_CLASSID,2);
-  ierr = PetscObjectCompose((PetscObject)v,"DM",(PetscObject)dm);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-#endif
-
-#if PETSC_VERSION_LE(3,3,0)
-#undef VecType
-typedef const char* VecType;
-#endif
-
-#if PETSC_VERSION_LE(3,3,0)
-#undef MatType
-typedef const char* MatType;
-#endif
-
 #if PETSC_VERSION_(3,4,0)
 #define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
 #endif
@@ -260,9 +236,7 @@ static PetscErrorCode DMCreateMatrix_IGA(DM dm,Mat *J)
   if (mtype) iga->mattype = (char*)mtype;
   ierr = IGACreateMat(iga,J);CHKERRQ(ierr);
   if (mtype) iga->mattype = (char*)save;
-#if PETSC_VERSION_GE(3,4,0)
   ierr = MatSetDM(*J,dm);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -369,7 +343,6 @@ static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
 }
 #endif
 
-#if PETSC_VERSION_GE(3,4,0)
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreateCoordinateDM_IGA"
 static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
@@ -386,7 +359,6 @@ static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
   ierr = IGADestroy(&ciga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "DMCreateSubDM_IGA"
@@ -512,10 +484,6 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->createlocalvector            = DMCreateLocalVector_IGA;
   dm->ops->creatematrix                 = DMCreateMatrix_IGA;
 
-#if PETSC_VERSION_LE(3,3,0)
-  #define getlocaltoglobalmapping      createlocaltoglobalmapping
-  #define getlocaltoglobalmappingblock createlocaltoglobalmappingblock
-#endif
 #if PETSC_VERSION_LT(3,5,0)
   dm->ops->getlocaltoglobalmappingblock = DMGetLocalToGlobalMapping_IGA;
 #endif
@@ -541,10 +509,8 @@ PetscErrorCode DMCreate_IGA(DM dm)
 #if PETSC_VERSION_GE(3,5,0)
   dm->ops->clone                        = DMClone_IGA;
 #endif
-#if PETSC_VERSION_GE(3,4,0)
   dm->ops->createcoordinatedm           = DMCreateCoordinateDM_IGA;
   dm->ops->createsubdm                  = DMCreateSubDM_IGA;
-#endif
   dm->ops->createfieldis                = DMCreateFieldIS_IGA;
   dm->ops->createfielddecomposition     = DMCreateFieldDecomposition_IGA;
   /*

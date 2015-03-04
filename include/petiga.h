@@ -806,47 +806,18 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 
 /* ---------------------------------------------------------------- */
 
-#if !defined(PetscValidRealPointer)
-#define PetscValidRealPointer PetscValidDoublePointer
-#endif
-
-#if !defined(PetscMalloc1)
-#define PetscMalloc1(m1,r1) PetscMalloc((m1)*sizeof(**(r1)),r1)
-#endif
-
-#if !defined(PetscCalloc1)
+#if PETSC_VERSION_LT(3,5,0)
+#define PetscMalloc1(m1,r1) \
+  PetscMalloc((m1)*sizeof(**(r1)),r1)
 #define PetscCalloc1(m1,r1) \
   (PetscMalloc1((m1),r1) || PetscMemzero(*(r1),(m1)*sizeof(**(r1))))
 #endif
 
-/* ---------------------------------------------------------------- */
-
-#if PETSC_VERSION_(3,3,0)
-
-#undef  PETSC_VERSION_LT
-#define PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR)    \
-  (PETSC_VERSION_RELEASE == 1 &&                  \
-   (PETSC_VERSION_MAJOR < (MAJOR) ||              \
-    (PETSC_VERSION_MAJOR == (MAJOR) &&            \
-     (PETSC_VERSION_MINOR < (MINOR) ||            \
-      (PETSC_VERSION_MINOR == (MINOR) &&          \
-       (PETSC_VERSION_SUBMINOR < (SUBMINOR)))))))
-
-#undef  PETSC_VERSION_LE
-#define PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR) \
-  (PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR) ||   \
-   PETSC_VERSION_(MAJOR,MINOR,SUBMINOR))
-
-#undef  PETSC_VERSION_GE
-#define PETSC_VERSION_GE(MAJOR,MINOR,SUBMINOR) \
-  (0 == PETSC_VERSION_LT(MAJOR,MINOR,SUBMINOR))
-
-#undef  PETSC_VERSION_GT
-#define PETSC_VERSION_GT(MAJOR,MINOR,SUBMINOR) \
-  (0 == PETSC_VERSION_LE(MAJOR,MINOR,SUBMINOR))
-
+#if PETSC_VERSION_LT(3,4,0)
+#error "PetIGA requires PETSc 3.4 or higher"
 #endif
 
 /* ---------------------------------------------------------------- */
+
 
 #endif/*PETIGA_H*/

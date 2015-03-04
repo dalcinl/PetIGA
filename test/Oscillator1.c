@@ -1,12 +1,6 @@
 #include <petsc.h>
 #include <petscts1.h>
 
-#if PETSC_VERSION_LE(3,3,0)
-#define TSSolve(ts,x) TSSolve(ts,x,NULL)
-#define TSRegister(ts,f) TSRegister(ts,0,0,f)
-#define TSSetSolutionFunction(ts,f,c) 0
-#endif
-
 typedef struct {
   PetscReal Omega;   /* natural frequency */
   PetscReal Xi;      /* damping coefficient  */

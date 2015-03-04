@@ -3,11 +3,6 @@
 #include <petsc-private/pcimpl.h>
 #include "petigabl.h"
 
-#if PETSC_VERSION_LE(3,3,0)
-#undef MatType
-typedef const char* MatType;
-#endif
-
 typedef struct {
   PetscInt dim,dof;
   PetscInt overlap[3];

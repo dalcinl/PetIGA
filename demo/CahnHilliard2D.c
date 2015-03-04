@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LE(3,3,0)
-#define TSSolve(ts,x) TSSolve((ts),(x),NULL)
-#endif
-
 typedef struct {
   PetscReal theta,alpha;
   PetscReal cbar;

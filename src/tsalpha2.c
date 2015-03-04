@@ -28,16 +28,6 @@ static PetscErrorCode TSRollBack_Alpha(TS);
   ts->time_step = next_time_step;
 #endif
 
-#if PETSC_VERSION_LT(3,4,0)
-#define PetscObjectComm(o) ((o)->comm)
-#define PetscObjectComposeFunction(o,n,f) \
-        PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
-#endif
-
-#if !defined(PetscValidRealPointer)
-#define PetscValidRealPointer PetscValidDoublePointer
-#endif
-
 typedef struct {
 
   PetscReal stage_time;
@@ -613,11 +603,7 @@ static PetscErrorCode TSSolve2_Alpha(TS ts,Vec X,Vec V)
 
   PetscFunctionBegin;
   ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
-#if PETSC_VERSION_LE(3,3,0)
-  ierr = TSSolve(ts,X,NULL);CHKERRQ(ierr);
-#else
   ierr = TSSolve(ts,X);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -801,10 +787,6 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",TSAlpha2SetRadius_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",TSAlpha2SetParams_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",TSAlpha2GetParams_Alpha);CHKERRQ(ierr);
-
-#if PETSC_VERSION_LE(3,3,0)
-  if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
-#endif
   PetscFunctionReturn(0);
 }
 EXTERN_C_END

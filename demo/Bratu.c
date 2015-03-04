@@ -29,10 +29,6 @@ extern PetscErrorCode Bratu_IJacobian(IGAPoint,PetscReal dt,
                                       PetscScalar *F,void *ctx);
 EXTERN_C_END
 
-#if PETSC_VERSION_LT(3,4,0)
-#define TSSolve(ts,x) TSSolve(ts,x,NULL)
-#endif
-
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {

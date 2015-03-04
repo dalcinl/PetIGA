@@ -28,16 +28,6 @@ static PetscErrorCode TSRollBack_Alpha(TS);
   ts->time_step = next_time_step;
 #endif
 
-#if PETSC_VERSION_LT(3,4,0)
-#define PetscObjectComm(o) ((o)->comm)
-#define PetscObjectComposeFunction(o,n,f) \
-        PetscObjectComposeFunction(o,n,"",(PetscVoidFunction)(f))
-#endif
-
-#if !defined(PetscValidRealPointer)
-#define PetscValidRealPointer PetscValidDoublePointer
-#endif
-
 typedef struct {
 
   PetscReal stage_time;
@@ -565,10 +555,6 @@ PetscErrorCode TSCreate_Alpha1(TS ts)
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaSetRadius_C",TSAlphaSetRadius_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaSetParams_C",TSAlphaSetParams_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlphaGetParams_C",TSAlphaGetParams_Alpha);CHKERRQ(ierr);
-
-#if PETSC_VERSION_LE(3,3,0)
-  if (ts->exact_final_time == PETSC_DECIDE) ts->exact_final_time = PETSC_FALSE;
-#endif
   PetscFunctionReturn(0);
 }
 EXTERN_C_END

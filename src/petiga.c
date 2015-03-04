@@ -30,11 +30,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 
   *newiga = NULL;
-#if PETSC_VERSION_LE(3,3,0)
-  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,-1,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#else
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#endif
   *newiga = iga;
 
   iga->dim = -1;
@@ -221,10 +217,6 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   }
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LE(3,3,0)
-PETSC_EXTERN PetscErrorCode PetscOptionsGetViewer(MPI_Comm,const char[],const char[],PetscViewer*,PetscViewerFormat*,PetscBool*);
-#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAViewFromOptions"

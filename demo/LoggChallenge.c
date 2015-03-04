@@ -68,11 +68,6 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   return 0;
 }
 
-#if PETSC_VERSION_LT(3,4,0)
-#undef  PetscTime
-#define PetscTime PetscGetTime
-#endif
-
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {

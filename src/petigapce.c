@@ -2,18 +2,6 @@
 #include <petsc-private/pcimpl.h>
 #include "petigabl.h"
 
-#if PETSC_VERSION_LE(3,3,0)
-#undef MatType
-typedef const char* MatType;
-#endif
-
-#if PETSC_VERSION_LE(3,3,0)
-#define MatGetRowIJ(A,z,f,c,na,ia,ja,done) \
-        MatGetRowIJ(A,z,f,c,na,(PetscInt**)ia,(PetscInt**)ja,done)
-#define MatRestoreRowIJ(A,z,f,c,na,ia,ja,done) \
-        MatRestoreRowIJ(A,z,f,c,na,(PetscInt**)ia,(PetscInt**)ja,done)
-#endif
-
 typedef struct {
   Mat mat;
 } PC_EBE;

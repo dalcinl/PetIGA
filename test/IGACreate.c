@@ -198,7 +198,6 @@ int main(int argc, char *argv[])
     ierr = DMDestroy(&newdm);CHKERRQ(ierr);
   }
 #endif
-#if PETSC_VERSION_GE(3,4,0)
   {
     DM cdm;
     ierr = DMGetCoordinateDM(dm,&cdm);CHKERRQ(ierr);
@@ -223,7 +222,6 @@ int main(int argc, char *argv[])
       }
     }
   }
-#endif
   {
     PetscInt i,len;char **namelist;IS *islist;
     ierr = DMCreateFieldIS(dm,&len,&namelist,&islist);CHKERRQ(ierr);
