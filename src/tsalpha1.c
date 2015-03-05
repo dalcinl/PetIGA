@@ -31,8 +31,8 @@ static PetscErrorCode TSRollBack_Alpha(TS);
 typedef struct {
 
   PetscReal stage_time;
-  PetscReal shift;
-  PetscReal scale;
+  PetscReal shift_V;
+  PetscReal scale_F;
   Vec       X0,Xa,X1;
   Vec       V0,Va,V1;
   Vec       vec_sol_prev;
@@ -60,8 +60,8 @@ static PetscErrorCode TSAlpha_StageTime(TS ts)
 
   PetscFunctionBegin;
   th->stage_time = t + Alpha_f*dt;
-  th->shift = Alpha_m/(Alpha_f*Gamma*dt);
-  th->scale = 1/Alpha_f;
+  th->shift_V = Alpha_m/(Alpha_f*Gamma*dt);
+  th->scale_F = 1/Alpha_f;
   PetscFunctionReturn(0);
 }
 
@@ -112,7 +112,8 @@ static PetscErrorCode TS_SNESSolve(TS ts,Vec b,Vec x)
 static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscReal      alpha_m,alpha_f,gamma,time_step;
+  PetscReal      time_step;
+  PetscReal      alpha_m,alpha_f,gamma;
   Vec            X0 = ts->vec_sol, X1, X2 = th->X1;
   PetscBool      stageok;
   PetscErrorCode ierr;
@@ -213,7 +214,8 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ts->ptime += ts->time_step;
     ts->time_step = next_time_step;
     ts->steps++;
-    th->status = TS_STEP_COMPLETE; break;
+    th->status = TS_STEP_COMPLETE;
+    break;
 
   reject_step:
     ts->reject++;
@@ -240,11 +242,10 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PETSC_UNUS
     ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
   } else if (order == th->order-1) {
     if (ts->steps > 0) {
-      Vec       vecs[3]; PetscScalar scal[3];
       PetscReal a = 1 + ts->time_step_prev/ts->time_step;
-      scal[0] = +1/a;         vecs[0] = th->X1;
-      scal[1] = -1/(a-1);     vecs[1] = th->X0;
-      scal[2] = +1/(a*(a-1)); vecs[2] = th->vec_sol_prev;
+      PetscScalar scal[3]; Vec vecs[3];
+      scal[0] = +1/a;   scal[1] = -1/(a-1); scal[2] = +1/(a*(a-1));
+      vecs[0] = th->X1; vecs[1] = th->X0;   vecs[2] = th->vec_sol_prev;
       ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
       ierr = VecMAXPY(U,3,scal,vecs);CHKERRQ(ierr);
     } else {
@@ -287,13 +288,15 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscReal      ta = th->stage_time;
+  Vec            Xa = th->Xa, Va = th->Va;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   ierr = TSAlpha_StageVecs(ts,X);CHKERRQ(ierr);
   /* F = Function(ta,Xa,Va) */
-  ierr = TSComputeIFunction(ts,th->stage_time,th->Xa,th->Va,F,PETSC_FALSE);CHKERRQ(ierr);
-  ierr = VecScale(F,th->scale);CHKERRQ(ierr);
+  ierr = TSComputeIFunction(ts,ta,Xa,Va,F,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = VecScale(F,th->scale_F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -309,15 +312,18 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
                                                TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscReal      ta = th->stage_time;
+  Vec            Xa = th->Xa, Va = th->Va;
+  PetscReal      dVdX = th->shift_V;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  /* A,B = Jacobian(ta,Xa,Va) */
+  /* J,P = Jacobian(ta,Xa,Va) */
 #if PETSC_VERSION_LT(3,5,0)
   *m = SAME_NONZERO_PATTERN;
-  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeIJacobian(ts,ta,Xa,Va,dVdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
 #else
-  ierr = TSComputeIJacobian(ts,th->stage_time,th->Xa,th->Va,th->shift,J,P,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeIJacobian(ts,ta,Xa,Va,dVdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
 #endif
   PetscFunctionReturn(0);
 }
@@ -467,7 +473,7 @@ static PetscErrorCode TSAlphaSetRadius_Alpha(TS ts,PetscReal radius)
 #define __FUNCT__ "TSAlphaSetParams_Alpha"
 static PetscErrorCode TSAlphaSetParams_Alpha(TS ts,PetscReal alpha_m,PetscReal alpha_f,PetscReal gamma)
 {
-  TS_Alpha *th = (TS_Alpha*)ts->data;
+  TS_Alpha  *th = (TS_Alpha*)ts->data;
   PetscReal tol = 100*PETSC_MACHINE_EPSILON;
   PetscReal res = ((PetscReal)0.5 + alpha_m - alpha_f) - gamma;
 

@@ -133,7 +133,8 @@ static PetscErrorCode TS_SNESSolve(TS ts,Vec b,Vec x)
 static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscReal      alpha_m,alpha_f,gamma,beta,time_step;
+  PetscReal      time_step;
+  PetscReal      alpha_m,alpha_f,gamma,beta;
   Vec            X0 = ts->vec_sol, X1, X2 = th->X1;
   Vec            V0 = th->vec_dot, V1, V2 = th->V1;
   PetscBool      stageok;
@@ -311,19 +312,17 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
 static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscReal      ta = th->stage_time;
+  Vec            Xa = th->Xa, Va = th->Va, Aa = th->Aa;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   ierr = TSAlpha_StageVecs(ts,X);CHKERRQ(ierr);
   if (th->Function) {
     /* F = Function(ta,Xa,Va,Aa) */
-    PetscReal ta = th->stage_time;
-    Vec       Xa = th->Xa, Va = th->Va, Aa = th->Aa;
     ierr = TSComputeIFunction2(ts,ta,Xa,Va,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
   } else {
     /* F = Function(ta,Xa,Aa) */
-    PetscReal ta = th->stage_time;
-    Vec       Xa = th->Xa, Aa = th->Aa;
     ierr = TSComputeIFunction(ts,ta,Xa,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
   }
   ierr = VecScale(F,th->scale_F);CHKERRQ(ierr);
@@ -342,14 +341,14 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
                                                TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
+  PetscReal      ta = th->stage_time;
+  Vec            Xa = th->Xa, Va = th->Va, Aa = th->Aa;
+  PetscReal      dVdX = th->shift_V, dAdX = th->shift_A;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   if (th->Jacobian) {
     /* J,P = Jacobian(ta,Xa,Va,Aa) */
-    PetscReal ta = th->stage_time;
-    Vec       Xa = th->Xa, Va = th->Va, Aa = th->Aa;
-    PetscReal dVdX = th->shift_V, dAdX = th->shift_A;
 #if PETSC_VERSION_LT(3,5,0)
     *m = SAME_NONZERO_PATTERN;
     ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P,PETSC_FALSE);CHKERRQ(ierr);
@@ -358,10 +357,8 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
 #endif
   } else {
     /* J,P = Jacobian(ta,Xa,Aa) */
-    PetscReal ta = th->stage_time;
-    Vec       Xa = th->Xa, Aa = th->Aa;
-    PetscReal dAdX = th->shift_A;
 #if PETSC_VERSION_LT(3,5,0)
+    *m = SAME_NONZERO_PATTERN;
     ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
 #else
     ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
@@ -708,8 +705,8 @@ static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PET
     ierr = VecCopy(th->V1,V);CHKERRQ(ierr);
   } else if (order == th->order-1) {
     if (ts->steps > 0) {
-      PetscScalar scal[3]; Vec vecX[3],vecV[3];
       PetscReal a = 1 + ts->time_step_prev/ts->time_step;
+      PetscScalar scal[3]; Vec vecX[3],vecV[3];
       scal[0] = +1/a;   scal[1] = -1/(a-1); scal[2] = +1/(a*(a-1));
       vecX[0] = th->X1; vecX[1] = th->X0;   vecX[2] = th->vec_sol_prev;
       vecV[0] = th->V1; vecV[1] = th->V0;   vecV[2] = th->vec_dot_prev;
@@ -789,9 +786,10 @@ static PetscErrorCode TSAlpha2GetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal
 }
 
 /* ------------------------------------------------------------ */
+
 /*MC
       TSALPHA2 - DAE solver using the implicit Generalized-Alpha method
-                 for second-order systems.
+                 for second-order systems
 
   Level: beginner
 
