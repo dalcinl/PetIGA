@@ -432,7 +432,7 @@ typedef struct {
     ts->vec_sol = X;                                       \
     _ierr_1 = TSErrorNormWRMS(ts,Y,norm);CHKERRQ(_ierr_1); \
     ts->vec_sol = _save;                                   \
-  } while(0)
+  } while (0)
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAdaptChoose_Alpha"

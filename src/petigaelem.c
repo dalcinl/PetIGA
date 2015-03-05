@@ -374,6 +374,11 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   PetscFunctionReturn(0);
 }
 
+#undef  CHKERRRETURN
+#define CHKERRRETURN(n,r) do {                                       \
+    CHKERRCONTINUE(n); if (PetscUnlikely(n)) PetscFunctionReturn(r); \
+  } while (0)
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGANextElement"
 PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
@@ -397,14 +402,12 @@ PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
     index = (index - coord) / width[i];
     ID[i] = coord + start[i];
   }
-#undef  CHKERRRETURN
-#define CHKERRRETURN(n) do{if(PetscUnlikely(n)){CHKERRCONTINUE(n);PetscFunctionReturn(PETSC_FALSE);}}while(0)
+
   {
     PetscErrorCode ierr;
-    ierr = IGAElementBuildClosure(element);CHKERRRETURN(ierr);
-    ierr = IGAElementBuildFix(element);CHKERRRETURN(ierr);
+    ierr = IGAElementBuildClosure(element);CHKERRRETURN(ierr,PETSC_FALSE);
+    ierr = IGAElementBuildFix(element);CHKERRRETURN(ierr,PETSC_FALSE);
   }
-#undef  CHKERRRETURN
   PetscFunctionReturn(PETSC_TRUE);
 
  stop:
@@ -412,6 +415,8 @@ PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
   element->index = -1;
   PetscFunctionReturn(PETSC_FALSE);
 }
+
+#undef  CHKERRRETURN
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAEndElement"
