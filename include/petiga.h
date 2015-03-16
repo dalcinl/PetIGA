@@ -579,10 +579,8 @@ PETSC_EXTERN PetscBool      IGAElementNextPoint(IGAElement element,IGAPoint poin
 PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point);
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildClosure(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildQuadrature(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFuns (IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildQuadratureAtBoundary(IGAElement element,PetscInt dir,PetscInt side);
-PETSC_EXTERN PetscErrorCode IGAElementBuildShapeFunsAtBoundary (IGAElement element,PetscInt dir,PetscInt side);
+PETSC_EXTERN PetscErrorCode IGAElementBuildTabulation(IGAElement element);
+PETSC_EXTERN PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt dir,PetscInt side);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent);
 PETSC_EXTERN PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index);
