@@ -164,10 +164,11 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   ierr = PetscMalloc1((size_t)(nel*nqp*nen*ndr),&value);CHKERRQ(ierr);
   for (iel=0; iel<nel; iel++) {
     PetscInt  k  = span[iel];
+    PetscReal *w = &weight[iel*nqp];
     PetscReal *u = &point[iel*nqp];
     PetscReal *N = &value[iel*nqp*nen*ndr];
     offset[iel] = k - p;
-    for (iqp=0; iqp<nqp; iqp++)
+    for (iqp=0; iqp<nqp && w[iqp]>0; iqp++)
       ComputeBasis(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
   }
 
