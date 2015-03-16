@@ -198,7 +198,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     size_t nsd = (size_t)element->nsd;
     size_t npd = (size_t)element->npd;
     ierr = PetscMalloc1(nen,&element->mapping);CHKERRQ(ierr);
-    if (!element->collocation) {
+    if (PetscLikely(!element->collocation)) {
       element->neq = element->nen;
       element->rowmap = element->mapping;
     } else {
@@ -895,7 +895,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
                                  M[0],M[1],M[2],M[3],M[4],
                                  dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
       }
-      if (PetscLikely(!element->parent->collocation))
+      if (PetscLikely(!element->collocation))
         for (q=0; q<nqp; q++) element->detJac[q] *= dX[q];
       /* */
       switch (dim) {
@@ -1075,7 +1075,7 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       }
       for (q=0; q<nqp; q++)
         IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&S[q],&n[q*dim]);
-      if (PetscLikely(!element->parent->collocation))
+      if (PetscLikely(!element->collocation))
         for (q=0; q<nqp; q++) element->detJac[q] *= S[q];
       /* */
       switch (dim) {
