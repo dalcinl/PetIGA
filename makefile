@@ -176,14 +176,20 @@ deletesharedlibs:
 deletelibs: deletestaticlibs deletesharedlibs
 .PHONY: deletelogs deletemods deletestaticlibs deletesharedlibs deletelibs
 
+
 # Clean up build
+clean:: allclean
 allclean:
 	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
 	${OMAKE} gmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; \
 	elif [ "${PETSC_BUILD_USING_CMAKE}" != "" ]; then \
 	${OMAKE} cmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
 	${OMAKE} legacy-clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
-.PHONY: allclean
+distclean:
+	@echo "*** Deleting all build files in ${PETIGA_DIR}/${PETSC_ARCH} ***"
+	-${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/
+.PHONY: clean allclean distclean
+
 
 # Run test examples
 testexamples:
