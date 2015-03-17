@@ -90,8 +90,7 @@ EXTERN_C_END
 PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
 {
   PetscInt       p,m,n;
-  const PetscInt *span;
-  const PetscReal*U,*X,*W;
+  const PetscReal*U;
   PetscInt       iel,nel;
   PetscInt       iqp,nqp;
   PetscInt       nen,ndr,d;
@@ -107,6 +106,8 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   PetscValidPointer(basis,1);
   PetscValidPointer(axis,2);
   PetscValidPointer(rule,3);
+
+  if (rule->nqp < 1) {ierr = IGARuleInit(rule,axis->p+1);CHKERRQ(ierr);}
 
   p = axis->p;
   m = axis->m;
@@ -125,29 +126,58 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
     }
   }
 
-  nel  = axis->nel;
-  span = axis->span;
-
-  if (rule->nqp < 1) {ierr = IGARuleInit(rule,p+1);CHKERRQ(ierr);}
+  /* Compute quadrature points and weights */
+  nel = axis->nel;
   nqp = rule->nqp;
-  X = rule->point;
-  W = rule->weight;
   ierr = PetscMalloc1((size_t)nel,&detJac);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)(nel*nqp),&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)(nel*nqp),&point);CHKERRQ(ierr);
-  for (iel=0; iel<nel; iel++) {
-    PetscInt  k  = span[iel];
-    PetscReal u0 = U[k], u1 = U[k+1];
-    PetscReal J  = (u1-u0)/2;
-    PetscReal *w = &weight[iel*nqp];
-    PetscReal *u = &point[iel*nqp];
-    detJac[iel] = J;
-    for (iqp=0; iqp<nqp; iqp++) {
-      w[iqp] = W[iqp];
-      u[iqp] = (X[iqp] + 1) * J + u0;
+  if (1) {
+    const PetscReal *X = rule->point;
+    const PetscReal *W = rule->weight;
+    for (iel=0; iel<nel; iel++) {
+      PetscInt  k  = axis->span[iel];
+      PetscReal u0 = U[k], u1 = U[k+1];
+      PetscReal J  = (u1-u0)/2;
+      PetscReal *w = weight + iel*nqp;
+      PetscReal *u = point  + iel*nqp;
+      detJac[iel] = J;
+      for (iqp=0; iqp<nqp; iqp++) {
+        w[iqp] = W[iqp];
+        u[iqp] = (X[iqp] + 1) * J + u0;
+      }
+    }
+  } else {
+#define SetRule(e)                       \
+    do {                                 \
+      const PetscInt   n = rule->nqp;    \
+      const PetscReal *X = rule->point;  \
+      const PetscReal *W = rule->weight; \
+      PetscInt  k  = axis->span[(e)];    \
+      PetscReal u0 = U[k], u1 = U[k+1];  \
+      PetscReal J  = (u1-u0)/2;          \
+      PetscReal *w = weight + (e)*nqp;   \
+      PetscReal *u = point  + (e)*nqp;   \
+      detJac[(e)] = J;                   \
+      for (iqp=0; iqp<n; iqp++) {        \
+        w[iqp] = W[iqp];                 \
+        u[iqp] = (X[iqp] + 1) * J + u0;  \
+      }                                  \
+      for (iqp=n; iqp<nqp; iqp++) {      \
+        w[iqp] = 0;                      \
+        u[iqp] = PETSC_MAX_REAL;         \
+      }                                  \
+    } while (0)
+    /* */
+    if (nel > 0) SetRule(0);     /* first  */
+    if (nel > 1) SetRule(nel-1); /* last   */
+    if (nel > 2) {               /* others */
+      if (nqp > 1) {ierr = IGARuleInit(rule,nqp-1);CHKERRQ(ierr);}
+      for (iel=1; iel<nel-1; iel++) SetRule(iel);
     }
   }
 
+  /* Compute basis functions and derivatives */
   nen = p+1;
   ndr = 5;
   d = PetscMin(p,4);
@@ -163,17 +193,16 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   ierr = PetscMalloc1((size_t)nel,&offset);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)(nel*nqp*nen*ndr),&value);CHKERRQ(ierr);
   for (iel=0; iel<nel; iel++) {
-    PetscInt  k  = span[iel];
-    PetscReal *w = &weight[iel*nqp];
-    PetscReal *u = &point[iel*nqp];
-    PetscReal *N = &value[iel*nqp*nen*ndr];
+    PetscInt  k  = axis->span[iel];
+    PetscReal *w = weight + iel*nqp;
+    PetscReal *u = point  + iel*nqp;
+    PetscReal *N = value  + iel*nqp*nen*ndr;
     offset[iel] = k - p;
     for (iqp=0; iqp<nqp && w[iqp]>0; iqp++)
       ComputeBasis(k,u[iqp],p,d,U,&N[iqp*nen*ndr]);
   }
 
   ierr = IGABasisReset(basis);CHKERRQ(ierr);
-
   basis->nel    = nel;
   basis->nqp    = nqp;
   basis->nen    = nen;
@@ -182,7 +211,6 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   basis->weight = weight;
   basis->point  = point;
   basis->value  = value;
-
   {
     PetscInt  k0 = p,     k1 = n;
     PetscReal u0 = U[k0], u1 = U[k1+1];
