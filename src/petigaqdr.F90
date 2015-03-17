@@ -4,7 +4,7 @@ subroutine IGA_Rule_GaussLegendre(q,X,W) &
   bind(C, name="IGA_Rule_GaussLegendre")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in)  :: q
+  integer(kind=IGA_INTEGER_KIND), intent(in), value :: q
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X(0:q-1)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: W(0:q-1)
   integer, parameter :: rk = IGA_REAL_KIND
@@ -139,7 +139,7 @@ subroutine IGA_Rule_GaussLobatto(q,X,W) &
   bind(C, name="IGA_Rule_GaussLobatto")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in)  :: q
+  integer(kind=IGA_INTEGER_KIND), intent(in), value :: q
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X(0:q-1)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: W(0:q-1)
   integer, parameter :: rk = IGA_REAL_KIND
