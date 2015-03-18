@@ -107,7 +107,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   PetscValidPointer(axis,2);
   PetscValidPointer(rule,3);
 
-  if (rule->nqp < 1) {ierr = IGARuleInit(rule,axis->p+1);CHKERRQ(ierr);}
+  if (rule->nqp < 1) {ierr = IGARuleSetSize(rule,axis->p+1);CHKERRQ(ierr);}
 
   p = axis->p;
   m = axis->m;
@@ -172,7 +172,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
     if (nel > 0) SetRule(0);     /* first  */
     if (nel > 1) SetRule(nel-1); /* last   */
     if (nel > 2) {               /* others */
-      if (nqp > 1) {ierr = IGARuleInit(rule,nqp-1);CHKERRQ(ierr);}
+      if (nqp > 1) {ierr = IGARuleSetSize(rule,nqp-1);CHKERRQ(ierr);}
       for (iel=1; iel<nel-1; iel++) SetRule(iel);
     }
   }

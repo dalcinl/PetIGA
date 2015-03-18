@@ -479,6 +479,23 @@ PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetRuleSize"
+PetscErrorCode IGASetRuleSize(IGA iga,PetscInt i,PetscInt nqp)
+{
+  IGARule        rule;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidLogicalCollectiveInt(iga,i,2);
+  PetscValidLogicalCollectiveInt(iga,nqp,3);
+  ierr = IGAGetRule(iga,i,&rule);CHKERRQ(ierr);
+  if (rule->nqp == nqp) PetscFunctionReturn(0);
+  ierr = IGARuleSetSize(rule,nqp);CHKERRQ(ierr);
+  iga->setup = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetQuadrature"
 PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
 {
@@ -492,7 +509,7 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   if (q == PETSC_DECIDE && iga->axis[i]->p > 0) q = iga->axis[i]->p + 1;
   if (q <= 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
   if (rule->nqp == q) PetscFunctionReturn(0);
-  ierr = IGARuleInit(rule,q);CHKERRQ(ierr);
+  ierr = IGARuleSetSize(rule,q);CHKERRQ(ierr);
   iga->setup = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -705,7 +722,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   {
-    PetscBool flg;
+    PetscBool setup = iga->setup;
+    PetscBool flg,flg1,flg2;
     PetscInt  i,nw,nl;
     const char *prefix = NULL;
     PetscBool collocation = iga->collocation;
@@ -768,6 +786,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     /* Collocation */
     ierr = PetscOptionsBool("-iga_collocation","Use collocation","IGASetUseCollocation",collocation,&collocation,&flg);CHKERRQ(ierr);
     if (flg) {ierr = IGASetUseCollocation(iga,collocation);CHKERRQ(ierr);}
+    if (iga->collocation) {ierr = IGAOptionsReject(prefix,"-iga_rule_type");CHKERRQ(ierr);}
+    if (iga->collocation) {ierr = IGAOptionsReject(prefix,"-iga_rule_size");CHKERRQ(ierr);}
     if (iga->collocation) {ierr = IGAOptionsReject(prefix,"-iga_quadrature");CHKERRQ(ierr);}
 
     /* Processor grid */
@@ -797,7 +817,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       ierr = IGARead(iga,filename);CHKERRQ(ierr);
       ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     } else { /* set axis details */
-      PetscBool flg1,flg2;
       ierr = PetscOptionsEnum("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum)btype[0],(PetscEnum*)&btype[0],&flg);CHKERRQ(ierr);
       if (flg) for (i=1; i<dim; i++) btype[i] = btype[0]; /* XXX */
       for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
@@ -838,14 +857,20 @@ PetscErrorCode IGASetFromOptions(IGA iga)
         ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
       }
 
-    /* Rule Type */
-    ierr = PetscOptionsEnum("-iga_rule_type","Rule type","IGASetRuleType",IGARuleTypes,(PetscEnum)btype[0],(PetscEnum*)&rtype[0],&flg);CHKERRQ(ierr);
-    if (flg) for (i=1; i<dim; i++) rtype[i] = rtype[0]; /* XXX */
-    if (flg) for (i=0; i<dim; i++) {
-        ierr = IGASetRuleType(iga,i,rtype[i]);CHKERRQ(ierr);
+    /* Quadrature Rule type & size */
+    for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
+    ierr = PetscOptionsEnum("-iga_rule_type","Quadrature Rule type","IGASetRuleType",IGARuleTypes,(PetscEnum)rtype[0],(PetscEnum*)&rtype[0],&flg1);CHKERRQ(ierr);
+    if (flg1) for (i=1; i<dim; i++) rtype[i] = rtype[0]; /* XXX PetscOptionsEnumArray */
+    ierr = PetscOptionsIntArray("-iga_rule_size","Quadrature Rule size","IGASetRuleSize",quadr,(nq=dim,&nq),&flg2);CHKERRQ(ierr);
+    if (flg2) for (i=1; i<dim; i++) {if (i>=nq) quadr[i] = quadr[0]; }
+    if (flg1 || flg2) for (i=0; i<dim; i++) {
+        PetscInt nqp = (quadr[i] > 0) ? quadr[i] : (iga->rule[i]->nqp > 0) ? iga->rule[i]->nqp : iga->axis[i]->p + 1;
+        if (flg1 && flg2) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
+        if (flg1) {ierr = IGASetRuleType(iga,i,rtype[i]);CHKERRQ(ierr);}
+        if (flg2) {ierr = IGASetRuleSize(iga,i,nqp);CHKERRQ(ierr);}
       }
 
-    /* Quadrature */
+    /* Quadrature (Legacy option)*/
     for (i=0; i<dim; i++) if (quadr[i] < 1) quadr[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGASetQuadrature",quadr,(nq=dim,&nq),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
@@ -871,6 +896,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+    if (setup) {ierr = IGASetUp(iga);CHKERRQ(ierr);}
   }
   PetscFunctionReturn(0);
 }
@@ -1496,7 +1523,7 @@ PetscErrorCode IGASetUp(IGA iga)
 
   for (i=0; i<3; i++)
     if (!iga->collocation) {
-      if (i >= iga->dim) {ierr = IGARuleInit(iga->rule[i],1);CHKERRQ(ierr);}
+      if (i >= iga->dim) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
       ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i]);CHKERRQ(ierr);
     } else {
       ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);

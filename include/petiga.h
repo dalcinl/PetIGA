@@ -82,7 +82,8 @@ PETSC_EXTERN PetscErrorCode IGARuleReference(IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleCopy(IGARule base,IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule);
 PETSC_EXTERN PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type);
-PETSC_EXTERN PetscErrorCode IGARuleInit(IGARule rule,PetscInt q);
+PETSC_EXTERN PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp);
+PETSC_EXTERN PetscErrorCode IGARuleSetUp(IGARule rule);
 PETSC_EXTERN PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[]);
 PETSC_EXTERN PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[]);
 
@@ -417,6 +418,7 @@ PETSC_EXTERN PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order);
 PETSC_EXTERN PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors);
 PETSC_EXTERN PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type);
 PETSC_EXTERN PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type);
+PETSC_EXTERN PetscErrorCode IGASetRuleSize(IGA iga,PetscInt i,PetscInt nqp);
 PETSC_EXTERN PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q);
 PETSC_EXTERN PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation);
 

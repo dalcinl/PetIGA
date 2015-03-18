@@ -69,19 +69,17 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
   PetscValidPointer(base,1);
   PetscValidPointer(rule,2);
   if (base == rule) PetscFunctionReturn(0);
-
-  rule->nqp = base->nqp;
-  ierr = PetscFree(rule->point);CHKERRQ(ierr);
-  if (base->point && base->nqp > 0) {
+  ierr = IGARuleReset(rule);CHKERRQ(ierr);
+  rule->type = base->type;
+  rule->nqp  = base->nqp;
+  if (base->nqp > 0 && base->point) {
     ierr = PetscMalloc1((size_t)base->nqp,&rule->point);CHKERRQ(ierr);
     ierr = PetscMemcpy(rule->point,base->point,(size_t)base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   }
-  ierr = PetscFree(rule->weight);CHKERRQ(ierr);
-  if (base->weight && base->nqp > 0) {
+  if (base->nqp > 0 && base->weight) {
     ierr = PetscMalloc1((size_t)base->nqp,&rule->weight);CHKERRQ(ierr);
     ierr = PetscMemcpy(rule->weight,base->weight,(size_t)base->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   }
-  rule->type = base->type;
   PetscFunctionReturn(0);
 }
 
@@ -106,8 +104,26 @@ PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(rule,1);
-  if (rule->type != type) {ierr = IGARuleReset(rule);CHKERRQ(ierr);}
+  if (rule->type == type) PetscFunctionReturn(0);
   rule->type = type;
+  if (rule->nqp > 0) {ierr = IGARuleSetUp(rule);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGARuleSetSize"
+PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp)
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidPointer(rule,1);
+  if (nqp < 1)
+    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+             "Number of quadrature points must be greater than zero, got %D",nqp);
+  if (rule->nqp == nqp) PetscFunctionReturn(0);
+  ierr = IGARuleReset(rule);CHKERRQ(ierr);
+  rule->nqp = nqp;
+  ierr = IGARuleSetUp(rule);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -115,20 +131,19 @@ static PetscErrorCode IGA_Rule_GaussLegendre (PetscInt q,PetscReal X[],PetscReal
 static PetscErrorCode IGA_Rule_GaussLobatto  (PetscInt q,PetscReal X[],PetscReal W[]);
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGARuleInit"
-PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
+#define __FUNCT__ "IGARuleSetUp"
+PetscErrorCode IGARuleSetUp(IGARule rule)
 {
-  PetscReal      *point,*weight;
   PetscErrorCode (*ComputeRule)(PetscInt,PetscReal[],PetscReal[]) = NULL;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidPointer(rule,1);
-  if (nqp < 1)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points must be greater than zero, got %D",nqp);
-
-  ierr = PetscCalloc1((size_t)nqp,&point);CHKERRQ(ierr);
-  ierr = PetscCalloc1((size_t)nqp,&weight);CHKERRQ(ierr);
+  if (rule->nqp < 1)
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
+            "Must call IGARuleSetSize() first");
+  if (!rule->point)  {ierr = PetscCalloc1((size_t)rule->nqp,&rule->point);CHKERRQ(ierr);}
+  if (!rule->weight) {ierr = PetscCalloc1((size_t)rule->nqp,&rule->weight);CHKERRQ(ierr);}
   switch (rule->type) {
   case IGA_RULE_LEGENDRE:
     ComputeRule = IGA_Rule_GaussLegendre; break;
@@ -137,14 +152,9 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
   case IGA_RULE_USER:
     ComputeRule = NULL; break;
   }
-  if (ComputeRule && ComputeRule(nqp,point,weight) != 0)
+  if (ComputeRule && ComputeRule(rule->nqp,rule->point,rule->weight) != 0)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points %D not implemented",nqp);
-
-  ierr = IGARuleReset(rule);CHKERRQ(ierr);
-  rule->nqp = nqp;
-  rule->point = point;
-  rule->weight = weight;
+             "Number of quadrature points %D not implemented",rule->nqp);
   PetscFunctionReturn(0);
 }
 
@@ -152,25 +162,15 @@ PetscErrorCode IGARuleInit(IGARule rule,PetscInt nqp)
 #define __FUNCT__ "IGARuleSetRule"
 PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[])
 {
-  PetscReal      *xx,*ww;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(rule,1);
   PetscValidPointer(x,3);
   PetscValidPointer(w,4);
-  if (q < 1)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points must be greater than zero, got %D",q);
-  ierr = PetscMalloc1((size_t)q,&xx);CHKERRQ(ierr);
-  ierr = PetscMalloc1((size_t)q,&ww);CHKERRQ(ierr);
-  ierr = PetscMemcpy(xx,x,(size_t)q*sizeof(PetscReal));CHKERRQ(ierr);
-  ierr = PetscMemcpy(ww,w,(size_t)q*sizeof(PetscReal));CHKERRQ(ierr);
-  ierr = PetscFree(rule->point);CHKERRQ(ierr);
-  ierr = PetscFree(rule->weight);CHKERRQ(ierr);
-  rule->nqp = q;
-  rule->point = xx;
-  rule->weight = ww;
   rule->type = IGA_RULE_USER;
+  ierr = IGARuleSetSize(rule,q);CHKERRQ(ierr);
+  ierr = PetscMemcpy(rule->point,x,(size_t)rule->nqp*sizeof(PetscReal));CHKERRQ(ierr);
+  ierr = PetscMemcpy(rule->weight,w,(size_t)rule->nqp*sizeof(PetscReal));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
