@@ -180,3 +180,119 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
 
   PetscFunctionReturn(0);
 }
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGADraw"
+PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
+{
+  PetscInt       i,j,dim;
+  PetscBool      match;
+  PetscDraw      draw;
+  MPI_Comm       comm;
+  PetscMPIInt    size,rank;
+  double         xmin,xmax,xlen,xb;
+  double         ymin,ymax,ylen,yb;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
+  PetscCheckSameComm(iga,1,viewer,2);
+  IGACheckSetUp(iga,1);
+
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  if (dim != 2) PetscFunctionReturn(0);
+
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&match);CHKERRQ(ierr);
+  if (!match) PetscFunctionReturn(0);
+  ierr = PetscViewerDrawGetDraw(viewer,0,&draw);CHKERRQ(ierr);
+  ierr = PetscDrawIsNull(draw,&match);CHKERRQ(ierr);
+  if (match) PetscFunctionReturn(0);
+
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
+  ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
+  ierr = PetscDrawSynchronizedClear(draw);CHKERRQ(ierr);
+
+  for (i=0; i<2; i++) {
+    IGAAxis axis; PetscReal u0,u1;
+    ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
+    ierr = IGAAxisGetLimits(axis,&u0,&u1);CHKERRQ(ierr);
+    if (!i) { xmin = (double)u0; xmax = (double)u1; xlen = xmax-xmin; xb = 0.05*xlen;}
+    else    { ymin = (double)u0; ymax = (double)u1; ylen = ymax-ymin; yb = 0.05*ylen;}
+  }
+  ierr = PetscDrawSetCoordinates(draw,xmin-xb,ymin-yb,xmax+xb,ymax+yb);CHKERRQ(ierr);
+
+  if (size > 1) { /* Processor grid */
+    PetscInt *r = iga->proc_ranks;
+    int colors[] = {PETSC_DRAW_GRAY, PETSC_DRAW_WHITE};
+    int c = colors[(r[0]+r[1]) % 2]; /* chessboard */
+    double x0,y0,x,y;
+    for (i=0; i<2; i++) {
+      if (!iga->collocation) {
+        PetscInt a = iga->elem_start[i];
+        PetscInt b = a + iga->elem_width[i] - 1;
+        IGAAxis  axis; PetscInt *span; PetscReal *U;
+        ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
+        ierr = IGAAxisGetSpans(axis,NULL,&span);CHKERRQ(ierr);
+        ierr = IGAAxisGetKnots(axis,NULL,&U);CHKERRQ(ierr);
+        if (!i) { x0 = (double)U[span[a]]; x = U[span[b]+1];}
+        else    { y0 = (double)U[span[a]]; y = U[span[b]+1];}
+      } else {
+        IGABasis BD = iga->basis[i];
+        PetscInt a = iga->node_lstart[i] ;
+        PetscInt b = a + iga->node_lwidth[i] - 1;
+        PetscInt n = iga->node_sizes[i] - 1;
+        PetscReal *U = BD->point;
+        PetscReal Ua = U[a] + ((a>0) ? (U[a-1]-U[a])/2 : 0);
+        PetscReal Ub = U[b] + ((b<n) ? (U[b+1]-U[b])/2 : 0);
+        if (!i) { x0 = (double)Ua; x = Ub;}
+        else    { y0 = (double)Ua; y = Ub;}
+      }
+    }
+    ierr = PetscDrawRectangle(draw,x0,y0,x,y,c,c,c,c);CHKERRQ(ierr);
+    ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
+  }
+
+  if (!rank) { /* Element grid */
+    int c = PETSC_DRAW_BLACK;
+    IGAAxis axis;
+    PetscInt p,m;
+    PetscReal *U;
+    ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
+    ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
+    ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
+    for (i=p; i<m-p+1; i++) { if (i>p&&U[i]==U[i-1]) continue;
+      double x = (double)U[i];
+      ierr = PetscDrawLine(draw,x,ymin,x,ymax,c);CHKERRQ(ierr);
+    }
+    ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
+    ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
+    ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
+    for (i=p; i<m-p+1; i++) { if (i>p&&U[i]==U[i-1]) continue;
+      double y = (double)U[i];
+      ierr = PetscDrawLine(draw,xmin,y,xmax,y,c);CHKERRQ(ierr);
+    }
+  }
+  ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
+
+  if (!rank) { /* Quadrature/Collocation points */
+    int c = PETSC_DRAW_RED;
+    IGABasis *BD = iga->basis;
+    PetscInt  ni = BD[0]->nel*BD[0]->nqp;
+    PetscInt  nj = BD[1]->nel*BD[1]->nqp;
+    PetscReal *u = BD[0]->point, *wu = BD[0]->weight;
+    PetscReal *v = BD[1]->point, *wv = BD[1]->weight;
+    for (i=0; i<ni; i++) {
+      double x = (double)u[i]; if (wu[i] <= 0) continue;
+      for (j=0; j<nj; j++) {
+        double y = (double)v[j]; if (wv[j] <= 0) continue;
+        ierr = PetscDrawPoint(draw,x,y,c);CHKERRQ(ierr);
+      }
+    }
+  }
+  ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
+
+  ierr = PetscDrawPause(draw);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
