@@ -4,6 +4,7 @@ const char *const IGARuleTypes[] = {
   "LEGENDRE",
   "LOBATTO",
   "USER",
+  "REDUCED",
   /* */
   "IGARuleType","IGA_RULE_",NULL};
 
@@ -151,6 +152,8 @@ PetscErrorCode IGARuleSetUp(IGARule rule)
     ComputeRule = IGA_Rule_GaussLobatto; break;
   case IGA_RULE_USER:
     ComputeRule = NULL; break;
+  case IGA_RULE_REDUCED:
+    ComputeRule = IGA_Rule_GaussLegendre; break;
   }
   if (ComputeRule && ComputeRule(rule->nqp,rule->point,rule->weight) != 0)
     SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,

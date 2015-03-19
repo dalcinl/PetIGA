@@ -132,7 +132,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   ierr = PetscMalloc1((size_t)nel,&detJac);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)(nel*nqp),&weight);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)(nel*nqp),&point);CHKERRQ(ierr);
-  if (1) {
+  if (rule->type != IGA_RULE_REDUCED) {
     const PetscReal *X = rule->point;
     const PetscReal *W = rule->weight;
     for (iel=0; iel<nel; iel++) {
