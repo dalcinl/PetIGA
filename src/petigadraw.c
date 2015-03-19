@@ -212,7 +212,6 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
   ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
-  ierr = PetscDrawSynchronizedClear(draw);CHKERRQ(ierr);
 
   for (i=0; i<2; i++) {
     IGAAxis axis; PetscReal u0,u1;
@@ -222,6 +221,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     else    { ymin = (double)u0; ymax = (double)u1; ylen = ymax-ymin; yb = 0.05*ylen;}
   }
   ierr = PetscDrawSetCoordinates(draw,xmin-xb,ymin-yb,xmax+xb,ymax+yb);CHKERRQ(ierr);
+
+  ierr = PetscDrawSynchronizedClear(draw);CHKERRQ(ierr);
 
   if (size > 1) { /* Processor grid */
     PetscInt *r = iga->proc_ranks;
