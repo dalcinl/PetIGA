@@ -190,8 +190,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   PetscDraw      draw;
   MPI_Comm       comm;
   PetscMPIInt    size,rank;
-  double         xmin,xmax,xlen,xb;
-  double         ymin,ymax,ylen,yb;
+  double         xmin=0,xmax=0,xlen=0,xb=0;
+  double         ymin=0,ymax=0,ylen=0,yb=0;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -214,11 +214,11 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
 
   for (i=0; i<2; i++) {
-    IGAAxis axis; PetscReal u0,u1;
+    IGAAxis axis; PetscReal Ua,Ub;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-    ierr = IGAAxisGetLimits(axis,&u0,&u1);CHKERRQ(ierr);
-    if (!i) { xmin = (double)u0; xmax = (double)u1; xlen = xmax-xmin; xb = 0.05*xlen;}
-    else    { ymin = (double)u0; ymax = (double)u1; ylen = ymax-ymin; yb = 0.05*ylen;}
+    ierr = IGAAxisGetLimits(axis,&Ua,&Ub);CHKERRQ(ierr);
+    if (!i) { xmin = (double)Ua; xmax = (double)Ub; xlen = xmax-xmin; xb = 0.05*xlen;}
+    else    { ymin = (double)Ua; ymax = (double)Ub; ylen = ymax-ymin; yb = 0.05*ylen;}
   }
   ierr = PetscDrawSetCoordinates(draw,xmin-xb,ymin-yb,xmax+xb,ymax+yb);CHKERRQ(ierr);
 
@@ -228,8 +228,9 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     PetscInt *r = iga->proc_ranks;
     int colors[] = {PETSC_DRAW_GRAY, PETSC_DRAW_WHITE};
     int c = colors[(r[0]+r[1]) % 2]; /* chessboard */
-    double x0,y0,x,y;
+    double x0=0,y0=0,x=0,y=0;
     for (i=0; i<2; i++) {
+      PetscReal Ua,Ub;
       if (!iga->collocation) {
         PetscInt a = iga->elem_start[i];
         PetscInt b = a + iga->elem_width[i] - 1;
@@ -237,19 +238,19 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
         ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
         ierr = IGAAxisGetSpans(axis,NULL,&span);CHKERRQ(ierr);
         ierr = IGAAxisGetKnots(axis,NULL,&U);CHKERRQ(ierr);
-        if (!i) { x0 = (double)U[span[a]]; x = U[span[b]+1];}
-        else    { y0 = (double)U[span[a]]; y = U[span[b]+1];}
+        Ua = U[span[a]];
+        Ub = U[span[b]+1];
       } else {
         IGABasis BD = iga->basis[i];
         PetscInt a = iga->node_lstart[i] ;
         PetscInt b = a + iga->node_lwidth[i] - 1;
         PetscInt n = iga->node_sizes[i] - 1;
         PetscReal *U = BD->point;
-        PetscReal Ua = U[a] + ((a>0) ? (U[a-1]-U[a])/2 : 0);
-        PetscReal Ub = U[b] + ((b<n) ? (U[b+1]-U[b])/2 : 0);
-        if (!i) { x0 = (double)Ua; x = Ub;}
-        else    { y0 = (double)Ua; y = Ub;}
+        Ua = U[a] + ((a>0) ? (U[a-1]-U[a])/2 : 0);
+        Ub = U[b] + ((b<n) ? (U[b+1]-U[b])/2 : 0);
       }
+      if (!i) { x0 = (double)Ua; x = (double)Ub;}
+      else    { y0 = (double)Ua; y = (double)Ub;}
     }
     ierr = PetscDrawRectangle(draw,x0,y0,x,y,c,c,c,c);CHKERRQ(ierr);
     ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
