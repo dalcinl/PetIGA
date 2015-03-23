@@ -426,13 +426,23 @@ typedef struct {
   Vec       Y;
 } TSAdapt_Basic;
 
-#define TSVecErrorNormWRMS(ts,X,Y,norm) 0; do {            \
+#if PETSC_VERSION_LT(3,6,0)
+#define TSVecErrorWeightedNorm(ts,X,Y,norm) 0; do {        \
     Vec            _save = ts->vec_sol;                    \
     PetscErrorCode _ierr_1;                                \
     ts->vec_sol = X;                                       \
     _ierr_1 = TSErrorNormWRMS(ts,Y,norm);CHKERRQ(_ierr_1); \
     ts->vec_sol = _save;                                   \
   } while (0)
+#else
+#define TSVecErrorWeightedNorm(ts,X,Y,norm) 0; do {            \
+    Vec            _save = ts->vec_sol;                        \
+    PetscErrorCode _ierr_1;                                    \
+    ts->vec_sol = X;                                           \
+    _ierr_1 = TSErrorWeightedNorm(ts,Y,norm);CHKERRQ(_ierr_1); \
+    ts->vec_sol = _save;                                       \
+  } while (0)
+#endif
 
 #undef __FUNCT__
 #define __FUNCT__ "TSAdaptChoose_Alpha"
@@ -450,8 +460,8 @@ static PetscErrorCode TSAdaptChoose_Alpha(TSAdapt adapt,TS ts,PetscReal h,PetscI
     if (!basic->Y) {ierr = VecDuplicate(ts->vec_sol,&basic->Y);CHKERRQ(ierr);}
     if (!th->work) {ierr = VecDuplicate(ts->vec_sol,&th->work);CHKERRQ(ierr);}
     ierr = TSEvaluateStep2(ts,order-1,basic->Y,th->work,NULL);CHKERRQ(ierr);
-    ierr = TSVecErrorNormWRMS(ts,th->X1,basic->Y,&enormX);CHKERRQ(ierr);
-    ierr = TSVecErrorNormWRMS(ts,th->V1,th->work,&enormV);CHKERRQ(ierr);
+    ierr = TSVecErrorWeightedNorm(ts,th->X1,basic->Y,&enormX);CHKERRQ(ierr);
+    ierr = TSVecErrorWeightedNorm(ts,th->V1,th->work,&enormV);CHKERRQ(ierr);
     enorm = PetscSqrtReal(PetscSqr(enormX)/2 + PetscSqr(enormV)/2);
   }
 
