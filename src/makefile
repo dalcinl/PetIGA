@@ -51,10 +51,9 @@ petigasnes.c \
 petigats.c \
 petigats2.c \
 petigaprobe.c \
+petigaopts.c \
 tsalpha1.c \
 tsalpha2.c \
-petscvwopt.c \
-snesfdcolor.c \
 
 SOURCEF = \
 petigaftn.F90 \

@@ -685,19 +685,6 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "IGAOptionsReject"
-PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
-{
-  PetscErrorCode ierr;
-  PetscBool      flag = PETSC_FALSE;
-  PetscFunctionBegin;
-  ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
-  if (flag) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Disabled option: %s",name);
-  PetscFunctionReturn(0);
-}
-
 #if PETSC_VERSION_LT(3,5,0)
 #define PetscOptionsFList PetscOptionsList
 #endif
@@ -901,27 +888,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
     if (setup) {ierr = IGASetUp(iga);CHKERRQ(ierr);}
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAOptionsAlias"
-PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[])
-{
-  char           value[4096]= {0};
-  PetscBool      flag = PETSC_FALSE;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidCharPointer(name,1);
-  PetscValidCharPointer(alias,3);
-  ierr = PetscOptionsHasName(NULL,name,&flag);CHKERRQ(ierr);
-  if (flag) {
-    ierr = PetscOptionsGetString(NULL,name,value,sizeof(value),&flag);CHKERRQ(ierr);
-    ierr = PetscOptionsSetValue(alias,value);CHKERRQ(ierr);
-  } else if (defval) {
-    ierr = PetscOptionsHasName(NULL,alias,&flag);CHKERRQ(ierr);
-    if (!flag) {ierr = PetscOptionsSetValue(alias,defval);CHKERRQ(ierr);}
   }
   PetscFunctionReturn(0);
 }

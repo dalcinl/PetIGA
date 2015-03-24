@@ -176,6 +176,13 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
+  PetscInt dir;
+  for (dir=0; dir<dim; dir++) {
+    ierr = IGASetRuleType(iga,dir,IGA_RULE_LEGENDRE);CHKERRQ(ierr);
+    ierr = IGASetRuleSize(iga,dir,10);CHKERRQ(ierr);
+  }
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+
   PetscScalar scalar;
   ierr = IGAComputeScalar(iga,x,1,&scalar,Error,&app);CHKERRQ(ierr);
   PetscReal L2error = PetscSqrtReal(PetscRealPart(scalar));

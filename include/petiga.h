@@ -821,5 +821,17 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[]);
+PETSC_EXTERN PetscErrorCode IGAOptionsDefault(const char prefix[],const char name[],const char value[]);
+PETSC_EXTERN PetscErrorCode IGAOptionsReject(const char prefix[],const char name[]);
+
+PETSC_EXTERN PetscEnum      IGAGetOptEnum(const char prefix[],const char name[],const char const *elist[],PetscEnum defval);
+PETSC_EXTERN const char*    IGAGetOptString(const char prefix[],const char name[],const char defval[]);
+PETSC_EXTERN PetscBool      IGAGetOptBool(const char prefix[],const char name[],PetscBool defval);
+PETSC_EXTERN PetscInt       IGAGetOptInt(const char prefix[],const char name[],PetscInt defval);
+PETSC_EXTERN PetscReal      IGAGetOptReal(const char prefix[],const char name[],PetscReal defval);
+PETSC_EXTERN PetscScalar    IGAGetOptScalar(const char prefix[],const char name[],PetscScalar defval);
+
+/* ---------------------------------------------------------------- */
 
 #endif/*PETIGA_H*/

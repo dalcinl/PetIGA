@@ -72,8 +72,13 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
-  PetscErrorCode  ierr;
+  PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
+
+  ierr = IGAOptionsAlias("-N",  "16", "-iga_elements");
+  ierr = IGAOptionsAlias("-p", NULL,  "-iga_degree");
+  ierr = IGAOptionsAlias("-k", NULL,  "-iga_continuity");
+  ierr = IGAOptionsAlias("-q", NULL,  "-iga_quadrature");
 
   PetscLogDouble tic,toc;
   ierr = PetscTime(&tic);
@@ -82,12 +87,11 @@ int main(int argc, char *argv[]) {
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,2);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
-
+  ierr = IGASetOrder(iga,1);CHKERRQ(ierr);
   PetscInt dir,side;
   for (dir=0; dir<2; dir++)
     for (side=0; side<2; side++)
       {ierr = IGASetBoundaryValue(iga,dir,side,0,0.0);CHKERRQ(ierr);}
-
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
@@ -129,11 +133,9 @@ int main(int argc, char *argv[]) {
   PetscInt its;
   ierr = KSPGetIterationNumber(ksp,&its);CHKERRQ(ierr);
 
-  ierr = IGAReset(iga);CHKERRQ(ierr);
   for (dir=0; dir<2; dir++) {
-    IGARule rule;
-    ierr = IGAGetRule(iga,dir,&rule);CHKERRQ(ierr);
-    ierr = IGARuleInit(rule,9);CHKERRQ(ierr);
+    ierr = IGASetRuleType(iga,dir,IGA_RULE_LEGENDRE);CHKERRQ(ierr);
+    ierr = IGASetRuleSize(iga,dir,10);CHKERRQ(ierr);
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
