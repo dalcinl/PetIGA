@@ -1484,7 +1484,7 @@ static PetscErrorCode IGASetUp_View(IGA iga)
   }
   if (draw && !PetscPreLoadingOn) {
     PetscInt h = 600, w = 600;
-    ierr = PetscViewerDrawOpen(comm,NULL,NULL,PETSC_DECIDE,PETSC_DECIDE,w,h,&viewer);
+    ierr = PetscViewerDrawOpen(comm,NULL,NULL,PETSC_DECIDE,PETSC_DECIDE,w,h,&viewer);CHKERRQ(ierr);
     ierr = IGADraw(iga,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   }
