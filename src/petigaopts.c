@@ -19,7 +19,7 @@ PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char
     ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
     if (flag) PetscFunctionReturn(0);
     ierr = PetscStrncpy(value,defval,sizeof(value));CHKERRQ(ierr);
-  }
+  } else PetscFunctionReturn(0);
   if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPush(prefix);CHKERRQ(ierr);}
   ierr = PetscOptionsSetValue(name,value);CHKERRQ(ierr);
   if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPop();CHKERRQ(ierr);}
