@@ -56,7 +56,7 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAGetOptEnum"
-PetscEnum IGAGetOptEnum(const char prefix[],const char name[],const char const *elist[],PetscEnum defval)
+PetscEnum IGAGetOptEnum(const char prefix[],const char name[],const char *const elist[],PetscEnum defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetEnum(prefix,name,elist,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
