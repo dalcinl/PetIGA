@@ -4,89 +4,130 @@
 #define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
 #endif
 
-double CONST = 0.5;
+typedef struct {
+  PetscReal c; /* reaction coefficient */
+  PetscReal k; /* diffusion coefficient */
+} AppCtx;
+
+PETSC_STATIC_INLINE
+void Solution(PetscInt dim,const PetscReal x[],PetscReal *value,PetscReal grad[])
+{
+  PetscInt  i,j;
+  PetscReal omega = PETSC_PI;
+  if (value) {
+    value[0] = 1;
+    for (i=0; i<dim; i++) value[0] *= PetscSinReal(omega*x[i]);
+  }
+  if (grad) {
+    for (i=0; i<dim; i++) {
+      grad[i] = 1;
+      for (j=0; j<dim; j++) {
+        if (i == j)
+          grad[i] *= omega*PetscCosReal(omega*x[j]);
+        else
+          grad[i] *= PetscSinReal(omega*x[j]);
+      }
+    }
+  }
+}
+
+PETSC_STATIC_INLINE
+PetscReal Forcing(PetscInt dim,const PetscReal x[],const AppCtx *app)
+{
+  PetscInt i;
+  const PetscReal c = app->c;
+  const PetscReal k = app->k;
+  const PetscReal omega = PETSC_PI;
+  PetscReal f = c + k*dim*omega*omega;
+  for (i=0; i<dim; i++) f *= PetscSinReal(omega*x[i]);
+  return f;
+}
+
+PETSC_STATIC_INLINE
+PetscReal DOT(PetscInt dim,const PetscReal a[dim],const PetscReal b[dim])
+{
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i]*b[i];
+  return s;
+}
 
 #undef  __FUNCT__
-#define __FUNCT__ "Galerkin1"
-PetscErrorCode Galerkin1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+#define __FUNCT__ "Galerkin"
+PetscErrorCode Galerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
-  PetscInt nen,dim;
-  IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0,0);
+  const AppCtx *app = (AppCtx*)ctx;
+  const PetscInt dim = p->dim;
+  const PetscInt nen = p->nen;
 
-  const PetscReal *N0;
-  IGAPointGetBasisFuns(p,0,&N0);
-  const PetscReal *N1;
-  IGAPointGetBasisFuns(p,1,&N1);
+  const PetscReal c = app->c;
+  const PetscReal k = app->k;
+  const PetscReal f = Forcing(dim,p->point,app);
 
-  PetscInt a,b,i;
-  PetscScalar omega  = 2.0*PETSC_PI*CONST;
-  PetscScalar omega2 = omega*omega;
+  const PetscReal *N0        = (typeof(N0)) p->basis[0];
+  const PetscReal (*N1)[dim] = (typeof(N1)) p->basis[1];
+
+  PetscInt a,b;
   for (a=0; a<nen; a++) {
-    for (b=0; b<nen; b++) {
-      PetscScalar Kab = 0.0;
-      for (i=0; i<dim; i++) Kab += N1[a*dim+i]*N1[b*dim+i];
-      Kab += N0[a]*N0[b];
-      K[a*nen+b] = Kab;
-    }
-    F[a] = (1.0+dim*omega2);
-    for (i=0; i<dim; i++) F[a] *= sin(omega*p->point[i]);
-    F[a] *= N0[a];
+    for (b=0; b<nen; b++)
+      K[a*nen+b] = c*N0[a]*N0[b] + k*DOT(dim,N1[a],N1[b]);
+    F[a] = N0[a]*f;
   }
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Collocation1"
-PetscErrorCode Collocation1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+PETSC_STATIC_INLINE
+PetscReal TRACE(PetscInt dim,const PetscReal a[dim][dim])
 {
-  PetscInt nen,dim,i;
-  IGAPointGetSizes(p,0,&nen,0);
-  IGAPointGetDims(p,&dim,0,0);
+  PetscInt i; PetscReal s = 0.0;
+  for (i=0; i<dim; i++) s += a[i][i];
+  return s;
+}
 
-  PetscInt Nb[3] = {0,0,0};
-  Nb[0] = p->parent->parent->axis[0]->nnp;
-  Nb[1] = p->parent->parent->axis[1]->nnp;
-  Nb[2] = p->parent->parent->axis[2]->nnp;
+#undef  __FUNCT__
+#define __FUNCT__ "Collocation"
+PetscErrorCode Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
+{
 
-  const PetscReal *N0,(*N2)[dim][dim];
-  IGAPointGetBasisFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetBasisFuns(p,2,(const PetscReal**)&N2);
+  const AppCtx  *app = (AppCtx*)ctx;
+  const PetscInt dim = p->dim;
+  const PetscInt nen = p->nen;
+
+  const PetscReal c = app->c;
+  const PetscReal k = app->k;
+  const PetscReal f = Forcing(dim,p->point,app);
+
+  const PetscReal *N0             = (typeof(N0)) p->basis[0];
+  const PetscReal (*N2)[dim][dim] = (typeof(N2)) p->basis[2];
 
   PetscInt a;
-  PetscBool Dirichlet=PETSC_FALSE;
-  for (i=0; i<dim; i++) if (p->parent->ID[i] == 0 || p->parent->ID[i] == Nb[i]-1) Dirichlet=PETSC_TRUE;
+  for (a=0; a<nen; a++)
+    K[a] = c*N0[a] - k*TRACE(dim,N2[a]);
+  F[0] = f;
 
-  PetscScalar omega  = 2.0*PETSC_PI*CONST;
-  PetscScalar omega2 = omega*omega;
-  if (Dirichlet) {
-    for (a=0; a<nen; a++) K[a] = N0[a];
-    F[0] = 0.0;
-  } else {
-    for (a=0; a<nen; a++) {
-      K[a] = N0[a];
-      for (i=0; i<dim; i++) K[a] += -N2[a][i][i];
-    }
-    F[0] = (1.+dim*omega2);
-    for (i=0; i<dim; i++) F[0] *= sin(omega*p->point[i]);
-  }
   return 0;
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "ErrorLaplace"
-PetscErrorCode ErrorLaplace(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Error"
+PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
-  PetscScalar ua,ue=1;
+  PetscInt i;
+  const PetscInt dim = p->dim;
+
+  PetscReal ue,grad_ue[dim];
+  Solution(dim,p->point,&ue,&grad_ue[0]);
+
+  PetscScalar ua,grad_ua[dim];
   IGAPointFormValue(p,U,&ua);
+  IGAPointFormGrad (p,U,&grad_ua[0]);
 
-  PetscInt i,dim;
-  IGAPointGetDims(p,&dim,0,0);
-  for (i=0; i<dim; i++) ue *= sin(2*CONST*PETSC_PI*p->point[i]);
+  PetscReal e,grad_e[dim];
+  e = PetscRealPart(ua) - ue;
+  for (i=0; i<dim; i++) grad_e[i] = PetscRealPart(grad_ua[i]) - grad_ue[i];
 
-  PetscReal error = PetscAbsScalar(ua-ue);
-  S[0] = error*error;
-  S[1] = ue;
+  S[0] = e*e;
+  S[1] = e*e + DOT(dim,grad_e,grad_e);
+
   return 0;
 }
 
@@ -97,6 +138,23 @@ int main(int argc, char *argv[])
   PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
+  ierr = IGAOptionsAlias("-d",  "2", "-iga_dim");
+  ierr = IGAOptionsAlias("-n",  "8", "-iga_elements");
+  ierr = IGAOptionsAlias("-p", NULL, "-iga_degree");
+  ierr = IGAOptionsAlias("-k", NULL, "-iga_continuity");
+  ierr = IGAOptionsAlias("-q", NULL, "-iga_rule_size");
+  ierr = IGAOptionsAlias("-r", NULL, "-iga_rule_type");
+
+  /* Application options */
+
+  AppCtx app;
+  app.c = 1;
+  app.k = 1;
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ConvTest Options","IGA");CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-reaction", "Reaction  coefficient",__FILE__,app.c,&app.c,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-diffusion","Diffusion coefficient",__FILE__,app.k,&app.k,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
   /* Initialize the discretization */
 
   IGA iga;
@@ -105,11 +163,17 @@ int main(int argc, char *argv[])
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
+  if (!iga->collocation) {
+    ierr = IGASetOrder(iga,1);CHKERRQ(ierr);
+  } else {
+    ierr = IGASetOrder(iga,2);CHKERRQ(ierr);
+  }
+
   /* Set boundary conditions */
 
-  PetscInt  dim,i;
+  PetscInt dim,i;
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  if (!iga->collocation) {
+  if (app.k > 0) {
     for (i=0; i<dim; i++) {
       ierr = IGASetBoundaryValue(iga,i,0,0,0.0);CHKERRQ(ierr);
       ierr = IGASetBoundaryValue(iga,i,1,0,0.0);CHKERRQ(ierr);
@@ -118,35 +182,45 @@ int main(int argc, char *argv[])
 
   /* Assemble */
 
-  Mat A;
-  Vec x,b;
+  Mat A; Vec x,b;
   ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&x);CHKERRQ(ierr);
   ierr = IGACreateVec(iga,&b);CHKERRQ(ierr);
-  if (iga->collocation) {
-    ierr = IGASetFormSystem(iga,Collocation1,NULL);CHKERRQ(ierr);
+  if (!iga->collocation) {
+    ierr = IGASetFormSystem(iga,Galerkin,&app);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
+    ierr = MatSetOption(A,MAT_SPD,PETSC_TRUE);CHKERRQ(ierr);
   } else {
-    ierr = IGASetFormSystem(iga,Galerkin1,NULL);CHKERRQ(ierr);
+    ierr = IGASetFormSystem(iga,Collocation,&app);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
-    ierr = MatSetOption(A,MAT_SYMMETRIC,PETSC_TRUE);CHKERRQ(ierr);
   }
 
   /* Solve */
 
-  KSP ksp;
+  KSP ksp; PC pc;
   ierr = IGACreateKSP(iga,&ksp);CHKERRQ(ierr);
+  ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
+  ierr = KSPSetType(ksp,KSPPREONLY);CHKERRQ(ierr);
+  ierr = PCSetType(pc,PCLU);CHKERRQ(ierr);
+  #ifdef PETSC_HAVE_MUMPS
+  ierr = PCFactorSetMatSolverPackage(pc,MATSOLVERMUMPS);CHKERRQ(ierr);
+  #endif
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  /* Various post-processing options */
+  /* Compute L2 and H1 errors */
 
-  iga->collocation = PETSC_FALSE;
-  PetscScalar error[2] = {0,0};
-  ierr = IGAComputeScalar(iga,x,2,&error[0],ErrorLaplace,NULL);CHKERRQ(ierr);
-  error[0] = PetscSqrtReal(PetscRealPart(error[0]));
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %.16e\n",error[0]);CHKERRQ(ierr);
+  if (iga->collocation) {ierr = IGAReset(iga);CHKERRQ(ierr);}
+  if (iga->collocation) {ierr = IGASetUseCollocation(iga,PETSC_FALSE);CHKERRQ(ierr);}
+  for (i=0; i<dim; i++) {ierr = IGASetRuleType(iga,i,IGA_RULE_LEGENDRE);CHKERRQ(ierr);}
+  for (i=0; i<dim; i++) {ierr = IGASetRuleSize(iga,i,10);CHKERRQ(ierr);}
+  ierr = IGASetUp(iga);CHKERRQ(ierr);
+  PetscScalar scalar[2];
+  ierr = IGAComputeScalar(iga,x,2,&scalar[0],Error,NULL);CHKERRQ(ierr);
+  PetscReal errorL2 = PetscSqrtReal(PetscRealPart(scalar[0]));
+  PetscReal errorH1 = PetscSqrtReal(PetscRealPart(scalar[1]));
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"Error:  L2 = %.16e  H1 = %.16e\n",(double)errorL2,(double)errorH1);CHKERRQ(ierr);
 
   /* Cleanup */
 
