@@ -1,5 +1,11 @@
 #include "petiga.h"
 
+EXTERN_C_BEGIN
+extern PetscInt IGA_NextKnot (PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
+extern PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[]);
+extern PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[]);
+EXTERN_C_END
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisCreate"
 PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
@@ -312,11 +318,6 @@ PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
   PetscFunctionReturn(0);
 }
 
-EXTERN_C_BEGIN
-extern PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[]);
-extern PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[]);
-EXTERN_C_END
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisGetSpans"
 PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
@@ -531,6 +532,20 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
     }
   }
   PetscFunctionReturn(0);
+}
+
+PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction)
+{
+  PetscInt j;
+  if (direction >= 0) {
+    if (PetscUnlikely(k<0)) return 0;
+    for (j=k+1; j<=m; j++) if (U[j] > U[k]) return j;
+    return m+1;
+  } else {
+    if (PetscUnlikely(k>m)) return m;
+    for (j=k-1; j>=0; j--) if (U[j] < U[k]) return j;
+    return -1;
+  }
 }
 
 PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[])
