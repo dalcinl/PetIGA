@@ -539,12 +539,12 @@ PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt directi
   PetscInt j;
   if (direction >= 0) {
     if (PetscUnlikely(k<0)) return 0;
-    for (j=k+1; j<=m; j++) if (U[j] > U[k]) return j;
-    return m+1;
+    for (j=k+1; j<m; j++) if (U[j] > U[k]) return j;
+    return m;
   } else {
     if (PetscUnlikely(k>m)) return m;
-    for (j=k-1; j>=0; j--) if (U[j] < U[k]) return j;
-    return -1;
+    for (j=k-1; j>0; j--) if (U[j] < U[k]) return j;
+    return 0;
   }
 }
 
