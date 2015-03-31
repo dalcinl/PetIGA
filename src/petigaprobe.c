@@ -226,6 +226,18 @@ PetscErrorCode IGAProbeSetVec(IGAProbe prb,Vec A)
   PetscFunctionReturn(0);
 }
 
+#if defined(PETSC_USE_DEBUG)
+#undef  PetscValidLogicalCollectiveReal
+#define PetscValidLogicalCollectiveReal(a,b,c)                          \
+  do {                                                                  \
+    PetscErrorCode _7_ierr;                                             \
+    PetscReal b1[2],b2[2];                                              \
+    b1[0] = -b; b1[1] = b;                                              \
+    _7_ierr = MPI_Allreduce(b1,b2,2,MPIU_REAL,MPIU_MAX,PetscObjectComm((PetscObject)a));CHKERRQ(_7_ierr); \
+    if (PetscAbsReal(-b2[0]-b2[1])>0) SETERRQ1(PetscObjectComm((PetscObject)a),PETSC_ERR_ARG_WRONG,"Real value must be same on all processes, argument # %d",c); \
+  } while (0)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAProbeSetPoint"
 PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])

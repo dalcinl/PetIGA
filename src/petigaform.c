@@ -342,6 +342,33 @@ PetscErrorCode IGASetFixTable(IGA iga,Vec U)
   PetscFunctionReturn(0);
 }
 
+#if defined(PETSC_USE_DEBUG)
+#if defined(PETSC_USE_COMPLEX)
+#undef  PetscValidLogicalCollectiveScalar
+#define PetscValidLogicalCollectiveScalar(a,b,c)                        \
+  do {                                                                  \
+    PetscErrorCode _7_ierr;                                             \
+    PetscReal b1[2],b2[2];                                              \
+    b1[0] = -PetscRealPart(b); b1[1] = PetscRealPart(b);                \
+    _7_ierr = MPI_Allreduce(b1,b2,2,MPIU_REAL,MPIU_MAX,PetscObjectComm((PetscObject)a));CHKERRQ(_7_ierr); \
+    if (PetscAbsReal(-b2[0]-b2[1]) > 0) SETERRQ1(PetscObjectComm((PetscObject)a),PETSC_ERR_ARG_WRONG,"Scalar value must be same on all processes, argument # %d",c); \
+    b1[0] = -PetscImaginaryPart(b); b1[1] = PetscImaginaryPart(b);      \
+    _7_ierr = MPI_Allreduce(b1,b2,2,MPIU_REAL,MPIU_MAX,PetscObjectComm((PetscObject)a));CHKERRQ(_7_ierr); \
+    if (PetscAbsReal(-b2[0]-b2[1]) > 0) SETERRQ1(PetscObjectComm((PetscObject)a),PETSC_ERR_ARG_WRONG,"Scalar value must be same on all processes, argument # %d",c); \
+  } while (0)
+#else
+#undef  PetscValidLogicalCollectiveScalar
+#define PetscValidLogicalCollectiveScalar(a,b,c)                        \
+  do {                                                                  \
+    PetscErrorCode _7_ierr;                                             \
+    PetscReal b1[2],b2[2];                                              \
+    b1[0] = -PetscRealPart(b); b1[1] = PetscRealPart(b);                \
+    _7_ierr = MPI_Allreduce(b1,b2,2,MPIU_REAL,MPIU_MAX,PetscObjectComm((PetscObject)a));CHKERRQ(_7_ierr); \
+    if (PetscAbsReal(-b2[0]-b2[1]) > 0) SETERRQ1(PetscObjectComm((PetscObject)a),PETSC_ERR_ARG_WRONG,"Scalar value must be same on all processes, argument # %d",c); \
+  } while (0)
+#endif
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetBoundaryValue"
 PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)

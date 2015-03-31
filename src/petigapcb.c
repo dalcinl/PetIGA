@@ -242,7 +242,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
               ierr = PetscLogFlops((PetscLogDouble)(4*n*n*n+3*n*n+5*n)/6);CHKERRQ(ierr); /* multiplications */
               ierr = PetscLogFlops((PetscLogDouble)(4*n*n*n-9*n*n+5*n)/6);CHKERRQ(ierr); /* additions */
             } else if (PetscLikely(n == 1)) {
-              if (values[0] != (PetscScalar)0.0) values[0] = (PetscScalar)1.0/values[0];
+              if (PetscAbsScalar(values[0]) >  0) values[0] = (PetscScalar)1.0/values[0];
               ierr = PetscLogFlops(1);CHKERRQ(ierr);
             }
             /* add values back into preconditioner matrix */

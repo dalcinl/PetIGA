@@ -276,7 +276,7 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
       for (i=0; i<nsd; i++)
         X[i+a*nsd] = PetscRealPart(Xw[pos++]);
       W[a] = PetscRealPart(Xw[pos++]);
-      if (W[a] != 0)
+      if (PetscAbsReal(W[a]) > 0)
         for (i=0; i<nsd; i++)
           X[i+a*nsd] /= W[a];
     }
@@ -339,7 +339,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
     n /= (nsd+1);
     ierr = VecGetArray(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
-      PetscReal w = (W[a] != 0) ? W[a] : 1;
+      PetscReal w = (PetscAbsReal(W[a]) > 0) ? W[a] : 1;
       for (i=0; i<nsd; i++)
         Xw[pos++] = X[i+a*nsd] * w;
       Xw[pos++] = W[a];
