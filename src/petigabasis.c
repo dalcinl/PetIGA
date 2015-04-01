@@ -80,6 +80,10 @@ PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type)
 }
 
 EXTERN_C_BEGIN
+extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
+EXTERN_C_END
+
+EXTERN_C_BEGIN
 extern void IGA_Basis_BSpline (PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal B[]);
 extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 extern void IGA_Basis_Spectral(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
@@ -115,14 +119,15 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   U = axis->U;
 
   if (basis->type != IGA_BASIS_BSPLINE) {
-    PetscInt s,j,k=1;
-    while (k < m) {
-      j = k; s = 1; while (++k < m && U[j] == U[k]) s++;
-      if (s < p) SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                          "Basis type %s requires C^0 continuity, "
-                          "Knot U[%D]=%g has multiplicity %D "
-                          "less than polynomial degree %D",
-                          IGABasisTypes[basis->type],j,(double)U[j],s,p);
+    PetscInt k,j,s;
+    for (k=1,j=m; k<m; k=j) { /* check multiplicity */
+      j = IGA_NextKnot(m,U,k,1);
+      if ((s = j-k) < p)
+        SETERRQ6(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                 "Basis type %s requires C^0 continuity, "
+                 "Knot U[%D:%D]=%g has multiplicity %D "
+                 "less than polynomial degree %D",
+                 IGABasisTypes[basis->type],k,j-1,(double)U[k],s,p);
     }
   }
 

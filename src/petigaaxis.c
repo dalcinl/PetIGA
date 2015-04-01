@@ -1,11 +1,5 @@
 #include "petiga.h"
 
-EXTERN_C_BEGIN
-extern PetscInt IGA_NextKnot (PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
-extern PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[]);
-extern PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[]);
-EXTERN_C_END
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisCreate"
 PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
@@ -222,11 +216,14 @@ PetscErrorCode IGAAxisGetDegree(IGAAxis axis,PetscInt *p)
   PetscFunctionReturn(0);
 }
 
+EXTERN_C_BEGIN
+extern PetscInt IGA_NextKnot (PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
+EXTERN_C_END
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisSetKnots"
 PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 {
-  PetscInt       p,n,k;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
@@ -240,22 +237,22 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
              "Number of knots must be at least %D, got %D",
              2*(axis->p+1),m+1);
 
-  p = axis->p;
-  n = m -p - 1;
-
-  for (k=1; k<=m;) {
-    PetscInt i = k, s = 1;
-    /* check increasing sequence */
-    if (U[k-1] > U[k])
-      SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",
-               k-1,(double)U[k-1],k,(double)U[k]);
-    /* check multiplicity */
-    while (++k < m && U[i] == U[k]) s++;
-    if (s > p)
-      SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Knot U[%D]=%g has multiplicity %D greater than polynomial degree %D",
-               i,(double)U[i],s,p);
+  {
+    PetscInt p = axis->p;
+    PetscInt k,j,s;
+    for (k=1; k<=m; k++) { /* check increasing sequence */
+      if (U[k-1] > U[k])
+        SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                 "Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",
+                 k-1,(double)U[k-1],k,(double)U[k]);
+    }
+    for (k=1,j=m; k<m; k=j) { /* check multiplicity */
+      j = IGA_NextKnot(m,U,k,1);
+      if ((s = j-k) > p)
+        SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                 "Knot U[%D:%D]=%g has multiplicity %D greater than degree %D",
+                 k,j-1,(double)U[k],s,p);
+    }
   }
 
   if (m != axis->m) {
@@ -268,13 +265,17 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
   axis->nel = 0;
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = IGAAxisGetSpans(axis,&axis->nel,&axis->span);CHKERRQ(ierr);
-
-  if (axis->periodic) {
-    PetscInt s = 1;
-    while (s < p && U[m-p] == U[m-p+s]) s++;
-    axis->nnp = n-p+s;
-  } else {
-    axis->nnp = n+1;
+  {
+    PetscInt p = axis->p;
+    PetscInt n = axis->m - p - 1;
+    if (axis->periodic) {
+      PetscInt k = n+1;
+      PetscInt j = IGA_NextKnot(axis->m,axis->U,k,1);
+      PetscInt s = j-k, C = p-s;
+      axis->nnp = n-C;
+    } else {
+      axis->nnp = n+1;
+    }
   }
   PetscFunctionReturn(0);
 }
@@ -328,12 +329,18 @@ PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
   if (nel)  PetscValidIntPointer(nel,2);
   if (span) PetscValidPointer(span,3);
   if (!axis->span) {
-    PetscInt p = axis->p;
-    PetscInt m = axis->m;
-    PetscInt n = m - p - 1;
-    axis->nel = IGA_SpanCount(n,p,axis->U);
-    ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
-    (void)IGA_SpanIndex(n,p,axis->U,axis->span);
+    PetscInt  p = axis->p;
+    PetscInt  m = axis->m;
+    PetscInt  n = m - p - 1;
+    PetscReal *U = axis->U;
+    PetscInt  k,count,*index;
+    k = p; count = 0;
+    while ((k = IGA_NextKnot(m,U,k,1)) <= n+1) count++;
+    ierr = PetscMalloc1((size_t)count,&index);CHKERRQ(ierr);
+    k = p; count = 0;
+    while ((k = IGA_NextKnot(m,U,k,1)) <= n+1) index[count++] = k-1;
+    axis->nel  = count;
+    axis->span = index;
   }
   if (nel)  *nel  = axis->nel;
   if (span) *span = axis->span;
@@ -376,7 +383,7 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
       SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                "Break sequence must be strictly increasing, "
                "got u[%D]=%g %s u[%D]=%g",
-               i-1,(double)u[i-1],(u[i]==u[i-1])?"==":">",i,(double)u[i]);
+               i-1,(double)u[i-1],(u[i-1]>u[i])?">":"==",i,(double)u[i]);
   if (C < 0 || C >= axis->p)
     SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
              "Continuity must be in range [0,%D], got %D",axis->p-1,C);
@@ -414,7 +421,6 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
   for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
-
   axis->nnp = axis->periodic ? n-C : n+1;
   PetscFunctionReturn(0);
 }
@@ -497,7 +503,6 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   ierr = PetscFree(axis->span);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)axis->nel,&axis->span);CHKERRQ(ierr);
   for (i=0; i<axis->nel; i++) axis->span[i] = p + i*s;
-
   axis->nnp = axis->periodic ? n-C : n+1;
   PetscFunctionReturn(0);
 }
@@ -517,16 +522,14 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
             "Must call IGAAxisSetKnots() first");
 
   ierr = IGAAxisGetSpans(axis,&axis->nel,&axis->span);CHKERRQ(ierr);
-
   {
     PetscInt p = axis->p;
-    PetscInt m = axis->m;
-    PetscInt n = m - p - 1;
+    PetscInt n = axis->m - p - 1;
     if (axis->periodic) {
-      PetscReal *U = axis->U;
-      PetscInt   s = 1;
-      while (s < p && U[m-p] == U[m-p+s]) s++;
-      axis->nnp = n-p+s;
+      PetscInt k = n+1;
+      PetscInt j = IGA_NextKnot(axis->m,axis->U,k,1);
+      PetscInt s = j-k, C = p-s;
+      axis->nnp = n-C;
     } else {
       axis->nnp = n+1;
     }
@@ -548,23 +551,23 @@ PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt directi
   }
 }
 
+/*
 PetscInt IGA_SpanCount(PetscInt n,PetscInt p,const PetscReal U[])
 {
-  PetscInt i, span = 0;
-  for (i=p; i<=n; i++)
-    if (U[i] != U[i+1])
-      span++;
+  PetscInt m = n+p+1, k = p, span = 0;
+  while ((k = IGA_NextKnot(m,U,k,1)) <= n+1) span++;
   return span;
 }
+*/
 
+/*
 PetscInt IGA_SpanIndex(PetscInt n,PetscInt p,const PetscReal U[],PetscInt index[])
 {
-  PetscInt i, span = 0;
-  for (i=p; i<=n; i++)
-    if (U[i] != U[i+1])
-      index[span++] = i;
+  PetscInt m = n+p+1, k = p, span = 0;
+  while ((k = IGA_NextKnot(m,U,k,1)) <= n+1) index[span++] = k-1;
   return span;
 }
+*/
 
 /*
 void IGA_Stencil(PetscInt n,PetscInt p,const PetscReal U[],

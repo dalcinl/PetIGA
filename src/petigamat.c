@@ -210,42 +210,46 @@ static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
   PetscFunctionReturn(0);
 }
 
+EXTERN_C_BEGIN
+extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
+EXTERN_C_END
+
 PETSC_STATIC_INLINE
 void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 {
-  PetscBool periodic = iga->axis[dir]->periodic;
-  PetscInt  p  = iga->axis[dir]->p;
-  PetscInt  m  = iga->axis[dir]->m;
+  IGAAxis axis = iga->axis[dir];
+  PetscInt  p  = axis->p;
+  PetscInt  m  = axis->m;
   PetscInt  n  = m - p - 1;
-  PetscReal *U = iga->axis[dir]->U;
-  PetscInt k;
+  PetscReal *U = axis->U;
 
   if (PetscUnlikely(iga->collocation)) {
-    k = iga->basis[dir]->offset[i];
+    PetscInt k = iga->basis[dir]->offset[i];
     *first = k; *last  = k + p; return;
   }
 
-  /* compute index of the leftmost overlapping basis */
-  k = i;
-  while (U[k]==U[k+1]) k++; /* XXX Using "==" with floating point values ! */
-  *first = k - p;
+  { /* compute index of the leftmost overlapping basis */
+    PetscInt k = i;
+    k = IGA_NextKnot(m,U,k,+1);
+    *first = k - p - 1;
+  }
+  
+  { /* compute index of the rightmost overlapping basis */
+    PetscInt k = i + p + 1;
+    k = IGA_NextKnot(m,U,k,-1);
+    *last = k;
+  }
 
-  /* compute index of the rightmost overlapping basis */
-  k = i + p + 1;
-  while (U[k]==U[k-1]) k--; /* XXX Using "==" with floating point values ! */
-  *last = k - 1;
-
-  if (!periodic) {
+  if (!axis->periodic) {
     if (i <= p)   *first = 0;
     if (i >= n-p) *last  = n;
   } else if (i==0) {
-    PetscInt s = 1;
-    while (s < p && U[m-p]==U[m-p+s]) s++;
-    k = n - p + s;
-    while (U[k]==U[k+1]) k++;
-    *first = k - s - n;
+    PetscInt k = n+1;
+    PetscInt j = IGA_NextKnot(m,U,k,+1);
+    PetscInt s = j-k, C = p-s, nnp = n-C;
+    k = IGA_NextKnot(m,U,nnp,+1) - nnp;
+    *first = k - p - 1;
   }
-
 }
 
 PETSC_STATIC_INLINE

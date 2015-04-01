@@ -181,6 +181,10 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+EXTERN_C_BEGIN
+extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
+EXTERN_C_END
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGADraw"
 PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
@@ -264,14 +268,14 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     ierr = IGAGetAxis(iga,0,&axis);CHKERRQ(ierr);
     ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
     ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
-    for (i=p; i<m-p+1; i++) { if (i>p&&U[i]==U[i-1]) continue;
+    for (i=p; i<=m-p; i = IGA_NextKnot(m,U,i,1)) {
       double x = (double)U[i];
       ierr = PetscDrawLine(draw,x,ymin,x,ymax,c);CHKERRQ(ierr);
     }
     ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
     ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
     ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
-    for (i=p; i<m-p+1; i++) { if (i>p&&U[i]==U[i-1]) continue;
+    for (i=p; i<=m-p; i = IGA_NextKnot(m,U,i,1)) {
       double y = (double)U[i];
       ierr = PetscDrawLine(draw,xmin,y,xmax,y,c);CHKERRQ(ierr);
     }
