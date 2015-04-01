@@ -5,83 +5,74 @@
 int main(int argc, char *argv[])
 {
   MPI_Comm       comm;
-  IGA            iga,iga1;
+  IGA            iga;
   PetscViewer    viewer;
   PetscErrorCode ierr;
+  
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
+
+  ierr = IGAOptionsAlias("-D",  NULL, "-iga_dim");
+  ierr = IGAOptionsAlias("-N",  NULL, "-iga_elements");
+  ierr = IGAOptionsAlias("-W",  NULL, "-iga_periodic");
+  ierr = IGAOptionsAlias("-L",  NULL, "-iga_limits");
+  ierr = IGAOptionsAlias("-p",  NULL, "-iga_degree");
+  ierr = IGAOptionsAlias("-k",  NULL, "-iga_continuity");
 
   comm = PETSC_COMM_WORLD;
   ierr = IGACreate(comm,&iga);CHKERRQ(ierr);
-  {
-    PetscInt  i;
-    PetscInt  dim = 3;
-    PetscInt  dof = 1;
-    PetscBool b[3] = {PETSC_FALSE, PETSC_FALSE, PETSC_FALSE};
-    PetscInt  N[3] = {16,16,16};
-    PetscInt  p[3] = { 2, 2, 2};
-    PetscInt  C[3] = {-1,-1,-1};
-    PetscInt  n0=3, n1=3, n2=3, n3=3;
-    ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","InputOutput Options","IGA");CHKERRQ(ierr);
-    ierr = PetscOptionsInt("-iga_dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsInt("-iga_dof","dofs/node",__FILE__,dof,&dof,NULL);CHKERRQ(ierr);
-    n0 = n1 = n2 = n3 = dim;
-    ierr = PetscOptionsBoolArray("-periodic","periodicity",     __FILE__,b,&n0,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&n1,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray ("-p","polynomial order",       __FILE__,p,&n2,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsIntArray ("-C","global continuity order",__FILE__,C,&n3,NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsEnd();CHKERRQ(ierr);
-    if (n0<3) b[2] = b[0]; if (n0<2) b[1] = b[0];
-    if (n1<3) N[2] = N[0]; if (n1<2) N[1] = N[0];
-    if (n2<3) p[2] = p[0]; if (n2<2) p[1] = p[0];
-    if (n3<3) C[2] = C[0]; if (n3<2) C[1] = C[0];
-    for (i=0; i<dim; i++)  if (C[i] ==-1) C[i] = p[i] - 1;
-    ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
-    ierr = IGASetDof(iga,dof);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) {
-      IGAAxis axis;
-      ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
-      ierr = IGAAxisSetPeriodic(axis,b[i]);CHKERRQ(ierr);
-      ierr = IGAAxisSetDegree(axis,p[i]);CHKERRQ(ierr);
-      ierr = IGAAxisInitUniform(axis,N[i],0.0,1.0,C[i]);CHKERRQ(ierr);
-    }
-  }
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
+  if (iga->dim < 1) {ierr = IGASetDim(iga,3);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
-  ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr); /* just for testing */
-
-  ierr = IGACreate(comm,&iga1);CHKERRQ(ierr);
-  ierr = IGARead(iga1,"iga.dat");CHKERRQ(ierr);
-  ierr = IGASetUp(iga1);CHKERRQ(ierr);
-  ierr = IGARead(iga1,"iga.dat");CHKERRQ(ierr);  /* just for testing */
-  ierr = IGASetUp(iga1);CHKERRQ(ierr);
-  ierr = IGADestroy(&iga1);CHKERRQ(ierr);
-
-  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-  ierr = IGASave(iga,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-
-  ierr = IGACreate(comm,&iga1);CHKERRQ(ierr);
-  ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = IGALoad(iga1,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-  ierr = IGASetUp(iga1);CHKERRQ(ierr);
-  ierr = IGADestroy(&iga1);CHKERRQ(ierr);
+  {
+    char fieldname[16];PetscInt field,dof;
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    for (field=0; field<dof; field++) {
+      ierr = PetscSNPrintf(fieldname,sizeof(fieldname),"Field_%D",field);CHKERRQ(ierr);
+      ierr = IGASetFieldName(iga,field,fieldname);CHKERRQ(ierr);
+    }
+  }
 
   {
-    Vec         vec;
-    PetscInt    size,bs;
-    PetscScalar value;
+    IGA newiga;
+    
+    ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr);
+    ierr = IGAWrite(iga,"iga.dat");CHKERRQ(ierr); /* just for testing */
+    ierr = IGACreate(comm,&newiga);CHKERRQ(ierr);
+    ierr = IGASetOptionsPrefix(newiga,"new_");CHKERRQ(ierr);
+    ierr = IGARead(newiga,"iga.dat");CHKERRQ(ierr);
+    ierr = IGASetUp(newiga);CHKERRQ(ierr);
+    ierr = IGARead(newiga,"iga.dat");CHKERRQ(ierr);  /* just for testing */
+    ierr = IGASetUp(newiga);CHKERRQ(ierr);
+    ierr = IGADestroy(&newiga);CHKERRQ(ierr);
+    
+    ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
+    ierr = IGASave(iga,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    ierr = IGACreate(comm,&newiga);CHKERRQ(ierr);
+    ierr = IGASetOptionsPrefix(newiga,"new_");CHKERRQ(ierr);
+    ierr = PetscViewerBinaryOpen(comm,"iga.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    ierr = IGALoad(newiga,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    ierr = IGASetUp(newiga);CHKERRQ(ierr);
+    ierr = IGADestroy(&newiga);CHKERRQ(ierr);
+  }
+  
+  {
+    Vec       vec;
+    PetscInt  bs;
+    PetscInt  loc;
+    PetscReal val;
+    
     ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
     ierr = VecSet(vec,1.0);CHKERRQ(ierr);
     ierr = IGAWriteVec(iga,vec,"igavec.dat");CHKERRQ(ierr);
     ierr = VecSet(vec,0.0);CHKERRQ(ierr);
     ierr = IGAReadVec (iga,vec,"igavec.dat");CHKERRQ(ierr);
-    ierr = VecGetSize(vec,&size);CHKERRQ(ierr);
-    ierr = VecSum(vec,&value);CHKERRQ(ierr);
-    if ((PetscReal)size != PetscRealPart(value))
-      SETERRQ(comm,PETSC_ERR_PLIB,"Bad data in file");
+    ierr = VecMin(vec,&loc,&val);CHKERRQ(ierr);
+    if ((PetscInt)val != 1) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Vec does not match");
+    ierr = VecMax(vec,&loc,&val);CHKERRQ(ierr);
+    if ((PetscInt)val != 1) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Vec does not match");
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
 
     ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
@@ -90,10 +81,16 @@ int main(int argc, char *argv[])
     ierr = PetscViewerBinaryOpen(comm,"igavec.dat",FILE_MODE_READ,&viewer);CHKERRQ(ierr);
     ierr = VecLoad(vec,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-    ierr = VecGetSize(vec,&size);CHKERRQ(ierr);
-    ierr = VecSum(vec,&value);CHKERRQ(ierr);
-    if ((PetscReal)size != PetscRealPart(value))
-      SETERRQ(comm,PETSC_ERR_PLIB,"Bad Vec data in file");
+    ierr = VecMin(vec,&loc,&val);CHKERRQ(ierr);
+    if ((PetscInt)val != 1) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Vec does not match");
+    ierr = VecMax(vec,&loc,&val);CHKERRQ(ierr);
+    if ((PetscInt)val != 1) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Vec does not match");
+    ierr = VecDestroy(&vec);CHKERRQ(ierr);
+
+    ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
+    ierr = PetscViewerVTKOpen(comm,"igavec.vts",FILE_MODE_WRITE,&viewer);
+    ierr = IGADrawVec(iga,vec,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
   }
 
