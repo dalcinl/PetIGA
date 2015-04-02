@@ -1572,6 +1572,7 @@ PetscErrorCode IGASetUp(IGA iga)
   for (i=0; i<3; i++)
     if (!iga->collocation) {
       if (i >= iga->dim) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
+      if (i >= iga->dim) {ierr = IGARuleSetType(iga->rule[i],IGA_RULE_LEGENDRE);CHKERRQ(ierr);}
       ierr = IGABasisInitQuadrature(iga->basis[i],iga->axis[i],iga->rule[i]);CHKERRQ(ierr);
     } else {
       ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);
