@@ -96,13 +96,11 @@ int main(int argc, char *argv[]) {
 
   // Setup options
 
-  PetscBool collocation = PETSC_FALSE;
   PetscBool print_error = PETSC_FALSE;
   PetscBool check_error = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Laplace Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsBool("-collocation","Enable to use collocation",__FILE__,collocation,&collocation,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-check_error","Checks the error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-save","Save the solution to file",__FILE__,save,&save,NULL);CHKERRQ(ierr);
@@ -114,7 +112,6 @@ int main(int argc, char *argv[]) {
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);
-  if (collocation) {ierr = IGASetUseCollocation(iga,PETSC_TRUE);CHKERRQ(ierr);}
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   if (iga->dim<1) {ierr = IGASetDim(iga,2);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -164,7 +161,6 @@ int main(int argc, char *argv[]) {
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error = %g\n",(double)error);CHKERRQ(ierr);}
   if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
-
   if (save)        {ierr = IGAWrite   (iga,  "Laplace-geometry.dat");CHKERRQ(ierr);}
   if (save)        {ierr = IGAWriteVec(iga,x,"Laplace-solution.dat");CHKERRQ(ierr);}
 
