@@ -148,7 +148,7 @@ extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt 
 EXTERN_C_END
 
 PETSC_STATIC_INLINE
-void IGA_ContinuityString(IGAAxis axis,char buf[8])
+void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
 {
   PetscInt  p  = axis->p;
   PetscInt  m  = axis->m;
@@ -162,7 +162,7 @@ void IGA_ContinuityString(IGAAxis axis,char buf[8])
     Cmin = PetscMin(Cmin,p-(j-k));
     Cmax = PetscMax(Cmax,p-(j-k));
   }
-  (void)PetscSNPrintf(buf,sizeof(buf),(Cmin==Cmax)?"%D":"%D:%D",Cmin,Cmax);
+  (void)PetscSNPrintf(buf,len,(Cmin==Cmax)?"%D":"%D:%D",Cmin,Cmax);
   if (axis->nel==1 && !axis->periodic) (void)PetscStrcpy(buf,"*");
 }
 
@@ -194,7 +194,7 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
   ierr = PetscViewerASCIIPrintf(viewer,"IGA: dim=%D dof=%D order=%D geometry=%D rational=%D property=%D\n",
                                 dim,dof,order,iga->geometry,(PetscInt)iga->rational,iga->property);CHKERRQ(ierr);
   for (i=0; i<dim; i++) {
-    char Cbuf[8]; IGA_ContinuityString(iga->axis[i],Cbuf);
+    char Cbuf[8]; IGA_ContinuityString(iga->axis[i],Cbuf,sizeof(Cbuf));
     ierr = PetscViewerASCIIPrintf(viewer,"Axis %D: basis=%s[%D,%s] rule=%s[%D] periodic=%d nnp=%D nel=%D\n",i,
                                   IGABasisTypes[iga->basis[i]->type],iga->axis[i]->p,Cbuf,
                                   IGARuleTypes[iga->rule[i]->type],iga->rule[i]->nqp,

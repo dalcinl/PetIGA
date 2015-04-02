@@ -155,7 +155,7 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   } else {
 #define SetRule(e)                       \
     do {                                 \
-      const PetscInt   n = rule->nqp;    \
+      const PetscInt  nr = rule->nqp;    \
       const PetscReal *X = rule->point;  \
       const PetscReal *W = rule->weight; \
       PetscInt  k  = axis->span[(e)];    \
@@ -164,11 +164,11 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
       PetscReal *w = weight + (e)*nqp;   \
       PetscReal *u = point  + (e)*nqp;   \
       detJac[(e)] = J;                   \
-      for (iqp=0; iqp<n; iqp++) {        \
+      for (iqp=0; iqp<nr; iqp++) {       \
         w[iqp] = W[iqp];                 \
         u[iqp] = (X[iqp] + 1) * J + u0;  \
       }                                  \
-      for (iqp=n; iqp<nqp; iqp++) {      \
+      for (iqp=nr; iqp<nqp; iqp++) {     \
         w[iqp] = 0;                      \
         u[iqp] = PETSC_MAX_REAL;         \
       }                                  \
