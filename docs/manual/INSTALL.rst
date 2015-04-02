@@ -18,13 +18,13 @@ most recent release of PETSc, download the compressed tar file from
 use the development version of PETSc which can be checked-out using
 `Git <http://git-scm.com/>`_ by the following command::
 
-    git clone https://bitbucket.org/petsc/petsc.git petsc-dev
+    git clone https://bitbucket.org/petsc/petsc.git
 
 In either case, once you have the library source code downloaded,
 enter top-level source directory and run the :file:`configure`
 script::
 
-    cd petsc-dev
+    cd petsc
     ./configure
 
 Once the configure is complete, the output from the script will guide

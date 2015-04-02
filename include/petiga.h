@@ -389,9 +389,10 @@ PETSC_EXTERN PetscErrorCode IGAOptionsAlias(const char name[],const char defval[
 
 PETSC_EXTERN PetscErrorCode IGALoad(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGASave(IGA iga,PetscViewer viewer);
-PETSC_EXTERN PetscErrorCode IGADraw(IGA iga,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGARead(IGA iga,const char filename[]);
 PETSC_EXTERN PetscErrorCode IGAWrite(IGA iga,const char filename[]);
+PETSC_EXTERN PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer);
+PETSC_EXTERN PetscErrorCode IGADraw(IGA iga,PetscViewer viewer);
 
 PETSC_EXTERN PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim);
 PETSC_EXTERN PetscErrorCode IGAGetGeometryDim(IGA iga,PetscInt *dim);
