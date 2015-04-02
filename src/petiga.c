@@ -341,6 +341,29 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 }
 
 #undef  __FUNCT__
+#define __FUNCT__ "IGASetName"
+PetscErrorCode IGASetName(IGA iga,const char name[])
+{
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  if (name) PetscValidCharPointer(name,2);
+  ierr = PetscObjectSetName((PetscObject)iga,name);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGAGetName"
+PetscErrorCode IGAGetName(IGA iga,const char *name[])
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(name,2);
+  *name = ((PetscObject)iga)->name;
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "IGASetFieldName"
 /*@
    IGASetFieldName - Sets the names of individual field components in

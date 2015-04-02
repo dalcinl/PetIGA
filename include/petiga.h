@@ -413,6 +413,8 @@ PETSC_EXTERN PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 PETSC_EXTERN PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);
 PETSC_EXTERN PetscErrorCode IGASetDof(IGA iga,PetscInt dof);
 PETSC_EXTERN PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof);
+PETSC_EXTERN PetscErrorCode IGASetName(IGA iga,const char name[]);
+PETSC_EXTERN PetscErrorCode IGAGetName(IGA iga,const char *name[]);
 PETSC_EXTERN PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[]);
 PETSC_EXTERN PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[]);
 PETSC_EXTERN PetscErrorCode IGASetOrder(IGA iga,PetscInt order);
