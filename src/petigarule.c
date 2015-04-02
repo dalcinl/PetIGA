@@ -10,13 +10,14 @@ const char *const IGARuleTypes[] = {
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGARuleCreate"
-PetscErrorCode IGARuleCreate(IGARule *rule)
+PetscErrorCode IGARuleCreate(IGARule *_rule)
 {
+  IGARule        rule;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
-  ierr = PetscCalloc1(1,rule);CHKERRQ(ierr);
-  (*rule)->refct = 1;
+  PetscValidPointer(_rule,1);
+  ierr = PetscCalloc1(1,&rule);CHKERRQ(ierr);
+  *_rule = rule; rule->refct = 1;
   PetscFunctionReturn(0);
 }
 
@@ -92,8 +93,7 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
   PetscFunctionBegin;
   PetscValidPointer(base,1);
   PetscValidPointer(rule,2);
-  ierr = PetscCalloc1(1,rule);CHKERRQ(ierr);
-  (*rule)->refct = 1;
+  ierr = IGARuleCreate(rule);CHKERRQ(ierr);
   ierr = IGARuleCopy(base,*rule);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

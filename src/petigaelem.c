@@ -9,9 +9,8 @@ PetscErrorCode IGAElementCreate(IGAElement *_element)
 
   PetscFunctionBegin;
   PetscValidPointer(_element,1);
-  ierr = PetscCalloc1(1,_element);CHKERRQ(ierr);
-  element = *_element;
-  element->refct =  1;
+  ierr = PetscCalloc1(1,&element);CHKERRQ(ierr);
+  *_element = element; element->refct = 1;
   element->index = -1;
   ierr = IGAPointCreate(&element->iterator);CHKERRQ(ierr);
   PetscFunctionReturn(0);

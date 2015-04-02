@@ -10,13 +10,14 @@ const char *const IGABasisTypes[] = {
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGABasisCreate"
-PetscErrorCode IGABasisCreate(IGABasis *basis)
+PetscErrorCode IGABasisCreate(IGABasis *_basis)
 {
+  IGABasis       basis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(basis,3);
-  ierr = PetscCalloc1(1,basis);CHKERRQ(ierr);
-  (*basis)->refct = 1;
+  PetscValidPointer(_basis,3);
+  ierr = PetscCalloc1(1,&basis);CHKERRQ(ierr);
+  *_basis = basis; basis->refct = 1;
   PetscFunctionReturn(0);
 }
 

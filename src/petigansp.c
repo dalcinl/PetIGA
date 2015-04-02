@@ -23,6 +23,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetGeometryDim(iga,&dim);CHKERRQ(ierr);
   if (!dim) {ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);}
+  dim = PetscClipInterval(dim,1,3);
   n = dim*Product(iga->node_lwidth);
   N = dim*Product(iga->node_sizes);
 

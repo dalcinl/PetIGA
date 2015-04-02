@@ -35,8 +35,8 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
   PetscValidPointer(_prb,3);
   IGACheckSetUp(iga,1);
 
-  ierr = PetscCalloc1(1,_prb);CHKERRQ(ierr);
-  prb = *_prb; prb->refct = 1;
+  ierr = PetscCalloc1(1,&prb);CHKERRQ(ierr);
+  *_prb = prb; prb->refct = 1;
 
   ierr = PetscObjectReference((PetscObject)iga);CHKERRQ(ierr);
   prb->iga  = iga;

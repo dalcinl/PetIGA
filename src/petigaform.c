@@ -34,8 +34,8 @@ PetscErrorCode IGAFormCreate(IGAForm *_form)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_form,1);
-  ierr = PetscCalloc1(1,_form);CHKERRQ(ierr);
-  (*_form)->refct = 1; form = *_form;
+  ierr = PetscCalloc1(1,&form);CHKERRQ(ierr);
+  *_form = form; form->refct = 1;
   /* */
   form->dof = -1;
   ierr = PetscCalloc1(1,&form->ops);CHKERRQ(ierr);

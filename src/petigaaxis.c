@@ -8,8 +8,8 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_axis,1);
-  ierr = PetscCalloc1(1,_axis);CHKERRQ(ierr);
-  (*_axis)->refct = 1; axis = *_axis;
+  ierr = PetscCalloc1(1,&axis);CHKERRQ(ierr);
+  *_axis = axis; axis->refct = 1;
 
   /* */
   axis->periodic = PETSC_FALSE;
@@ -130,15 +130,16 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAAxisDuplicate"
-PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *axis)
+PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *_axis)
 {
+  IGAAxis        axis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(base,1);
-  PetscValidPointer(axis,2);
-  ierr = PetscCalloc1(1,axis);CHKERRQ(ierr);
-  (*axis)->refct = 1;
-  ierr = IGAAxisCopy(base,*axis);CHKERRQ(ierr);
+  PetscValidPointer(_axis,2);
+  ierr = PetscCalloc1(1,&axis);CHKERRQ(ierr);
+  *_axis = axis; axis->refct = 1;
+  ierr = IGAAxisCopy(base,axis);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

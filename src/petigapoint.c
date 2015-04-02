@@ -8,9 +8,8 @@ PetscErrorCode IGAPointCreate(IGAPoint *_point)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidPointer(_point,3);
-  ierr = PetscCalloc1(1,_point);CHKERRQ(ierr);
-  point = *_point;
-  point->refct =  1;
+  ierr = PetscCalloc1(1,&point);CHKERRQ(ierr);
+  *_point = point; point->refct =  1;
   point->index = -1;
   PetscFunctionReturn(0);
 }

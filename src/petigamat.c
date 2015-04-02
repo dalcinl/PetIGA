@@ -264,12 +264,13 @@ PETSC_STATIC_INLINE
 PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
                        PetscInt iA,PetscInt jA,PetscInt kA,PetscInt stencil[])
 {
+  PetscInt dim = PetscClipInterval(iga->dim,1,3);
   PetscInt first[3] = {0,0,0};
   PetscInt last [3] = {0,0,0};
   PetscInt count    = 0;
   { /* compute range of overlapping basis in each direction */
     PetscInt i,A[3]; A[0] = iA; A[1] = jA; A[2] = kA;
-    for (i=0; i<iga->dim; i++) {
+    for (i=0; i<dim; i++) {
       Stencil(iga,i,A[i],&first[i],&last[i]);
       first[i] = PetscMax(first[i],start[i]);
       last [i] = PetscMin(last [i],start[i]+shape[i]-1);

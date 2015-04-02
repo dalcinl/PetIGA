@@ -154,7 +154,7 @@ void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
   PetscInt  m  = axis->m;
   PetscReal *U = axis->U;
   PetscInt Cmin=p,Cmax=-1;
-  PetscInt k,ks=p+1,ke=m-p,j=m;
+  PetscInt k,j,ks=p+1,ke=m-p;
   if (axis->periodic) ks = IGA_NextKnot(m,U,p,-1)+1;
   if (axis->periodic) ke = IGA_NextKnot(m,U,ke,+1)-1;
   for (k=ks; k<ke; k=j) {
