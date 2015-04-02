@@ -517,6 +517,7 @@ struct _n_IGAElement {
   PetscScalar *propertyA; /*[nen][npd] */
 
   PetscInt  nqp;
+  PetscInt  sqp[3];
 
   PetscReal *point;    /*   [nqp][dim]                */
   PetscReal *weight;   /*   [nqp]                     */

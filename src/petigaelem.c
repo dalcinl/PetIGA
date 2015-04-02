@@ -806,7 +806,6 @@ PetscInt IGA_Quadrature_SIZE(const IGABasis BD[],const PetscInt ID[],PetscInt NQ
 #define __FUNCT__ "IGAElementBuildTabulation"
 PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 {
-  PetscInt tmp[3];
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
@@ -817,11 +816,10 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
     PetscInt nen = element->nen;
     IGABasis *BD = element->parent->basis;
     PetscInt *ID = element->ID;
-    PetscInt *NQ = &tmp[0]; /* XXX */
+    PetscInt *NQ = element->sqp;
 
     PetscInt nqp,q;
     nqp = IGA_Quadrature_SIZE(BD,ID,NQ);
-
     element->iterator->count = nqp; /* XXX */
 
     {
@@ -934,7 +932,6 @@ EXTERN_C_END
 #define __FUNCT__ "IGAElementBuildTabulationBoundary"
 PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axis,PetscInt side)
 {
-  PetscInt tmp[3];
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
@@ -945,12 +942,11 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
     PetscInt nen = element->nen;
     IGABasis *BD = element->parent->basis;
     PetscInt *ID = element->ID;
-    PetscInt *NQ = &tmp[0];
+    PetscInt *NQ = element->sqp;
 
     PetscInt nqp,q;
     nqp = IGA_Quadrature_SIZE(BD,ID,NQ);
     nqp /= NQ[axis]; NQ[axis] = 1;
-
     element->iterator->count = nqp; /* XXX */
 
     {
