@@ -4,6 +4,10 @@
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
 static       PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
+#if PETSC_VERSION_LT(3,6,0)
+#define PetscViewerBinaryRead(vw,p,n,c,dt) PetscViewerBinaryRead(vw,p,n,dt)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGALoad"
 PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
@@ -26,28 +30,28 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
 
   if (!skipheader) {
     PetscInt classid = 0;
-    ierr = PetscViewerBinaryRead(viewer,&classid,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&classid,1,NULL,PETSC_INT);CHKERRQ(ierr);
     if (classid != IGA_FILE_CLASSID) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Not an IGA in file");
   }
   { /* */
     PetscInt info = 0;
-    ierr = PetscViewerBinaryRead(viewer,&info,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&info,1,NULL,PETSC_INT);CHKERRQ(ierr);
     geometry = (info & 0x1) ? PETSC_TRUE : PETSC_FALSE;
     property = (info & 0x2) ? PETSC_TRUE : PETSC_FALSE;
   }
   ierr = IGAReset(iga);CHKERRQ(ierr);
   { /* */
     PetscInt i,dim;
-    ierr = PetscViewerBinaryRead(viewer,&dim, 1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&dim,1,NULL,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetDim(iga,dim);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
       PetscInt  p,m;
       PetscReal *U;
-      ierr = PetscViewerBinaryRead(viewer,&p,1,PETSC_INT);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryRead(viewer,&m,1,PETSC_INT);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,&p,1,NULL,PETSC_INT);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,&m,1,NULL,PETSC_INT);CHKERRQ(ierr);
       ierr = PetscMalloc1((size_t)m,&U);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryRead(viewer,U,m,PETSC_REAL);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryRead(viewer,U,m,NULL,PETSC_REAL);CHKERRQ(ierr);
       ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
       ierr = IGAAxisInit(axis,p,m-1,U);CHKERRQ(ierr);CHKERRQ(ierr);
       ierr = PetscFree(U);CHKERRQ(ierr);
@@ -56,13 +60,13 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   ierr = IGASetUp_Basic(iga);CHKERRQ(ierr);
   if (geometry) { /* */
     PetscInt dim;
-    ierr = PetscViewerBinaryRead(viewer,&dim,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&dim,1,NULL,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetGeometryDim(iga,dim);CHKERRQ(ierr);
     ierr = IGALoadGeometry(iga,viewer);CHKERRQ(ierr);
   }
   if (property) { /* */
     PetscInt dim;
-    ierr = PetscViewerBinaryRead(viewer,&dim,1,PETSC_INT);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryRead(viewer,&dim,1,NULL,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASetPropertyDim(iga,dim);CHKERRQ(ierr);
     ierr = IGALoadProperty(iga,viewer);CHKERRQ(ierr);
   }
