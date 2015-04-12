@@ -895,6 +895,12 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
                                  M[0],M[1],M[2],M[3],M[4],
                                  dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
       }
+#if defined(PETSC_USE_DEBUG)
+      for (q=0; q<nqp; q++)
+        if (dX[q] <= 0)
+          SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_USER,
+                   "Non-positive det(Jacobian)=%g",(double)dX[q]);
+#endif
       if (PetscLikely(!element->collocation))
         for (q=0; q<nqp; q++) element->detJac[q] *= dX[q];
       /* */
@@ -1060,7 +1066,7 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       PetscReal *E2 = element->hessX[1];
       PetscReal *E3 = element->der3X[1];
       PetscReal *E4 = element->der4X[1];
-      PetscReal *S  = element->detS;
+      PetscReal *dS = element->detS;
       PetscReal *n  = element->normal;
       /* */
       switch (dim) {
@@ -1074,10 +1080,16 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
                                  M[0],M[1],M[2],M[3],M[4],
                                  dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
       }
+#if defined(PETSC_USE_DEBUG)
       for (q=0; q<nqp; q++)
-        IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&S[q],&n[q*dim]);
+        if (dX[q] <= 0)
+          SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_USER,
+                   "Non-positive det(Jacobian)=%g",(double)dX[q]);
+#endif
+      for (q=0; q<nqp; q++)
+        IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&dS[q],&n[q*dim]);
       if (PetscLikely(!element->collocation))
-        for (q=0; q<nqp; q++) element->detJac[q] *= S[q];
+        for (q=0; q<nqp; q++) element->detJac[q] *= dS[q];
       /* */
       switch (dim) {
       case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
