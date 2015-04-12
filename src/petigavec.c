@@ -1,5 +1,9 @@
 #include "petiga.h"
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/vecimpl.h>
+#else
+#include <petsc/private/vecimpl.h>
+#endif
 
 PETSC_EXTERN PetscErrorCode VecView_MPI_DA(Vec,PetscViewer);
 PETSC_EXTERN PetscErrorCode VecLoad_Default_DA(Vec,PetscViewer);

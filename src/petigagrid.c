@@ -1,5 +1,9 @@
 #include "petigagrid.h"
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/petscimpl.h>
+#else
+#include <petsc/private/petscimpl.h>
+#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_Grid_Create"

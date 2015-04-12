@@ -1,6 +1,10 @@
 #include "petiga.h"
 #include "petigagrid.h"
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/pcimpl.h>
+#else
+#include <petsc/private/pcimpl.h>
+#endif
 #include "petigabl.h"
 
 typedef struct {

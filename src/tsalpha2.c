@@ -3,7 +3,11 @@
   for second order systems.
 */
 #include <petscts2.h>
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/tsimpl.h>                /*I   "petscts.h"   I*/
+#else
+#include <petsc/private/tsimpl.h>                /*I   "petscts.h"   I*/
+#endif
 
 static PetscBool  cited = PETSC_FALSE;
 static const char citation[] =

@@ -1,5 +1,9 @@
 #include <petiga.h>
+#if PETSC_VERSION_LT(3,6,0)
 #include "petsc-private/dmimpl.h"
+#else
+#include "petsc/private/dmimpl.h"
+#endif
 
 #if PETSC_VERSION_(3,4,0)
 #define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)

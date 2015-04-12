@@ -1,5 +1,9 @@
 #include "petigapart.h"
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/petscimpl.h>
+#else
+#include <petsc/private/petscimpl.h>
+#endif
 
 PETSC_STATIC_INLINE
 PetscInt IGA_CUT2D(PetscInt M,PetscInt N,

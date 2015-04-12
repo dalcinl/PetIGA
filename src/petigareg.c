@@ -1,7 +1,13 @@
 #include "petiga.h"
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/pcimpl.h>
 #include <petsc-private/tsimpl.h>
 #include <petsc-private/dmimpl.h>
+#else
+#include <petsc/private/pcimpl.h>
+#include <petsc/private/tsimpl.h>
+#include <petsc/private/dmimpl.h>
+#endif
 
 PETSC_EXTERN PetscBool IGAPackageInitialized;
 PETSC_EXTERN PetscBool IGARegisterAllCalled;
