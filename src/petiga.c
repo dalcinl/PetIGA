@@ -1,5 +1,4 @@
 #include "petiga.h"
-#include "petigapart.h"
 #include "petigagrid.h"
 
 #undef  __FUNCT__
@@ -1187,6 +1186,9 @@ PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
   *dm = iga->node_dm;
   PetscFunctionReturn(0);
 }
+
+PETSC_EXTERN PetscErrorCode IGA_Partition(PetscInt,PetscInt,PetscInt,const PetscInt[],PetscInt[],PetscInt[]);
+PETSC_EXTERN PetscErrorCode IGA_Distribute(PetscInt,const PetscInt[],const PetscInt[],const PetscInt[],PetscInt[],PetscInt[]);
 
 EXTERN_C_BEGIN
 extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);

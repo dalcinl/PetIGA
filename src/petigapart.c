@@ -1,9 +1,12 @@
-#include "petigapart.h"
+#include <petsc.h>
 #if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/petscimpl.h>
 #else
 #include <petsc/private/petscimpl.h>
 #endif
+
+PETSC_EXTERN PetscErrorCode IGA_Partition(PetscInt,PetscInt,PetscInt,const PetscInt[],PetscInt[],PetscInt[]);
+PETSC_EXTERN PetscErrorCode IGA_Distribute(PetscInt,const PetscInt[],const PetscInt[],const PetscInt[],PetscInt[],PetscInt[]);
 
 PETSC_STATIC_INLINE
 PetscInt IGA_CUT2D(PetscInt M,PetscInt N,
@@ -159,7 +162,7 @@ PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
                           "Bad partition, prod(%D,%D,%D) != %D",m[0],m[1],m[2],size);
   for (k=0; k<dim; k++)
     if (N[k] < n[k]) SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                              "Partition %D is too fine, %D elements in %D parts)",k,N[k],n[k]);
+                              "Partition %D is too fine, %D elements in %D parts",k,N[k],n[k]);
   if (i)
     for (k=0; k<dim; k++) {
       i[k] = rank % n[k];

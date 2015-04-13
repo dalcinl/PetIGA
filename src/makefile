@@ -22,7 +22,6 @@ SOURCEH = \
 petigabl.h \
 petigaftn.h \
 petigagrid.h \
-petigapart.h \
 
 SOURCEC = \
 petiga.c \
