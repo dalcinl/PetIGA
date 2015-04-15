@@ -65,8 +65,8 @@ PETSC_EXTERN PetscErrorCode IGAAxisSetUp(IGAAxis axis);
 typedef enum {
   IGA_RULE_LEGENDRE=0, /* Gauss-Legendre         */
   IGA_RULE_LOBATTO,    /* Gauss-Lobatto          */
-  IGA_RULE_USER,       /* User-defined           */
-  IGA_RULE_REDUCED     /* Reduced Gauss-Legendre */
+  IGA_RULE_REDUCED,    /* Reduced Gauss-Legendre */
+  IGA_RULE_USER        /* User-defined           */
 } IGARuleType;
 
 PETSC_EXTERN const char *const IGARuleTypes[];

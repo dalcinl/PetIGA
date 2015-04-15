@@ -3,8 +3,8 @@
 const char *const IGARuleTypes[] = {
   "LEGENDRE",
   "LOBATTO",
-  "USER",
   "REDUCED",
+  "USER",
   /* */
   "IGARuleType","IGA_RULE_",NULL};
 
