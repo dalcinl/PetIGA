@@ -1614,6 +1614,7 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
   for (i=0; i<3; i++) {
     ierr = IGAAxisCopy(iga->axis[i],newiga->axis[i]);CHKERRQ(ierr);
     ierr = IGARuleCopy(iga->rule[i],newiga->rule[i]);CHKERRQ(ierr);
+    newiga->basis[i]->type = iga->basis[i]->type;
     newiga->proc_sizes[i]  = iga->proc_sizes[i];
     newiga->proc_ranks[i]  = iga->proc_ranks[i];
     newiga->elem_sizes[i]  = iga->elem_sizes[i];
