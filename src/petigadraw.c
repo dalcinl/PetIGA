@@ -141,7 +141,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   ierr = IGAProbeSetOrder(probe,0);CHKERRQ(ierr);
   ierr = IGAProbeSetCollective(probe,PETSC_FALSE);CHKERRQ(ierr);
   {
-    PetscReal uvw[3] = {0.0, 0.0, 0.0};
+    PetscReal uvw[3] = {0,0,0};
     PetscReal xval[3];
     PetscScalar *uval;
     PetscInt is,iw,js,jw,ks,kw;

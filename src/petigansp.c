@@ -72,7 +72,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
     IGAAxis *AX = iga->axis;
     PetscInt c,i,j,k;
     PetscInt xpos = 0;
-    PetscReal xyz[3] = {0.0, 0.0, 0.0};
+    PetscReal xyz[3] = {0,0,0};
     for (k=klstart; k<klend; k++) {
       xyz[2] = IGA_Greville(k,AX[2]->p,AX[2]->U);
       for (j=jlstart; j<jlend; j++) {

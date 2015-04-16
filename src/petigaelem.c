@@ -1493,7 +1493,7 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
         IGAFormBC bcv = AtBoundaryV(element,dir,side);
         if (bcl && bcl->count) {
           PetscInt  f, n = bcl->count;
-          PetscReal *dshape, normal[3] = {0.0,0.0,0.0};
+          PetscReal *dshape, normal[3] = {0,0,0};
           if (!element->geometry) {
             normal[dir] = side ? 1.0 : -1.0;
             dshape = element->basis[1];
