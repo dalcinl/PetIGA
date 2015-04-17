@@ -29,7 +29,11 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 
   *newiga = NULL;
+#if PETSC_VERSION_LT(3,6,0)
   ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+#else
+  ierr = PetscHeaderCreate(iga,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
+#endif
   *newiga = iga;
 
   iga->dim = -1;
