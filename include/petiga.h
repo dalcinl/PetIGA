@@ -42,6 +42,7 @@ struct _n_IGAAxis {
   PetscInt   nnp,nel;  /* bases, spans */
   PetscInt   *span;    /* span indices */
 };
+
 PETSC_EXTERN PetscErrorCode IGAAxisCreate(IGAAxis *axis);
 PETSC_EXTERN PetscErrorCode IGAAxisDestroy(IGAAxis *axis);
 PETSC_EXTERN PetscErrorCode IGAAxisReset(IGAAxis axis);
@@ -80,6 +81,7 @@ struct _n_IGARule {
   PetscReal *point;   /* [nqp] quadrature points  */
   PetscReal *weight;  /* [nqp] quadrature weights */
 };
+
 PETSC_EXTERN PetscErrorCode IGARuleCreate(IGARule *rule);
 PETSC_EXTERN PetscErrorCode IGARuleDestroy(IGARule *rule);
 PETSC_EXTERN PetscErrorCode IGARuleReset(IGARule rule);
@@ -330,10 +332,11 @@ struct _p_IGA {
   PetscBool   rational;
   PetscInt    geometry;
   PetscInt    property;
-  PetscBool   fixtable;
   PetscReal   *rationalW;
   PetscReal   *geometryX;
   PetscScalar *propertyA;
+
+  PetscBool   fixtable;
   PetscScalar *fixtableU;
 
   PetscInt  proc_sizes[3];
