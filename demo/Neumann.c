@@ -6,14 +6,14 @@
 
 #define pi M_PI
 
-PetscReal Exact(PetscReal x[3])
+PetscReal Solution(PetscReal x[3])
 {
   return sin(2*pi*x[0]) + sin(2*pi*x[1]) + sin(2*pi*x[2]);
 }
 
 PetscReal Forcing(PetscReal x[3])
 {
-  return 4*pi*pi * Exact(x);
+  return 4*pi*pi * Solution(x);
 }
 
 PetscReal Flux(PetscInt dir,PetscInt side)
@@ -89,15 +89,12 @@ PetscErrorCode MassVector(IGAPoint p,PetscScalar *V,void *ctx)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Exact"
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x[3] = {0,0,0};
   IGAPointFormPoint(p,x);
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
-  PetscScalar e = u -  Exact(x);
-  S[0] = e*e;
+  value[0] = Solution(x);
   return 0;
 }
 
@@ -174,9 +171,8 @@ int main(int argc, char *argv[]) {
     ierr = VecDestroy(&Q);CHKERRQ(ierr);
   }
 
-  PetscScalar error;
-  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
+  PetscReal error;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error=%g\n",(double)error);CHKERRQ(ierr);}
   if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}

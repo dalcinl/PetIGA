@@ -140,19 +140,16 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Exact"
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
   PetscReal x;
   if (user->side == 0)
     x = 1 - p->point[user->axis] + 1;
   else
     x = p->point[user->axis] + 1;
-  PetscReal e = u - x;
-  S[0] = e*e;
+  value[0] = x;
   return 0;
 }
 
@@ -217,9 +214,8 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  PetscScalar error = 0;
-  ierr = IGAComputeScalar(iga,x,1,&error,Error,&user);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
+  PetscReal error;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,&user);CHKERRQ(ierr);
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error = %g\n",(double)error);CHKERRQ(ierr);}
   if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}

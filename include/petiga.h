@@ -132,7 +132,8 @@ PETSC_EXTERN PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
 
 /* ---------------------------------------------------------------- */
 
-typedef PetscErrorCode (*IGAFormScalar)(IGAPoint point,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx);
+typedef PetscErrorCode (*IGAFormExact)(IGAPoint point,PetscInt k,PetscScalar V[],void *ctx);
+typedef PetscErrorCode (*IGAFormScalar)(IGAPoint point,const PetscScalar U[],PetscInt n,PetscScalar S[],void *ctx);
 typedef PetscErrorCode (*IGAFormVector)(IGAPoint point,PetscScalar F[],void *ctx);
 typedef PetscErrorCode (*IGAFormMatrix)(IGAPoint point,PetscScalar K[],void *ctx);
 typedef PetscErrorCode (*IGAFormSystem)(IGAPoint point,PetscScalar K[],PetscScalar F[],void *ctx);
@@ -720,6 +721,10 @@ PETSC_EXTERN PetscLogEvent IGA_FormFunction;
 PETSC_EXTERN PetscLogEvent IGA_FormJacobian;
 PETSC_EXTERN PetscLogEvent IGA_FormIFunction;
 PETSC_EXTERN PetscLogEvent IGA_FormIJacobian;
+
+PETSC_EXTERN PetscErrorCode IGAComputeErrorNorm(IGA iga,PetscInt k,
+                                                Vec vecU,IGAFormExact Exact,
+                                                PetscReal enorm[],void *ctx);
 
 PETSC_EXTERN PetscErrorCode IGAComputeScalar(IGA iga,Vec U,
                                              PetscInt n,PetscScalar S[],

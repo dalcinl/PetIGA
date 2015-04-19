@@ -48,23 +48,19 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-PetscReal Exact(PetscReal x, PetscReal y)
+PetscReal Solution(PetscReal x, PetscReal y)
 {
   PetscReal pi = M_PI;
   return sin(pi*x) * sin(pi*y);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Exact"
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x = p->point[0];
   PetscReal y = p->point[1];
-  PetscReal u_exact = Exact(x,y);
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
-  PetscReal e = PetscAbsScalar(u - u_exact);
-  S[0] = e*e;
+  value[0] = Solution(x,y);
   return 0;
 }
 
@@ -139,10 +135,8 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  PetscScalar error = 0;
-  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
-
+  PetscReal error = 0;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,
                      "Error=%E , ||b-Ax||=%E in %D its , "
                      "Time: %f [assembly: %f (%.0f\%), solve: %f (%.0f\%)]\n",

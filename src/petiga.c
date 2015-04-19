@@ -326,7 +326,7 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
   if (dim < 1 || dim > 3)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of parametric dimensions must be in range [1,3], got %D",dim);
   if (iga->dim > 0 && iga->dim != dim)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
@@ -367,7 +367,7 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dof,2);
   if (dof < 1)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of DOFs per node must be greater than one, got %D",dof);
   if (iga->dof > 0 && iga->dof != dof)
     SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
@@ -493,11 +493,9 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,order,2);
   if (order < 0)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Order must be nonnegative, got %D",order);
-  order = PetscMax(order,1);
-  order = PetscMin(order,4);
-  iga->order = order;
+  iga->order = PetscClipInterval(1,order,4);
   PetscFunctionReturn(0);
 }
 

@@ -95,21 +95,13 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   AppCtx  *app = (AppCtx*)ctx;
   PetscInt dim = p->dim;
-
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
-
   PetscReal xyz[3] = {0,0,0};
   IGAPointFormPoint(p,xyz);
-  PetscScalar f = app->Function(dim,xyz);
-
-  PetscReal e = PetscAbsScalar(u - f);
-  S[0] = e*e;
-
+  value[0] = app->Function(dim,xyz);
   return 0;
 }
 
@@ -183,9 +175,9 @@ int main(int argc, char *argv[]) {
   }
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
-  PetscScalar scalar;
-  ierr = IGAComputeScalar(iga,x,1,&scalar,Error,&app);CHKERRQ(ierr);
-  PetscReal L2error = PetscSqrtReal(PetscRealPart(scalar));
+  PetscReal L2error;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&L2error,&app);CHKERRQ(ierr);
+
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)L2error);CHKERRQ(ierr);}
   if (check_error) {if (L2error > 1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%g\n",(double)L2error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}

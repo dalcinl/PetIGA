@@ -70,19 +70,12 @@ PetscErrorCode System2(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Exact"
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
-
-  PetscInt  dim = p->dim;
-  PetscReal x[3];
+  PetscReal x[3] = {0,0,0};
   IGAPointFormGeomMap(p,x);
-  PetscReal g = Solution(dim,x);
-
-  PetscReal e = PetscAbsScalar(u - g);
-  S[0] = e*e;
+  value[0] = Solution(p->dim,x);
   return 0;
 }
 
@@ -136,7 +129,7 @@ int main(int argc, char *argv[])
   for (dir=0; dir<dim; dir++)
     for (side=0; side<2; side++)
       {ierr = IGASetBoundaryValue(iga,dir,side,0,/*dummy*/0.0);CHKERRQ(ierr);}
-  ierr = IGASetFixTable(iga,x);CHKERRQ(ierr); /* Set vector to read BCs from */
+  ierr = IGASetFixTable(iga,x);CHKERRQ(ierr);    /* Set vector to read BCs from */
   ierr = IGASetFormSystem(iga,System2,NULL);CHKERRQ(ierr);
   ierr = IGAComputeSystem(iga,A,b);CHKERRQ(ierr);
   ierr = VecSet(x,0.0);CHKERRQ(ierr);
@@ -150,9 +143,8 @@ int main(int argc, char *argv[])
   }
   ierr = IGASetFixTable(iga,NULL);CHKERRQ(ierr); /* Clear vector to read BCs from */
 
-  PetscScalar error = 0;
-  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
+  PetscReal error = 0;
+  ierr = IGAComputeErrorNorm(iga,1,x,Exact,&error,NULL);CHKERRQ(ierr);
 
 #if defined(PETSC_USE_REAL_SINGLE)
   error_tol = PetscMax(error_tol,1e-5f);

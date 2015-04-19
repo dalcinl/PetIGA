@@ -109,25 +109,12 @@ PetscErrorCode Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
-  PetscInt i;
-  const PetscInt dim = p->dim;
-
-  PetscReal ue,grad_ue[dim];
-  Solution(dim,p->point,&ue,&grad_ue[0]);
-
-  PetscScalar ua,grad_ua[dim];
-  IGAPointFormValue(p,U,&ua);
-  IGAPointFormGrad (p,U,&grad_ua[0]);
-
-  PetscReal e,grad_e[dim];
-  e = PetscRealPart(ua) - ue;
-  for (i=0; i<dim; i++) grad_e[i] = PetscRealPart(grad_ua[i]) - grad_ue[i];
-
-  S[0] = e*e;
-  S[1] = e*e + DOT(dim,grad_e,grad_e);
-
+  switch (order) {
+  case 0: Solution(p->dim,p->point,value,NULL); break;
+  case 1: Solution(p->dim,p->point,NULL,value); break;
+  }
   return 0;
 }
 
@@ -216,10 +203,10 @@ int main(int argc, char *argv[])
   for (i=0; i<dim; i++) {ierr = IGASetRuleType(iga,i,IGA_RULE_LEGENDRE);CHKERRQ(ierr);}
   for (i=0; i<dim; i++) {ierr = IGASetRuleSize(iga,i,10);CHKERRQ(ierr);}
   ierr = IGASetUp(iga);CHKERRQ(ierr);
-  PetscScalar scalar[2];
-  ierr = IGAComputeScalar(iga,x,2,&scalar[0],Error,NULL);CHKERRQ(ierr);
-  PetscReal errorL2 = PetscSqrtReal(PetscRealPart(scalar[0]));
-  PetscReal errorH1 = PetscSqrtReal(PetscRealPart(scalar[1]));
+  PetscReal errorL2,seminormH1;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&errorL2,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeErrorNorm(iga,1,x,Exact,&seminormH1,NULL);CHKERRQ(ierr);
+  PetscReal errorH1 = PetscSqrtReal(PetscSqr(errorL2)+PetscSqr(seminormH1));
   ierr = PetscPrintf(PETSC_COMM_WORLD,"Error:  L2 = %.16e  H1 = %.16e\n",(double)errorL2,(double)errorH1);CHKERRQ(ierr);
 
   /* Cleanup */

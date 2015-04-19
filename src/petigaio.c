@@ -186,7 +186,7 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
   if (dim < 1 || dim > 3)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of space dimensions must be in range [1,3], got %D",dim);
   if (iga->geometry == dim) PetscFunctionReturn(0);
   iga->geometry = dim;
@@ -389,7 +389,7 @@ PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
-  if (dim < 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
+  if (dim < 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
                         "Number of properties must be nonnegative, got %D",dim);
   if (iga->property == dim) PetscFunctionReturn(0);
   iga->property = dim;

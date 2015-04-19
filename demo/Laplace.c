@@ -77,13 +77,10 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
-PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
+#define __FUNCT__ "Exact"
+PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
-  PetscScalar u;
-  IGAPointFormValue(p,U,&u);
-  PetscReal e = PetscAbsScalar(u - 1.0);
-  S[0] = e*e;
+  value[0] = 1;
   return 0;
 }
 
@@ -154,10 +151,9 @@ int main(int argc, char *argv[]) {
 
   // Various post-processing options
 
-  PetscScalar error = 0;
-  ierr = IGAComputeScalar(iga,x,1,&error,Error,NULL);CHKERRQ(ierr);
-  error = PetscSqrtReal(PetscRealPart(error));
-
+  PetscReal error;
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
+  
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error = %g\n",(double)error);CHKERRQ(ierr);}
   if (check_error) {if (PetscRealPart(error)>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
