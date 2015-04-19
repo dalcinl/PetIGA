@@ -875,6 +875,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
       PetscReal **M = element->basis;
       PetscReal **N = element->shape;
       PetscReal *dX = element->detX;
+      PetscReal *X0 = NULL; /* XXX */
       PetscReal *X1 = element->gradX[0];
       PetscReal *X2 = element->hessX[0];
       PetscReal *X3 = element->der3X[0];
@@ -887,13 +888,24 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
       switch (dim) {
       case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
       case 2: IGA_GeometryMap_2D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
       case 1: IGA_GeometryMap_1D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
+      }
+      switch (dim) {
+      case 3: IGA_InverseMap_3D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
+      case 2: IGA_InverseMap_2D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
+      case 1: IGA_InverseMap_1D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
       }
 #if defined(PETSC_USE_DEBUG)
       for (q=0; q<nqp; q++)
@@ -1058,6 +1070,7 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       PetscReal **N = element->shape;
       PetscReal **M = element->basis;
       PetscReal *dX = element->detX;
+      PetscReal *X0 = NULL; /* XXX */
       PetscReal *X1 = element->gradX[0];
       PetscReal *X2 = element->hessX[0];
       PetscReal *X3 = element->der3X[0];
@@ -1072,13 +1085,24 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       switch (dim) {
       case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
       case 2: IGA_GeometryMap_2D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
       case 1: IGA_GeometryMap_1D(ord,nqp,nen,X,
                                  M[0],M[1],M[2],M[3],M[4],
-                                 dX,X1,X2,X3,X4,E1,E2,E3,E4); break;
+                                 X0,X1,X2,X3,X4); break;
+      }
+      switch (dim) {
+      case 3: IGA_InverseMap_3D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
+      case 2: IGA_InverseMap_2D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
+      case 1: IGA_InverseMap_1D(ord,nqp,
+                                X1,X2,X3,X4,
+                                dX,E1,E2,E3,E4); break;
       }
 #if defined(PETSC_USE_DEBUG)
       for (q=0; q<nqp; q++)

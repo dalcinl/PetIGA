@@ -54,6 +54,5 @@ pure subroutine Rationalize(&
   !
   if (order < 4) return
   R4 = 0 ! XXX Implement
-  R4 = R4 / W0
   !
 end subroutine Rationalize

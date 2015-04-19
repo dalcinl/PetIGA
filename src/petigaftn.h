@@ -45,13 +45,26 @@ EXTERN_C_END
 EXTERN_C_BEGIN
 extern void IGA_GeometryMap_1D(PetscInt,PetscInt,PetscInt,const PetscReal[],
                                const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                               PetscReal*,PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_GeometryMap_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
                                const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                               PetscReal*,PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 extern void IGA_GeometryMap_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
                                const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
-                               PetscReal*,PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+EXTERN_C_END
+
+
+EXTERN_C_BEGIN
+extern void IGA_InverseMap_1D(PetscInt,PetscInt,
+                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                              PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_InverseMap_2D(PetscInt,PetscInt,
+                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                              PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_InverseMap_3D(PetscInt,PetscInt,
+                              const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                              PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 

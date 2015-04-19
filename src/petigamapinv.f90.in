@@ -1,28 +1,19 @@
 ! -*- f90 -*-
 
-pure subroutine GeometryMap(&
+pure subroutine InverseMap(&
      order,&
-     nen,X,&
-     M0,M1,M2,M3,M4,&
-     dX,&
      X1,X2,X3,X4,&
+     dX,&
      E1,E2,E3,E4)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
-  integer(kind=IGA_INTEGER_KIND), intent(in)  :: order
-  integer(kind=IGA_INTEGER_KIND), intent(in)  :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(                nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(            dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(        dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(    dim,dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim,dim,dim,dim,nen)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim,dim,dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: dX
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim,dim,dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim,dim,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim,dim,dim,dim)
@@ -34,29 +25,11 @@ pure subroutine GeometryMap(&
 
   ! 1st derivatives
   if (order < 1) return
-  X1 = 0 ! MATMUL(M1,transpose(X))
-  do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           X1(a,i) = X1(a,i) + X(i,node)*M1(a,node)
-        end do
-     end do
-  end do
   dX = Determinant(dim,X1)
   E1 = Inverse(dim,dX,X1)
 
   ! 2nd derivatives
   if (order < 2) return
-  X2 = 0
-  do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              X2(b,a,i) = X2(b,a,i) + X(i,node)*M2(b,a,node)
-           end do
-        end do
-     end do
-  end do
   E2 = 0
   do i = 1,dim
      do j = 1,dim
@@ -75,18 +48,6 @@ pure subroutine GeometryMap(&
 
   ! 3rd derivatives
   if (order < 3) return
-  X3 = 0
-  do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              do c = 1,dim
-                 X3(c,b,a,i) = X3(c,b,a,i) + X(i,node)*M3(c,b,a,node)
-              end do
-           end do
-        end do
-     end do
-  end do
   E3 = 0
   do d = 1,dim
      do i = 1,dim
@@ -114,23 +75,9 @@ pure subroutine GeometryMap(&
 
   ! 4th derivatives
   if (order < 4) return
-  X4 = 0
-  do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              do c = 1,dim
-                 do d = 1,dim
-                    X4(d,c,b,a,i) = X4(d,c,b,a,i) + X(i,node)*M4(d,c,b,a,node)
-                 end do
-              end do
-           end do
-        end do
-     end do
-  end do
-  E4 = 0
-  ! XXX Implement
+  E4 = 0 ! XXX Implement
+  
 
-end subroutine GeometryMap
+end subroutine InverseMap
 
 include 'petigainv.f90.in'

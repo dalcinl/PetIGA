@@ -270,9 +270,7 @@ pure subroutine IGA_GeometryMap_3D(&
      order,                        &
      nqp,nen,X,                    &
      M0,M1,M2,M3,M4,               &
-     dX,                           &
-     X1,X2,X3,X4,                  &
-     E1,E2,E3,E4)                  &
+     X0,X1,X2,X3,X4)               &
   bind(C, name="IGA_GeometryMap_3D")
   use PetIGA
   implicit none
@@ -286,28 +284,55 @@ pure subroutine IGA_GeometryMap_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: dX(nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X0(dim**1,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim**2,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim**3,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim**4,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim**5,nqp)
+  integer(kind=IGA_INTEGER_KIND)  :: q
+  do q=1,nqp
+     call GeometryMap(&
+          order,nen,X,&
+          M1(:,q),M2(:,q),M3(:,q),M4(:,q),&
+          X1(:,q),X2(:,q),X3(:,q),X4(:,q))
+  end do
+contains
+include 'petigamapgeo.f90.in'
+end subroutine IGA_GeometryMap_3D
+
+
+pure subroutine IGA_InverseMap_3D(&
+     order,                       &
+     nqp,                         &
+     X1,X2,X3,X4,                 &
+     dX,                          &
+     E1,E2,E3,E4)                 &
+  bind(C, name="IGA_InverseMap_3D")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 3
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim**2,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim**3,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim**4,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: dX(nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim**2,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim**3,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim**4,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(dim**5,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
-     call GeometryMap(&
-          order,nen,X,&
-          M0(:,q),&
-          M1(:,q),M2(:,q),M3(:,q),M4(:,q),&
-          dX(q),&
+     call InverseMap(&
+          order,&
           X1(:,q),X2(:,q),X3(:,q),X4(:,q),&
+          dX(q),&
           E1(:,q),E2(:,q),E3(:,q),E4(:,q))
   end do
 contains
-include 'petigageo.f90.in'
-end subroutine IGA_GeometryMap_3D
+include 'petigamapinv.f90.in'
+end subroutine IGA_InverseMap_3D
 
 
 pure subroutine IGA_ShapeFuns_3D(&
@@ -347,7 +372,7 @@ pure subroutine IGA_ShapeFuns_3D(&
           N1(:,q),N2(:,q),N3(:,q),N4(:,q))
   end do
 contains
-include 'petigamap.f90.in'
+include 'petigamapshf.f90.in'
 end subroutine IGA_ShapeFuns_3D
 
 

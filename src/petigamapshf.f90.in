@@ -84,7 +84,6 @@ pure subroutine ShapeFunctions(&
 
   ! 4th derivatives
   if (order < 4) return
-  R4 = 0
-  ! XXX Implement
+  R4 = 0 ! XXX Implement
 
 end subroutine ShapeFunctions
