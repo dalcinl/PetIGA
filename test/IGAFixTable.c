@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
   ierr = IGASetFixTable(iga,NULL);CHKERRQ(ierr); /* Clear vector to read BCs from */
 
   PetscReal error = 0;
-  ierr = IGAComputeErrorNorm(iga,1,x,Exact,&error,NULL);CHKERRQ(ierr);
+  ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
 
 #if defined(PETSC_USE_REAL_SINGLE)
   error_tol = PetscMax(error_tol,1e-5f);
