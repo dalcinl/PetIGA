@@ -7,18 +7,14 @@ from subprocess import Popen, PIPE
 
 import argparse
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('-collocation', action='store_true', dest='collocation')
 parser.add_argument('-d', type=int, nargs='+', dest='dimension', default=[1,2])
 parser.add_argument('-n', type=int, nargs='+', dest='element', default=[48,64])
 parser.add_argument('-p', type=int, nargs='+', dest='degree', default=[1,2,3,4])
 parser.add_argument('-k', type=int, nargs='+', dest='continuity', default=None)
-if '--' in sys.argv:
-    pos = sys.argv.index('--')
-    options = parser.parse_args(sys.argv[1:pos])
-    extra_args = sys.argv[pos+1:]
-else:
-    options = parser.parse_args()
-    extra_args = []
+parser.add_argument('-collocation', action='store_true', dest='collocation')
+parser.add_argument('args', nargs=argparse.REMAINDER, help='extra args for program')
+
+options = parser.parse_args(sys.argv[1:])
 
 try:
     unichr
@@ -40,20 +36,25 @@ def parseoutput(output):
     return a, b
 
 def generate(opts):
-    for d in opts.dimension:
-        for p in opts.degree:
+    for d in sorted(set(opts.dimension)):
+        if d < 1: continue
+        if d > 3: continue
+        for p in sorted(set(opts.degree)):
             if p < 1: continue
-            if p < 2 and opts.collocation: continue
+            if p > 9: continue
             if opts.collocation:
+                if p < 2: continue
                 continuity = [p-1]
             elif options.continuity:
-                continuity = [k for k in opts.continuity
-                              if k >= 0 and k < p]
-                if not continuity:
-                    continuity = [p-1]
+                continuity = []
+                for k in options.continuity:
+                    if k < 0: k = p+k
+                    if k < 0: continue
+                    if k > p-1: continue
+                    continuity.append(k)
             else:
                 continuity = range(p)
-            for k in continuity:
+            for k in sorted(set(continuity)):
                 yield d, p, k
 
 def computerate(h, e):
@@ -72,10 +73,7 @@ def checkrate(expected, actual, tol=0.075):
 
 ok = True
 for d, p, k in generate(options):
-    if d < 1 or d > 3: continue
-    if p < 1 or p > 10: continue
-    if k < 0 or k > p-1: continue
-    N = options.element[:]
+    N = sorted(set(options.element[:]))
     if len(N) < 1:
         N.insert([64,32,16][dim-1])
     if len(N) < 2:
@@ -85,7 +83,7 @@ for d, p, k in generate(options):
         h.append(1.0/n)
         command = "./ConvTest -d %d -n %d -p %d -k %d" % (d, n, p, k)
         if options.collocation: command += ' -iga_collocation'
-        if extra_args: command = ' '.join([command]+extra_args)
+        if options.args: command = ' '.join([command] + options.args)
         pipe = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = pipe.communicate()
         assert not stderr
@@ -103,7 +101,7 @@ for d, p, k in generate(options):
         mH1 = CHECK if checkrate(p,   rH1) else CROSS
     if CROSS in [mL2, mH1]: ok = False
 
-    print(u"d={:d} n={:s} p={:d} k={:d}".format(d, repr(N), p, k),
+    print(u"d={:d} n={:s} p={:d} k={:d}".format(d, repr(N).replace(" ",""), p, k),
           u"Rates: L2={:.2f}{:s} H1={:.2f}{:s}".format(rL2, mL2, rH1, mH1),
           u"Errors: L2={:.2e} H1={:.2e}".format(L2, H1),
           sep=' - ')
