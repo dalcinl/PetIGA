@@ -129,6 +129,21 @@ runex5a_1 runex5a_2 runex5a_3 \
 IGAProbe.rm
 
 
+IGAErrorNorm: IGAErrorNorm.o chkopts
+	$(CLINKER) -o $@ $< $(PETIGA_LIB)
+	$(RM) -f $<
+runex6a_1:
+	-@$(MPIEXEC) -n 1 ./IGAErrorNorm $(OPTS) -iga_dim 1
+runex6a_2:
+	-@$(MPIEXEC) -n 1 ./IGAErrorNorm $(OPTS) -iga_dim 2
+runex6a_3:
+	-@$(MPIEXEC) -n 1 ./IGAErrorNorm $(OPTS) -iga_dim 3
+IGAErrorNorm = \
+IGAErrorNorm.PETSc \
+runex6a_1 runex6a_2 runex6a_3 \
+IGAErrorNorm.rm
+
+
 Test_SNES_2D: Test_SNES_2D.o chkopts
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
@@ -213,6 +228,7 @@ TESTEXAMPLES_C = $(IGACreate) \
 		 $(IGAFixTable) \
 		 $(IGAGeometryMap) \
 		 $(IGAProbe) \
+		 $(IGAErrorNorm) \
 		 $(Test_SNES_2D) \
 		 $(Oscillator1) \
 		 $(Oscillator2)
