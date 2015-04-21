@@ -44,14 +44,14 @@ gmake-build:
 gmake-clean:
 	@cd ${PETIGA_DIR} && ${GMAKE} -f gmakefile clean
 all-gmake: chk_petsc_dir chk_petiga_dir arch-tree
-	-@echo "============================================="
-	-@echo "Building PetIGA (GNU Make - ${MAKE_NP} build threads)"
+	-@echo "=================================================="
+	-@echo "Building PetIGA (GNU Make - ${MAKE_NP} build jobs)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "============================================="
+	-@echo "=================================================="
 	@${GMAKE} gmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
-	-@echo "============================================="
+	-@echo "=================================================="
 .PHONY: gmake-build gmake-clean all-gmake
 
 
@@ -96,14 +96,14 @@ cmake-clean:
 	@if [ -f ${PETIGA_DIR}/${PETSC_ARCH}/Makefile ]; then \
 	cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} clean; fi;
 all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
-	-@echo "============================================="
-	-@echo "Building PetIGA (CMake - ${MAKE_NP} build threads)"
+	-@echo "=================================================="
+	-@echo "Building PetIGA (CMake - ${MAKE_NP} build jobs)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "============================================="
+	-@echo "=================================================="
 	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
-	-@echo "============================================="
+	-@echo "=================================================="
 .PHONY: cmake-boot cmake-down cmake-build cmake-clean all-cmake
 
 
@@ -114,16 +114,16 @@ legacy-build: arch-tree deletelibs deletemods build
 legacy-clean: deletemods deletelibs
 	-@${OMAKE} tree ACTION=clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
-	-@echo "============================================="
+	-@echo "=================================================="
 	-@echo "Building PetIGA (legacy build)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "============================================="
+	-@echo "=================================================="
 	-@echo "Beginning to build PetIGA library"
 	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
 	-@echo "Completed building PetIGA library"
-	-@echo "============================================="
+	-@echo "=================================================="
 .PHONY: legacy-build legacy-clean all-legacy
 
 #
@@ -193,12 +193,12 @@ distclean: chk_petiga_dir
 
 # Run test examples
 testexamples:
-	-@echo "============================================="
+	-@echo "=================================================="
 	-@echo "Beginning to compile and run test examples"
-	-@echo "============================================="
+	-@echo "=================================================="
 	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed compiling and running test examples"
-	-@echo "============================================="
+	-@echo "=================================================="
 .PHONY: testexamples
 
 
