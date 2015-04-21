@@ -186,7 +186,7 @@ allclean:
 	${OMAKE} cmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; else \
 	${OMAKE} legacy-clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}; fi;
 distclean: chk_petiga_dir
-	@echo "*** Deleting all build files in ${PETIGA_DIR}/${PETSC_ARCH} ***"
+	@echo "*** Deleting all build files ***"
 	-${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/
 .PHONY: clean allclean distclean
 
