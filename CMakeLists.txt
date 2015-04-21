@@ -62,4 +62,4 @@ install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PAT
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.mod"  )
 install (TARGETS   petiga LIBRARY         DESTINATION lib)
 install (DIRECTORY lib/petiga/make/       DESTINATION lib/petiga/make)
-install (CODE "execute_process(COMMAND sed -i -e s/$\(PETSC_ARCH\).//g ${CMAKE_INSTALL_PREFIX}/lib/petiga/make/variables)")
+install (CODE "execute_process(COMMAND sed -i \"\" -e s/$\(PETSC_ARCH\).//g ${CMAKE_INSTALL_PREFIX}/lib/petiga/make/variables)")
