@@ -4,6 +4,7 @@ L2Projection AdaptiveL2Projection \
 Laplace BoundaryIntegral \
 Poisson LoggChallenge \
 Neumann \
+NitscheMethod \
 AdvectionDiffusion \
 Bratu \
 PatternFormation \
@@ -67,6 +68,9 @@ LoggChallenge: LoggChallenge.o chkopts
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
 Neumann: Neumann.o chkopts
+	$(CLINKER) -o $@ $< $(PETIGA_LIB)
+	$(RM) -f $<
+NitscheMethod: NitscheMethod.o chkopts
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
 Bratu: Bratu.o BratuFJ.o chkopts
@@ -213,6 +217,10 @@ runex8_1:
 	-@$(MPIEXEC) -n 1 ./ElasticRod $(OPTS) -ts_max_steps 10
 runex8_4:
 	-@$(MPIEXEC) -n 4 ./ElasticRod $(OPTS) -ts_max_steps 10
+runex9a_1:
+	-@$(MPIEXEC) -n 1 ./NitscheMethod $(OPTS) -check_error 1e-6 -iga_dim 1 -iga_degree 2 -ksp_type cg -ksp_rtol 1e-7 -pc_type none
+runex9a_4:
+	-@$(MPIEXEC) -n 4 ./NitscheMethod $(OPTS) -check_error 1e-6 -iga_dim 2 -iga_degree 2 -ksp_type cg -ksp_rtol 1e-7
 
 
 L2Projection := \
@@ -243,6 +251,11 @@ runex7c_4 \
 runex7d_1 runex7d_4 \
 Neumann.rm
 
+NitscheMethod := \
+NitscheMethod.PETSc \
+runex9a_1 runex9a_4 \
+NitscheMethod.rm
+
 Bratu := \
 Bratu.PETSc \
 runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 \
@@ -258,7 +271,7 @@ PatternFormation := PatternFormation.PETSc runex5a_1 runex5a_4 runex5b_1 runex5b
 ElasticRod := ElasticRod.PETSc runex8_1 runex8_4 ElasticRod.rm
 
 
-TESTEXAMPLES_C := $(L2Projection) $(Laplace) $(Poisson) $(Neumann) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
+TESTEXAMPLES_C := $(L2Projection) $(Laplace) $(Poisson) $(Neumann) $(NitscheMethod) $(Bratu) $(CahnHilliard) $(PatternFormation) $(ElasticRod)
 TESTEXAMPLES_F :=
 TESTEXAMPLES_FORTRAN:=$(TESTEXAMPLES_F)
 testexamples:
