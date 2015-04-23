@@ -90,8 +90,10 @@ cmake-down:
 	-@${RM} -r ${PETIGA_DIR}/${PETSC_ARCH}/cmake_install.cmake
 cmake-build: cmake-boot
 	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} -j ${MAKE_NP}
-	-@if [ "${DSYMUTIL}" != "true" ]; then \
+	-@if [ "${DSYMUTIL}" != "true" -a -f ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX} ]; then \
         ${DSYMUTIL} ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX}; fi
+cmake-install:
+	@cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} install
 cmake-clean:
 	@if [ -f ${PETIGA_DIR}/${PETSC_ARCH}/Makefile ]; then \
 	cd ${PETIGA_DIR}/${PETSC_ARCH} && ${OMAKE} clean; fi;
