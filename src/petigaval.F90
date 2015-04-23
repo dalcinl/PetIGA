@@ -105,6 +105,43 @@ end function normal3d
 end subroutine IGA_GetNormal
 
 
+subroutine IGA_EvaluateReal(nen,dof,dim,N,U,V) &
+  bind(C, name="IGA_EvaluateReal")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof,dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(dof,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: V(dim,dof)
+  integer(kind=IGA_INTEGER_KIND)  :: a, i
+  ! V = MATMUL(N,transpose(U))
+  V = 0
+  do a = 1, nen
+     do i = 1, dof
+        V(:,i) = V(:,i) + N(:,a) * U(i,a)
+     end do
+  end do
+end subroutine IGA_EvaluateReal
+
+subroutine IGA_EvaluateScalar(order,nen,dof,dim,N,U,V) &
+  bind(C, name="IGA_EvaluateScalar")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order,nen,dof,dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim**order,nen)
+  scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
+  scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim**order,dof)
+  integer(kind=IGA_INTEGER_KIND)  :: a, i
+  ! V = MATMUL(N,transpose(U))
+  V = 0
+  do a = 1, nen
+     do i = 1, dof
+        V(:,i) = V(:,i) + N(:,a) * U(i,a)
+     end do
+  end do
+end subroutine IGA_EvaluateScalar
+
+
 subroutine IGA_GetValue(nen,dof,N,U,V) &
   bind(C, name="IGA_GetValue")
   use PetIGA
