@@ -356,11 +356,11 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     ierr = PetscMemzero(element->shape[4],sizeof(PetscReal)*nqp*nen*dim*dim*dim*dim);CHKERRQ(ierr);
     /* */
     for (q=0; q<nqp; q++) {
-      PetscReal *G0 = &element->gradX[0][q*dim*dim];
-      PetscReal *G1 = &element->gradX[1][q*dim*dim];
+      PetscReal *X1 = &element->gradX[0][q*dim*dim];
+      PetscReal *E1 = &element->gradX[1][q*dim*dim];
       element->detX[q] = 1.0;
       for (i=0; i<dim; i++)
-        G0[i*(dim+1)] = G1[i*(dim+1)] = 1.0;
+        X1[i*(dim+1)] = E1[i*(dim+1)] = 1.0;
     }
   }
   { /* */
@@ -613,9 +613,9 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
   if (PetscUnlikely(element->atboundary)) {
     size_t    nqp = (size_t)element->nqp;
     size_t    dim = (size_t)element->dim;
-    PetscReal *S  = element->detS;
+    PetscReal *dS = element->detS;
     PetscReal *n  = element->normal;
-    ierr = PetscMemzero(S,nqp*sizeof(PetscReal));CHKERRQ(ierr);
+    ierr = PetscMemzero(dS,nqp*sizeof(PetscReal));CHKERRQ(ierr);
     ierr = PetscMemzero(n,nqp*dim*sizeof(PetscReal));CHKERRQ(ierr);
     if (PetscUnlikely(element->collocation)) {
       element->atboundary  = PETSC_FALSE;
@@ -805,10 +805,12 @@ PetscInt IGA_Quadrature_SIZE(const IGABasis BD[],const PetscInt ID[],PetscInt NQ
 #define __FUNCT__ "IGAElementBuildTabulation"
 PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 {
+  PetscBool pullback;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  pullback = (PetscBool)(element->geometry && element->dim == element->nsd);
   {
     PetscInt ord = element->parent->order;
     PetscInt dim = element->dim;
@@ -869,8 +871,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
       }
     }
 
-    if (element->dim == element->nsd) /* XXX */
-    if (element->geometry) {
+    if (pullback) {
       PetscReal *X  = element->geometryX;
       PetscReal **M = element->basis;
       PetscReal **N = element->shape;
@@ -913,8 +914,6 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
           SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_USER,
                    "Non-positive det(Jacobian)=%g",(double)dX[q]);
 #endif
-      if (PetscLikely(!element->collocation))
-        for (q=0; q<nqp; q++) element->detJac[q] *= dX[q];
       /* */
       switch (dim) {
       case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
@@ -931,6 +930,9 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
                                N[0],N[1],N[2],N[3],N[4]); break;
       }
     }
+
+    if (pullback && PetscLikely(!element->collocation))
+      for (q=0; q<nqp; q++) element->detJac[q] *= element->detX[q];
   }
   PetscFunctionReturn(0);
 }
@@ -949,10 +951,12 @@ EXTERN_C_END
 #define __FUNCT__ "IGAElementBuildTabulationBoundary"
 PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axis,PetscInt side)
 {
+  PetscBool pullback;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
+  pullback = (PetscBool)(element->geometry && element->dim == element->nsd);
   {
     PetscInt ord = element->parent->order;
     PetscInt dim = element->dim;
@@ -1057,18 +1061,10 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       }
     }
 
-    {
-      PetscReal *S = element->detS;
-      PetscReal *n = element->normal;
-      (void)PetscMemzero(n,(size_t)(nqp*dim)*sizeof(PetscReal));
-      for (q=0; q<nqp; q++) S[q] = 1.0;
-      for (q=0; q<nqp; q++) n[q*dim+axis] = side ? 1.0 : -1.0;
-    }
-    if (element->dim == element->nsd) /* XXX */
-    if (element->geometry) {
+    if (pullback) {
       PetscReal *X  = element->geometryX;
-      PetscReal **N = element->shape;
       PetscReal **M = element->basis;
+      PetscReal **N = element->shape;
       PetscReal *dX = element->detX;
       PetscReal *X0 = NULL; /* XXX */
       PetscReal *X1 = element->gradX[0];
@@ -1079,8 +1075,6 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
       PetscReal *E2 = element->hessX[1];
       PetscReal *E3 = element->der3X[1];
       PetscReal *E4 = element->der4X[1];
-      PetscReal *dS = element->detS;
-      PetscReal *n  = element->normal;
       /* */
       switch (dim) {
       case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
@@ -1110,10 +1104,6 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
           SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_USER,
                    "Non-positive det(Jacobian)=%g",(double)dX[q]);
 #endif
-      for (q=0; q<nqp; q++)
-        IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&dS[q],&n[q*dim]);
-      if (PetscLikely(!element->collocation))
-        for (q=0; q<nqp; q++) element->detJac[q] *= dS[q];
       /* */
       switch (dim) {
       case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
@@ -1130,6 +1120,23 @@ PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt axi
                                N[0],N[1],N[2],N[3],N[4]); break;
       }
     }
+
+    {
+      PetscReal *dS = element->detS;
+      PetscReal *n  = element->normal;
+      if (pullback) {
+        PetscReal *X1 = element->gradX[0];
+        for (q=0; q<nqp; q++)
+          IGA_GetNormal(dim,axis,side,&X1[q*dim*dim],&dS[q],&n[q*dim]);
+      } else {
+        (void)PetscMemzero(n,(size_t)(nqp*dim)*sizeof(PetscReal));
+        for (q=0; q<nqp; q++) dS[q] = 1.0;
+        for (q=0; q<nqp; q++) n[q*dim+axis] = side ? 1.0 : -1.0;
+      }
+    }
+
+    if (pullback && PetscLikely(!element->collocation))
+      for (q=0; q<nqp; q++) element->detJac[q] *= element->detS[q];
   }
   PetscFunctionReturn(0);
 }
