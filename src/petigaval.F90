@@ -113,7 +113,7 @@ subroutine IGA_GetValue(nen,dof,N,U,V) &
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dof)
-  integer(kind=IGA_INTEGER_KIND)  :: a, i
+  integer(kind=IGA_INTEGER_KIND)  :: a
   ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
@@ -129,12 +129,12 @@ subroutine IGA_GetGrad(nen,dof,dim,N,U,V) &
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim,dof)
-  integer(kind=IGA_INTEGER_KIND)  :: a, c
+  integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = MATMUL(N,transpose(U))
   V = 0
   do a = 1, nen
-     do c = 1, dof
-        V(:,c) = V(:,c) + N(:,a) * U(c,a)
+     do i = 1, dof
+        V(:,i) = V(:,i) + N(:,a) * U(i,a)
      end do
   end do
 end subroutine IGA_GetGrad
