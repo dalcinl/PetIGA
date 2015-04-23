@@ -94,7 +94,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "Error"
+#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   AppCtx  *app = (AppCtx*)ctx;
