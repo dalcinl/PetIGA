@@ -20,6 +20,7 @@ PetscErrorCode IGASetForm(IGA iga,IGAForm form)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(form,2);
   if (form == iga->form) PetscFunctionReturn(0);
+  ierr = IGAFormReference(form);CHKERRQ(ierr);
   ierr = IGAFormDestroy(&iga->form);CHKERRQ(ierr);
   iga->form = form;
   PetscFunctionReturn(0);
