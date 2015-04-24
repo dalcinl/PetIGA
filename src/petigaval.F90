@@ -123,14 +123,14 @@ subroutine IGA_EvaluateReal(nen,dof,dim,N,U,V) &
   end do
 end subroutine IGA_EvaluateReal
 
-subroutine IGA_EvaluateScalar(order,nen,dof,dim,N,U,V) &
+subroutine IGA_EvaluateScalar(nen,dof,dim,N,U,V) &
   bind(C, name="IGA_EvaluateScalar")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order,nen,dof,dim
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim**order,nen)
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,dof,dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)       :: U(dof,nen)
-  scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim**order,dof)
+  scalar (kind=IGA_SCALAR_KIND ), intent(out)      :: V(dim,dof)
   integer(kind=IGA_INTEGER_KIND)  :: a, i
   ! V = MATMUL(N,transpose(U))
   V = 0
