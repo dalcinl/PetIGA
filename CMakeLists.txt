@@ -70,4 +70,5 @@ install (DIRECTORY include/               DESTINATION include FILES_MATCHING PAT
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.h"    )
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.mod"  )
 install (DIRECTORY lib/petiga/conf/       DESTINATION lib/petiga/conf)
-install (CODE "execute_process(COMMAND sed -i \"\" -e s/$\(PETSC_ARCH\).//g ${CMAKE_INSTALL_PREFIX}/lib/petiga/conf/variables)")
+install (CODE "execute_process(COMMAND sed -i.arch -e s/$\(PETSC_ARCH\).//g \"${CMAKE_INSTALL_PREFIX}/lib/petiga/conf/variables\")")
+install (CODE "file(REMOVE \"${CMAKE_INSTALL_PREFIX}/lib/petiga/conf/variables.arch\")")
