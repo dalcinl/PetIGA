@@ -433,7 +433,6 @@ PetscErrorCode IGASetBoundaryForm(IGA iga,PetscInt axis,PetscInt side,PetscBool 
 
    Details of Vector:
 $  PetscErrorCode Vector(IGAPoint p,PetscScalar F[],void *ctx);
-
 +  p - point at which to evaluate L(w)
 .  F - contribution to L(w)
 -  ctx - user-defined context for evaluation routine
@@ -466,7 +465,6 @@ PetscErrorCode IGASetFormVector(IGA iga,IGAFormVector Vector,void *VecCtx)
 
    Details of System:
 $  PetscErrorCode System(IGAPoint p,PetscScalar K[],void *ctx);
-
 +  p - point at which to evaluate a(w,u)
 .  K - contribution to a(w,u)
 -  ctx - user-defined context for evaluation routine
@@ -499,7 +497,6 @@ PetscErrorCode IGASetFormMatrix(IGA iga,IGAFormMatrix Matrix,void *MatCtx)
 
    Details of System:
 $  PetscErrorCode System(IGAPoint p,PetscScalar K[],PetscScalar F[],void *ctx);
-
 +  p - point at which to evaluate a(w,u)=L(w)
 .  K - contribution to a(w,u)
 .  F - contribution to L(w)
@@ -533,11 +530,10 @@ PetscErrorCode IGASetFormSystem(IGA iga,IGAFormSystem System,void *SysCtx)
 
    Details of Function:
 $  PetscErrorCode Function(IGAPoint p,const PetscScalar U[],PetscScalar F[],void *ctx);
-
 +  p - point at which to compute the residual
 .  U - local state vector
 .  F - local contribution to global residual vector
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -567,11 +563,10 @@ PetscErrorCode IGASetFormFunction(IGA iga,IGAFormFunction Function,void *FunCtx)
 
    Details of Jacobian:
 $  PetscErrorCode Jacobian(IGAPoint p,const PetscScalar U[],PetscScalar J[],void *ctx);
-
 +  p - point at which to compute the Jacobian
 .  U - local state vector
 .  J - local contribution to global Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -604,7 +599,6 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
                             PetscReal a,const PetscScalar V[],
                             PetscReal t,const PetscScalar U[],
                             PetscScalar F[],void *ctx);
-
 +  p - point at which to compute the residual
 .  dt - time step size
 .  a - positive parameter which depends on the time integration method (XXX Should this be here?)
@@ -612,7 +606,7 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
 .  t - time at step/stage being solved
 .  U - state vector
 .  F - function vector
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -646,7 +640,6 @@ $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
                             PetscReal a,const PetscScalar V[],
                             PetscReal t,const PetscScalar U[],
                             PetscScalar J[],void *ctx);
-
 +  p - point at which to compute the Jacobian
 .  dt - time step size
 .  a - positive parameter which depends on the time integration method
@@ -654,7 +647,7 @@ $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
 .  t - time at step/stage being solved
 .  U - state vector
 .  J - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -688,7 +681,6 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
                             PetscReal v,const PetscScalar V[],
                             PetscReal t,const PetscScalar U[],
                             PetscScalar F[],void *ctx);
-
 +  p - point at which to compute the residual
 .  dt - time step size
 .  a - positive parameter which depends on the time integration method
@@ -698,7 +690,7 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
 .  t - time at step/stage being solved
 .  U - state vector
 .  F - function vector
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -733,17 +725,16 @@ $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
                             PetscReal v,const PetscScalar V[],
                             PetscReal t,const PetscScalar U[],
                             PetscScalar J[],void *ctx);
-
-+  p   - point at which to compute the Jacobian
++  p - point at which to compute the Jacobian
 .  dt  - time step size
-.  a   - positive parameter which depends on the time integration method
-.  A   - second time derivative of the state vector
-.  v   - positive parameter which depends on the time integration method
-.  V   - time derivative of the state vector
-.  t   - time at step/stage being solved
-.  U   - state vector
-.  J   - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
+.  a - positive parameter which depends on the time integration method
+.  A - second time derivative of the state vector
+.  v - positive parameter which depends on the time integration method
+.  V - time derivative of the state vector
+.  t - time at step/stage being solved
+.  U - state vector
+.  J - Jacobian matrix
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -777,7 +768,6 @@ $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
                              PetscReal t, const PetscScalar U[],
                              PetscReal t0,const PetscScalar U0[],
                              PetscScalar F[],void *ctx);
-
 +  p - point at which to compute the residual
 .  dt - time step size
 .  a - positive parameter which depends on the time integration method (XXX Should this be here?)
@@ -787,7 +777,7 @@ $  PetscErrorCode IEFunction(IGAPoint p,PetscReal dt,
 .  t0 - time at current step
 .  U0 - state vector at t0
 .  F - function vector
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -822,7 +812,6 @@ $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
                              PetscReal t, const PetscScalar U[],
                              PetscReal t0,const PetscScalar U0[],
                              PetscScalar J[],void *ctx);
-
 +  p - point at which to compute the Jacobian
 .  dt - time step size
 .  a - positive parameter which depends on the time integration method
@@ -832,7 +821,7 @@ $  PetscErrorCode IEJacobian(IGAPoint p,PetscReal dt,
 .  t0 - time at current step
 .  U0 - state vector at t0
 .  J - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -865,13 +854,12 @@ PetscErrorCode IGASetFormIEJacobian(IGA iga,IGAFormIEJacobian IEJacobian,void *I
 $  PetscErrorCode RHSFunction(IGAPoint p,PetscReal dt,
                               PetscReal t, const PetscScalar U[],
                               PetscScalar F[],void *ctx);
-
 +  p - point at which to compute the residual
 .  dt - time step size
 .  t - time at step/stage being solved
 .  U - state vector at t
 .  F - function vector
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
@@ -904,13 +892,12 @@ PetscErrorCode IGASetFormRHSFunction(IGA iga,IGAFormRHSFunction RHSFunction,void
 $  PetscErrorCode RHSJacobian(IGAPoint p,PetscReal dt,
                               PetscReal t, const PetscScalar U[],
                               PetscScalar J[],void *ctx);
-
 +  p - point at which to compute the Jacobian
 .  dt - time step size
 .  t - time at step/stage being solved
 .  U - state vector at t
 .  J - Jacobian matrix
--  ctx - [optional] user-defined context for evaluation routine
+-  ctx - user-defined context for evaluation routine
 
    Level: normal
 
