@@ -71,6 +71,6 @@ DIRS     =
 LOCDIR   = src/
 MANSEC   = IGA
 
-include $(PETIGA_DIR)/lib/petiga/make/variables
-include $(PETIGA_DIR)/lib/petiga/make/rules
-include $(PETIGA_DIR)/lib/petiga/make/test
+include $(PETIGA_DIR)/lib/petiga/conf/variables
+include $(PETIGA_DIR)/lib/petiga/conf/rules
+include $(PETIGA_DIR)/lib/petiga/conf/test

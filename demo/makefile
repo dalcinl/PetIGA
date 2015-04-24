@@ -36,8 +36,8 @@ MANSEC    = IGA
 
 topdir := $(shell cd .. && pwd)
 PETIGA_DIR ?= $(topdir)
-include $(PETIGA_DIR)/lib/petiga/make/variables
-include $(PETIGA_DIR)/lib/petiga/make/rules
+include $(PETIGA_DIR)/lib/petiga/conf/variables
+include $(PETIGA_DIR)/lib/petiga/conf/rules
 
 Poisson1D: Poisson1D.o chkopts
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
@@ -281,4 +281,4 @@ testfortran:
 	    $(OMAKE) tree ACTION=testexamples_Fortran PETSC_ARCH=$(PETSC_ARCH) PETSC_DIR=$(PETSC_DIR) PETIGA_DIR=$(PETIGA_DIR); \
 	  fi
 
-include $(PETIGA_DIR)/lib/petiga/make/test
+include $(PETIGA_DIR)/lib/petiga/conf/test

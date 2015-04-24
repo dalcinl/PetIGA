@@ -32,9 +32,11 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set (CMAKE_INSTALL_PREFIX "$ENV{HOME}/petiga" CACHE PATH "PetIGA install prefix" FORCE)
 endif ()
 set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set (CMAKE_MACOSX_RPATH TRUE)
 set (CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib") # XXX @rpath/libpetiga.dylib
+
+# XXX @rpath/libpetiga.dylib
+set (CMAKE_MACOSX_RPATH NO)
+set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
 include_directories (${PETSC_INCLUDES} ${PETSC_PACKAGE_INCLUDES}
                     "${PetIGA_SOURCE_DIR}/${PETSC_ARCH}/include"
@@ -67,5 +69,5 @@ endif ()
 install (DIRECTORY include/               DESTINATION include FILES_MATCHING PATTERN "*.h"    )
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.h"    )
 install (DIRECTORY ${PETSC_ARCH}/include/ DESTINATION include FILES_MATCHING PATTERN "*.mod"  )
-install (DIRECTORY lib/petiga/make/       DESTINATION lib/petiga/make)
-install (CODE "execute_process(COMMAND sed -i \"\" -e s/$\(PETSC_ARCH\).//g ${CMAKE_INSTALL_PREFIX}/lib/petiga/make/variables)")
+install (DIRECTORY lib/petiga/conf/       DESTINATION lib/petiga/conf)
+install (CODE "execute_process(COMMAND sed -i \"\" -e s/$\(PETSC_ARCH\).//g ${CMAKE_INSTALL_PREFIX}/lib/petiga/conf/variables)")

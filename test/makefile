@@ -11,8 +11,8 @@ MANSEC          = IGA
 
 topdir := $(shell cd .. && pwd)
 PETIGA_DIR ?= $(topdir)
-include $(PETIGA_DIR)/lib/petiga/make/variables
-include $(PETIGA_DIR)/lib/petiga/make/rules
+include $(PETIGA_DIR)/lib/petiga/conf/variables
+include $(PETIGA_DIR)/lib/petiga/conf/rules
 
 OPTS=-nox -malloc_debug -malloc_dump
 
@@ -258,4 +258,4 @@ test-build: Test_SNES_2D.PETSc
 	    $(OMAKE) Test_SNES_2D.rm PETSC_ARCH=$(PETSC_ARCH) PETSC_DIR=$(PETSC_DIR) PETIGA_DIR=$(PETIGA_DIR); \
 	   fi
 
-include $(PETIGA_DIR)/lib/petiga/make/test
+include $(PETIGA_DIR)/lib/petiga/conf/test

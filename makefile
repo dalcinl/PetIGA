@@ -3,9 +3,9 @@ LOCDIR = .
 DIRS   = include src docs test demo
 
 PETIGA_DIR ?= $(CURDIR)
-include ${PETIGA_DIR}/lib/petiga/make/variables
-include ${PETIGA_DIR}/lib/petiga/make/rules
-include ${PETIGA_DIR}/lib/petiga/make/test
+include ${PETIGA_DIR}/lib/petiga/conf/variables
+include ${PETIGA_DIR}/lib/petiga/conf/rules
+include ${PETIGA_DIR}/lib/petiga/conf/test
 
 all:
 	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
