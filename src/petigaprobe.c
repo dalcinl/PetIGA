@@ -1,4 +1,4 @@
-#include "petigaprobe.h"
+#include "petiga.h"
 
 EXTERN_C_BEGIN
 extern PetscInt IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u,const PetscReal U[]);

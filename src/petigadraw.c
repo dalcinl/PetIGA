@@ -1,5 +1,4 @@
 #include "petiga.h"
-#include "petigaprobe.h"
 
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);

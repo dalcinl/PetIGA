@@ -8,7 +8,6 @@
  */
 
 #include "petiga.h"
-#include "petigaprobe.h"
 
 typedef struct {
   IGA       iga;

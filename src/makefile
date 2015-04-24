@@ -16,7 +16,6 @@ ALL: lib
 
 SOURCEH = \
 ../include/petiga.h \
-../include/petigaprobe.h \
 ../include/petscts1.h \
 ../include/petscts2.h \
 petigabl.h \
@@ -36,6 +35,7 @@ petigaform.c \
 petigafdjac.c \
 petigaelem.c \
 petigapoint.c \
+petigaprobe.c \
 petigavec.c \
 petigamat.c \
 petigansp.c \
@@ -49,7 +49,6 @@ petigaksp.c \
 petigasnes.c \
 petigats.c \
 petigats2.c \
-petigaprobe.c \
 petigaopts.c \
 tsalpha1.c \
 tsalpha2.c \
