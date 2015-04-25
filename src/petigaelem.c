@@ -364,11 +364,12 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     /* */
     if (!element->geometry)
       for (q=0; q<nqp; q++) {
+        PetscReal *dX = &element->detX[q];
         PetscReal *X1 = &element->gradX[0][q*nsd*dim];
         PetscReal *E1 = &element->gradX[1][q*dim*nsd];
-        element->detX[q] = 1.0;
-        for (i=0; i<dim; i++)
-          X1[i*(dim+1)] = E1[i*(dim+1)] = 1.0;
+        dX[0] = 1.0;
+        for (i=0; i<dim; i++) X1[i*(dim+1)] = 1.0;
+        for (i=0; i<dim; i++) E1[i*(dim+1)] = 1.0;
       }
   }
   { /* */

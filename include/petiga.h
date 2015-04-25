@@ -729,6 +729,7 @@ struct _n_IGAProbe {
   PetscBool offprocess;
   /**/
   PetscInt  dim;
+  PetscInt  nsd;
   PetscInt  dof;
   PetscInt  p[3];
   PetscReal *U[3];

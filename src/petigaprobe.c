@@ -42,6 +42,7 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
   prb->iga  = iga;
 
   ierr = IGAGetDim(iga,&prb->dim);CHKERRQ(ierr);
+  prb->nsd = iga->geometry ? iga->geometry : iga->dim;
   ierr = IGAGetDof(iga,&prb->dof);CHKERRQ(ierr);
 
   for (i=0; i<3; i++) {
@@ -59,17 +60,18 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
   }
   if (iga->rational)
     prb->arrayW = iga->rationalW;
-  if (iga->geometry && iga->geometry == iga->dim)
+  if (iga->geometry)
     prb->arrayX = iga->geometryX;
 
   {
     size_t nen = (size_t)prb->nen;
     size_t dim = (size_t)prb->dim;
+    size_t nsd = (size_t)prb->nsd;
     size_t dof = (size_t)prb->dof;
 
     ierr = PetscCalloc1(nen,&prb->map);CHKERRQ(ierr);
     ierr = PetscCalloc1(nen,&prb->W);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*dim,&prb->X);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd,&prb->X);CHKERRQ(ierr);
     ierr = PetscCalloc1(nen*dof,&prb->A);CHKERRQ(ierr);
 
     ierr = PetscCalloc1(nen,&prb->basis[0]);CHKERRQ(ierr);
@@ -79,30 +81,34 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
     ierr = PetscCalloc1(nen*dim*dim*dim*dim,&prb->basis[4]);CHKERRQ(ierr);
 
     ierr = PetscCalloc1(1,&prb->detX);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim,&prb->mapX[0]);CHKERRQ(ierr);
+
+    ierr = PetscCalloc1(nsd,&prb->mapX[0]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim,&prb->mapX[1]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim,&prb->mapX[2]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim*dim,&prb->mapX[3]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim*dim*dim,&prb->mapX[4]);CHKERRQ(ierr);
+
     ierr = PetscCalloc1(dim,&prb->mapU[0]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim,&prb->mapX[1]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim,&prb->mapU[1]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim,&prb->mapX[2]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim,&prb->mapU[2]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim*dim,&prb->mapX[3]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim*dim,&prb->mapU[3]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim*dim*dim,&prb->mapX[4]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(dim*dim*dim*dim*dim,&prb->mapU[4]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(dim*nsd,&prb->mapU[1]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(dim*nsd*nsd,&prb->mapU[2]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(dim*nsd*nsd*nsd,&prb->mapU[3]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(dim*nsd*nsd*nsd*nsd,&prb->mapU[4]);CHKERRQ(ierr);
 
     ierr = PetscCalloc1(nen,&prb->shape[0]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*dim,&prb->shape[1]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*dim*dim,&prb->shape[2]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*dim*dim*dim,&prb->shape[3]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*dim*dim*dim*dim,&prb->shape[4]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd,&prb->shape[1]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd,&prb->shape[2]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd*nsd,&prb->shape[3]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd*nsd*nsd,&prb->shape[4]);CHKERRQ(ierr);
   }
   {
     PetscInt dim  = prb->dim;
-    PetscReal *X0 = prb->mapX[1];
-    PetscReal *U0 = prb->mapU[1];
-    prb->detX[0] = 1.0;
-    for (i=0; i<dim; i++)
-      X0[i*(dim+1)] = U0[i*(dim+1)] = 1.0;
+    PetscInt nsd  = prb->nsd;
+    PetscReal *dX = prb->detX;
+    PetscReal *X1 = prb->mapX[1];
+    PetscReal *U1 = prb->mapU[1];
+    dX[0] = 1.0;
+    for (i=0; i<dim; i++) X1[i*(dim+1)] = 1.0;
+    for (i=0; i<dim; i++) U1[i*(nsd+1)] = 1.0;
   }
 
   ierr = IGAGetOrder(iga,&prb->order);CHKERRQ(ierr);
@@ -147,11 +153,13 @@ PetscErrorCode IGAProbeDestroy(IGAProbe *_prb)
   ierr = PetscFree(prb->basis[4]);CHKERRQ(ierr);
 
   ierr = PetscFree(prb->detX);CHKERRQ(ierr);
+
   ierr = PetscFree(prb->mapX[0]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapX[1]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapX[2]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapX[3]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapX[4]);CHKERRQ(ierr);
+
   ierr = PetscFree(prb->mapU[0]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapU[1]);CHKERRQ(ierr);
   ierr = PetscFree(prb->mapU[2]);CHKERRQ(ierr);
@@ -280,7 +288,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   /* Span closure */
   if (PetscLikely(!prb->offprocess)) {
     PetscInt a,nen = prb->nen;
-    PetscInt k,dim = prb->dim;
+    PetscInt k,nsd = prb->nsd;
     PetscInt c,dof = prb->dof;
     PetscInt *map  = prb->map;
     {
@@ -305,8 +313,8 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
         prb->W[a] = prb->arrayW[map[a]];
     if (prb->arrayX)
       for (a=0; a<nen; a++)
-        for (k=0; k<dim; k++)
-          prb->X[k + a*dim] = prb->arrayX[k + map[a]*dim];
+        for (k=0; k<nsd; k++)
+          prb->X[k + a*nsd] = prb->arrayX[k + map[a]*nsd];
     if (prb->arrayA)
       for (a=0; a<nen; a++)
         for (c=0; c<dof; c++)
@@ -315,14 +323,14 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   if (PetscUnlikely(prb->collective)) {
     MPI_Comm    comm;
     PetscMPIInt nen = (PetscMPIInt)prb->nen;
-    PetscMPIInt dim = (PetscMPIInt)prb->dim;
+    PetscMPIInt nsd = (PetscMPIInt)prb->nsd;
     PetscMPIInt dof = (PetscMPIInt)prb->dof;
     PetscMPIInt rank=-1,root;
     ierr = IGAGetComm(prb->iga,&comm);CHKERRQ(ierr);
     if (!prb->offprocess) {ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);}
     ierr = MPI_Allreduce(&rank,&root,1,MPI_INT,MPI_MAX,comm);CHKERRQ(ierr);
     if (prb->arrayW) {ierr = MPI_Bcast(prb->W,nen,MPIU_REAL,root,comm);CHKERRQ(ierr);}
-    if (prb->arrayX) {ierr = MPI_Bcast(prb->X,nen*dim,MPIU_REAL,root,comm);CHKERRQ(ierr);}
+    if (prb->arrayX) {ierr = MPI_Bcast(prb->X,nen*nsd,MPIU_REAL,root,comm);CHKERRQ(ierr);}
     if (prb->arrayA) {ierr = MPI_Bcast(prb->A,nen*dof,MPIU_SCALAR,root,comm);CHKERRQ(ierr);}
   }
 
@@ -383,25 +391,38 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   }
   if (prb->arrayX) {
     PetscReal **M = prb->basis;
+    PetscReal *X0 = prb->mapX[0];
+    PetscReal *X1 = prb->mapX[1];
+    PetscReal *X2 = prb->mapX[2];
+    PetscReal *X3 = prb->mapX[3];
+    PetscReal *X4 = prb->mapX[4];
+    IGA_GetGeomMap(prb->nen,prb->nsd,M[0],prb->X,X0);
+    if (PetscLikely(prb->dim == prb->nsd))
+      switch (prb->dim) {
+      case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
+                                 M[0],M[1],M[2],M[3],M[4],
+                                 X0,X1,X2,X3,X4); break;
+      case 2: IGA_GeometryMap_2D(prb->order,1,prb->nen,prb->X,
+                                 M[0],M[1],M[2],M[3],M[4],
+                                 X0,X1,X2,X3,X4); break;
+      case 1: IGA_GeometryMap_1D(prb->order,1,prb->nen,prb->X,
+                                 M[0],M[1],M[2],M[3],M[4],
+                                 X0,X1,X2,X3,X4); break;
+      }
+    else
+      IGA_GeometryMap(prb->order,prb->dim,prb->nsd,
+                      1,prb->nen,prb->X,
+                      M[0],M[1],M[2],M[3],M[4],
+                      X0,X1,X2,X3,X4);
+  }
+  if (prb->arrayX && PetscLikely(prb->dim == prb->nsd)) {
+    PetscReal **M = prb->basis;
     PetscReal **N = prb->shape;
     PetscReal *dX = prb->detX;
-    PetscReal *X0 = prb->mapX[0];
     PetscReal *X1 = prb->mapX[1], *E1 = prb->mapU[1];
     PetscReal *X2 = prb->mapX[2], *E2 = prb->mapU[2];
     PetscReal *X3 = prb->mapX[3], *E3 = prb->mapU[3];
     PetscReal *X4 = prb->mapX[4], *E4 = prb->mapU[4];
-    IGA_GetGeomMap(prb->nen,prb->dim,M[0],prb->X,X0);
-    switch (prb->dim) {
-    case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
-                               M[0],M[1],M[2],M[3],M[4],
-                               X0,X1,X2,X3,X4); break;
-    case 2: IGA_GeometryMap_2D(prb->order,1,prb->nen,prb->X,
-                               M[0],M[1],M[2],M[3],M[4],
-                               X0,X1,X2,X3,X4); break;
-    case 1: IGA_GeometryMap_1D(prb->order,1,prb->nen,prb->X,
-                               M[0],M[1],M[2],M[3],M[4],
-                               X0,X1,X2,X3,X4); break;
-    }
     switch (prb->dim) {
     case 3: IGA_InverseMap_3D(prb->order,1,
                               X1,X2,X3,X4,dX,
@@ -440,10 +461,10 @@ PetscErrorCode IGAProbeGeomMap(IGAProbe prb,PetscReal x[])
   PetscValidPointer(prb,1);
   PetscValidRealPointer(x,2);
   if (PetscUnlikely(prb->offprocess && !prb->collective)) {
-    PetscInt i; for (i=0; i<prb->dim; i++) x[i] = 0.0;
+    PetscInt i; for (i=0; i<prb->nsd; i++) x[i] = 0.0;
   } else {
     PetscReal *X = prb->arrayX ? prb->mapX[0] : prb->mapU[0];
-    PetscInt i; for (i=0; i<prb->dim; i++) x[i] = X[i];
+    PetscInt i; for (i=0; i<prb->nsd; i++) x[i] = X[i];
   }
   PetscFunctionReturn(0);
 }
@@ -464,13 +485,13 @@ PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
     size_t n = (size_t)prb->dof * intpow[prb->dim][der];
     ierr = PetscMemzero(A,n*sizeof(PetscScalar));CHKERRQ(ierr);
   } else {
-    PetscReal *shape = prb->arrayX ? prb->shape[der] : prb->basis[der];
+    PetscReal **shape = (prb->arrayX && prb->dim == prb->nsd) ? prb->shape : prb->basis;
     switch (der) {
-    case 0: IGA_GetValue(prb->nen,prb->dof,/*     */shape,prb->A,A); break;
-    case 1: IGA_GetGrad (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
-    case 2: IGA_GetHess (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
-    case 3: IGA_GetDer3 (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
-    case 4: IGA_GetDer4 (prb->nen,prb->dof,prb->dim,shape,prb->A,A); break;
+    case 0: IGA_GetValue(prb->nen,prb->dof,/*     */shape[0],prb->A,A); break;
+    case 1: IGA_GetGrad (prb->nen,prb->dof,prb->dim,shape[1],prb->A,A); break;
+    case 2: IGA_GetHess (prb->nen,prb->dof,prb->dim,shape[2],prb->A,A); break;
+    case 3: IGA_GetDer3 (prb->nen,prb->dof,prb->dim,shape[3],prb->A,A); break;
+    case 4: IGA_GetDer4 (prb->nen,prb->dof,prb->dim,shape[4],prb->A,A); break;
     default: PetscFunctionReturn(PETSC_ERR_ARG_OUTOFRANGE);
     }
   }
