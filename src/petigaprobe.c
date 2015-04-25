@@ -404,14 +404,14 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     }
     switch (prb->dim) {
     case 3: IGA_InverseMap_3D(prb->order,1,
-                              X1,X2,X3,X4,
-                              dX,E1,E2,E3,E4); break;
+                              X1,X2,X3,X4,dX,
+                              E1,E2,E3,E4); break;
     case 2: IGA_InverseMap_2D(prb->order,1,
-                              X1,X2,X3,X4,
-                              dX,E1,E2,E3,E4); break;
+                              X1,X2,X3,X4,dX,
+                              E1,E2,E3,E4); break;
     case 1: IGA_InverseMap_1D(prb->order,1,
-                              X1,X2,X3,X4,
-                              dX,E1,E2,E3,E4); break;
+                              X1,X2,X3,X4,dX,
+                              E1,E2,E3,E4); break;
     }
     switch (prb->dim) {
     case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,

@@ -537,7 +537,6 @@ struct _n_IGAElement {
                        /*3: [nqp][nen][dim][dim][dim] */
                        /*4: [nqp][nen][dim][dim][dim][dim] */
 
-  PetscReal *detX;     /*   [nqp]                     */
   PetscReal *gradX[2]; /*0: [nqp][nsd][dim]           */
                        /*1: [nqp][dim][nsd]           */
   PetscReal *hessX[2]; /*0: [nqp][nsd][dim][dim]      */
@@ -546,8 +545,10 @@ struct _n_IGAElement {
                        /*1: [nqp][dim][nsd][nsd][nsd] */
   PetscReal *der4X[2]; /*0: [nqp][nsd][dim][dim][dim][dim] */
                        /*1: [nqp][dim][nsd][nsd][nsd][nsd] */
+
+  PetscReal *detX;     /*   [nqp]                     */
   PetscReal *detS;     /*   [nqp]                     */
-  PetscReal *normal;   /*   [nqp][dim]                */
+  PetscReal *normal;   /*   [nqp][nsd]                */
 
   PetscReal *shape[5]; /*0: [nqp][nen]                */
                        /*1: [nqp][nen][nsd]           */
@@ -596,7 +597,6 @@ PETSC_EXTERN PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *poin
 
 PETSC_EXTERN PetscErrorCode IGAElementBuildClosure(IGAElement element);
 PETSC_EXTERN PetscErrorCode IGAElementBuildTabulation(IGAElement element);
-PETSC_EXTERN PetscErrorCode IGAElementBuildTabulationBoundary(IGAElement element,PetscInt dir,PetscInt side);
 
 PETSC_EXTERN PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent);
 PETSC_EXTERN PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index);
@@ -653,7 +653,6 @@ struct _n_IGAPoint {
                        /*3: [nen][dim][dim][dim] */
                        /*4: [nen][dim][dim][dim][dim] */
 
-  PetscReal *detX;     /*   [1] */
   PetscReal *gradX[2]; /*0: [nsd][dim] */
                        /*1: [dim][nsd] */
   PetscReal *hessX[2]; /*0: [nsd][dim][dim] */
@@ -662,8 +661,10 @@ struct _n_IGAPoint {
                        /*1: [dim][nsd][nsd][nsd] */
   PetscReal *der4X[2]; /*0: [nsd][dim][dim][dim][dim] */
                        /*1: [dim][nsd][nsd][nsd][nsd] */
+
+  PetscReal *detX;     /*   [1] */
   PetscReal *detS;     /*   [1] */
-  PetscReal *normal;   /*   [dim] */
+  PetscReal *normal;   /*   [nsd] */
 
   PetscReal *shape[5]; /*0: [nen]  */
                        /*1: [nen][nsd] */

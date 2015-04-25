@@ -7,46 +7,40 @@
 #define scalar real
 #endif
 
-subroutine IGA_GetGeomMap(nen,nsd,N,C,X) &
-  bind(C, name="IGA_GetGeomMap")
+pure subroutine IGA_GeometryMap(&
+     order,dim,nsd,             &
+     nqp,nen,X,                 &
+     M0,M1,M2,M3,M4,            &
+     X0,X1,X2,X3,X4)            &
+  bind(C, name="IGA_GeometryMap")
   use PetIGA
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: X(nsd)
-  X = matmul(C,N)
-end subroutine IGA_GetGeomMap
-
-subroutine IGA_GetGradGeomMap(nen,nsd,dim,N,C,F) &
-  bind(C, name="IGA_GetGradGeomMap")
-  use PetIGA
-  implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd,dim
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: F(dim,nsd)
-  F = matmul(N,transpose(C))
-end subroutine IGA_GetGradGeomMap
-
-subroutine IGA_GetInvGradGeomMap(nen,nsd,dim,N,C,G) &
-  bind(C, name="IGA_GetInvGradGeomMap")
-  use PetIGA
-  implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd,dim
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out)      :: G(nsd,dim)
-  real   (kind=IGA_REAL_KIND   )  :: F(nsd,dim)
-  real   (kind=IGA_REAL_KIND   )  :: M(dim,dim), detM, invM(dim,dim)
-  F = matmul(C,transpose(N))
-  M = matmul(transpose(F),F)
-  detM = Determinant(dim,M)
-  invM = Inverse(dim,detM,M)
-  G = transpose(matmul(invM,transpose(F)))
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: dim
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nsd
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(        nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X0(dim**0*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim**1*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim**2*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim**3*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim**4*nsd,nqp)
+  integer(kind=IGA_INTEGER_KIND)  :: q
+  do q=1,nqp
+     call GeometryMap(&
+          order,nen,X,&
+          M0(:,q),M1(:,q),M2(:,q),M3(:,q),M4(:,q),&
+          X0(:,q),X1(:,q),X2(:,q),X3(:,q),X4(:,q))
+  end do
 contains
-include 'petigainv.f90.in'
-end subroutine IGA_GetInvGradGeomMap
+include 'petigamapgeo.f90.in'
+end subroutine IGA_GeometryMap
 
 subroutine IGA_GetNormal(dim,axis,side,F,dS,N) &
   bind(C, name="IGA_GetNormal")
@@ -103,6 +97,48 @@ function normal3d(axis,F,N) result(dS)
   N = N/dS
 end function normal3d
 end subroutine IGA_GetNormal
+
+
+subroutine IGA_GetGeomMap(nen,nsd,N,C,X) &
+  bind(C, name="IGA_GetGeomMap")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: X(nsd)
+  X = matmul(C,N)
+end subroutine IGA_GetGeomMap
+
+subroutine IGA_GetGradGeomMap(nen,nsd,dim,N,C,F) &
+  bind(C, name="IGA_GetGradGeomMap")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd,dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: F(dim,nsd)
+  F = matmul(N,transpose(C))
+end subroutine IGA_GetGradGeomMap
+
+subroutine IGA_GetInvGradGeomMap(nen,nsd,dim,N,C,G) &
+  bind(C, name="IGA_GetInvGradGeomMap")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen,nsd,dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: N(dim,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)       :: C(nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out)      :: G(nsd,dim)
+  real   (kind=IGA_REAL_KIND   )  :: F(nsd,dim)
+  real   (kind=IGA_REAL_KIND   )  :: M(dim,dim), detM, invM(dim,dim)
+  F = matmul(C,transpose(N))
+  M = matmul(transpose(F),F)
+  detM = Determinant(dim,M)
+  invM = Inverse(dim,detM,M)
+  G = transpose(matmul(invM,transpose(F)))
+contains
+include 'petigainv.f90.in'
+end subroutine IGA_GetInvGradGeomMap
 
 
 subroutine IGA_EvaluateReal(nen,dof,dim,N,U,V) &

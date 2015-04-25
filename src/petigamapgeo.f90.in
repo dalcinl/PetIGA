@@ -3,83 +3,62 @@
 pure subroutine GeometryMap(&
      order,&
      nen,X,&
-     M1,M2,M3,M4,&
-     X1,X2,X3,X4)
+     M0,M1,M2,M3,M4,&
+     X0,X1,X2,X3,X4)
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
+  !integer(kind=IGA_INTEGER_KIND),parameter   :: nsd = 1,2,3
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: order
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(            dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(        dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(    dim,dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim,dim,dim,dim,nen)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim,dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X(    nsd,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4,nen)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X0(dim**0,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X1(dim**1,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X2(dim**2,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X3(dim**3,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X4(dim**4,nsd)
 
-  integer(kind=IGA_INTEGER_KIND)  :: node
-  integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
-  integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
+  integer(kind=IGA_INTEGER_KIND)  :: node, i
 
   ! 1st derivatives
   if (order < 1) return
   X1 = 0 ! MATMUL(M1,transpose(X))
   do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           X1(a,i) = X1(a,i) + X(i,node)*M1(a,node)
-        end do
+     do i = 1,nsd
+        X1(:,i) = X1(:,i) + X(i,node)*M1(:,node)
      end do
   end do
 
   ! 2nd derivatives
   if (order < 2) return
-  X2 = 0
+  X2 = 0 ! MATMUL(M2,transpose(X))
   do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              X2(b,a,i) = X2(b,a,i) + X(i,node)*M2(b,a,node)
-           end do
-        end do
+     do i = 1,nsd
+        X2(:,i) = X2(:,i) + X(i,node)*M2(:,node)
      end do
   end do
 
   ! 3rd derivatives
   if (order < 3) return
-  X3 = 0
+  X3 = 0 ! MATMUL(M3,transpose(X))
   do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              do c = 1,dim
-                 X3(c,b,a,i) = X3(c,b,a,i) + X(i,node)*M3(c,b,a,node)
-              end do
-           end do
-        end do
+     do i = 1,nsd
+        X3(:,i) = X3(:,i) + X(i,node)*M3(:,node)
      end do
   end do
 
   ! 4th derivatives
   if (order < 4) return
-  X4 = 0
+  X4 = 0 ! MATMUL(M4,transpose(X))
   do node = 1,nen
-     do i = 1,dim
-        do a = 1,dim
-           do b = 1,dim
-              do c = 1,dim
-                 do d = 1,dim
-                    X4(d,c,b,a,i) = X4(d,c,b,a,i) + X(i,node)*M4(d,c,b,a,node)
-                 end do
-              end do
-           end do
-        end do
+     do i = 1,nsd
+        X4(:,i) = X4(:,i) + X(i,node)*M4(:,node)
      end do
   end do
 
 end subroutine GeometryMap
-
-include 'petigainv.f90.in'

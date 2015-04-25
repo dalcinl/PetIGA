@@ -52,6 +52,9 @@ extern void IGA_GeometryMap_2D(PetscInt,PetscInt,PetscInt,const PetscReal[],
 extern void IGA_GeometryMap_3D(PetscInt,PetscInt,PetscInt,const PetscReal[],
                                const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
                                PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
+extern void IGA_GeometryMap   (PetscInt,PetscInt,PetscInt,PetscInt,PetscInt,const PetscReal[],
+                               const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],const PetscReal[],
+                               PetscReal[],PetscReal[],PetscReal[],PetscReal[],PetscReal[]);
 EXTERN_C_END
 
 
