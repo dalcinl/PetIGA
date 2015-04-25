@@ -87,11 +87,13 @@ int main(int argc, char *argv[])
     if ((PetscInt)val != 1) SETERRQ(comm,PETSC_ERR_PLIB,"Loaded Vec does not match");
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
 
+#if !defined(PETSC_USE_COMPLEX)
     ierr = IGACreateVec(iga,&vec);CHKERRQ(ierr);
     ierr = PetscViewerVTKOpen(comm,"igavec.vts",FILE_MODE_WRITE,&viewer);
     ierr = IGADrawVec(iga,vec,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     ierr = VecDestroy(&vec);CHKERRQ(ierr);
+#endif
   }
 
   {

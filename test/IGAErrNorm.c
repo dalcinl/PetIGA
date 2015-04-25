@@ -67,7 +67,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
   PetscScalar (*K)[dof][nen][dof] = (typeof(K)) KK;
   PetscScalar (*F)[dof] = (typeof(F)) FF;
 
-  PetscReal u[dof];
+  PetscScalar u[dof];
   (void)Exact(p,0,u,NULL);
 
   PetscInt a,b,i;
