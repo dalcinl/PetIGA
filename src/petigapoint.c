@@ -449,8 +449,8 @@ PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],P
   PetscValidPointer(u,4);
   if (PetscUnlikely(p->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
-  if (PetscUnlikely(ider < 0 || ider > 3))
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=ider<=3, got %D",ider);
+  if (PetscUnlikely(ider < 0 || ider > 4))
+    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=ider<=4, got %D",ider);
   {
     PetscInt nen = p->nen;
     PetscInt dof = p->dof;
@@ -461,6 +461,7 @@ PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],P
     case 1: IGA_GetGrad (nen,dof,dim,N,U,u); break;
     case 2: IGA_GetHess (nen,dof,dim,N,U,u); break;
     case 3: IGA_GetDer3 (nen,dof,dim,N,U,u); break;
+    case 4: IGA_GetDer4 (nen,dof,dim,N,U,u); break;
     default: PetscFunctionReturn(PETSC_ERR_ARG_OUTOFRANGE);
     }
   }
