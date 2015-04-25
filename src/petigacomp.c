@@ -118,8 +118,8 @@ static PetscErrorCode ErrorSqr(IGAPoint p,const PetscScalar U[],PetscInt dof,Pet
   ierr = PetscMemzero(v_exact,(size_t)(dof*n)*sizeof(PetscScalar));CHKERRQ(ierr);
   if (app->Exact) {ierr = app->Exact(p,order,v_exact,app->ctx);CHKERRQ(ierr);}
   for (i=0; i<dof; i++) {
-    PetscReal e, *u = &v_exact[i*n], *uh = &v_approx[i*n];
-    for (j=0; j<n; j++) { e = PetscAbsScalar(u[j] - uh[j]); errsqr[i] += e*e; }
+    PetscScalar *u = &v_exact[i*n], *uh = &v_approx[i*n];
+    for (j=0; j<n; j++) { PetscReal e = PetscAbsScalar(u[j] - uh[j]); errsqr[i] += e*e; }
   }
   PetscFunctionReturn(0);
 }
