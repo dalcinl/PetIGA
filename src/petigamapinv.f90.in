@@ -8,16 +8,17 @@ pure subroutine InverseMap(&
   use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
+  !integer(kind=IGA_INTEGER_KIND),parameter   :: nsd = 1,2,3
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim,dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(            dim,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(        dim,dim,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(    dim,dim,dim,nsd)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim,dim,dim,dim,nsd)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: dX
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim,dim,dim,dim)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(dim,dim,dim,dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(            nsd,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(        nsd,nsd,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(    nsd,nsd,nsd,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(nsd,nsd,nsd,nsd,dim)
 
   integer(kind=IGA_INTEGER_KIND)  :: node
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
@@ -31,14 +32,13 @@ pure subroutine InverseMap(&
   ! 2nd derivatives
   if (order < 2) return
   E2 = 0
-  do i = 1,dim
-     do j = 1,dim
-        do k = 1,dim
+  do i = 1,nsd
+     do j = 1,nsd
+        do k = 1,nsd
            do a = 1,dim
               do b = 1,dim
                  do c = 1,dim
-                    E2(j,i,c) = E2(j,i,c) &
-                         -X2(b,a,k)*E1(i,a)*E1(j,b)*E1(k,c)
+                    E2(j,i,c) = E2(j,i,c) - X2(b,a,k)*E1(i,a)*E1(j,b)*E1(k,c)
                  end do
               end do
            end do
@@ -50,21 +50,16 @@ pure subroutine InverseMap(&
   if (order < 3) return
   E3 = 0
   do d = 1,dim
-     do i = 1,dim
-        do j = 1,dim
-           do k = 1,dim
+     do i = 1,nsd
+        do j = 1,nsd
+           do k = 1,nsd
               do a = 1,dim
                  do b = 1,dim
-                    do l = 1,dim
+                    do l = 1,nsd
                        do c = 1,dim
-                          E3(k,j,i,d) = E3(k,j,i,d) &
-                               -X3(c,b,a,l)*E1(i,a)*E1(j,b)*E1(k,c)*E1(l,d)
+                          E3(k,j,i,d) = E3(k,j,i,d) - X3(c,b,a,l)*E1(i,a)*E1(j,b)*E1(k,c)*E1(l,d)
                        end do
-                       E3(k,j,i,d) = E3(k,j,i,d) &
-                            -X2(b,a,l)*( &
-                            +E1(i,a)*E2(k,j,b) &
-                            +E1(j,b)*E2(k,i,a) &
-                            +E1(k,b)*E2(j,i,a))*E1(l,d)
+                       E3(k,j,i,d) = E3(k,j,i,d) - X2(b,a,l)*(E1(i,a)*E2(k,j,b)+E1(j,b)*E2(k,i,a)+E1(k,b)*E2(j,i,a))*E1(l,d)
                     end do
                  end do
               end do

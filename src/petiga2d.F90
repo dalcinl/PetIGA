@@ -210,17 +210,18 @@ pure subroutine IGA_InverseMap_2D(&
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), parameter        :: nsd = 2
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X1(dim**1*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X2(dim**2*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X3(dim**3*nsd,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: X4(dim**4*nsd,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: dX(nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E1(nsd**1*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E2(nsd**2*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(nsd**3*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(nsd**4*dim,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   do q=1,nqp
      call InverseMap(&
@@ -244,23 +245,24 @@ pure subroutine IGA_ShapeFuns_2D(&
   use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), parameter        :: dim = 2
+  integer(kind=IGA_INTEGER_KIND), parameter        :: nsd = 2
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: order
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nqp
   integer(kind=IGA_INTEGER_KIND), intent(in),value :: nen
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(dim**2,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(dim**3,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(dim**4,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(dim**5,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E1(nsd**1*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(nsd**2*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(nsd**3*dim,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(nsd**4*dim,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(dim**0*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(dim**1*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(nsd**0*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(nsd**1*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(nsd**2*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(nsd**3*nen,nqp)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(nsd**4*nen,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
   N0 = M0 ! 0th derivatives
   do q=1,nqp
