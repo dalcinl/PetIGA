@@ -297,6 +297,15 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   IGACheckSetUp(iga,1);
   element = *_element = iga->iterator;
 
+  { /* */
+    PetscInt dim = iga->dim, dof = iga->dof;
+    PetscInt nsd = iga->geometry ? iga->geometry : iga->dim;
+    PetscInt npd = iga->property ? iga->property : 0;
+    if (element->dim != dim || element->dof != dof ||
+        element->nsd != nsd || element->npd != npd)
+      {ierr = IGAElementInit(element,iga);CHKERRQ(ierr);}
+  }
+
   element->index = -1;
   element->atboundary  = PETSC_FALSE;
   element->boundary_id = -1;
@@ -311,16 +320,6 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     size_t nen = (size_t)element->nen;
     size_t nsd = iga->geometry ? (size_t)iga->geometry : (size_t)iga->dim;
     size_t npd = (size_t)iga->property;
-    if (element->nsd != (PetscInt)nsd) {
-      element->nsd = (PetscInt)nsd;
-      ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
-      ierr = PetscMalloc1(nen*nsd,&element->geometryX);CHKERRQ(ierr);
-    }
-    if (element->npd != (PetscInt)npd) {
-      element->npd = (PetscInt)npd;
-      ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
-      ierr = PetscMalloc1(nen*npd,&element->propertyA);CHKERRQ(ierr);
-    }
     ierr = PetscMemzero(element->rationalW,sizeof(PetscReal)*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->geometryX,sizeof(PetscReal)*nen*nsd);CHKERRQ(ierr);
     ierr = PetscMemzero(element->propertyA,sizeof(PetscReal)*nen*npd);CHKERRQ(ierr);
