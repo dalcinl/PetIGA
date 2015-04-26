@@ -496,7 +496,7 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   if (order < 0)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Order must be nonnegative, got %D",order);
-  iga->order = PetscClipInterval(1,order,4);
+  iga->order = PetscClipInterval(order,1,4);
   PetscFunctionReturn(0);
 }
 

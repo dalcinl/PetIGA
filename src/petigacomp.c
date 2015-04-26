@@ -106,8 +106,8 @@ static const size_t intpow[4][5] = {{1,0,0,0,0},{1,1,1,1,1},{1,2,4,8,16},{1,3,9,
 static PetscErrorCode ErrorSqr(IGAPoint p,const PetscScalar U[],PetscInt dof,PetscScalar errsqr[],void *ctx)
 {
   ErrorCtx       *app = (ErrorCtx*)ctx;
-  PetscInt       dim = PetscClipInterval(1,p->dim,3);
-  PetscInt       order = PetscClipInterval(0,app->order,4);
+  PetscInt       dim = PetscClipInterval(p->dim,1,3);
+  PetscInt       order = PetscClipInterval(app->order,0,4);
   PetscInt       i,j,n = (PetscInt)intpow[dim][order];
   PetscScalar    *v_approx = app->work[0];
   PetscScalar    *v_exact  = app->work[1];
