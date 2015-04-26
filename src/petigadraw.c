@@ -8,7 +8,7 @@ PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
 {
   MPI_Comm        comm;
-  PetscInt        i,dim;
+  PetscInt        i,dim,nsd;
   PetscInt        sizes[3] = {1, 1, 1};
   PetscInt        width[3] = {1, 1, 1};
   PetscBool       wraps[3] = {PETSC_TRUE, PETSC_TRUE, PETSC_TRUE};
@@ -24,8 +24,7 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
 
   /* compute global and local sizes */
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  dim = PetscMax(1,dim); /* silent GCC -O3 warning */
-  dim = PetscMin(dim,3); /* silent GCC -O3 warning */
+  dim = PetscClipInterval(dim,1,3); /* silent GCC -O3 warning */
   if (!iga->collocation) {
     const PetscInt *pranks = iga->proc_ranks;
     const PetscInt *psizes = iga->proc_sizes;
@@ -42,12 +41,14 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
   /* create DMDA context */
   ierr = IGACreateDMDA(iga,bs,sizes,width,wraps,PETSC_TRUE,1,dm);CHKERRQ(ierr);
   /* create coordinate vector */
+  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
+  nsd = PetscClipInterval(dim,nsd,3);
   n = width[0]*width[1]*width[2];
   N = sizes[0]*sizes[1]*sizes[2];
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = VecCreate(comm,&X);CHKERRQ(ierr);
-  ierr = VecSetSizes(X,dim*n,dim*N);CHKERRQ(ierr);
-  ierr = VecSetBlockSize(X,dim);CHKERRQ(ierr);
+  ierr = VecSetSizes(X,nsd*n,nsd*N);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(X,nsd);CHKERRQ(ierr);
   ierr = VecSetType(X,VECSTANDARD);CHKERRQ(ierr);
   ierr = VecSetUp(X);CHKERRQ(ierr);
   ierr = DMSetCoordinates(*dm,X);CHKERRQ(ierr);
@@ -108,7 +109,7 @@ PetscReal LagrangeParameter(PetscInt index,IGAAxis axis)
 #define __FUNCT__ "IGADrawVec"
 PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
 {
-  PetscInt       dim,dof;
+  PetscInt       dof,dim,nsd;
   DM             da;
   Vec            X,U;
   PetscScalar    *arrayX=NULL;
@@ -125,8 +126,11 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUp(iga,1);
 
-  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
+  dim = PetscClipInterval(dim,1,3);
+  nsd = PetscClipInterval(nsd,dim,3);
 
   ierr = IGAGetDrawDM(iga,&da);CHKERRQ(ierr);
   ierr = DMGetCoordinates(da,&X);CHKERRQ(ierr);
@@ -140,8 +144,8 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   ierr = IGAProbeSetOrder(probe,0);CHKERRQ(ierr);
   ierr = IGAProbeSetCollective(probe,PETSC_FALSE);CHKERRQ(ierr);
   {
-    PetscReal uvw[3] = {0,0,0};
-    PetscReal xval[3];
+    PetscReal uvw[3]  = {0,0,0};
+    PetscReal xval[3] = {0,0,0};
     PetscScalar *uval;
     PetscInt is,iw,js,jw,ks,kw;
     PetscInt c,i,j,k,xpos=0,upos=0;
@@ -158,7 +162,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
             ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
             ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);
             ierr = IGAProbeFormValue(probe,uval);CHKERRQ(ierr);
-            for (c=0; c<dim; c++) arrayX[xpos++] = xval[c];
+            for (c=0; c<nsd; c++) arrayX[xpos++] = xval[c];
             for (c=0; c<dof; c++) arrayU[upos++] = uval[c];
           }
         }
