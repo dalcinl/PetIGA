@@ -37,11 +37,13 @@ int main(int argc, char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
 
+  PetscBool fd = PETSC_FALSE;
   PetscBool steady = PETSC_TRUE;
   PetscReal lambda = 6.80;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Bratu Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-steady","Steady problem",__FILE__,steady,&steady,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-lambda","Bratu parameter",__FILE__,lambda,&lambda,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBool("-iga_fd","Use FD Jacobian",__FILE__,fd,&fd,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   IGA iga;
@@ -64,10 +66,10 @@ int main(int argc, char *argv[]) {
   ctx.lambda = lambda;
   if (steady) {
     ierr = IGASetFormFunction(iga,Bratu_Function,&ctx);CHKERRQ(ierr);
-    ierr = IGASetFormJacobian(iga,Bratu_Jacobian,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormJacobian(iga,fd?IGAFormJacobianFD:Bratu_Jacobian,&ctx);CHKERRQ(ierr);
   } else {
     ierr = IGASetFormIFunction(iga,Bratu_IFunction,&ctx);CHKERRQ(ierr);
-    ierr = IGASetFormIJacobian(iga,Bratu_IJacobian,&ctx);CHKERRQ(ierr);
+    ierr = IGASetFormIJacobian(iga,fd?IGAFormIJacobianFD:Bratu_IJacobian,&ctx);CHKERRQ(ierr);
   }
 
   Vec x;

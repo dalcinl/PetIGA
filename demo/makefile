@@ -188,17 +188,25 @@ runex6c_4:
 runex6d_1:
 	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
 runex6d_2:
-	-@$(MPIEXEC) -n 4 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
+	-@$(MPIEXEC) -n 2 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
 runex6d_4:
 	-@$(MPIEXEC) -n 4 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
+runex6d_6:
+	-@$(MPIEXEC) -n 6 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
 runex6d_8:
 	-@$(MPIEXEC) -n 8 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
-runex6d_9:
-	-@$(MPIEXEC) -n 9 ./Bratu $(OPTS) -iga_dim 2 -steady true -iga_collocation
 runex6e_1:
+	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -iga_fd
 	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color
 runex6e_4:
+	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -iga_fd
 	-@$(MPIEXEC) -n 4 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color
+runex6f_1:
+	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -iga_fd         -steady false -ts_max_steps 2
+	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color  -steady false -ts_max_steps 2
+runex6f_4:
+	-@$(MPIEXEC) -n 1 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -iga_fd	       -steady false -ts_max_steps 2
+	-@$(MPIEXEC) -n 4 ./Bratu $(OPTS) -iga_dim 2 -iga_degree 1 -lambda 1.0 -snes_fd_color  -steady false -ts_max_steps 2
 runex7a_1:
 	-@$(MPIEXEC) -n 1 ./Neumann $(OPTS) -check_error -iga_dim 1 -pc_type icc
 runex7a_4:
@@ -259,8 +267,8 @@ NitscheMethod.rm
 Bratu := \
 Bratu.PETSc \
 runex6a_1 runex6a_2 runex6b_1 runex6b_4 runex6c_1 runex6c_4 \
-runex6d_1 runex6d_2 runex6d_4 runex6d_8 runex6d_9 \
-runex6e_1 runex6e_4 \
+runex6d_1 runex6d_2 runex6d_4 runex6d_6 runex6d_8 \
+runex6e_1 runex6e_4 runex6f_1 runex6f_4 \
 Bratu.rm
 
 CahnHilliard2D := CahnHilliard2D.PETSc runex4_1 runex4_4 CahnHilliard2D.rm
@@ -280,5 +288,7 @@ testfortran:
 	-@if [ "$(FC)" != "" ]; then \
 	    $(OMAKE) tree ACTION=testexamples_Fortran PETSC_ARCH=$(PETSC_ARCH) PETSC_DIR=$(PETSC_DIR) PETIGA_DIR=$(PETIGA_DIR); \
 	  fi
+
+runex-%: ; $(OMAKE) $($*)
 
 include $(PETIGA_DIR)/lib/petiga/conf/test
