@@ -42,7 +42,7 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
   ierr = IGACreateDMDA(iga,bs,sizes,width,wraps,PETSC_TRUE,1,dm);CHKERRQ(ierr);
   /* create coordinate vector */
   ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
-  nsd = PetscClipInterval(dim,nsd,3);
+  nsd = PetscClipInterval(nsd,dim,3);
   n = width[0]*width[1]*width[2];
   N = sizes[0]*sizes[1]*sizes[2];
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);

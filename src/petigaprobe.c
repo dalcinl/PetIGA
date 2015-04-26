@@ -58,9 +58,9 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
     ierr = PetscMalloc1((size_t)(n*5),&prb->BD[i]);CHKERRQ(ierr);
     prb->nen *= n;
   }
-  if (iga->rational)
+  if (iga->rational && iga->rationalW)
     prb->arrayW = iga->rationalW;
-  if (iga->geometry)
+  if (iga->geometry && iga->geometryX)
     prb->arrayX = iga->geometryX;
 
   {

@@ -188,6 +188,9 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
   if (dim < 1 || dim > 3)
     SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of space dimensions must be in range [1,3], got %D",dim);
+  if (dim < iga->dim)
+    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
+             "Number of space dimensions must greater than or equal to %D, got %D",iga->dim,dim);
   if (iga->geometry == dim) PetscFunctionReturn(0);
   iga->geometry = dim;
   iga->rational = PETSC_FALSE;
@@ -264,16 +267,17 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   ierr = VecStrideMax(gvec,nsd,NULL,&max_w);CHKERRQ(ierr);
   iga->rational = ((max_w-min_w)>tol_w) ? PETSC_TRUE : PETSC_FALSE;
 
-  ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);
-  ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);
   {
     PetscInt n,a,i,pos;
     PetscReal *X,*W;
     const PetscScalar *Xw;
+    PetscInt *gwidth = iga->geom_gwidth,gsize = gwidth[0]*gwidth[1]*gwidth[2];
     ierr = VecGetSize(lvec,&n);CHKERRQ(ierr);
     n /= (nsd+1);
-    ierr = PetscMalloc1((size_t)(n*nsd),&iga->geometryX);CHKERRQ(ierr);
-    ierr = PetscMalloc1((size_t)n,&iga->rationalW);CHKERRQ(ierr);
+    if (n != gsize) {ierr = PetscFree(iga->geometryX);CHKERRQ(ierr);}
+    if (n != gsize) {ierr = PetscFree(iga->rationalW);CHKERRQ(ierr);}
+    if (!iga->geometryX) {ierr = PetscMalloc1((size_t)(n*nsd),&iga->geometryX);CHKERRQ(ierr);}
+    if (!iga->rationalW) {ierr = PetscMalloc1((size_t)n,&iga->rationalW);CHKERRQ(ierr);}
     X = iga->geometryX; W = iga->rationalW;
     ierr = VecGetArrayRead(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
@@ -312,7 +316,7 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
   IGACheckSetUpStage1(iga,1);
-  if (!iga->geometry) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
+  if (!iga->geometry || !iga->geometryX) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"No geometry set");
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&isbinary);CHKERRQ(ierr);
   if (!isbinary) SETERRQ(((PetscObject)viewer)->comm,PETSC_ERR_ARG_WRONG,"Only for binary viewers");
@@ -343,10 +347,10 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
     n /= (nsd+1);
     ierr = VecGetArray(lvec,&Xw);CHKERRQ(ierr);
     for (pos=0,a=0; a<n; a++) {
-      PetscReal w = (PetscAbsReal(W[a]) > 0) ? W[a] : 1;
+      PetscReal w = (W && PetscAbsReal(W[a]) > 0) ? W[a] : 1;
       for (i=0; i<nsd; i++)
         Xw[pos++] = X[i+a*nsd] * w;
-      Xw[pos++] = W[a];
+      Xw[pos++] = W ? W[a] : (PetscReal)1;
     }
     ierr = VecRestoreArray(lvec,&Xw);CHKERRQ(ierr);
   }

@@ -352,13 +352,13 @@ static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
 static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
 {
   IGA            iga = DMIGACast(dm)->iga;
-  PetscInt       dim;
+  PetscInt       dim,nsd;
   IGA            ciga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = IGAGetGeometryDim(iga,&dim);CHKERRQ(ierr);
-  if (!dim) {ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);}
-  ierr = IGAClone(iga,dim,&ciga);CHKERRQ(ierr);
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
+  ierr = IGAClone(iga,PetscMax(dim,nsd),&ciga);CHKERRQ(ierr);
   ierr = IGACreateWrapperDM(ciga,cdm);CHKERRQ(ierr);
   ierr = IGADestroy(&ciga);CHKERRQ(ierr);
   PetscFunctionReturn(0);

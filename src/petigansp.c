@@ -11,7 +11,7 @@ PETSC_STATIC_INLINE PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2
 PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
 {
   MPI_Comm       comm;
-  PetscInt       dim,n,N;
+  PetscInt       dim,nsd,n,N;
   Vec            vecX;
   PetscScalar    *arrayX;
   PetscErrorCode ierr;
@@ -21,20 +21,21 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
   IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = IGAGetGeometryDim(iga,&dim);CHKERRQ(ierr);
-  if (!dim) {ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);}
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
   dim = PetscClipInterval(dim,1,3);
-  n = dim*Product(iga->node_lwidth);
-  N = dim*Product(iga->node_sizes);
+  nsd = PetscClipInterval(nsd,dim,3);
+  n = nsd*Product(iga->node_lwidth);
+  N = nsd*Product(iga->node_sizes);
 
   ierr = VecCreate(comm,&vecX);CHKERRQ(ierr);
   ierr = VecSetSizes(vecX,n,N);CHKERRQ(ierr);
-  ierr = VecSetBlockSize(vecX,dim);CHKERRQ(ierr);
+  ierr = VecSetBlockSize(vecX,nsd);CHKERRQ(ierr);
   ierr = VecSetType(vecX,iga->vectype);CHKERRQ(ierr);
   *coords = vecX;
 
   ierr = VecGetArray(vecX,&arrayX);CHKERRQ(ierr);
-  if (iga->geometry) {
+  if (iga->geometry && iga->geometryX) {
     /* local non-ghosted grid */
     const PetscInt *lstart = iga->node_lstart;
     const PetscInt *lwidth = iga->node_lwidth;
@@ -58,7 +59,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
               j>=jlstart && j<jlend &&
               k>=klstart && k<klend)
             {
-              for (c=0; c<dim; c++)
+              for (c=0; c<nsd; c++)
                 arrayX[xpos++] = xyz[index+c];
             }
   } else {
@@ -80,7 +81,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
         for (i=ilstart; i<ilend; i++) {
           xyz[0] = IGA_Greville(i,AX[0]->p,AX[0]->U);
           {
-            for (c=0; c<dim; c++)
+            for (c=0; c<nsd; c++)
               arrayX[xpos++] = xyz[c];
           }
         }
