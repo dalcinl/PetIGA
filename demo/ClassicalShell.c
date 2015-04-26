@@ -209,7 +209,11 @@ int main(int argc, char *argv[]) {
     ierr = VecGetValues(x,1,&index,&value);CHKERRQ(ierr);
     PetscPrintf(PETSC_COMM_SELF,"x[%d]=%g\n",index,(double)value);
   }
+
   ierr = IGAWriteVec(iga,x,"ClassicalShell.out");CHKERRQ(ierr);
+#if !defined(PETSC_USE_COMPLEX)
+  ierr = IGAWriteVecVTK(iga,x,"ClassicalShell.vts");CHKERRQ(ierr);
+#endif
 
   PetscBool draw = PETSC_FALSE;
   ierr = PetscOptionsHasName(NULL,"-draw",&draw);CHKERRQ(ierr);

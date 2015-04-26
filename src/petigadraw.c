@@ -184,6 +184,27 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAWriteVecVTK"
+PetscErrorCode IGAWriteVecVTK(IGA iga,Vec vec,const char filename[])
+{
+  MPI_Comm       comm;
+  PetscViewer    viewer;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
+  PetscCheckSameComm(iga,1,vec,2);
+  PetscValidCharPointer(filename,2);
+
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = PetscViewerVTKOpen(comm,filename,FILE_MODE_WRITE,&viewer);
+  ierr = IGADrawVec(iga,vec,viewer);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 EXTERN_C_BEGIN
 extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
 EXTERN_C_END
