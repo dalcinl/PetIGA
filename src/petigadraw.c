@@ -81,28 +81,28 @@ EXTERN_C_BEGIN
 extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
 EXTERN_C_END
 
-PETSC_STATIC_INLINE
-PetscReal GrevilleParameter(PetscInt index,IGAAxis axis)
+static
+PetscReal GrevillePoint(PetscInt index,IGAAxis axis)
 {
   if (PetscUnlikely(axis->p == 0)) return 0;
   return IGA_Greville(index,axis->p,axis->U);
 }
 
-PETSC_STATIC_INLINE
-PetscReal LagrangeParameter(PetscInt index,IGAAxis axis)
+static
+PetscReal LagrangePoint(PetscInt index,IGAAxis axis)
 {
-  PetscInt p,e,i,k;
-  PetscReal u0,u1;
   if (PetscUnlikely(axis->p == 0)) return 0;
-  p = axis->p;
-  e = index / p;
-  i = index % p;
-  if (PetscUnlikely(e == axis->nel))
-    return axis->U[axis->span[e-1] + 1];
-  k  = axis->span[e];
-  u0 = axis->U[k];
-  u1 = axis->U[k+1];
-  return u0 + (PetscReal)i/(PetscReal)p*(u1-u0);
+  {
+    PetscInt n = axis->nel;
+    PetscInt p = axis->p;
+    PetscInt e = index / p;
+    PetscInt i = index % p;
+    PetscReal u0,u1;
+    if (PetscUnlikely(e == n)) { e -= 1; i = p; }
+    u0 = axis->U[axis->span[e]];
+    u1 = axis->U[axis->span[e]+1];
+    return u0 + (PetscReal)i/(PetscReal)p*(u1-u0);
+  }
 }
 
 #undef  __FUNCT__
@@ -115,7 +115,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscScalar    *arrayX=NULL;
   PetscScalar    *arrayU=NULL;
   IGAProbe       probe;
-  PetscReal     (*Parameter)(PetscInt,IGAAxis);
+  PetscReal     (*ComputePoint)(PetscInt,IGAAxis);
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -138,7 +138,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   ierr = VecGetArray(X,&arrayX);CHKERRQ(ierr);
   ierr = VecGetArray(U,&arrayU);CHKERRQ(ierr);
 
-  Parameter = iga->collocation ? GrevilleParameter : LagrangeParameter;
+  ComputePoint = iga->collocation ? GrevillePoint : LagrangePoint;
 
   ierr = IGAProbeCreate(iga,vec,&probe);CHKERRQ(ierr);
   ierr = IGAProbeSetOrder(probe,0);CHKERRQ(ierr);
@@ -153,11 +153,11 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
     ierr = DMDAGetCorners(da,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
     ierr = PetscMalloc1((size_t)dof,&uval);CHKERRQ(ierr);
     for (k=ks; k<ks+kw; k++) {
-      uvw[2] = Parameter(k+shift[2],iga->axis[2]);
+      uvw[2] = ComputePoint(k+shift[2],iga->axis[2]);
       for (j=js; j<js+jw; j++) {
-        uvw[1] = Parameter(j+shift[1],iga->axis[1]);
+        uvw[1] = ComputePoint(j+shift[1],iga->axis[1]);
         for (i=is; i<is+iw; i++) {
-          uvw[0] = Parameter(i+shift[0],iga->axis[0]);
+          uvw[0] = ComputePoint(i+shift[0],iga->axis[0]);
           {
             ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
             ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);

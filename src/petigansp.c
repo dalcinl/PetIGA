@@ -4,6 +4,30 @@ EXTERN_C_BEGIN
 extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
 EXTERN_C_END
 
+EXTERN_C_BEGIN
+extern void IGA_LobattoPoints(PetscInt n,PetscReal x0,PetscReal x1,PetscReal x[]);
+EXTERN_C_END
+
+PETSC_STATIC_INLINE
+PetscReal ComputePoint(PetscInt index,IGAAxis axis,IGABasisType btype)
+{
+  if (PetscUnlikely(axis->p == 0)) return 0;
+  if (btype == IGA_BASIS_SPECTRAL) {
+    PetscInt n = axis->nel;
+    PetscInt p = axis->p;
+    PetscInt e = index / p;
+    PetscInt i = index % p;
+    PetscReal u0,u1,u[16+1];
+    if (PetscUnlikely(p > 16)) return PETSC_MAX_REAL;
+    if (PetscUnlikely(e == n)) { e -= 1; i = p; }
+    u0 = axis->U[axis->span[e]];
+    u1 = axis->U[axis->span[e]+1];
+    IGA_LobattoPoints(p+1,u0,u1,u);
+    return u[i];
+  }
+  return IGA_Greville(index,axis->p,axis->U);
+}
+
 PETSC_STATIC_INLINE PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
 
 #undef  __FUNCT__
@@ -70,19 +94,19 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
     PetscInt jlstart = lstart[1], jlend = lstart[1]+lwidth[1];
     PetscInt klstart = lstart[2], klend = lstart[2]+lwidth[2];
     /* fill coordinates using Greville abscissae */
-    IGAAxis *AX = iga->axis;
-    PetscInt c,i,j,k;
-    PetscInt xpos = 0;
-    PetscReal xyz[3] = {0,0,0};
+    IGAAxis  *AX = iga->axis;
+    IGABasis *BD = iga->basis;
+    PetscInt c,i,j,k,pos = 0;
+    PetscReal uvw[3] = {0,0,0};
     for (k=klstart; k<klend; k++) {
-      xyz[2] = IGA_Greville(k,AX[2]->p,AX[2]->U);
+      uvw[2] = ComputePoint(k,AX[2],BD[2]->type);
       for (j=jlstart; j<jlend; j++) {
-        xyz[1] = IGA_Greville(j,AX[1]->p,AX[1]->U);
+        uvw[1] = ComputePoint(j,AX[1],BD[1]->type);
         for (i=ilstart; i<ilend; i++) {
-          xyz[0] = IGA_Greville(i,AX[0]->p,AX[0]->U);
+          uvw[0] = ComputePoint(i,AX[0],BD[0]->type);
           {
             for (c=0; c<nsd; c++)
-              arrayX[xpos++] = xyz[c];
+              arrayX[pos++] = uvw[c];
           }
         }
       }

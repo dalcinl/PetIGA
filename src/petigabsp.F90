@@ -117,3 +117,15 @@ subroutine IGA_Basis_Spectral(k,uu,p,d,U,B) &
 contains
 include 'petigabsp.f90.in'
 end subroutine IGA_Basis_Spectral
+
+subroutine IGA_LobattoPoints(n,x0,x1,X) &
+  bind(C, name="IGA_LobattoPoints")
+  use PetIGA
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in),value  :: n
+  real   (kind=IGA_REAL_KIND   ), intent(in),value  :: x0, x1
+  real   (kind=IGA_REAL_KIND   ), intent(out)       :: X(0:n-1)
+  call GaussLobattoPoints(n,X0,X1,X)
+contains
+include 'petigabsp.f90.in'
+end subroutine IGA_LobattoPoints
