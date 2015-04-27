@@ -862,6 +862,7 @@ PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscErrorCode IGAPreparePCMG(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerPC(PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp);

@@ -369,6 +369,41 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
 /* ---------------------------------------------------------------- */
 
+#undef  __FUNCT__
+#define __FUNCT__ "IGAPreparePCMG"
+PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
+{
+  DM             dm;
+  PetscBool      match;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidHeaderSpecific(pc,PC_CLASSID,2);
+
+  ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)pc,PCMG,&match);CHKERRQ(ierr);
+  if (match && !dm) {
+    PetscBool  wraps[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscInt   i,dim,dof,*N = iga->node_sizes,*n = iga->node_lwidth;
+    const char *prefix = NULL;
+    /* Use a DMDA to generate the grid hierarchy with low-order levels */
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
+    ierr = IGACreateDMDA(iga,dof,N,n,wraps,PETSC_TRUE,1,&dm);CHKERRQ(ierr);
+    ierr = PCSetDM(pc,dm);CHKERRQ(ierr);
+    ierr = DMDestroy(&dm);CHKERRQ(ierr);
+    /* Use the Galerkin process to compute coarse-level operators */
+    ierr = PCGetOptionsPrefix(pc,&prefix);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(prefix,"-pc_mg_galerkin",&match);CHKERRQ(ierr);
+    if (!match) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
+  }
+  PetscFunctionReturn(0);
+}
+
+/* ---------------------------------------------------------------- */
+
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_PC"
@@ -391,6 +426,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *c
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   /* */
+  ierr = IGAPreparePCMG(iga,pc);CHKERRQ(ierr);
   ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
   /* */
   PetscFunctionReturn(0);
