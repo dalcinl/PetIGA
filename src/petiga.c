@@ -1039,7 +1039,7 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   PetscValidIntPointer(gsizes,3);
   PetscValidIntPointer(lsizes,4);
   if (periodic) PetscValidIntPointer(periodic,5);
-  PetscValidLogicalCollectiveBool(iga,stencil_width,6);
+  PetscValidLogicalCollectiveBool(iga,stencil_box,6);
   PetscValidLogicalCollectiveInt(iga,stencil_width,7);
   PetscValidPointer(dm,8);
   IGACheckSetUpStage1(iga,1);
