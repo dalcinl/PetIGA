@@ -823,7 +823,8 @@ PetscInt IGA_Quadrature_SIZE(const IGABasis BD[],const PetscInt ID[],PetscInt NQ
 #define __FUNCT__ "IGAElementBuildTabulation"
 PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 {
-  PetscInt axis,side;
+  PetscInt axis = PETSC_MAX_INT;
+  PetscInt side = PETSC_MAX_INT;
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (PetscUnlikely(element->index < 0))
