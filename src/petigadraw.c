@@ -185,8 +185,8 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAWriteVecVTK"
-PetscErrorCode IGAWriteVecVTK(IGA iga,Vec vec,const char filename[])
+#define __FUNCT__ "IGADrawVecVTK"
+PetscErrorCode IGADrawVecVTK(IGA iga,Vec vec,const char filename[])
 {
   MPI_Comm       comm;
   PetscViewer    viewer;

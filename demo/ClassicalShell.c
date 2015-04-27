@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 
   ierr = IGAWriteVec(iga,x,"ClassicalShell.out");CHKERRQ(ierr);
 #if !defined(PETSC_USE_COMPLEX)
-  ierr = IGAWriteVecVTK(iga,x,"ClassicalShell.vts");CHKERRQ(ierr);
+  ierr = IGADrawVecVTK(iga,x,"ClassicalShell.vts");CHKERRQ(ierr);
 #endif
 
   PetscBool draw = PETSC_FALSE;

@@ -418,7 +418,7 @@ PETSC_EXTERN PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer);
 PETSC_EXTERN PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[]);
 PETSC_EXTERN PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[]);
-PETSC_EXTERN PetscErrorCode IGAWriteVecVTK(IGA iga,Vec vec,const char filename[]);
+PETSC_EXTERN PetscErrorCode IGADrawVecVTK(IGA iga,Vec vec,const char filename[]);
 
 PETSC_EXTERN PetscErrorCode IGASetDim(IGA iga,PetscInt dim);
 PETSC_EXTERN PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim);
