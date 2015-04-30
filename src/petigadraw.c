@@ -199,7 +199,7 @@ PetscErrorCode IGADrawVecVTK(IGA iga,Vec vec,const char filename[])
   PetscValidCharPointer(filename,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = PetscViewerVTKOpen(comm,filename,FILE_MODE_WRITE,&viewer);
+  ierr = PetscViewerVTKOpen(comm,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
   ierr = IGADrawVec(iga,vec,viewer);CHKERRQ(ierr);
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   PetscFunctionReturn(0);
