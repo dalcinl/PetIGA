@@ -1202,9 +1202,10 @@ extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
 extern PetscInt  IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal U[]);
 EXTERN_C_END
 
+PETSC_EXTERN PetscErrorCode IGASetUp_Stage1(IGA);
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Stage1"
-static PetscErrorCode IGASetUp_Stage1(IGA iga)
+PetscErrorCode IGASetUp_Stage1(IGA iga)
 {
   PetscInt       i,dim;
   PetscInt       grid_sizes[3] = {1,1,1};
@@ -1405,9 +1406,10 @@ static PetscErrorCode IGASetUp_Stage1(IGA iga)
   PetscFunctionReturn(0);
 }
 
+PETSC_EXTERN PetscErrorCode IGASetUp_Stage2(IGA);
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetUp_Stage2"
-static PetscErrorCode IGASetUp_Stage2(IGA iga)
+PetscErrorCode IGASetUp_Stage2(IGA iga)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
