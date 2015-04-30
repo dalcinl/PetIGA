@@ -369,7 +369,12 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 
 /* ---------------------------------------------------------------- */
 
+#if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/dmdaimpl.h>
+#else
+#include <petsc/private/dmdaimpl.h>
+#endif
+
 static
 #undef  __FUNCT__
 #define __FUNCT__ "DMDASetCoarseningFactor"
@@ -466,7 +471,7 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
   (void)CoarsenFactor(dim,M,factor);
   ierr = DMDASetCoarseningFactor(dm,factor[0],factor[1],factor[2]);CHKERRQ(ierr);
   ierr = DMCoarsenHookAdd(dm,DMDACoarsenHook_PCMG,NULL,NULL);CHKERRQ(ierr);
-  ierr = PetscInfo6(dm,"DA dimensions (%3D,%3D,%3D) coarsen factors (%3D,%3D,%3D)\n",M[0],M[1],M[2],factor[0],factor[1],factor[2]);
+  ierr = PetscInfo6(dm,"DA dimensions (%3D,%3D,%3D) coarsen factors (%3D,%3D,%3D)\n",M[0],M[1],M[2],factor[0],factor[1],factor[2]);CHKERRQ(ierr);
   ierr = DMViewFromOptions(dm,NULL,"-mg_levels_da_view");CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
