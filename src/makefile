@@ -44,7 +44,8 @@ petigadraw.c \
 petigacomp.c \
 petigapcb.c \
 petigapce.c \
-petigapc.c \
+petigapcmg.c \
+petigapcbddc.c \
 petigaksp.c \
 petigasnes.c \
 petigats.c \

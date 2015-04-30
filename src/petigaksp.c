@@ -304,8 +304,36 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscFunctionReturn(0);
 }
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
 */
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_OptionsHandler_PC"
+static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *ctx)
+{
+  PC             pc = (PC)obj;
+  Mat            mat;
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(pc,PC_CLASSID,1);
+#if PETSC_VERSION_LT(3,6,0)
+  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+#endif
+  ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
+  if (!mat) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(mat,MAT_CLASSID,1);
+  ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  /* */
+  ierr = IGAPreparePCMG(iga,pc);CHKERRQ(ierr);
+  ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
+  /* */
+  PetscFunctionReturn(0);
+}
+
+static PetscErrorCode OptHdlDel(PETSC_UNUSED PetscObject obj,PETSC_UNUSED void *ctx) {return 0;}
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsHandlerKSP"
@@ -319,5 +347,17 @@ PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
   /*ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,OptHdlDel,NULL);CHKERRQ(ierr);*/
   ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerPC(pc);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetOptionsHandlerPC"
+PetscErrorCode IGASetOptionsHandlerPC(PC pc)
+{
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(pc,PC_CLASSID,1);
+  ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
