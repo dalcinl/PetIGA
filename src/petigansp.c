@@ -88,6 +88,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
             }
   } else {
     /* local non-ghosted grid */
+    const PetscInt *shift  = iga->node_shift;
     const PetscInt *lstart = iga->node_lstart;
     const PetscInt *lwidth = iga->node_lwidth;
     PetscInt ilstart = lstart[0], ilend = lstart[0]+lwidth[0];
@@ -99,11 +100,11 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
     PetscInt c,i,j,k,pos = 0;
     PetscReal uvw[3] = {0,0,0};
     for (k=klstart; k<klend; k++) {
-      uvw[2] = ComputePoint(k,AX[2],BD[2]->type);
+      uvw[2] = ComputePoint(k+shift[2],AX[2],BD[2]->type);
       for (j=jlstart; j<jlend; j++) {
-        uvw[1] = ComputePoint(j,AX[1],BD[1]->type);
+        uvw[1] = ComputePoint(j+shift[1],AX[1],BD[1]->type);
         for (i=ilstart; i<ilend; i++) {
-          uvw[0] = ComputePoint(i,AX[0],BD[0]->type);
+          uvw[0] = ComputePoint(i+shift[0],AX[0],BD[0]->type);
           {
             for (c=0; c<nsd; c++)
               arrayX[pos++] = uvw[c];
