@@ -7,6 +7,12 @@
 #include <petsc/private/dmdaimpl.h>
 #endif
 
+#if PETSC_VERSION_LT(3,5,0)
+#define DMBoundaryType       DMDABoundaryType
+#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
+#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
+#endif
+
 static
 #undef  __FUNCT__
 #define __FUNCT__ "DMDASetCoarseningFactor"
