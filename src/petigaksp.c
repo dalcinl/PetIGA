@@ -306,8 +306,8 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
 }
 */
 
-#if PETSC_VERSION_LT(3,6,0)
-#define PCGetOperators(pc,Amat,Pmat) PCGetOperators(pc,Amat,Pmat,NULL)
+#if PETSC_VERSION_LT(3,5,0)
+#define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
 
 #undef  __FUNCT__
