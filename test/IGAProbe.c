@@ -54,7 +54,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt nen = p->nen;
 
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   PetscReal f;
   Function(x,&f);
 

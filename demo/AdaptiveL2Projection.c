@@ -28,7 +28,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt nen = p->nen;
   
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   PetscScalar f = Function(x[0],x[1],x[2]);
   
   const PetscReal *N;
@@ -49,7 +49,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   PetscScalar f = Function(x[0],x[1],x[2]);
   
   PetscScalar u;

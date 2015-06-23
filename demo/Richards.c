@@ -24,7 +24,7 @@ PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt dim = p->dim;
 
   PetscReal x[dim];
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
 
   PetscReal f = user->S0;
   PetscReal d = x[dim-1];

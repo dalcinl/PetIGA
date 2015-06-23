@@ -16,7 +16,7 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
   PetscInt nen=p->nen;
 
   PetscReal xy[2];
-  IGAPointFormPoint(p,xy);
+  IGAPointFormGeomMap(p,xy);
   PetscReal x = xy[0];
   PetscReal y = xy[1];
 
@@ -80,7 +80,7 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
 PetscErrorCode FunctionCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *ctx)
 {
   PetscReal xy[2];
-  IGAPointFormPoint(p,xy);
+  IGAPointFormGeomMap(p,xy);
   PetscReal x = xy[0];
   PetscReal y = xy[1];
 

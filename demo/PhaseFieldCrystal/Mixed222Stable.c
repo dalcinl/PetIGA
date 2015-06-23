@@ -115,7 +115,7 @@ PetscErrorCode ResidualL2Projection(IGAPoint p,const PetscScalar *U,PetscScalar 
   PetscScalar (*Ra)[3] = (typeof(Ra)) F;
 
   PetscReal x[dim];
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
 
   PetscScalar tmp[3];
   IGAPointFormValue(p,U,&tmp[0]);

@@ -77,7 +77,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscInt dim = p->dim;
 
   PetscReal xyz[3] = {0,0,0};
-  IGAPointFormPoint(p,xyz);
+  IGAPointFormGeomMap(p,xyz);
   PetscScalar f = app->Function(dim,xyz);
 
   const PetscReal *N = (typeof(N)) p->shape[0];
@@ -100,7 +100,7 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   AppCtx  *app = (AppCtx*)ctx;
   PetscInt dim = p->dim;
   PetscReal xyz[3] = {0,0,0};
-  IGAPointFormPoint(p,xyz);
+  IGAPointFormGeomMap(p,xyz);
   value[0] = app->Function(dim,xyz);
   return 0;
 }

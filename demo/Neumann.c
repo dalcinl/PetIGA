@@ -39,7 +39,7 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
   const PetscReal (*N1)[dim] = (typeof(N1)) p->shape[1];
 
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   PetscReal f = Forcing(x);
 
   PetscInt a,b;
@@ -68,7 +68,7 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
   const PetscReal (*N2)[dim][dim] = (typeof(N2)) p->shape[2];
 
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   PetscReal f = Forcing(x);
 
   PetscInt a;
@@ -93,7 +93,7 @@ PetscErrorCode MassVector(IGAPoint p,PetscScalar *V,void *ctx)
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x[3] = {0,0,0};
-  IGAPointFormPoint(p,x);
+  IGAPointFormGeomMap(p,x);
   value[0] = Solution(x);
   return 0;
 }
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
     MatNullSpace nsp;
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
     ierr = MatNullSpaceCreate(comm,PETSC_TRUE,0,NULL,&nsp);CHKERRQ(ierr);
-    ierr = KSPSetNullSpace(ksp,nsp);CHKERRQ(ierr);
+    ierr = MatSetNullSpace(A,nsp);CHKERRQ(ierr);
     ierr = MatNullSpaceDestroy(&nsp);CHKERRQ(ierr);
   }
 
