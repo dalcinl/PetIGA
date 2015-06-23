@@ -29,13 +29,13 @@ After `installing PETSc
 set appropriate values for ``PETSC_DIR`` and ``PETSC_ARCH`` in your
 environment::
 
-  $ export PETSC_DIR=/home/user/petsc-3.4.0
+  $ export PETSC_DIR=/home/user/petsc-3.6.0
   $ export PETSC_ARCH=arch-linux2-c-debug
 
-Clone the `Mercurial <http://mercurial.selenic.com/>`_ repository
+Clone the `Git <http://git-scm.com/>`_ repository
 hosted at `Bitbucket <https://bitbucket.org/dalcinl/petiga>`_ ::
 
-  $ hg clone https://bitbucket.org/dalcinl/PetIGA
+  $ git clone https://bitbucket.org/dalcinl/PetIGA.git
 
 Finally, enter PetIGA top level directory and use ``make`` to compile
 the code and build the PetIGA library::

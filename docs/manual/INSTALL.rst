@@ -41,10 +41,10 @@ the topic.
 PetIGA
 ------
 
-The development version of PetIGA can be checked-out using `Mercurial
-<http://mercurial.selenic.com/>`_ by the following command::
+The development version of PetIGA can be checked-out using `Git
+<http://git-scm.com/>`_ by the following command::
 
-    hg clone https://bitbucket.org/dalcinl/PetIGA
+    git clone https://bitbucket.org/dalcinl/PetIGA.git
 
 To compile PetIGA, simply enter into the top level directory and type
 :command:`make`. PetIGA will compile a library based on the values of
