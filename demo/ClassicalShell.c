@@ -58,8 +58,8 @@ PetscErrorCode System(IGAPoint p,PetscScalar K[],PetscScalar F[],void *ctx)
 
   // get geometry
   PetscReal grad_g[3][2],hess_g[3][2][2];
-  memcpy(grad_g,p->gradX[0],sizeof(grad_g));
-  memcpy(hess_g,p->hessX[0],sizeof(hess_g));
+  memcpy(grad_g,p->mapX[1],sizeof(grad_g));
+  memcpy(hess_g,p->mapX[2],sizeof(hess_g));
 
   // compute unit normal
   PetscScalar n[3],rmagn;

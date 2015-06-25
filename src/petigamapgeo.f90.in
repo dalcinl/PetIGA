@@ -25,6 +25,14 @@ pure subroutine GeometryMap(&
 
   integer(kind=IGA_INTEGER_KIND)  :: node, i
 
+  ! 0th derivatives
+  X0 = 0 ! MATMUL(M0,transpose(X))
+  do node = 1,nen
+     do i = 1,nsd
+        X0(:,i) = X0(:,i) + X(i,node)*M0(:,node)
+     end do
+  end do
+
   ! 1st derivatives
   if (order < 1) return
   X1 = 0 ! MATMUL(M1,transpose(X))

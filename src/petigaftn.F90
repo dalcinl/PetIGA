@@ -73,6 +73,7 @@ module PetIGA
 
      integer(kind=IGA_INTEGER_KIND) :: count
      integer(kind=IGA_INTEGER_KIND) :: index
+
      integer(kind=IGA_INTEGER_KIND) :: neq
      integer(kind=IGA_INTEGER_KIND) :: nen
      integer(kind=IGA_INTEGER_KIND) :: dof
@@ -84,18 +85,25 @@ module PetIGA
      type(C_PTR) :: geometry
      type(C_PTR) :: property
 
-     type(C_PTR) :: point
      type(C_PTR) :: weight
      type(C_PTR) :: detJac
+
+     type(C_PTR) :: point
+     type(C_PTR) :: normal
+     
      type(C_PTR) :: basis(0:4)
-     type(C_PTR) :: gradX(0:1)
-     type(C_PTR) :: hessX(0:1)
-     type(C_PTR) :: der3X(0:1)
-     type(C_PTR) :: der4X(0:1)
+     type(C_PTR) :: shape(0:4)
+     
+     type(C_PTR) :: mapU(0:4)
+     type(C_PTR) :: mapX(0:4)
      type(C_PTR) :: detX
      type(C_PTR) :: detS
-     type(C_PTR) :: normal
-     type(C_PTR) :: shape(0:4)
+
+     type(C_PTR)                    :: private_parent
+     integer(kind=IGA_INTEGER_KIND) :: private_nvec
+     type(C_PTR)                    :: private_wvec(8)
+     integer(kind=IGA_INTEGER_KIND) :: private_nmat
+     type(C_PTR)                    :: private_wmat(4)
   end type IGAPoint
 
 

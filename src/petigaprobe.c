@@ -13,12 +13,11 @@ EXTERN_C_END
 #include "petigaftn.h"
 
 EXTERN_C_BEGIN
-extern void IGA_GetGeomMap(PetscInt nen,PetscInt nsd,const PetscReal N[],const PetscReal X[],PetscReal x[]);
-extern void IGA_GetValue  (PetscInt nen,PetscInt dof,/*         */const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
-extern void IGA_GetGrad   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
-extern void IGA_GetHess   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
-extern void IGA_GetDer3   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
-extern void IGA_GetDer4   (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetValue(PetscInt nen,PetscInt dof,/*         */const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetGrad (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetHess (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
+extern void IGA_GetDer4 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -80,13 +79,11 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
     ierr = PetscCalloc1(nen*dim*dim*dim,&prb->basis[3]);CHKERRQ(ierr);
     ierr = PetscCalloc1(nen*dim*dim*dim*dim,&prb->basis[4]);CHKERRQ(ierr);
 
-    ierr = PetscCalloc1(1,&prb->detX);CHKERRQ(ierr);
-
-    ierr = PetscCalloc1(nsd,&prb->mapX[0]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nsd*dim,&prb->mapX[1]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nsd*dim*dim,&prb->mapX[2]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nsd*dim*dim*dim,&prb->mapX[3]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nsd*dim*dim*dim*dim,&prb->mapX[4]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen,&prb->shape[0]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd,&prb->shape[1]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd,&prb->shape[2]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd*nsd,&prb->shape[3]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nen*nsd*nsd*nsd*nsd,&prb->shape[4]);CHKERRQ(ierr);
 
     ierr = PetscCalloc1(dim,&prb->mapU[0]);CHKERRQ(ierr);
     ierr = PetscCalloc1(dim*nsd,&prb->mapU[1]);CHKERRQ(ierr);
@@ -94,11 +91,13 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
     ierr = PetscCalloc1(dim*nsd*nsd*nsd,&prb->mapU[3]);CHKERRQ(ierr);
     ierr = PetscCalloc1(dim*nsd*nsd*nsd*nsd,&prb->mapU[4]);CHKERRQ(ierr);
 
-    ierr = PetscCalloc1(nen,&prb->shape[0]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*nsd,&prb->shape[1]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*nsd*nsd,&prb->shape[2]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*nsd*nsd*nsd,&prb->shape[3]);CHKERRQ(ierr);
-    ierr = PetscCalloc1(nen*nsd*nsd*nsd*nsd,&prb->shape[4]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd,&prb->mapX[0]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim,&prb->mapX[1]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim,&prb->mapX[2]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim*dim,&prb->mapX[3]);CHKERRQ(ierr);
+    ierr = PetscCalloc1(nsd*dim*dim*dim*dim,&prb->mapX[4]);CHKERRQ(ierr);
+
+    ierr = PetscCalloc1(1,&prb->detX);CHKERRQ(ierr);
   }
   {
     PetscInt dim  = prb->dim;
@@ -396,7 +395,6 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     PetscReal *X2 = prb->mapX[2];
     PetscReal *X3 = prb->mapX[3];
     PetscReal *X4 = prb->mapX[4];
-    IGA_GetGeomMap(prb->nen,prb->nsd,M[0],prb->X,X0);
     if (PetscLikely(prb->dim == prb->nsd))
       switch (prb->dim) {
       case 3: IGA_GeometryMap_3D(prb->order,1,prb->nen,prb->X,
@@ -419,34 +417,35 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     PetscReal **M = prb->basis;
     PetscReal **N = prb->shape;
     PetscReal *dX = prb->detX;
-    PetscReal *X1 = prb->mapX[1], *E1 = prb->mapU[1];
-    PetscReal *X2 = prb->mapX[2], *E2 = prb->mapU[2];
-    PetscReal *X3 = prb->mapX[3], *E3 = prb->mapU[3];
-    PetscReal *X4 = prb->mapX[4], *E4 = prb->mapU[4];
+    PetscReal *X1 = prb->mapX[1], *U1 = prb->mapU[1];
+    PetscReal *X2 = prb->mapX[2], *U2 = prb->mapU[2];
+    PetscReal *X3 = prb->mapX[3], *U3 = prb->mapU[3];
+    PetscReal *X4 = prb->mapX[4], *U4 = prb->mapU[4];
     switch (prb->dim) {
     case 3: IGA_InverseMap_3D(prb->order,1,
                               X1,X2,X3,X4,dX,
-                              E1,E2,E3,E4); break;
+                              U1,U2,U3,U4); break;
     case 2: IGA_InverseMap_2D(prb->order,1,
                               X1,X2,X3,X4,dX,
-                              E1,E2,E3,E4); break;
+                              U1,U2,U3,U4); break;
     case 1: IGA_InverseMap_1D(prb->order,1,
                               X1,X2,X3,X4,dX,
-                              E1,E2,E3,E4); break;
+                              U1,U2,U3,U4); break;
     }
+    ierr = PetscMemcpy(N[0],M[0],(size_t)prb->nen*sizeof(PetscReal));CHKERRQ(ierr);
     switch (prb->dim) {
     case 3: IGA_ShapeFuns_3D(prb->order,1,prb->nen,
-                             E1,E2,E3,E4,
-                             M[0],M[1],M[2],M[3],M[4],
-                             N[0],N[1],N[2],N[3],N[4]); break;
+                             U1,U2,U3,U4,
+                             M[1],M[2],M[3],M[4],
+                             N[1],N[2],N[3],N[4]); break;
     case 2: IGA_ShapeFuns_2D(prb->order,1,prb->nen,
-                             E1,E2,E3,E4,
-                             M[0],M[1],M[2],M[3],M[4],
-                             N[0],N[1],N[2],N[3],N[4]); break;
+                             U1,U2,U3,U4,
+                             M[1],M[2],M[3],M[4],
+                             N[1],N[2],N[3],N[4]); break;
     case 1: IGA_ShapeFuns_1D(prb->order,1,prb->nen,
-                             E1,E2,E3,E4,
-                             M[0],M[1],M[2],M[3],M[4],
-                             N[0],N[1],N[2],N[3],N[4]); break;
+                             U1,U2,U3,U4,
+                             M[1],M[2],M[3],M[4],
+                             N[1],N[2],N[3],N[4]); break;
     }
   }
 

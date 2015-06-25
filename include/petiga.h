@@ -528,34 +528,36 @@ struct _n_IGAElement {
   PetscInt  nqp;
   PetscInt  sqp[3];
 
-  PetscReal *point;    /*   [nqp][dim]                */
-  PetscReal *weight;   /*   [nqp]                     */
-  PetscReal *detJac;   /*   [nqp]                     */
+  PetscReal *weight;   /*   [nqp] */
+  PetscReal *detJac;   /*   [nqp] */
 
-  PetscReal *basis[5]; /*0: [nqp][nen]                */
-                       /*1: [nqp][nen][dim]           */
-                       /*2: [nqp][nen][dim][dim]      */
+  PetscReal *basis[5]; /*0: [nqp][nen] */
+                       /*1: [nqp][nen][dim] */
+                       /*2: [nqp][nen][dim][dim] */
                        /*3: [nqp][nen][dim][dim][dim] */
                        /*4: [nqp][nen][dim][dim][dim][dim] */
 
-  PetscReal *gradX[2]; /*0: [nqp][nsd][dim]           */
-                       /*1: [nqp][dim][nsd]           */
-  PetscReal *hessX[2]; /*0: [nqp][nsd][dim][dim]      */
-                       /*1: [nqp][dim][nsd][nsd]      */
-  PetscReal *der3X[2]; /*0: [nqp][nsd][dim][dim][dim] */
-                       /*1: [nqp][dim][nsd][nsd][nsd] */
-  PetscReal *der4X[2]; /*0: [nqp][nsd][dim][dim][dim][dim] */
-                       /*1: [nqp][dim][nsd][nsd][nsd][nsd] */
-
-  PetscReal *detX;     /*   [nqp]                     */
-  PetscReal *detS;     /*   [nqp]                     */
-  PetscReal *normal;   /*   [nqp][nsd]                */
-
-  PetscReal *shape[5]; /*0: [nqp][nen]                */
-                       /*1: [nqp][nen][nsd]           */
-                       /*2: [nqp][nen][nsd][nsd]      */
+  PetscReal *shape[5]; /*0: [nqp][nen] */
+                       /*1: [nqp][nen][nsd] */
+                       /*2: [nqp][nen][nsd][nsd] */
                        /*3: [nqp][nen][nsd][nsd][nsd] */
                        /*4: [nqp][nen][nsd][nsd][nsd][nsd] */
+
+  PetscReal *mapU[5];  /*0: [nqp][dim] */
+                       /*1: [nqp][dim][nsd] */
+                       /*2: [nqp][dim][nsd][nsd] */
+                       /*3: [nqp][dim][nsd][nsd][nsd] */
+                       /*4: [nqp][dim][nsd][nsd][nsd][nsd] */
+
+  PetscReal *mapX[5];  /*0: [nqp][nsd] */
+                       /*1: [nqp][nsd][dim] */
+                       /*2: [nqp][nsd][dim][dim] */
+                       /*3: [nqp][nsd][dim][dim][dim] */
+                       /*4: [nqp][nsd][dim][dim][dim][dim] */
+
+  PetscReal *normal;   /*   [nqp][nsd] */
+  PetscReal *detX;     /*   [nqp] */
+  PetscReal *detS;     /*   [nqp] */
 
   IGA      parent;
   IGAPoint iterator;
@@ -640,13 +642,15 @@ struct _n_IGAPoint {
   PetscInt nsd;
   PetscInt npd;
 
-  PetscReal   *rational;/*  [nen]      */
+  PetscReal   *rational;/*  [nen] */
   PetscReal   *geometry;/*  [nen][nsd] */
   PetscScalar *property;/*  [nen][npd] */
 
+  PetscReal *weight;   /*   [1] */
+  PetscReal *detJac;   /*   [1] */
+
   PetscReal *point;    /*   [dim] */
-  PetscReal *weight;   /*   [1]   */
-  PetscReal *detJac;   /*   [1]   */
+  PetscReal *normal;   /*   [nsd] */
 
   PetscReal *basis[5]; /*0: [nen] */
                        /*1: [nen][dim] */
@@ -654,24 +658,26 @@ struct _n_IGAPoint {
                        /*3: [nen][dim][dim][dim] */
                        /*4: [nen][dim][dim][dim][dim] */
 
-  PetscReal *gradX[2]; /*0: [nsd][dim] */
-                       /*1: [dim][nsd] */
-  PetscReal *hessX[2]; /*0: [nsd][dim][dim] */
-                       /*1: [dim][nsd][nsd] */
-  PetscReal *der3X[2]; /*0: [nsd][dim][dim][dim] */
-                       /*1: [dim][nsd][nsd][nsd] */
-  PetscReal *der4X[2]; /*0: [nsd][dim][dim][dim][dim] */
-                       /*1: [dim][nsd][nsd][nsd][nsd] */
-
-  PetscReal *detX;     /*   [1] */
-  PetscReal *detS;     /*   [1] */
-  PetscReal *normal;   /*   [nsd] */
-
   PetscReal *shape[5]; /*0: [nen]  */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd][nsd] */
+
+  PetscReal *mapU[5];  /*0: [dim] */
+                       /*1: [dim][nsd] */
+                       /*2: [dim][nsd][nsd] */
+                       /*3: [dim][nsd][nsd][nsd] */
+                       /*4: [dim][nsd][nsd][nsd][nsd] */
+
+  PetscReal *mapX[5];  /*0: [nsd] */
+                       /*1: [nsd][dim] */
+                       /*2: [nsd][dim][dim] */
+                       /*3: [nsd][dim][dim][dim] */
+                       /*4: [nsd][dim][dim][dim][dim] */
+
+  PetscReal *detX;     /*   [1] */
+  PetscReal *detS;     /*   [1] */
 
   IGAElement parent;
 
@@ -721,9 +727,9 @@ PETSC_EXTERN PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],
 struct _n_IGAProbe {
   PetscInt refct;
   /**/
-  IGA       iga;
-  Vec       gvec;
-  Vec       lvec;
+  IGA iga;
+  Vec gvec;
+  Vec lvec;
   /**/
   PetscInt  order;
   PetscBool collective;
@@ -755,22 +761,22 @@ struct _n_IGAProbe {
                        /*2: [nen][dim][dim] */
                        /*3: [nen][dim][dim][dim] */
                        /*4: [nen][dim][dim][dim][dim] */
-  PetscReal *detX;
-  PetscReal *mapX[5];  /*0: [nsd] */
-                       /*1: [nsd][dim] */
-                       /*2: [nsd][dim][dim] */
-                       /*3: [nsd][dim][dim][dim] */
-                       /*4: [nsd][dim][dim][dim][dim] */
-  PetscReal *mapU[5];  /*0: [dim] */
-                       /*1: [dim][nsd] */
-                       /*2: [dim][nsd][nsd] */
-                       /*3: [dim][nsd][nsd][nsd] */
-                       /*4: [dim][nsd][nsd][nsd][nsd] */
   PetscReal *shape[5]; /*0: [nen] */
                        /*1: [nen][nsd] */
                        /*2: [nen][nsd][nsd] */
                        /*3: [nen][nsd][nsd][nsd] */
                        /*4: [nen][nsd][nsd][nsd][nsd] */
+  PetscReal *mapU[5];  /*0: [dim] */
+                       /*1: [dim][nsd] */
+                       /*2: [dim][nsd][nsd] */
+                       /*3: [dim][nsd][nsd][nsd] */
+                       /*4: [dim][nsd][nsd][nsd][nsd] */
+  PetscReal *mapX[5];  /*0: [nsd] */
+                       /*1: [nsd][dim] */
+                       /*2: [nsd][dim][dim] */
+                       /*3: [nsd][dim][dim][dim] */
+                       /*4: [nsd][dim][dim][dim][dim] */
+  PetscReal *detX;
 };
 
 PETSC_EXTERN PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *prb);

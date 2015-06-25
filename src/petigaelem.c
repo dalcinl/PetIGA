@@ -110,7 +110,6 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->geometryX);CHKERRQ(ierr);
   ierr = PetscFree(element->propertyA);CHKERRQ(ierr);
 
-  ierr = PetscFree(element->point);CHKERRQ(ierr);
   ierr = PetscFree(element->weight);CHKERRQ(ierr);
   ierr = PetscFree(element->detJac);CHKERRQ(ierr);
 
@@ -120,24 +119,27 @@ PetscErrorCode IGAElementReset(IGAElement element)
   ierr = PetscFree(element->basis[3]);CHKERRQ(ierr);
   ierr = PetscFree(element->basis[4]);CHKERRQ(ierr);
 
-  ierr = PetscFree(element->gradX[0]);CHKERRQ(ierr);
-  ierr = PetscFree(element->hessX[0]);CHKERRQ(ierr);
-  ierr = PetscFree(element->der3X[0]);CHKERRQ(ierr);
-  ierr = PetscFree(element->der4X[0]);CHKERRQ(ierr);
-  ierr = PetscFree(element->gradX[1]);CHKERRQ(ierr);
-  ierr = PetscFree(element->hessX[1]);CHKERRQ(ierr);
-  ierr = PetscFree(element->der3X[1]);CHKERRQ(ierr);
-  ierr = PetscFree(element->der4X[1]);CHKERRQ(ierr);
-
-  ierr = PetscFree(element->detX);CHKERRQ(ierr);
-  ierr = PetscFree(element->detS);CHKERRQ(ierr);
-  ierr = PetscFree(element->normal);CHKERRQ(ierr);
-
   ierr = PetscFree(element->shape[0]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[1]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[2]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[3]);CHKERRQ(ierr);
   ierr = PetscFree(element->shape[4]);CHKERRQ(ierr);
+
+  ierr = PetscFree(element->mapU[0]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapU[1]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapU[2]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapU[3]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapU[4]);CHKERRQ(ierr);
+
+  ierr = PetscFree(element->mapX[0]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapX[1]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapX[2]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapX[3]);CHKERRQ(ierr);
+  ierr = PetscFree(element->mapX[4]);CHKERRQ(ierr);
+
+  ierr = PetscFree(element->normal);CHKERRQ(ierr);
+  ierr = PetscFree(element->detX);CHKERRQ(ierr);
+  ierr = PetscFree(element->detS);CHKERRQ(ierr);
 
   ierr = IGAElementFreeFix(element);CHKERRQ(ierr);
   ierr = IGAElementFreeWork(element);CHKERRQ(ierr);
@@ -216,7 +218,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     size_t dim = (size_t)element->dim;
     size_t nsd = (size_t)element->nsd;
 
-    ierr = PetscMalloc1(nqp*dim,&element->point);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,&element->weight);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp,&element->detJac);CHKERRQ(ierr);
 
@@ -226,25 +227,27 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim,&element->basis[3]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*dim*dim*dim*dim,&element->basis[4]);CHKERRQ(ierr);
 
-    ierr = PetscMalloc1(nqp*nsd*dim,&element->gradX[0]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*nsd*dim*dim,&element->hessX[0]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*nsd*dim*dim*dim,&element->der3X[0]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*nsd*dim*dim*dim*dim,&element->der4X[0]);CHKERRQ(ierr);
-
-    ierr = PetscMalloc1(nqp*dim*nsd,&element->gradX[1]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*dim*nsd*nsd,&element->hessX[1]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*dim*nsd*nsd*nsd,&element->der3X[1]);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*dim*nsd*nsd*nsd*nsd,&element->der4X[1]);CHKERRQ(ierr);
-
-    ierr = PetscMalloc1(nqp,&element->detX);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp,&element->detS);CHKERRQ(ierr);
-    ierr = PetscMalloc1(nqp*nsd,&element->normal);CHKERRQ(ierr);
-
     ierr = PetscMalloc1(nqp*nen,&element->shape[0]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*nsd,&element->shape[1]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*nsd*nsd,&element->shape[2]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*nsd*nsd*nsd,&element->shape[3]);CHKERRQ(ierr);
     ierr = PetscMalloc1(nqp*nen*nsd*nsd*nsd*nsd,&element->shape[4]);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nqp*dim,&element->mapU[0]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*dim*nsd,&element->mapU[1]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*dim*nsd*nsd,&element->mapU[2]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*dim*nsd*nsd*nsd,&element->mapU[3]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*dim*nsd*nsd*nsd*nsd,&element->mapU[4]);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nqp*nsd,&element->mapX[0]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nsd*dim,&element->mapX[1]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nsd*dim*dim,&element->mapX[2]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nsd*dim*dim*dim,&element->mapX[3]);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp*nsd*dim*dim*dim*dim,&element->mapX[4]);CHKERRQ(ierr);
+
+    ierr = PetscMalloc1(nqp*nsd,&element->normal);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp,&element->detX);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nqp,&element->detS);CHKERRQ(ierr);
   }
   { /* */
     size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
@@ -331,9 +334,8 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     size_t dim = (size_t)element->dim;
     size_t nsd = (size_t)element->nsd;
     /* */
-    ierr = PetscMemzero(element->point,   sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->weight,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->detJac,  sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->weight,sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->detJac,sizeof(PetscReal)*nqp);CHKERRQ(ierr);
     /* */
     ierr = PetscMemzero(element->basis[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[1],sizeof(PetscReal)*nqp*nen*dim);CHKERRQ(ierr);
@@ -341,34 +343,36 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
     ierr = PetscMemzero(element->basis[3],sizeof(PetscReal)*nqp*nen*dim*dim*dim);CHKERRQ(ierr);
     ierr = PetscMemzero(element->basis[4],sizeof(PetscReal)*nqp*nen*dim*dim*dim*dim);CHKERRQ(ierr);
     /* */
-    ierr = PetscMemzero(element->gradX[0],sizeof(PetscReal)*nqp*nsd*dim);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->hessX[0],sizeof(PetscReal)*nqp*nsd*dim*dim);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->der3X[0],sizeof(PetscReal)*nqp*nsd*dim*dim*dim);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->der4X[0],sizeof(PetscReal)*nqp*nsd*dim*dim*dim*dim);CHKERRQ(ierr);
-    /* */
-    ierr = PetscMemzero(element->gradX[1],sizeof(PetscReal)*nqp*dim*nsd);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->hessX[1],sizeof(PetscReal)*nqp*dim*nsd*nsd);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->der3X[1],sizeof(PetscReal)*nqp*dim*nsd*nsd*nsd);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->der4X[1],sizeof(PetscReal)*nqp*dim*nsd*nsd*nsd*nsd);CHKERRQ(ierr);
-    /* */
-    ierr = PetscMemzero(element->detX,    sizeof(PetscReal)*nqp);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->detS,    sizeof(PetscReal)*nqp);CHKERRQ(ierr);
-    ierr = PetscMemzero(element->normal,  sizeof(PetscReal)*nqp*nsd);CHKERRQ(ierr);
-    /* */
     ierr = PetscMemzero(element->shape[0],sizeof(PetscReal)*nqp*nen);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[1],sizeof(PetscReal)*nqp*nen*nsd);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[2],sizeof(PetscReal)*nqp*nen*nsd*nsd);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[3],sizeof(PetscReal)*nqp*nen*nsd*nsd*nsd);CHKERRQ(ierr);
     ierr = PetscMemzero(element->shape[4],sizeof(PetscReal)*nqp*nen*nsd*nsd*nsd*nsd);CHKERRQ(ierr);
     /* */
+    ierr = PetscMemzero(element->mapU[0],sizeof(PetscReal)*nqp*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapU[1],sizeof(PetscReal)*nqp*dim*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapU[2],sizeof(PetscReal)*nqp*dim*nsd*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapU[3],sizeof(PetscReal)*nqp*dim*nsd*nsd*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapU[4],sizeof(PetscReal)*nqp*dim*nsd*nsd*nsd*nsd);CHKERRQ(ierr);
+    /* */
+    ierr = PetscMemzero(element->mapX[0],sizeof(PetscReal)*nqp*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapX[1],sizeof(PetscReal)*nqp*nsd*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapX[2],sizeof(PetscReal)*nqp*nsd*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapX[3],sizeof(PetscReal)*nqp*nsd*dim*dim*dim);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->mapX[4],sizeof(PetscReal)*nqp*nsd*dim*dim*dim*dim);CHKERRQ(ierr);
+    /* */
+    ierr = PetscMemzero(element->normal,sizeof(PetscReal)*nqp*nsd);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->detX,sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    ierr = PetscMemzero(element->detS,sizeof(PetscReal)*nqp);CHKERRQ(ierr);
+    /* */
     if (!element->geometry)
       for (q=0; q<nqp; q++) {
         PetscReal *dX = &element->detX[q];
-        PetscReal *X1 = &element->gradX[0][q*nsd*dim];
-        PetscReal *E1 = &element->gradX[1][q*dim*nsd];
+        PetscReal *X1 = &element->mapX[1][q*nsd*dim];
+        PetscReal *U1 = &element->mapU[1][q*dim*nsd];
         dX[0] = 1.0;
         for (i=0; i<dim; i++) X1[i*(dim+1)] = 1.0;
-        for (i=0; i<dim; i++) E1[i*(dim+1)] = 1.0;
+        for (i=0; i<dim; i++) U1[i*(dim+1)] = 1.0;
       }
   }
   { /* */
@@ -523,9 +527,11 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   if (PetscUnlikely(index == 0))            goto start;
   if (PetscUnlikely(index >= point->count)) goto stop;
 
-  point->point    += dim;
   point->weight   += 1;
   point->detJac   += 1;
+
+  point->point    += dim;
+  point->normal   += nsd;
 
   point->basis[0] += nen;
   point->basis[1] += nen*dim1;
@@ -533,33 +539,36 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->basis[3] += nen*dim3;
   point->basis[4] += nen*dim4;
 
-  point->gradX[0] += nsd*dim1;
-  point->hessX[0] += nsd*dim2;
-  point->der3X[0] += nsd*dim3;
-  point->der4X[0] += nsd*dim4;
-
-  point->gradX[1] += dim*nsd1;
-  point->hessX[1] += dim*nsd2;
-  point->der3X[1] += dim*nsd3;
-  point->der4X[1] += dim*nsd4;
-
-  point->detX     += 1;
-  point->detS     += 1;
-  point->normal   += nsd;
-
   point->shape[0] += nen;
   point->shape[1] += nen*nsd1;
   point->shape[2] += nen*nsd2;
   point->shape[3] += nen*nsd3;
   point->shape[4] += nen*nsd4;
 
+  point->mapU[0]  += dim;
+  point->mapU[1]  += dim*nsd1;
+  point->mapU[2]  += dim*nsd2;
+  point->mapU[3]  += dim*nsd3;
+  point->mapU[4]  += dim*nsd4;
+
+  point->mapX[0]  += nsd;
+  point->mapX[1]  += nsd*dim1;
+  point->mapX[2]  += nsd*dim2;
+  point->mapX[3]  += nsd*dim3;
+  point->mapX[4]  += nsd*dim4;
+
+  point->detX     += 1;
+  point->detS     += 1;
+
   PetscFunctionReturn(PETSC_TRUE);
 
  start:
 
-  point->point    = element->point;
-  point->weight   = element->weight;
-  point->detJac   = element->detJac;
+  point->weight = element->weight;
+  point->detJac = element->detJac;
+
+  point->point  = element->mapU[0];
+  point->normal = element->normal;
 
   point->basis[0] = element->basis[0];
   point->basis[1] = element->basis[1];
@@ -567,21 +576,7 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   point->basis[3] = element->basis[3];
   point->basis[4] = element->basis[4];
 
-  point->gradX[0] = element->gradX[0];
-  point->hessX[0] = element->hessX[0];
-  point->der3X[0] = element->der3X[0];
-  point->der4X[0] = element->der4X[0];
-
-  point->gradX[1] = element->gradX[1];
-  point->hessX[1] = element->hessX[1];
-  point->der3X[1] = element->der3X[1];
-  point->der4X[1] = element->der4X[1];
-
-  point->detX     = element->detX;
-  point->detS     = element->detS;
-  point->normal   = element->normal;
-
-  if (element->geometry && dim == nsd) { /* XXX */
+  if (element->geometry && dim == nsd) {
     point->shape[0] = element->shape[0];
     point->shape[1] = element->shape[1];
     point->shape[2] = element->shape[2];
@@ -594,6 +589,29 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
     point->shape[3] = element->basis[3];
     point->shape[4] = element->basis[4];
   }
+
+  point->mapU[0] = element->mapU[0];
+  point->mapU[1] = element->mapU[1];
+  point->mapU[2] = element->mapU[2];
+  point->mapU[3] = element->mapU[3];
+  point->mapU[4] = element->mapU[4];
+
+  if (element->geometry) {
+    point->mapX[0] = element->mapX[0];
+    point->mapX[1] = element->mapX[1];
+    point->mapX[2] = element->mapX[2];
+    point->mapX[3] = element->mapX[3];
+    point->mapX[4] = element->mapX[4];
+  } else {
+    point->mapX[0] = element->mapU[0];
+    point->mapX[1] = element->mapU[1];
+    point->mapX[2] = element->mapU[2];
+    point->mapX[3] = element->mapU[3];
+    point->mapX[4] = element->mapU[4];
+  }
+
+  point->detX = element->detX;
+  point->detS = element->detS;
 
   PetscFunctionReturn(PETSC_TRUE);
 
@@ -848,7 +866,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
     element->iterator->count = nqp; /* XXX */
 
     {
-      PetscReal *u = element->point;
+      PetscReal *u = element->mapU[0];
       PetscReal *w = element->weight;
       PetscReal *J = element->detJac;
       if (PetscLikely(!element->atboundary))
@@ -970,11 +988,11 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
     if (element->geometry) {
       PetscReal *X  = element->geometryX;
       PetscReal **M = element->basis;
-      PetscReal *X0 = NULL; /* XXX */
-      PetscReal *X1 = element->gradX[0];
-      PetscReal *X2 = element->hessX[0];
-      PetscReal *X3 = element->der3X[0];
-      PetscReal *X4 = element->der4X[0];
+      PetscReal *X0 = element->mapX[0];
+      PetscReal *X1 = element->mapX[1];
+      PetscReal *X2 = element->mapX[2];
+      PetscReal *X3 = element->mapX[3];
+      PetscReal *X4 = element->mapX[4];
       if (PetscLikely(dim == nsd))
         switch (dim) {
         case 3: IGA_GeometryMap_3D(ord,nqp,nen,X,
@@ -997,24 +1015,24 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
       PetscReal **M = element->basis;
       PetscReal **N = element->shape;
       PetscReal *dX = element->detX;
-      PetscReal *X1 = element->gradX[0];
-      PetscReal *X2 = element->hessX[0];
-      PetscReal *X3 = element->der3X[0];
-      PetscReal *X4 = element->der4X[0];
-      PetscReal *E1 = element->gradX[1];
-      PetscReal *E2 = element->hessX[1];
-      PetscReal *E3 = element->der3X[1];
-      PetscReal *E4 = element->der4X[1];
+      PetscReal *X1 = element->mapX[1];
+      PetscReal *X2 = element->mapX[2];
+      PetscReal *X3 = element->mapX[3];
+      PetscReal *X4 = element->mapX[4];
+      PetscReal *U1 = element->mapU[1];
+      PetscReal *U2 = element->mapU[2];
+      PetscReal *U3 = element->mapU[3];
+      PetscReal *U4 = element->mapU[4];
       switch (dim) {
       case 3: IGA_InverseMap_3D(ord,nqp,
                                 X1,X2,X3,X4,dX,
-                                E1,E2,E3,E4); break;
+                                U1,U2,U3,U4); break;
       case 2: IGA_InverseMap_2D(ord,nqp,
                                 X1,X2,X3,X4,dX,
-                                E1,E2,E3,E4); break;
+                                U1,U2,U3,U4); break;
       case 1: IGA_InverseMap_1D(ord,nqp,
                                 X1,X2,X3,X4,dX,
-                                E1,E2,E3,E4); break;
+                                U1,U2,U3,U4); break;
       }
 #if defined(PETSC_USE_DEBUG)
       for (q=0; q<nqp; q++)
@@ -1023,32 +1041,32 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
                    "Non-positive det(Jacobian)=%g",(double)dX[q]);
 #endif
       /* */
+      (void)PetscMemcpy(N[0],M[0],(size_t)(nqp*nen)*sizeof(PetscReal));
       switch (dim) {
       case 3: IGA_ShapeFuns_3D(ord,nqp,nen,
-                               E1,E2,E3,E4,
-                               M[0],M[1],M[2],M[3],M[4],
-                               N[0],N[1],N[2],N[3],N[4]); break;
+                               U1,U2,U3,U4,
+                               M[1],M[2],M[3],M[4],
+                               N[1],N[2],N[3],N[4]); break;
       case 2: IGA_ShapeFuns_2D(ord,nqp,nen,
-                               E1,E2,E3,E4,
-                               M[0],M[1],M[2],M[3],M[4],
-                               N[0],N[1],N[2],N[3],N[4]); break;
+                               U1,U2,U3,U4,
+                               M[1],M[2],M[3],M[4],
+                               N[1],N[2],N[3],N[4]); break;
       case 1: IGA_ShapeFuns_1D(ord,nqp,nen,
-                               E1,E2,E3,E4,
-                               M[0],M[1],M[2],M[3],M[4],
-                               N[0],N[1],N[2],N[3],N[4]); break;
+                               U1,U2,U3,U4,
+                               M[1],M[2],M[3],M[4],
+                               N[1],N[2],N[3],N[4]); break;
       }
     }
 
     if (PetscUnlikely(element->atboundary)) {
-      PetscReal *X1 = element->gradX[0];
+      PetscReal *X1 = element->mapX[1];
       PetscReal *dS = element->detS;
       PetscReal *n  = element->normal;
       if (element->geometry && PetscLikely(dim == nsd)) {
         for (q=0; q<nqp; q++) IGA_GetNormal(dim,axis,side,&X1[q*nsd*dim],&dS[q],&n[q*nsd]);
       } else {
         (void)PetscMemzero(n,(size_t)(nqp*nsd)*sizeof(PetscReal));
-        for (q=0; q<nqp; q++) dS[q] = 1.0;
-        for (q=0; q<nqp; q++) n[q*nsd+axis] = side ? 1.0 : -1.0;
+        for (q=0; q<nqp; q++) {dS[q] = 1.0; n[q*nsd+axis] = side ? 1.0 : -1.0;}
       }
     }
 
@@ -1127,8 +1145,7 @@ PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[]
     PetscInt pos = 0, *map = element->mapping;
     for (a=0; a<nen; a++) {
       const PetscScalar *u = arrayU + map[a]*dof;
-      for (i=0; i<dof; i++)
-        U[pos++] = u[i]; /* XXX Use PetscMemcpy() ?? */
+      for (i=0; i<dof; i++) U[pos++] = u[i]; /* XXX Use PetscMemcpy() ?? */
     }
   } else {
     size_t n = (size_t)(element->nen * element->dof);
@@ -1451,8 +1468,8 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
             normal[dir] = side ? 1.0 : -1.0;
             dshape = element->basis[1];
           } else {
-            PetscReal dS, *gX = element->gradX[0];
-            IGA_GetNormal(dim,dir,side,gX,&dS,normal);
+            PetscReal dS, *X1 = element->mapX[1];
+            IGA_GetNormal(dim,dir,side,X1,&dS,normal);
             dshape = element->shape[1];
           }
           for (f=0; f<n; f++) {

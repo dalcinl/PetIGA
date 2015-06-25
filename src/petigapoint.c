@@ -266,11 +266,12 @@ PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[])
   PetscValidPointer(p,1);
   PetscValidRealPointer(x,2);
   if (p->geometry) {
-    const PetscReal *X = p->geometry;
-    IGA_GetGeomMap(p->nen,p->nsd,p->shape[0],X,x);
+    PetscInt i,nsd = p->nsd;
+    const PetscReal *X = p->mapX[0];
+    for (i=0; i<nsd; i++) x[i] = X[i];
   } else {
     PetscInt i,dim = p->dim;
-    const PetscReal *X = p->point;
+    const PetscReal *X = p->mapU[0];
     for (i=0; i<dim; i++) x[i] = X[i];
   }
   PetscFunctionReturn(0);
@@ -289,7 +290,7 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     if (dim == nsd) {
-      (void)PetscMemcpy(F,p->gradX[0],(size_t)(nsd*dim)*sizeof(PetscReal));
+      (void)PetscMemcpy(F,p->mapX[1],(size_t)(nsd*dim)*sizeof(PetscReal));
     } else {
       const PetscReal *X = p->geometry;
       IGA_GetGradGeomMap(p->nen,nsd,dim,p->basis[1],X,F);
@@ -318,7 +319,7 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
     PetscInt a,dim = p->dim;
     PetscInt i,nsd = p->nsd;
     if (dim == nsd) {
-      (void)PetscMemcpy(G,p->gradX[1],(size_t)(dim*nsd)*sizeof(PetscReal));
+      (void)PetscMemcpy(G,p->mapU[1],(size_t)(dim*nsd)*sizeof(PetscReal));
     } else {
       const PetscReal *X = p->geometry;
       IGA_GetInvGradGeomMap(p->nen,nsd,dim,p->basis[1],X,G);

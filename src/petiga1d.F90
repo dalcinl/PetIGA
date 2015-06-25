@@ -199,8 +199,8 @@ pure subroutine IGA_ShapeFuns_1D(&
      order,                      &
      nqp,nen,                    &
      E1,E2,E3,E4,                &
-     M0,M1,M2,M3,M4,             &
-     N0,N1,N2,N3,N4)             &
+     M1,M2,M3,M4,                &
+     N1,N2,N3,N4)                &
   bind(C, name="IGA_ShapeFuns_1D")
   use PetIGA
   implicit none
@@ -213,18 +213,15 @@ pure subroutine IGA_ShapeFuns_1D(&
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E2(nsd**2*dim,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E3(nsd**3*dim,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: E4(nsd**4*dim,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: M0(dim**0*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M1(dim**1*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M2(dim**2*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M3(dim**3*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: M4(dim**4*nen,nqp)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: N0(nsd**0*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N1(nsd**1*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(nsd**2*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(nsd**3*nen,nqp)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(nsd**4*nen,nqp)
   integer(kind=IGA_INTEGER_KIND)  :: q
-  N0 = M0 ! 0th derivatives
   do q=1,nqp
      call ShapeFunctions(&
           order,nen,&

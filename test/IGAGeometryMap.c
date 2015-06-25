@@ -36,9 +36,10 @@ static PetscReal PW[3][3] = {
 PetscErrorCode TestGeometryMap(IGAPoint p)
 {
   PetscInt dim = p->dim;
-  PetscReal u = p->point[0];
-  PetscReal v = p->point[1];
-  PetscReal w = (dim==3) ? p->point[2] : 0;
+  PetscReal *U = p->mapU[0];
+  PetscReal u = U[0];
+  PetscReal v = U[1];
+  PetscReal w = (dim==3) ? U[2] : 0;
   PetscReal X[3] = {0,0,0};
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -64,7 +65,7 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   }
   if (dim==2) {
     PetscReal F[2][2],ww,F00,F01,F10,F11;
-    ierr = PetscMemcpy(&F[0][0],p->gradX[0],sizeof(F));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&F[0][0],p->mapX[1],sizeof(F));CHKERRQ(ierr);
     ww  = (v*v*(-2+sqrt2)+v*(-sqrt2+2)-1);
     F00 = (v*v*(-1+sqrt2)+v*(-sqrt2+2)-1)/ww;
     F01 = (-v*(u + 1)*(-2*v + sqrt2*v + 2))/(ww*ww);
@@ -77,7 +78,7 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   }
   if (dim==3) {
     PetscReal F[3][3],ww,F00,F01,F10,F11;
-    ierr = PetscMemcpy(&F[0][0],p->gradX[0],sizeof(F));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&F[0][0],p->mapX[1],sizeof(F));CHKERRQ(ierr);
     ww  = (v*v*(-2+sqrt2)+v*(-sqrt2+2)-1);
     F00 = (v*v*(-1+sqrt2)+v*(-sqrt2+2)-1)/ww;
     F01 = (-v*(u + 1)*(-2*v + sqrt2*v + 2))/(ww*ww);
@@ -97,9 +98,9 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
     PetscReal G[2][2];
     PetscReal H[2][2][2];
     PetscReal D[2][2][2][2];
-    ierr = PetscMemcpy(&G[0][0],      p->gradX[0],sizeof(G));CHKERRQ(ierr);
-    ierr = PetscMemcpy(&H[0][0][0],   p->hessX[0],sizeof(H));CHKERRQ(ierr);
-    ierr = PetscMemcpy(&D[0][0][0][0],p->der3X[0],sizeof(D));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&G[0][0],      p->mapX[1],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&H[0][0][0],   p->mapX[2],sizeof(H));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&D[0][0][0][0],p->mapX[3],sizeof(D));CHKERRQ(ierr);
     for (a=0;a<dim;a++)
       for (i=0;i<dim;i++)
         for (j=0;j<dim;j++)
@@ -134,9 +135,9 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
     PetscReal G[3][3];
     PetscReal H[3][3][3];
     PetscReal D[3][3][3][3];
-    ierr = PetscMemcpy(&G[0][0],      p->gradX[0],sizeof(G));CHKERRQ(ierr);
-    ierr = PetscMemcpy(&H[0][0][0],   p->hessX[0],sizeof(H));CHKERRQ(ierr);
-    ierr = PetscMemcpy(&D[0][0][0][0],p->der3X[0],sizeof(D));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&G[0][0],      p->mapX[1],sizeof(G));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&H[0][0][0],   p->mapX[2],sizeof(H));CHKERRQ(ierr);
+    ierr = PetscMemcpy(&D[0][0][0][0],p->mapX[3],sizeof(D));CHKERRQ(ierr);
     for (a=0;a<dim;a++)
       for (i=0;i<dim;i++)
         for (j=0;j<dim;j++)
