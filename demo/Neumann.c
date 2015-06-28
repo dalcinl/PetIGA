@@ -169,6 +169,14 @@ int main(int argc, char *argv[]) {
     ierr = VecDot(Q,x,&mean);CHKERRQ(ierr);
     ierr = VecShift(x,-mean);CHKERRQ(ierr);
     ierr = VecDestroy(&Q);CHKERRQ(ierr);
+  } else {
+    MatNullSpace nsp;
+    ierr = MatGetNullSpace(A,&nsp);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,5,0)
+    ierr = MatNullSpaceRemove(nsp,x,NULL);CHKERRQ(ierr);
+#else
+    ierr = MatNullSpaceRemove(nsp,x);CHKERRQ(ierr);
+#endif
   }
 
   PetscReal error;
