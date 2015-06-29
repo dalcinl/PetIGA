@@ -43,7 +43,7 @@ PetscErrorCode IGAFormJacobianFD(IGAPoint p,
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIJacobianFD"
-PetscErrorCode IGAFormIJacobianFD(IGAPoint p,PetscReal dt,
+PetscErrorCode IGAFormIJacobianFD(IGAPoint p,
                                   PetscReal s,const PetscScalar V[],
                                   PetscReal t,const PetscScalar U[],
                                   PetscScalar J[],PETSC_UNUSED void *ctx)
@@ -63,13 +63,13 @@ PetscErrorCode IGAFormIJacobianFD(IGAPoint p,PetscReal dt,
   PetscFunctionBegin;
   ierr = IGAPointGetWorkVec(p,&F);CHKERRQ(ierr);
   ierr = IGAPointGetWorkVec(p,&G);CHKERRQ(ierr);
-  ierr = Function(p,dt,s,V,t,U,F,FunCtx);CHKERRQ(ierr);
+  ierr = Function(p,s,V,t,U,F,FunCtx);CHKERRQ(ierr);
   for (j=0; j<N; j++) {
     PetscScalar Vj = Y[j];
     PetscScalar Uj = X[j];
     Y[j] = Vj + h*s;
     X[j] = Uj + h;
-    ierr = Function(p,dt,s,Y,t,X,G,FunCtx);CHKERRQ(ierr);
+    ierr = Function(p,s,Y,t,X,G,FunCtx);CHKERRQ(ierr);
     for (i=0; i<M; i++) J[i*N+j] = (G[i]-F[i])/h;
     Y[j] = Vj;
     X[j] = Uj;
@@ -79,7 +79,7 @@ PetscErrorCode IGAFormIJacobianFD(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIEJacobianFD"
-PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,PetscReal dt,
+PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,
                                    PetscReal s, const PetscScalar V[],
                                    PetscReal t, const PetscScalar U[],
                                    PetscReal t0,const PetscScalar U0[],
@@ -100,13 +100,13 @@ PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,PetscReal dt,
   PetscFunctionBegin;
   ierr = IGAPointGetWorkVec(p,&F);CHKERRQ(ierr);
   ierr = IGAPointGetWorkVec(p,&G);CHKERRQ(ierr);
-  ierr = Function(p,dt,s,V,t,U,t0,U0,F,FunCtx);CHKERRQ(ierr);
+  ierr = Function(p,s,V,t,U,t0,U0,F,FunCtx);CHKERRQ(ierr);
   for (j=0; j<N; j++) {
     PetscScalar Vj = Y[j];
     PetscScalar Uj = X[j];
     Y[j] = Vj + h*s;
     X[j] = Uj + h;
-    ierr = Function(p,dt,s,Y,t,X,t0,U0,G,FunCtx);CHKERRQ(ierr);
+    ierr = Function(p,s,Y,t,X,t0,U0,G,FunCtx);CHKERRQ(ierr);
     for (i=0; i<M; i++) J[i*N+j] = (G[i]-F[i])/h;
     Y[j] = Vj;
     X[j] = Uj;
@@ -116,7 +116,7 @@ PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormIJacobian2FD"
-PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
+PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,
                                    PetscReal a,const PetscScalar A[],
                                    PetscReal v,const PetscScalar V[],
                                    PetscReal t,const PetscScalar U[],
@@ -138,7 +138,7 @@ PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
   PetscFunctionBegin;
   ierr = IGAPointGetWorkVec(p,&F);CHKERRQ(ierr);
   ierr = IGAPointGetWorkVec(p,&G);CHKERRQ(ierr);
-  ierr = Function(p,dt,a,A,v,V,t,U,F,FunCtx);CHKERRQ(ierr);
+  ierr = Function(p,a,A,v,V,t,U,F,FunCtx);CHKERRQ(ierr);
   for (j=0; j<N; j++) {
     PetscScalar Aj = Z[j];
     PetscScalar Vj = Y[j];
@@ -146,7 +146,7 @@ PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
     Z[j] = Aj + h*a;
     Y[j] = Vj + h*v;
     X[j] = Uj + h;
-    ierr = Function(p,dt,a,Z,v,Y,t,X,G,FunCtx);CHKERRQ(ierr);
+    ierr = Function(p,a,Z,v,Y,t,X,G,FunCtx);CHKERRQ(ierr);
     for (i=0; i<M; i++) J[i*N+j] = (G[i]-F[i])/h;
     Z[j] = Aj;
     Y[j] = Vj;
@@ -157,7 +157,7 @@ PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGAFormRHSJacobianFD"
-PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,PetscReal dt,
+PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,
                                     PetscReal t,const PetscScalar U[],
                                     PetscScalar J[],PETSC_UNUSED void *ctx)
 {
@@ -175,11 +175,11 @@ PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,PetscReal dt,
   PetscFunctionBegin;
   ierr = IGAPointGetWorkVec(p,&F);CHKERRQ(ierr);
   ierr = IGAPointGetWorkVec(p,&G);CHKERRQ(ierr);
-  ierr = Function(p,dt,t,U,F,FunCtx);CHKERRQ(ierr);
+  ierr = Function(p,t,U,F,FunCtx);CHKERRQ(ierr);
   for (j=0; j<N; j++) {
     PetscScalar Uj = X[j];
     X[j] = Uj + h;
-    ierr = Function(p,dt,t,X,G,FunCtx);CHKERRQ(ierr);
+    ierr = Function(p,t,X,G,FunCtx);CHKERRQ(ierr);
     for (i=0; i<M; i++) J[i*N+j] = (G[i]-F[i])/h;
     X[j] = Uj;
   }

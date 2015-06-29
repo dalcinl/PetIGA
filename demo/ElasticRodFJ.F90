@@ -18,13 +18,13 @@ end type IGAUser
 contains
 
 integer(kind=IGA_ERRCODE_KIND) &
-function IFunction(p,dt,shiftA,AA,shiftV,VV,t,UU,FF,user) result (ierr) &
+function IFunction(p,shiftA,AA,shiftV,VV,t,UU,FF,user) result (ierr) &
 bind(C, name="ElasticRod_IFunction")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
   type(IGAUser),  intent(in) :: user
-  real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shiftA, shiftV, t
+  real   (kind=IGA_REAL_KIND   ), intent(in), value :: shiftA, shiftV, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: AA(p%dof,p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%dof,p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%dof,p%nen)
@@ -53,13 +53,13 @@ bind(C, name="ElasticRod_IFunction")
 end function IFunction
 
 integer(kind=IGA_ERRCODE_KIND) &
-function IJacobian(p,dt,shiftA,AA,shiftV,VV,t,UU,JJ,user) result (ierr) &
+function IJacobian(p,shiftA,AA,shiftV,VV,t,UU,JJ,user) result (ierr) &
 bind(C, name="ElasticRod_IJacobian")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
   type(IGAUser),  intent(in) :: user
-  real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shiftA, shiftV, t
+  real   (kind=IGA_REAL_KIND   ), intent(in), value :: shiftA, shiftV, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: AA(p%dof,p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%dof,p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%dof,p%nen)

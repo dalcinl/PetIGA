@@ -56,7 +56,7 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
 
 #undef  __FUNCT__
 #define __FUNCT__ "LeftInjectionResidual"
-PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
+PetscErrorCode LeftInjectionResidual(IGAPoint p,
                                      PetscReal shift,const PetscScalar *V,
                                      PetscReal t,const PetscScalar *U,
                                      PetscScalar *R,void *ctx)
@@ -80,13 +80,13 @@ PetscErrorCode LeftInjectionResidual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
 {
   if (p->atboundary)
-    return LeftInjectionResidual(p,dt,shift,V,t,U,R,ctx);
+    return LeftInjectionResidual(p,shift,V,t,U,R,ctx);
 
   AppCtx *user = (AppCtx *)ctx;
   PetscScalar rholw = user->rholw;
@@ -150,7 +150,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "LeftInjectionJacobian"
-PetscErrorCode LeftInjectionJacobian(IGAPoint p,PetscReal dt,
+PetscErrorCode LeftInjectionJacobian(IGAPoint p,
                                      PetscReal shift,const PetscScalar *V,
                                      PetscReal t,const PetscScalar *U,
                                      PetscScalar *J,void *ctx)
@@ -161,13 +161,13 @@ PetscErrorCode LeftInjectionJacobian(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *J,void *ctx)
 {
   if (p->atboundary)
-    return LeftInjectionJacobian(p,dt,shift,V,t,U,J,ctx);
+    return LeftInjectionJacobian(p,shift,V,t,U,J,ctx);
   // for now use the option -snes_fd_color for the Jacobian
   return 0;
 }

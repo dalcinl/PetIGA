@@ -146,59 +146,59 @@ typedef PetscErrorCode (*IGAFormFunction)(IGAPoint point,
 typedef PetscErrorCode (*IGAFormJacobian)(IGAPoint point,
                                           const PetscScalar U[],
                                           PetscScalar J[],void *ctx);
-typedef PetscErrorCode (*IGAFormIFunction)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIFunction)(IGAPoint point,
                                            PetscReal a,const PetscScalar V[],
                                            PetscReal t,const PetscScalar U[],
                                            PetscScalar F[],void *ctx);
-typedef PetscErrorCode (*IGAFormIJacobian)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIJacobian)(IGAPoint point,
                                            PetscReal a,const PetscScalar V[],
                                            PetscReal t,const PetscScalar U[],
                                            PetscScalar J[],void *ctx);
-typedef PetscErrorCode (*IGAFormIFunction2)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIFunction2)(IGAPoint point,
                                             PetscReal a,const PetscScalar A[],
                                             PetscReal v,const PetscScalar V[],
                                             PetscReal t,const PetscScalar U[],
                                             PetscScalar F[],void *ctx);
-typedef PetscErrorCode (*IGAFormIJacobian2)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIJacobian2)(IGAPoint point,
                                             PetscReal a,const PetscScalar A[],
                                             PetscReal v,const PetscScalar V[],
                                             PetscReal t,const PetscScalar U[],
                                             PetscScalar J[],void *ctx);
-typedef PetscErrorCode (*IGAFormIEFunction)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIEFunction)(IGAPoint point,
                                             PetscReal a,const PetscScalar V[],
                                             PetscReal t,const PetscScalar U[],
                                             PetscReal t0,const PetscScalar U0[],
                                             PetscScalar F[],void *ctx);
-typedef PetscErrorCode (*IGAFormIEJacobian)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormIEJacobian)(IGAPoint point,
                                             PetscReal a,const PetscScalar V[],
                                             PetscReal t,const PetscScalar U[],
                                             PetscReal t0,const PetscScalar U0[],
                                             PetscScalar J[],void *ctx);
-typedef PetscErrorCode (*IGAFormRHSFunction)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormRHSFunction)(IGAPoint point,
                                              PetscReal t,const PetscScalar U[],
                                              PetscScalar F[],void *ctx);
-typedef PetscErrorCode (*IGAFormRHSJacobian)(IGAPoint point,PetscReal dt,
+typedef PetscErrorCode (*IGAFormRHSJacobian)(IGAPoint point,
                                              PetscReal t,const PetscScalar U[],
                                              PetscScalar J[],void *ctx);
 
 PETSC_EXTERN PetscErrorCode IGAFormJacobianFD(IGAPoint p,
                                               const PetscScalar U[],
                                               PetscScalar J[],void *ctx);
-PETSC_EXTERN PetscErrorCode IGAFormIJacobianFD(IGAPoint p,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAFormIJacobianFD(IGAPoint p,
                                                PetscReal s,const PetscScalar V[],
                                                PetscReal t,const PetscScalar U[],
                                                PetscScalar J[],void *ctx);
-PETSC_EXTERN PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,
                                                 PetscReal s, const PetscScalar V[],
                                                 PetscReal t, const PetscScalar U[],
                                                 PetscReal t0,const PetscScalar U0[],
                                                 PetscScalar J[],void *ctx);
-PETSC_EXTERN PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,
                                                 PetscReal a,const PetscScalar A[],
                                                 PetscReal v,const PetscScalar V[],
                                                 PetscReal t,const PetscScalar U[],
                                                 PetscScalar J[],void *ctx);
-PETSC_EXTERN PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,
                                                  PetscReal t,const PetscScalar U[],
                                                  PetscScalar F[],void *ctx);
 
@@ -829,38 +829,38 @@ PETSC_EXTERN PetscErrorCode IGAComputeFunction(IGA iga,Vec U,Vec F);
 PETSC_EXTERN PetscErrorCode IGAComputeJacobian(IGA iga,Vec U,Mat J);
 
 PETSC_EXTERN PetscErrorCode IGACreateTS(IGA iga,TS *ts);
-PETSC_EXTERN PetscErrorCode IGAComputeIFunction(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIFunction(IGA iga,
                                                 PetscReal a,Vec V,
                                                 PetscReal t,Vec U,
                                                 Vec F);
-PETSC_EXTERN PetscErrorCode IGAComputeIJacobian(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIJacobian(IGA iga,
                                                 PetscReal a,Vec V,
                                                 PetscReal t,Vec U,
                                                 Mat J);
-PETSC_EXTERN PetscErrorCode IGAComputeIEFunction(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIEFunction(IGA iga,
                                                  PetscReal a, Vec V,
                                                  PetscReal t, Vec U,
                                                  PetscReal t0,Vec U0,
                                                  Vec F);
-PETSC_EXTERN PetscErrorCode IGAComputeIEJacobian(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIEJacobian(IGA iga,
                                                  PetscReal a, Vec V,
                                                  PetscReal t, Vec U,
                                                  PetscReal t0,Vec U0,
                                                  Mat J);
-PETSC_EXTERN PetscErrorCode IGAComputeRHSFunction(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeRHSFunction(IGA iga,
                                                   PetscReal t,Vec U,
                                                   Vec F);
-PETSC_EXTERN PetscErrorCode IGAComputeRHSJacobian(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeRHSJacobian(IGA iga,
                                                   PetscReal t,Vec U,
                                                   Mat J);
 
 PETSC_EXTERN PetscErrorCode IGACreateTS2(IGA iga, TS *ts);
-PETSC_EXTERN PetscErrorCode IGAComputeIFunction2(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIFunction2(IGA iga,
                                                  PetscReal a,Vec vecA,
                                                  PetscReal v,Vec vecV,
                                                  PetscReal t,Vec vecU,
                                                  Vec vecF);
-PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,PetscReal dt,
+PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,
                                                  PetscReal a,Vec vecA,
                                                  PetscReal v,Vec vecV,
                                                  PetscReal t,Vec vecU,

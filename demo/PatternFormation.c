@@ -25,7 +25,7 @@ typedef struct {
 
 #undef  __FUNCT__
 #define __FUNCT__ "Function"
-PetscErrorCode Function(IGAPoint p,PetscReal dt,
+PetscErrorCode Function(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
                         PetscReal t0,const PetscScalar *U0,
@@ -79,7 +79,7 @@ PetscErrorCode Function(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
                         PetscReal t0,const PetscScalar *U0,

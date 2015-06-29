@@ -7,12 +7,12 @@ typedef struct {
   PetscReal E;   /* Young modulus */
 } UserParams;
 
-extern PetscErrorCode ElasticRod_IFunction(IGAPoint,PetscReal dt,
+extern PetscErrorCode ElasticRod_IFunction(IGAPoint,
                                            PetscReal a,const PetscScalar *A,
                                            PetscReal v,const PetscScalar *V,
                                            PetscReal t,const PetscScalar *U,
                                            PetscScalar *F,void *ctx);
-extern PetscErrorCode ElasticRod_IJacobian(IGAPoint,PetscReal dt,
+extern PetscErrorCode ElasticRod_IJacobian(IGAPoint,
                                            PetscReal a,const PetscScalar *A,
                                            PetscReal v,const PetscScalar *V,
                                            PetscReal t,const PetscScalar *U,

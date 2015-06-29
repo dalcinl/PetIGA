@@ -88,7 +88,7 @@ void CapillaryPressure(PetscScalar S,PetscScalar lambda,PetscScalar kappa,PetscS
 
 #undef  __FUNCT__
 #define __FUNCT__ "ZeroFluxResidual"
-PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
+PetscErrorCode ZeroFluxResidual(IGAPoint p,
                                 PetscReal shift,const PetscScalar *V,
                                 PetscReal t,const PetscScalar *U,
                                 PetscScalar *R,void *ctx)
@@ -115,13 +115,13 @@ PetscErrorCode ZeroFluxResidual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
 {
   if (p->atboundary)
-    return ZeroFluxResidual(p,dt,shift,V,t,U,R,ctx);
+    return ZeroFluxResidual(p,shift,V,t,U,R,ctx);
 
   AppCtx *user = (AppCtx *)ctx;
 
@@ -172,7 +172,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "ZeroFluxJacobian"
-PetscErrorCode ZeroFluxJacobian(IGAPoint p,PetscReal dt,
+PetscErrorCode ZeroFluxJacobian(IGAPoint p,
                                 PetscReal shift,const PetscScalar *V,
                                 PetscReal t,const PetscScalar *U,
                                 PetscScalar *J,void *ctx)
@@ -182,13 +182,13 @@ PetscErrorCode ZeroFluxJacobian(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint p,PetscReal dt,
+PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *J,void *ctx)
 {
   if (p->atboundary)
-    return ZeroFluxJacobian(p,dt,shift,V,t,U,J,ctx);
+    return ZeroFluxJacobian(p,shift,V,t,U,J,ctx);
   return 0;
 }
 

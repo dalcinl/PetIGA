@@ -109,13 +109,13 @@ end function Jacobian
 ! --- Time-dependent ---
 
 integer(kind=IGA_ERRCODE_KIND) &
-function IFunction(p,dt,shift,VV,t,UU,FF,ctx) result (ierr) &
+function IFunction(p,shift,VV,t,UU,FF,ctx) result (ierr) &
 bind(C, name="Bratu_IFunction")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
   type(AppCtx),   intent(in) :: ctx
-  real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shift, t
+  real   (kind=IGA_REAL_KIND   ), intent(in), value :: shift, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out) :: FF(p%neq)
@@ -141,13 +141,13 @@ bind(C, name="Bratu_IFunction")
 end function IFunction
 
 integer(kind=IGA_ERRCODE_KIND) &
-function IJacobian(p,dt,shift,VV,t,UU,JJ,ctx) result (ierr) &
+function IJacobian(p,shift,VV,t,UU,JJ,ctx) result (ierr) &
 bind(C, name="Bratu_IJacobian")
   use PetIGA
   implicit none
   type(IGAPoint), intent(in) :: p
   type(AppCtx),   intent(in) :: ctx
-  real   (kind=IGA_REAL_KIND   ), intent(in), value :: dt, shift, t
+  real   (kind=IGA_REAL_KIND   ), intent(in), value :: shift, t
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: VV(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out) :: JJ(p%nen,p%neq)

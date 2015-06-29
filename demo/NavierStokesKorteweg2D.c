@@ -25,7 +25,7 @@ typedef struct {
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
+PetscErrorCode Residual(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *Re,void *ctx)
@@ -98,7 +98,7 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Jacobian"
-PetscErrorCode Jacobian(IGAPoint pnt,PetscReal dt,
+PetscErrorCode Jacobian(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *Je,void *ctx)

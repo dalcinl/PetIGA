@@ -19,11 +19,11 @@ extern PetscErrorCode Bratu_Jacobian(IGAPoint,const PetscScalar U[],PetscScalar 
 EXTERN_C_END
 
 EXTERN_C_BEGIN
-extern PetscErrorCode Bratu_IFunction(IGAPoint,PetscReal dt,
+extern PetscErrorCode Bratu_IFunction(IGAPoint,
                                       PetscReal a,const PetscScalar *V,
                                       PetscReal t,const PetscScalar *U,
                                       PetscScalar *F,void *ctx);
-extern PetscErrorCode Bratu_IJacobian(IGAPoint,PetscReal dt,
+extern PetscErrorCode Bratu_IJacobian(IGAPoint,
                                       PetscReal a,const PetscScalar *V,
                                       PetscReal t,const PetscScalar *U,
                                       PetscScalar *F,void *ctx);

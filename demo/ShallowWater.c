@@ -4,6 +4,7 @@ typedef struct {
   PetscReal z,a,s;
   PetscReal gravity;
   PetscReal viscosity;
+  TS ts; /* XXX */
 } AppCtx;
 
 PetscReal Tau(PetscReal dt, PetscScalar u0, PetscScalar u1, PetscInt nen, const PetscReal (*N1)[2])
@@ -37,14 +38,15 @@ PetscScalar SUPG(PetscReal tau, PetscReal W[3], PetscScalar R[3])
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *Re,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
-  //PetscReal nu = user->viscosity;
   PetscReal g  = user->gravity;
+  PetscReal nu = user->viscosity; (void)nu;
+  PetscReal dt; TSGetTimeStep(user->ts,&dt);
 
   PetscScalar s_t[3],s[3],grad_s[3][2];
   IGAPointFormValue(p,V,&s_t[0]);
@@ -58,7 +60,6 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   PetscScalar h_x  = grad_s[0][0], h_y  = grad_s[0][1];
   PetscScalar hu_x = grad_s[1][0], hu_y = grad_s[1][1];
   PetscScalar hv_x = grad_s[2][0], hv_y = grad_s[2][1];
-
 
   const PetscReal *N0,(*N1)[2];
   IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
@@ -85,24 +86,24 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
     Rhv = Na * res[2];
 
     PetscReal W0[3];
-    W0[0] = 0; 
-    W0[1] = (-u*u+g*h) * Na_x + (-u*v)     * Na_y; 
-    W0[2] = (-u*v)     * Na_x + (-v*v+g*h) * Na_y; 
+    W0[0] = 0;
+    W0[1] = (-u*u+g*h) * Na_x + (-u*v)     * Na_y;
+    W0[2] = (-u*v)     * Na_x + (-v*v+g*h) * Na_y;
 
     PetscReal W1[3];
-    W1[0] = (1)   * Na_x; 
-    W1[1] = (2*u) * Na_x + (v) * Na_y; 
-    W1[2] = (v)   * Na_x; 
+    W1[0] = (1)   * Na_x;
+    W1[1] = (2*u) * Na_x + (v) * Na_y;
+    W1[2] = (v)   * Na_x;
 
     PetscReal W2[3];
-    W2[0] =                (1) * Na_y; 
+    W2[0] =                (1) * Na_y;
     W2[1] =                (u) * Na_y;
-    W2[2] = (u) * Na_x + (2*v) * Na_y; 
+    W2[2] = (u) * Na_x + (2*v) * Na_y;
 
     Rh  += SUPG(tau,W0,res);
     Rhu += SUPG(tau,W1,res);
-    Rhv += SUPG(tau,W2,res);  
-  
+    Rhv += SUPG(tau,W2,res);
+
     /* ----- */
 
     R[a][0] = Rh;
@@ -113,17 +114,18 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
   return 0;
 }
 
+/*
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
-PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
+PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
                        PetscScalar *Ke,void *ctx)
 {
-  //AppCtx *user = (AppCtx *)ctx;
-
+  AppCtx *user = (AppCtx *)ctx;
   return 0;
 }
+*/
 
 #undef __FUNCT__
 #define __FUNCT__ "FormInitialCondition"
@@ -222,20 +224,18 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,IGAFormIJacobianFD,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  user.ts = ts;
 
+  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  //ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   PetscReal dx = 1.0/PetscMax(N[0],N[1]);
   PetscReal dt = 0.5 * dx/sqrt(user.gravity*user.a);
   ierr = TSSetTimeStep(ts,dt);CHKERRQ(ierr);
-
-  ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
-  //ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
-  //ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-
+  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t=0; Vec U;

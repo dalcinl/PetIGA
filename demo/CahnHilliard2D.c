@@ -52,16 +52,16 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 {
   AppCtx *user = (AppCtx *)ctx;
   PetscFunctionBegin;
- 
+
   PetscScalar c,c1[3];
-  IGAPointFormValue(p,U,&c); 
+  IGAPointFormValue(p,U,&c);
   IGAPointFormGrad(p,U,&c1[0]);
   PetscReal diff = c - user->cbar;
 
   S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],user); // Free energy
   S[1] = diff*diff;                                    // Second moment
   S[2] = S[1]*diff;                                    // Third moment
-  
+
   PetscFunctionReturn(0);
 }
 
@@ -93,7 +93,7 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,
+PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
@@ -133,7 +133,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
     /* ----- */
     PetscScalar Ra  = 0;
     // Na * c_t
-    Ra += Na * c_t; 
+    Ra += Na * c_t;
     // grad(Na) . ((M*dmu + dM*del2(c))) grad(C)
     PetscScalar t1 = M*dmu + dM*(c_xx+c_yy);
     Ra += Na_x * t1 * c_x;
@@ -148,7 +148,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
-PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
+PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
                        PetscScalar *K,void *ctx)
@@ -217,7 +217,7 @@ PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
 PetscErrorCode FormInitialCondition(IGA iga,Vec C,AppCtx *user)
 {
   MPI_Comm       comm;
-  PetscRandom    rctx;    
+  PetscRandom    rctx;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
@@ -225,16 +225,16 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec C,AppCtx *user)
   ierr = PetscRandomSetFromOptions(rctx);CHKERRQ(ierr);
   ierr = PetscRandomSetInterval(rctx,user->cbar-0.05,user->cbar+0.05);CHKERRQ(ierr);
   ierr = PetscRandomSeed(rctx);CHKERRQ(ierr);
-  ierr = VecSetRandom(C,rctx);CHKERRQ(ierr); 
-  ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr); 
-  PetscFunctionReturn(0); 
+  ierr = VecSetRandom(C,rctx);CHKERRQ(ierr);
+  ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
-  IGA            iga; 
+  IGA            iga;
   char           filename[PETSC_MAX_PATH_LEN];
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -263,8 +263,8 @@ int main(int argc, char *argv[]) {
   PetscInt  p = 2;
   PetscInt  k = PETSC_DECIDE;
   char      initial[PETSC_MAX_PATH_LEN] = {0};
-  PetscBool output  = PETSC_FALSE; 
-  PetscBool monitor = PETSC_FALSE; 
+  PetscBool output  = PETSC_FALSE;
+  PetscBool monitor = PETSC_FALSE;
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard2D Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,NULL);CHKERRQ(ierr);

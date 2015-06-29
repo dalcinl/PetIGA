@@ -1,18 +1,15 @@
 #include "petiga.h"
 
-PetscLogEvent NS_Residual = 0;
-PetscLogEvent NS_Tangent  = 0;
-
 typedef struct {
-  PetscReal nu;
+  PetscReal   nu;
   PetscScalar fx,fy,fz;
-  IGA iga;
+  TS ts; /* XXX */
 } AppCtx;
 
 #undef __FUNCT__
 #define __FUNCT__ "Tau"
-void Tau(PetscReal J[3][3],
-         PetscReal dt,PetscScalar u[],PetscReal nu,
+void Tau(PetscReal J[3][3],PetscReal dt,
+         PetscScalar u[],PetscReal nu,
          PetscScalar *tauM,PetscScalar *tauC)
 {
   PetscReal C_I = 1.0/12.0;
@@ -84,15 +81,14 @@ void FineScale(const AppCtx *user,PetscScalar tauM,PetscScalar tauC,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
+PetscErrorCode Residual(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *Re,void *ctx)
 {
-  //PetscLogEventBegin(NS_Residual,0,0,0,0);
-
   AppCtx *user = (AppCtx *)ctx;
   PetscReal nu = user->nu;
+  PetscReal dt; TSGetTimeStep(user->ts,&dt);
 
   PetscScalar u_t[4],u[4];
   PetscScalar grad_u[4][3];
@@ -170,21 +166,19 @@ PetscErrorCode Residual(IGAPoint pnt,PetscReal dt,
     R[a][3] = Rp;
   }
 
-  //PetscLogEventEnd(NS_Residual,0,0,0,0);
   return 0;
 }
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
-PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
+PetscErrorCode Tangent(IGAPoint pnt,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
                        PetscScalar *Ke,void *ctx)
 {
-  //PetscLogEventBegin(NS_Tangent,0,0,0,0);
-
   AppCtx *user = (AppCtx *)ctx;
   PetscReal nu = user->nu;
+  PetscReal dt; TSGetTimeStep(user->ts,&dt);
 
   PetscScalar u[4];
   IGAPointFormValue(pnt,U,&u[0]);
@@ -254,7 +248,6 @@ PetscErrorCode Tangent(IGAPoint pnt,PetscReal dt,
     }
   }
 
-  //PetscLogEventEnd(NS_Tangent,0,0,0,0);
   return 0;
 }
 
@@ -273,14 +266,14 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
     ierr = PetscViewerBinaryOpen(comm,datafile,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
     ierr = VecLoad(U,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);
-  } else { 
+  } else {
     DM da;
     ierr = IGACreateNodeDM(iga,4,&da);CHKERRQ(ierr);
     DMDALocalInfo info;
     ierr = DMDAGetLocalInfo(da,&info);CHKERRQ(ierr);
     PetscScalar ****u;
     ierr = DMDAVecGetArrayDOF(da,U,&u);CHKERRQ(ierr);
-    
+
     PetscScalar H    = 2;//user->Ly;
     PetscScalar visc = user->nu;
     PetscScalar dpdx = user->fx;
@@ -288,11 +281,11 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
     PetscReal jmax = (info.my-1);
     for(k=info.zs;k<info.zs+info.zm;k++){
       for(j=info.ys;j<info.ys+info.ym;j++){
-	for(i=info.xs;i<info.xs+info.xm;i++){
-	  PetscReal   y = (j/jmax)*H;
-	  PetscScalar ux = 1/(2*visc) * dpdx * y*(H-y);
-	  u[k][j][i][0] = ux;
-	}
+        for(i=info.xs;i<info.xs+info.xm;i++){
+          PetscReal   y = (j/jmax)*H;
+          PetscScalar ux = 1/(2*visc) * dpdx * y*(H-y);
+          u[k][j][i][0] = ux;
+        }
       }
     }
 
@@ -312,14 +305,15 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
 
 #undef __FUNCT__
 #define __FUNCT__ "OutputMonitor"
-PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *mctx)
+PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *ctx)
 {
-  PetscFunctionBegin;
+  IGA            iga;
+  char           filename[PETSC_MAX_PATH_LEN];
   PetscErrorCode ierr;
-  AppCtx *user = (AppCtx *)mctx;
-  char           filename[256];
-  sprintf(filename,"./nsvms%d.dat",it_number);
-  ierr = IGAWriteVec(user->iga,U,filename);CHKERRQ(ierr);
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)ts,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = PetscSNPrintf(filename,sizeof(filename),"./nsvms%d.dat",(int)it_number);CHKERRQ(ierr);
+  ierr = IGAWriteVec(iga,U,filename);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -327,11 +321,8 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,voi
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
-  PetscErrorCode  ierr;
+  PetscErrorCode ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
-
-  ierr = PetscLogEventRegister("NS_Residual",IGA_CLASSID,&NS_Residual);CHKERRQ(ierr);
-  ierr = PetscLogEventRegister("NS_Tangent", IGA_CLASSID,&NS_Tangent );CHKERRQ(ierr);
 
   AppCtx user;
   user.nu = 1.47200e-4;
@@ -378,7 +369,6 @@ int main(int argc, char *argv[]) {
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDim(iga,3);CHKERRQ(ierr);
   ierr = IGASetDof(iga,4);CHKERRQ(ierr);
-  user.iga = iga;
 
   IGAAxis axis0;
   ierr = IGAGetAxis(iga,0,&axis0);CHKERRQ(ierr);
@@ -409,19 +399,17 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
-  ierr = IGASetFormIJacobian(iga,Tangent,&user);CHKERRQ(ierr);
+  ierr = IGASetFormIJacobian(iga,Tangent ,&user);CHKERRQ(ierr);
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
-  ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
+  user.ts = ts;
 
-  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-
-  if (output) {
-    ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);
-  }
+  ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
+  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  if (output) {ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);}
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 
   PetscReal t=0; Vec U;

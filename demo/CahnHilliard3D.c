@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-typedef struct { 
+typedef struct {
   IGA iga;
   PetscReal theta,cbar,alpha;
   PetscReal L0,lambda,tau;
@@ -32,13 +32,13 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 {
   PetscFunctionBegin;
   AppCtx *user = (AppCtx *)ctx;
- 
+
   PetscScalar c,c1[3];
-  IGAPointFormValue(p,U,&c); 
+  IGAPointFormValue(p,U,&c);
   IGAPointFormGrad(p,U,&c1[0]);
 
-  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],c1[2],user); 
-  
+  S[0] = GinzburgLandauFreeEnergy(c,c1[0],c1[1],c1[2],user);
+
   PetscFunctionReturn(0);
 }
 
@@ -62,8 +62,8 @@ void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,Pet
 
 #undef  __FUNCT__
 #define __FUNCT__ "Residual"
-PetscErrorCode Residual(IGAPoint p,PetscReal dt,
-			PetscReal shift,const PetscScalar *V,
+PetscErrorCode Residual(IGAPoint p,
+                        PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
                         PetscScalar *R,void *ctx)
 {
@@ -104,7 +104,7 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
     /* ----- */
     PetscScalar Ra  = 0;
     // Na * c_t
-    Ra += Na * c_t; 
+    Ra += Na * c_t;
     // grad(Na) . ((M*dmu + dM*del2(c))) grad(C)
     PetscScalar t1 = M*dmu + dM*(c_xx+c_yy+c_zz);
     Ra += Na_x * t1 * c_x;
@@ -120,9 +120,9 @@ PetscErrorCode Residual(IGAPoint p,PetscReal dt,
 
 #undef  __FUNCT__
 #define __FUNCT__ "Tangent"
-PetscErrorCode Tangent(IGAPoint p,PetscReal dt,
-		       PetscReal shift,const PetscScalar *V,
-		       PetscReal t,const PetscScalar *U,
+PetscErrorCode Tangent(IGAPoint p,
+                       PetscReal shift,const PetscScalar *V,
+                       PetscReal t,const PetscScalar *U,
                        PetscScalar *K,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -204,15 +204,15 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],V
     ierr = VecLoad(C,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);
   } else { /* initial condition is random */
-    PetscRandom rctx;    
+    PetscRandom rctx;
     ierr = PetscRandomCreate(PETSC_COMM_WORLD,&rctx);CHKERRQ(ierr);
     ierr = PetscRandomSetFromOptions(rctx);CHKERRQ(ierr);
-    ierr = PetscRandomSetInterval(rctx,user->cbar-0.05,user->cbar+0.05);CHKERRQ(ierr); 
+    ierr = PetscRandomSetInterval(rctx,user->cbar-0.05,user->cbar+0.05);CHKERRQ(ierr);
     ierr = PetscRandomSeed(rctx);CHKERRQ(ierr);
-    ierr = VecSetRandom(C,rctx);CHKERRQ(ierr); 
-    ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr); 
+    ierr = VecSetRandom(C,rctx);CHKERRQ(ierr);
+    ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr);
   }
-  PetscFunctionReturn(0); 
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -240,7 +240,7 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscReal dt;
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
   PetscPrintf(PETSC_COMM_WORLD,"%.6e %.6e %.16e\n",t,dt,user->energy[0]);
-  
+
   if(user->energy[0] > user->energy[1]) PetscPrintf(PETSC_COMM_WORLD,"WARNING: Ginzburg-Landau free energy increased!\n");
 
   PetscFunctionReturn(0);
@@ -288,7 +288,7 @@ PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,Petsc
   PetscReal      atol = 1.0e-3;
   PetscReal       rho = 0.9;
   //PetscScalar       dE2 = EstimateSecondDerivative(*th);
-  
+
   /* If the SNES fails, reject the step and reduce the step by the
      maximum amount */
   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
@@ -352,8 +352,8 @@ int main(int argc, char *argv[]) {
   user.L0    = 1.0;    /* length scale */
   user.tau   = 1.0;
 
-  PetscBool output = PETSC_FALSE; 
-  PetscBool monitor = PETSC_FALSE; 
+  PetscBool output = PETSC_FALSE;
+  PetscBool monitor = PETSC_FALSE;
   char initial[PETSC_MAX_PATH_LEN] = {0};
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard3D Options","CH3D");CHKERRQ(ierr);
   ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
@@ -371,8 +371,8 @@ int main(int argc, char *argv[]) {
   ierr = IGASetUp(iga);CHKERRQ(ierr);
 
   PetscReal h = 1.0/sqrt(iga->elem_sizes[0]*iga->elem_sizes[0]+
-			 iga->elem_sizes[1]*iga->elem_sizes[1]+
-			 iga->elem_sizes[2]*iga->elem_sizes[2]);
+                         iga->elem_sizes[1]*iga->elem_sizes[1]+
+                         iga->elem_sizes[2]*iga->elem_sizes[2]);
   user.lambda = user.tau*h*h; /* mesh size parameter */
 
   ierr = IGASetFormIFunction(iga,Residual,&user);CHKERRQ(ierr);
@@ -386,7 +386,7 @@ int main(int argc, char *argv[]) {
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
 
   user.E = NULL;
-  ierr = TSAlphaSetAdapt(ts,CHAdapt,&user);CHKERRQ(ierr); 
+  ierr = TSAlphaSetAdapt(ts,CHAdapt,&user);CHKERRQ(ierr);
 
   if (monitor) {
     user.iga = iga;
@@ -412,4 +412,3 @@ int main(int argc, char *argv[]) {
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
-
