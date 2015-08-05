@@ -861,8 +861,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Periodicity */
     ierr = PetscOptionsBoolArray("-iga_periodic","Periodicity","IGAAxisSetPeriodic",wraps,(n=dim,&n),&flg);CHKERRQ(ierr);
-    if (flg && n==0) for (i=0; i<dim; i++) wraps[i] = PETSC_TRUE;
-    if (flg && n==1) for (i=1; i<dim; i++) wraps[i] = wraps[0];
+    if (flg && n==0) for (i=0; i<dim&&i<3; i++) wraps[i] = PETSC_TRUE;
+    if (flg && n==1) for (i=1; i<dim&&i<3; i++) wraps[i] = wraps[0];
     if (flg) for (i=0; i<dim; i++) {
         PetscBool w = wraps[i];
         ierr = IGAAxisSetPeriodic(iga->axis[i],w);CHKERRQ(ierr);
@@ -881,8 +881,8 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     } else { /* set axis details */
       PetscInt ne,nd,nc,nl;
       ierr = PetscOptionsEnumArray("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum*)btype,(n=dim,&n),&flg);CHKERRQ(ierr);
-      if (flg && n==1) for (i=1; i<dim; i++) btype[i] = btype[0];
-      for (i=0; i<dim; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
+      if (flg && n==1) for (i=1; i<dim&&i<3; i++) btype[i] = btype[0];
+      for (i=0; i<dim&&i<3; i++) if (btype[i] != IGA_BASIS_BSPLINE) conts[i] = 0;
       ierr = PetscOptionsIntArray ("-iga_elements",  "Elements",  "IGAAxisInitUniform",elems,(ne=dim,&ne),&flg1);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_degree",    "Degree",    "IGAAxisSetDegree",  degrs,(nd=dim,&nd),&flg2);CHKERRQ(ierr);
       ierr = PetscOptionsIntArray ("-iga_continuity","Continuity","IGAAxisInitUniform",conts,(nc=dim,&nc),NULL);CHKERRQ(ierr);
@@ -909,31 +909,31 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
     /* Order */
     if (order < 0) for (i=0; i<dim; i++) order = PetscMax(order,iga->axis[i]->p);
-    order = PetscMax(order,1); order = PetscMin(order,4);
+    order = PetscClipInterval(order,1,4);
     ierr = PetscOptionsInt("-iga_order","Maximum available derivative order","IGASetOrder",order,&order,&flg);CHKERRQ(ierr);
     if (flg) { ierr = IGASetOrder(iga,order);CHKERRQ(ierr);}
 
     /* Basis Type */
     ierr = PetscOptionsEnumArray("-iga_basis_type","Basis type","IGASetBasisType",IGABasisTypes,(PetscEnum*)btype,(n=dim,&n),&flg);CHKERRQ(ierr);
-    if (flg && n==1) for (i=1; i<dim; i++) btype[i] = btype[0];
+    if (flg && n==1) for (i=1; i<dim&&i<3; i++) btype[i] = btype[0];
     if (flg) for (i=0; i<dim; i++) {
         ierr = IGASetBasisType(iga,i,btype[i]);CHKERRQ(ierr);
       }
 
     /* Quadrature Rule type & size */
-    for (i=0; i<dim; i++) if (rsize[i] < 1) rsize[i] = iga->axis[i]->p + 1;
+    for (i=0; i<dim&&i<3; i++) if (rsize[i] < 1) rsize[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsEnumArray("-iga_rule_type","Quadrature Rule type","IGASetRuleType",IGARuleTypes,(PetscEnum*)rtype,(n=dim,&n),&flg1);CHKERRQ(ierr);
-    if (flg1 && n==1) for (i=1; i<dim; i++) rtype[i] = rtype[0];
+    if (flg1 && n==1) for (i=1; i<dim&&i<3; i++) rtype[i] = rtype[0];
     ierr = PetscOptionsIntArray("-iga_rule_size","Quadrature Rule size","IGASetRuleSize",rsize,(n=dim,&n),&flg2);CHKERRQ(ierr);
-    if (flg2 && n==1) for (i=1; i<dim; i++) rsize[i] = rsize[0];
-    if (flg1 || flg2) for (i=0; i<dim; i++) {
+    if (flg2 && n==1) for (i=1; i<dim&&i<3; i++) rsize[i] = rsize[0];
+    if (flg1 || flg2) for (i=0; i<dim&&i<3; i++) {
         PetscInt nqp = (rsize[i] > 0) ? rsize[i] : (iga->rule[i]->nqp > 0) ? iga->rule[i]->nqp : iga->axis[i]->p + 1;
         if (flg1 && flg2) {ierr = IGARuleReset(iga->rule[i]);CHKERRQ(ierr);}
         if (flg1) {ierr = IGASetRuleType(iga,i,rtype[i]);CHKERRQ(ierr);}
         if (flg2) {ierr = IGASetRuleSize(iga,i,nqp);CHKERRQ(ierr);}
       }
     /* Quadrature (Legacy option)*/
-    for (i=0; i<dim; i++) if (rsize[i] < 1) rsize[i] = iga->axis[i]->p + 1;
+    for (i=0; i<dim&&i<3; i++) if (rsize[i] < 1) rsize[i] = iga->axis[i]->p + 1;
     ierr = PetscOptionsIntArray("-iga_quadrature","Quadrature points","IGASetQuadrature",rsize,(n=dim,&n),&flg);CHKERRQ(ierr);
     if (flg) for (i=0; i<dim; i++) {
         PetscInt q = (i<n) ? rsize[i] : rsize[0];
