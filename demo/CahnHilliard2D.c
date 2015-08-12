@@ -112,16 +112,16 @@ PetscErrorCode Residual(IGAPoint p,
   PetscReal dmu;
   ChemicalPotential(user,c,NULL,&dmu,NULL);
 
-  PetscScalar c1[2],c2[2][2];
+  PetscScalar c1[2],del2_c;
   IGAPointFormGrad(p,U,&c1[0]);
-  IGAPointFormHess(p,U,&c2[0][0]);
-  PetscScalar c_x  = c1[0],    c_y  = c1[1];
-  PetscScalar c_xx = c2[0][0], c_yy = c2[1][1];
+  IGAPointFormDel2(p,U,&del2_c);
+  PetscScalar c_x = c1[0], c_y = c1[1];
 
-  const PetscReal *N0,(*N1)[2],(*N2)[2][2];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
-  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
+  PetscScalar t1 = M*dmu + dM*del2_c;
+
+  const PetscReal (*N0)       = (typeof(N0)) p->shape[0];
+  const PetscReal (*N1)[2]    = (typeof(N1)) p->shape[1];
+  const PetscReal (*N2)[2][2] = (typeof(N2)) p->shape[2];
 
   PetscInt a;
   for (a=0; a<nen; a++) {
@@ -135,11 +135,9 @@ PetscErrorCode Residual(IGAPoint p,
     // Na * c_t
     Ra += Na * c_t;
     // grad(Na) . ((M*dmu + dM*del2(c))) grad(C)
-    PetscScalar t1 = M*dmu + dM*(c_xx+c_yy);
-    Ra += Na_x * t1 * c_x;
-    Ra += Na_y * t1 * c_y;
+    Ra += (Na_x * c_x + Na_y * c_y) * t1;
     // del2(Na) * M * del2(c)
-    Ra += (Na_xx+Na_yy) * M * (c_xx+c_yy);
+    Ra += (Na_xx+Na_yy) * M * del2_c;
     /* ----- */
     R[a] = Ra;
   }
@@ -167,16 +165,17 @@ PetscErrorCode Tangent(IGAPoint p,
   PetscReal dmu,d2mu;
   ChemicalPotential(user,c,NULL,&dmu,&d2mu);
 
-  PetscScalar c1[2],c2[2][2];
+  PetscScalar c1[2],del2_c;
   IGAPointFormGrad(p,U,&c1[0]);
-  IGAPointFormHess(p,U,&c2[0][0]);
-  PetscScalar c_x  = c1[0],    c_y  = c1[1];
-  PetscScalar c_xx = c2[0][0], c_yy = c2[1][1];
+  IGAPointFormDel2(p,U,&del2_c);
+  PetscScalar c_x = c1[0], c_y = c1[1];
 
-  const PetscReal *N0,(*N1)[2],(*N2)[2][2];
-  IGAPointGetShapeFuns(p,0,(const PetscReal**)&N0);
-  IGAPointGetShapeFuns(p,1,(const PetscReal**)&N1);
-  IGAPointGetShapeFuns(p,2,(const PetscReal**)&N2);
+  PetscScalar t1 = M*dmu + dM*del2_c;
+  PetscScalar t2 = (dM*dmu+M*d2mu+d2M*del2_c);
+
+  const PetscReal (*N0)       = (typeof(N0)) p->shape[0];
+  const PetscReal (*N1)[2]    = (typeof(N1)) p->shape[1];
+  const PetscReal (*N2)[2][2] = (typeof(N2)) p->shape[2];
 
   PetscInt a,b;
   for (a=0; a<nen; a++) {
@@ -185,26 +184,25 @@ PetscErrorCode Tangent(IGAPoint p,
     PetscReal Na_y  = N1[a][1];
     PetscReal Na_xx = N2[a][0][0];
     PetscReal Na_yy = N2[a][1][1];
+    PetscReal del2_Na = Na_xx+Na_yy;
     for (b=0; b<nen; b++) {
       PetscReal Nb    = N0[b];
       PetscReal Nb_x  = N1[b][0];
       PetscReal Nb_y  = N1[b][1];
       PetscReal Nb_xx = N2[b][0][0];
       PetscReal Nb_yy = N2[b][1][1];
+      PetscReal del2_Nb = Nb_xx+Nb_yy;
       /* ----- */
       PetscScalar Kab = 0;
       // shift*Na*Nb
       Kab += shift*Na*Nb;
       // grad(Na) . (M*dmu+dM*del2(c)) grad(Nb)
-      PetscScalar t1 = M*dmu + dM*(c_xx+c_yy);
-      Kab += Na_x * t1 * Nb_x;
-      Kab += Na_y * t1 * Nb_y;
+      Kab += (Na_x * Nb_x + Na_y * Nb_y) * t1;
       // grad(Na) . ((dM*dmu+M*d2mu+d2M*del2(c))*Nb + dM*del2(Nb)) grad(C)
-      PetscScalar t2 = (dM*dmu+M*d2mu+d2M*(c_xx+c_yy))*Nb + dM*(Nb_xx+Nb_yy);
-      Kab += Na_x * t2 * c_x;
-      Kab += Na_y * t2 * c_y;
+      PetscScalar t3 = t2*Nb + dM*del2_Nb;
+      Kab += (Na_x * c_x + Na_y * c_y) * t3;
       // del2(Na) * ((dM*del2(c)*Nb + M*del2(Nb))
-      Kab += (Na_xx+Na_yy) * (dM*(c_xx+c_yy)*Nb + M*(Nb_xx+Nb_yy));
+      Kab += del2_Na * (dM*del2_c*Nb + M*del2_Nb);
       /* ----- */
       K[a*nen+b] = Kab;
     }
