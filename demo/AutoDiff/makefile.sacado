@@ -1,0 +1,9 @@
+# -*- mode: makefile-gmake -*-
+
+#SACADO_DIR = /home/devel/sacado
+SACADO_DIR = sacado
+SACADO_INCLUDE = -I$(SACADO_DIR)/include
+AD_INCLUDE = -DSACADO $(SACADO_INCLUDE)
+
+.PHONY: bootstrap
+bootstrap: $(SACADO_DIR)/include/Sacado.hpp

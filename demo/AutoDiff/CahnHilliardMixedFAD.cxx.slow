@@ -1,0 +1,49 @@
+// -*- c++ -*-
+#include "petiga/petiga.hpp"
+#include "CahnHilliard.hpp"
+
+template<int dim, int nen, int dof, typename Scalar>
+static inline
+PetscErrorCode IFunction(IGAPoint q,
+                         PetscReal, const Scalar (&V)[nen][dof],
+                         PetscReal, const Scalar (&U)[nen][dof],
+                         Scalar (&F)[nen][dof],
+                         void *ctx)
+{
+  const Params *params = (Params *)ctx;
+
+  using namespace PetIGA;
+  typedef  Space<dim,nen> Space;
+  typename Space::Shape0 N0 = Space::GetShape0(q);
+  typename Space::Shape1 N1 = Space::GetShape1(q);
+
+  Scalar c_t;
+  Point::FormValue<0>(q, V, c_t);
+  Scalar u[2],grad_u[2][dim];
+  Point::FormValue(q, U, u);
+  Point::FormGrad (q, U, grad_u);
+  Scalar& c = u[0];
+  Scalar& s = u[1];
+  Scalar (&grad_c)[dim] = grad_u[0];
+  Scalar (&grad_s)[dim] = grad_u[1];
+
+  Scalar M;
+  Mobility(params,c,M);
+  Scalar mu;
+  ChemicalPotential(params,c,mu);
+
+  for (int a=0; a<nen; a++) {
+    F[a][0] = N0[a] *  c_t   + dot(N1[a],grad_s) * M;
+    F[a][1] = N0[a] * (s-mu) - dot(N1[a],grad_c);
+  }
+
+  return 0;
+}
+
+#include "petiga/fad/ijacobian.hpp"
+
+#define DOF 2
+#define IFunctionCXX IFunctionFAD
+#define IJacobianCXX IJacobianFAD
+#include "petiga/cxx/ifunction.hpp"
+#include "petiga/cxx/ijacobian.hpp"

@@ -1,0 +1,14 @@
+# -*- mode: makefile-gmake -*-
+
+FADBAD_DIR = ./FADBAD++
+FADBAD_INCLUDE = -I$(FADBAD_DIR)
+AD_INCLUDE = -DFADBAD $(FADBAD_INCLUDE)
+
+.PHONY: bootstrap
+bootstrap: $(FADBAD_DIR)/fadiff.h
+
+FADBAD_TAR = FADBAD++-2.1.tar.gz
+$(FADBAD_DIR)/fadiff.h: $(FADBAD_TAR)
+	@tar zxf $<
+$(FADBAD_TAR):
+	@curl -s -O http://www.fadbad.com/download/$@

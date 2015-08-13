@@ -1,0 +1,182 @@
+// -*- c++ -*-
+#include "petiga/petiga.hpp"
+#include "CahnHilliard.hpp"
+
+template<int dim, int nen, int dof, typename Scalar0, typename Scalar1, typename ScalarF>
+static inline
+PetscErrorCode IFunction(IGAPoint  q,
+                         PetscReal, const Scalar0 (&V0)[nen], const Scalar1 (&V1)[nen],
+                         PetscReal, const Scalar0 (&U0)[nen], const Scalar1 (&U1)[nen],
+                         ScalarF (&F)[nen][dof],
+                         void *ctx)
+{
+  const Params *params = (Params *)ctx;
+
+  using namespace PetIGA;
+  typedef  Space<dim,nen> Space;
+  typename Space::Shape0 N0 = Space::GetShape0(q);
+  typename Space::Shape1 N1 = Space::GetShape1(q);
+
+  typedef const Scalar0 (&Array0)[nen][1];
+  typedef const Scalar1 (&Array1)[nen][1];
+  Array0 CT = reinterpret_cast<Array0>(V0);
+  Array0 C  = reinterpret_cast<Array0>(U0);
+  Array1 S  = reinterpret_cast<Array1>(U1);
+
+  Scalar0 c_t;
+  Point::FormValue(q, CT, c_t);
+  Scalar0 c, grad_c[dim];
+  Point::FormValue(q, C, c);
+  Point::FormGrad (q, C, grad_c);
+  Scalar1 s, grad_s[dim];
+  Point::FormValue(q, S, s);
+  Point::FormGrad (q, S, grad_s);
+
+  Scalar0 M;
+  Mobility(params,c,M);
+  Scalar0 mu;
+  ChemicalPotential(params,c,mu);
+
+  for (int a=0; a<nen; a++) {
+    F[a][0] = N0[a] *  c_t   + dot(N1[a],grad_s) * M;
+    F[a][1] = N0[a] * (s-mu) - dot(N1[a],grad_c);
+  }
+
+  return 0;
+}
+
+template <int m, int n, typename Out, typename In> inline
+void unpack(Out (&out)[m][n], const In (&in)[n][m])
+{
+  for (int i=0; i<n; i++)
+    for (int j=0; j<m; j++)
+      out[j][i] = in[i][j];
+}
+template <int m, int n, typename Out, typename In> inline
+void unpack(const In (&in)[n][m], Out (&out)[m][n]) { unpack(out,in); }
+
+template<int dim, int nen, int dof, typename Scalar>
+static inline
+PetscErrorCode IFunction(IGAPoint  q,
+                         PetscReal s,const Scalar (&VV)[nen][dof],
+                         PetscReal t,const Scalar (&UU)[nen][dof],
+                         Scalar (&F)[nen][dof],
+                         void *ctx)
+{
+  Scalar V[dof][nen]; unpack(V, VV);
+  Scalar U[dof][nen]; unpack(U, UU);
+  return IFunction<dim>(q,
+                        s, V[0], V[1],
+                        t, U[0], U[1],
+                        F, ctx);
+}
+
+#include "petiga/fad/adtype.hpp"
+
+template<int dim, int nen, int dof, typename Scalar>
+static inline
+PetscErrorCode IJacobian(IGAPoint  q,
+                         PetscReal s, const Scalar (&VV)[nen][dof],
+                         PetscReal t, const Scalar (&UU)[nen][dof],
+                         Scalar (&J)[nen][dof][nen][dof],
+                         void *ctx)
+{
+#if 1
+
+  typedef PetIGA::AD<Scalar,nen,1> AD;
+  typedef typename AD::Type ADType;
+
+  Scalar V[dof][nen]; unpack(V, VV);
+  Scalar U[dof][nen]; unpack(U, UU);
+
+  ADType Y[nen],X[nen];
+  ADType R[dof][nen][dof];
+
+  {
+    const int field = 0;
+    AD::Input(Y, V[field], s);
+    AD::Input(X, U[field]);
+    IFunction<dim>(q,
+                   s, Y, V[1],
+                   t, X, U[1],
+                   R[field], ctx);
+  }
+  {
+    const int field = 1;
+    AD::Input(Y, V[field], s);
+    AD::Input(X, U[field]);
+    IFunction<dim>(q,
+                   s, V[0], Y,
+                   t, U[0], X,
+                   R[field], ctx);
+  }
+
+  for (int a=0; a<nen; a++)
+    for (int i=0; i<dof; i++)
+      for (int b=0; b<nen; b++)
+        for (int j=0; j<dof; j++)
+          #ifdef SACADO_HPP
+          J[a][i][b][j] = R[j][a][i].dx(b);
+          #else
+          J[a][i][b][j] = R[j][a][i].d(b);
+          #endif
+
+#else
+
+  typedef PetIGA::AD<Scalar,nen> AD;
+  typedef typename AD::Type ADType;
+
+  Scalar V[dof][nen]; unpack(V, VV);
+  Scalar U[dof][nen]; unpack(U, UU);
+
+  ADType Y[nen],X[nen];
+
+  Scalar tmp[dof][nen][dof][nen];
+
+  {
+    const int index = 0;
+    AD::Input(Y, V[index], s);
+    AD::Input(X, U[index]);
+    ADType R[nen][dof];
+    IFunction<dim>(q,
+                   s, Y, V[1],
+                   t, X, U[1],
+                   R, ctx);
+    for (int a=0; a<nen; a++)
+      for (int i=0; i<dof; i++)
+        for (int b=0; b<nen; b++)
+          tmp[index][a][i][b] = R[a][i].d(b);
+  }
+  {
+    const int index = 1;
+    AD::Input(Y, V[index], s);
+    AD::Input(X, U[index]);
+    ADType R[nen][dof];
+    IFunction<dim>(q,
+                   s, V[0], Y,
+                   t, U[0], X,
+                   R, ctx);
+
+    for (int a=0; a<nen; a++)
+      for (int i=0; i<dof; i++)
+        for (int b=0; b<nen; b++)
+          tmp[index][a][i][b] = R[a][i].d(b);
+  }
+
+  for (int a=0; a<nen; a++)
+    for (int i=0; i<dof; i++)
+      for (int b=0; b<nen; b++)
+        for (int j=0; j<dof; j++)
+          J[a][i][b][j] = tmp[j][a][i][b];
+
+#endif
+  return 0;
+}
+
+
+
+#define DOF 2
+#define IFunctionCXX IFunctionFAD
+#define IJacobianCXX IJacobianFAD
+#include "petiga/cxx/ifunction.hpp"
+#include "petiga/cxx/ijacobian.hpp"
