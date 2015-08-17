@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
   ierr = IGACreateNodeDM(iga,1,&dm);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
-  ierr = IGACreateWrapperDM(iga,&dm);CHKERRQ(ierr);
+  ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
   ierr = DMIGAGetIGA(dm,&iga);CHKERRQ(ierr);
   ierr = DMIGASetIGA(dm,iga);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(dm,&x);CHKERRQ(ierr);
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
-  ierr = IGACreateWrapperDM(iga,&dm);CHKERRQ(ierr);
+  ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
 #if PETSC_VERSION_GE(3,5,0)
   {
     DM newdm;

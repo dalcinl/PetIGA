@@ -16,6 +16,27 @@ typedef struct {
 #define DMIGACast(dm) ((DM_IGA*)(dm)->data)
 
 #undef  __FUNCT__
+#define __FUNCT__ "DMIGACreate"
+PetscErrorCode DMIGACreate(IGA iga,DM *dm)
+{
+  MPI_Comm       comm;
+  const char     *prefix;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(dm,2);
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
+  ierr = DMCreate(comm,dm);CHKERRQ(ierr);
+  ierr = DMSetType(*dm,DMIGA);CHKERRQ(ierr);
+  ierr = DMSetOptionsPrefix(*dm,prefix);CHKERRQ(ierr);
+  ierr = PetscObjectReference((PetscObject)iga);CHKERRQ(ierr);
+  DMIGACast(*dm)->iga = iga;
+  if (iga->setup) {ierr = DMSetUp(*dm);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
 #define __FUNCT__ "DMIGASetIGA"
 PetscErrorCode DMIGASetIGA(DM dm,IGA iga)
 {
@@ -47,27 +68,6 @@ PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga)
   ierr = PetscObjectTypeCompare((PetscObject)dm,DMIGA,&match);CHKERRQ(ierr);
   if (!match) SETERRQ(((PetscObject)dm)->comm,PETSC_ERR_ARG_WRONG,"DM is not of type DMIGA");
   *iga = DMIGACast(dm)->iga;
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateWrapperDM"
-PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm)
-{
-  MPI_Comm       comm;
-  const char     *prefix;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,2);
-  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
-  ierr = DMCreate(comm,dm);CHKERRQ(ierr);
-  ierr = DMSetType(*dm,DMIGA);CHKERRQ(ierr);
-  ierr = DMSetOptionsPrefix(*dm,prefix);CHKERRQ(ierr);
-  ierr = PetscObjectReference((PetscObject)iga);CHKERRQ(ierr);
-  DMIGACast(*dm)->iga = iga;
-  if (iga->setup) {ierr = DMSetUp(*dm);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -359,7 +359,7 @@ static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
   ierr = IGAClone(iga,PetscMax(dim,nsd),&ciga);CHKERRQ(ierr);
-  ierr = IGACreateWrapperDM(ciga,cdm);CHKERRQ(ierr);
+  ierr = DMIGACreate(ciga,cdm);CHKERRQ(ierr);
   ierr = IGADestroy(&ciga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -400,7 +400,7 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields
       for (i=0; i<numFields; i++)
         {ierr = IGASetFieldName(subiga,i,iga->fieldname[fields[i]]);CHKERRQ(ierr);}
     }
-    ierr = IGACreateWrapperDM(subiga,subdm);CHKERRQ(ierr);
+    ierr = DMIGACreate(subiga,subdm);CHKERRQ(ierr);
     ierr = IGADestroy(&subiga);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);

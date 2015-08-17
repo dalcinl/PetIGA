@@ -488,7 +488,7 @@ PETSC_EXTERN PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,c
 PETSC_EXTERN PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *newiga);
 
 #define DMIGA "iga"
-PETSC_EXTERN PetscErrorCode IGACreateWrapperDM(IGA iga,DM *dm);
+PETSC_EXTERN PetscErrorCode DMIGACreate(IGA iga,DM *dm);
 PETSC_EXTERN PetscErrorCode DMIGASetIGA(DM dm,IGA iga);
 PETSC_EXTERN PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga);
 
