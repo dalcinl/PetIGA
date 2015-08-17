@@ -868,6 +868,15 @@ PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,
 
 /* ---------------------------------------------------------------- */
 
+PETSC_EXTERN PetscErrorCode IGAKSPFormRHS(KSP,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGAKSPFormOperators(KSP,Mat,Mat,void*);
+PETSC_EXTERN PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat,Mat,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIFunction(TS,PetscReal,Vec,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian(TS,PetscReal,Vec,Vec,PetscReal,Mat,Mat,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,void*);
+
 PETSC_EXTERN PetscErrorCode IGAPreparePCMG(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerPC(PC pc);

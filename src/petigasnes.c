@@ -142,9 +142,6 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   PetscFunctionReturn(0);
 }
 
-PETSC_EXTERN PetscErrorCode IGASNESFormFunction(SNES,Vec,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGASNESFormJacobian(SNES,Vec,Mat,Mat,void*);
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGASNESFormFunction"
 PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
@@ -184,6 +181,41 @@ PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
   PetscFunctionReturn(0);
 }
 
+/*
+#undef  __FUNCT__
+#define __FUNCT__ "IGA_OptionsHandler_SNES"
+static PetscErrorCode IGA_OptionsHandler_SNES(PetscObject obj,void *ctx)
+{
+  SNES            snes = (SNES)obj;
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
+  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
+  ierr = PetscObjectQuery((PetscObject)snes,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscFunctionReturn(0);
+}
+static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
+*/
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGASetOptionsHandlerSNES"
+PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
+{
+  KSP            ksp;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
+  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,NULL);CHKERRQ(ierr);*/
+  ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerKSP(ksp);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 #if PETSC_VERSION_LT(3,5,0)
 PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
 PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStructure *m,void *ctx)
@@ -217,40 +249,5 @@ PetscErrorCode IGACreateSNES(IGA iga,SNES *snes)
   ierr = SNESSetJacobian(*snes,J,J,IGASNESFormJacobian,iga);CHKERRQ(ierr);
   ierr = MatDestroy(&J);CHKERRQ(ierr);
 
-  PetscFunctionReturn(0);
-}
-
-/*
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_OptionsHandler_SNES"
-static PetscErrorCode IGA_OptionsHandler_SNES(PetscObject obj,void *ctx)
-{
-  SNES            snes = (SNES)obj;
-  IGA            iga;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
-  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-  ierr = PetscObjectQuery((PetscObject)snes,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) PetscFunctionReturn(0);
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscFunctionReturn(0);
-}
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
-*/
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsHandlerSNES"
-PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
-{
-  KSP            ksp;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)snes,IGA_OptionsHandler_SNES,OptHdlDel,NULL);CHKERRQ(ierr);*/
-  ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
-  ierr = IGASetOptionsHandlerKSP(ksp);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

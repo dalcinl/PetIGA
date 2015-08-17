@@ -9,6 +9,13 @@
 #define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
 #endif
 
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+#define IGASNESFormJacobian IGASNESFormJacobian_Legacy
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+#define IGATSFormIJacobian  IGATSFormIJacobian_Legacy
+#endif
+
 typedef struct {
   IGA iga;
 } DM_IGA;
@@ -278,6 +285,7 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   ierr = DMIGA_GetIGA(dm,&iga);CHKERRQ(ierr);
   ierr = IGASetUp(iga);CHKERRQ(ierr);
@@ -295,6 +303,13 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
 #endif
   ierr = DMSetVecType(dm,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(dm,iga->mattype);CHKERRQ(ierr);
+
+  ierr = DMKSPSetComputeRHS(dm,IGAKSPFormRHS,iga);CHKERRQ(ierr);
+  ierr = DMKSPSetComputeOperators(dm,IGAKSPFormOperators,iga);CHKERRQ(ierr);
+  ierr = DMSNESSetFunction(dm,IGASNESFormFunction,iga);CHKERRQ(ierr);
+  ierr = DMSNESSetJacobian(dm,IGASNESFormJacobian,iga);CHKERRQ(ierr);
+  ierr = DMTSSetIFunction(dm,IGATSFormIFunction,iga);CHKERRQ(ierr);
+  ierr = DMTSSetIJacobian(dm,IGATSFormIJacobian,iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

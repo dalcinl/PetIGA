@@ -179,11 +179,6 @@ PetscErrorCode IGAComputeIJacobian2(IGA iga,
   PetscFunctionReturn(0);
 }
 
-PETSC_EXTERN PetscErrorCode IGATSFormIFunction (TS,PetscReal,Vec,Vec,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian (TS,PetscReal,Vec,Vec,PetscReal,Mat,Mat,void*);
-PETSC_EXTERN PetscErrorCode IGATSFormIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian2(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,void*);
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGATSFormIFunction2"
 PetscErrorCode IGATSFormIFunction2(TS ts,PetscReal t,Vec U,Vec V,Vec A,Vec F,void *ctx)

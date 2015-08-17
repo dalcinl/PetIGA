@@ -207,12 +207,9 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
   PetscFunctionReturn(0);
 }
 
-PETSC_EXTERN PetscErrorCode IGAKSPComputeRHS(KSP,Vec,void*);
-PETSC_EXTERN PetscErrorCode IGAKSPComputeOperators(KSP,Mat,Mat,void*);
-
 #undef  __FUNCT__
-#define __FUNCT__ "IGAKSPComputeRHS"
-PetscErrorCode IGAKSPComputeRHS(KSP ksp,Vec b,void *ctx)
+#define __FUNCT__ "IGAKSPFormRHS"
+PetscErrorCode IGAKSPFormRHS(KSP ksp,Vec b,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   PetscErrorCode ierr;
@@ -228,8 +225,8 @@ PetscErrorCode IGAKSPComputeRHS(KSP ksp,Vec b,void *ctx)
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAKSPComputeOperators"
-PetscErrorCode IGAKSPComputeOperators(KSP ksp,Mat A,Mat B,void *ctx)
+#define __FUNCT__ "IGAKSPFormOperators"
+PetscErrorCode IGAKSPFormOperators(KSP ksp,Mat A,Mat B,void *ctx)
 {
   IGA            iga = (IGA)ctx;
   Vec            rhs;
@@ -238,7 +235,7 @@ PetscErrorCode IGAKSPComputeOperators(KSP ksp,Mat A,Mat B,void *ctx)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
   PetscValidHeaderSpecific(A,MAT_CLASSID,2);
-  PetscValidHeaderSpecific(B,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(B,MAT_CLASSID,3);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,4);
   if (!iga->form->ops->System) {
     ierr = IGAComputeMatrix(iga,A);CHKERRQ(ierr);
@@ -246,44 +243,6 @@ PetscErrorCode IGAKSPComputeOperators(KSP ksp,Mat A,Mat B,void *ctx)
     ierr = KSPGetRhs(ksp,&rhs);CHKERRQ(ierr);
     ierr = IGAComputeSystem(iga,A,rhs);CHKERRQ(ierr);
   }
-  PetscFunctionReturn(0);
-}
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateKSP"
-/*@
-   IGACreateKSP - Creates a KSP (linear solver) which uses the same
-   communicators as the IGA.
-
-   Logically collective on IGA
-
-   Input Parameter:
-.  iga - the IGA context
-
-   Output Parameter:
-.  ksp - the KSP
-
-   Level: normal
-
-.keywords: IGA, create, KSP
-@*/
-PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp)
-{
-  MPI_Comm       comm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(ksp,2);
-
-  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  ierr = KSPCreate(comm,ksp);CHKERRQ(ierr);
-  ierr = PetscObjectCompose((PetscObject)*ksp,"IGA",(PetscObject)iga);CHKERRQ(ierr);
-  ierr = IGASetOptionsHandlerKSP(*ksp);CHKERRQ(ierr);
-
-  /*ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);*/
-  /*ierr = KSPSetOperators(*ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);*/
-  /*ierr = MatDestroy(&A);CHKERRQ(ierr);*/
   PetscFunctionReturn(0);
 }
 
@@ -363,5 +322,43 @@ PetscErrorCode IGASetOptionsHandlerPC(PC pc)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
   ierr = PetscObjectAddOptionsHandler((PetscObject)pc,IGA_OptionsHandler_PC,OptHdlDel,NULL);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef  __FUNCT__
+#define __FUNCT__ "IGACreateKSP"
+/*@
+   IGACreateKSP - Creates a KSP (linear solver) which uses the same
+   communicators as the IGA.
+
+   Logically collective on IGA
+
+   Input Parameter:
+.  iga - the IGA context
+
+   Output Parameter:
+.  ksp - the KSP
+
+   Level: normal
+
+.keywords: IGA, create, KSP
+@*/
+PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp)
+{
+  MPI_Comm       comm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  PetscValidPointer(ksp,2);
+
+  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
+  ierr = KSPCreate(comm,ksp);CHKERRQ(ierr);
+  ierr = PetscObjectCompose((PetscObject)*ksp,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerKSP(*ksp);CHKERRQ(ierr);
+
+  /*ierr = IGACreateMat(iga,&A);CHKERRQ(ierr);*/
+  /*ierr = KSPSetOperators(*ksp,A,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);*/
+  /*ierr = MatDestroy(&A);CHKERRQ(ierr);*/
   PetscFunctionReturn(0);
 }
