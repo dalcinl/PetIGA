@@ -55,11 +55,6 @@ typedef struct {
   PetscInt     order;
   TSStepStatus status;
 
-  TSIFunction2 Function;
-  void         *FunCtx;
-  TSIJacobian2 Jacobian;
-  void         *JacCtx;
-
 } TS_Alpha;
 
 #undef __FUNCT__
@@ -322,13 +317,8 @@ static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec 
 
   PetscFunctionBegin;
   ierr = TSAlpha_StageVecs(ts,X);CHKERRQ(ierr);
-  if (th->Function) {
-    /* F = Function(ta,Xa,Va,Aa) */
-    ierr = TSComputeIFunction2(ts,ta,Xa,Va,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
-  } else {
-    /* F = Function(ta,Xa,Aa) */
-    ierr = TSComputeIFunction(ts,ta,Xa,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
-  }
+  /* F = Function(ta,Xa,Va,Aa) */
+  ierr = TSComputeIFunction2(ts,ta,Xa,Va,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
   ierr = VecScale(F,th->scale_F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -351,23 +341,13 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  if (th->Jacobian) {
-    /* J,P = Jacobian(ta,Xa,Va,Aa) */
+  /* J,P = Jacobian(ta,Xa,Va,Aa) */
 #if PETSC_VERSION_LT(3,5,0)
-    *m = SAME_NONZERO_PATTERN;
-    ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P,PETSC_FALSE);CHKERRQ(ierr);
+  *m = SAME_NONZERO_PATTERN;
+  ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P,PETSC_FALSE);CHKERRQ(ierr);
 #else
-    ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
 #endif
-  } else {
-    /* J,P = Jacobian(ta,Xa,Aa) */
-#if PETSC_VERSION_LT(3,5,0)
-    *m = SAME_NONZERO_PATTERN;
-    ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
-#else
-    ierr = TSComputeIJacobian(ts,ta,Xa,Aa,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
-#endif
-  }
   PetscFunctionReturn(0);
 }
 
@@ -405,20 +385,16 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   ierr = TSReset_Alpha(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
-
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSEvaluateStep2_C",NULL);CHKERRQ(ierr);
+
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetParams_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2GetParams_C",NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -574,66 +550,6 @@ static PetscErrorCode TSView_Alpha(TS ts,PetscViewer viewer)
 }
 
 /* ------------------------------------------------------------ */
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSetIFunction2_Alpha"
-static PetscErrorCode TSSetIFunction2_Alpha(TS ts,Vec F,TSIFunction2 f,void *ctx)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  ierr = TSSetIFunction(ts,F,NULL,NULL);CHKERRQ(ierr);
-  if (f)   th->Function = f;
-  if (ctx) th->FunCtx   = ctx;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSetIJacobian2_Alpha"
-static PetscErrorCode TSSetIJacobian2_Alpha(TS ts,Mat J,Mat P,TSIJacobian2 j,void *ctx)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  ierr = TSSetIJacobian(ts,J,P,NULL,NULL);CHKERRQ(ierr);
-  if (j)   th->Jacobian = j;
-  if (ctx) th->JacCtx   = ctx;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeIFunction2_Alpha"
-static PetscErrorCode TSComputeIFunction2_Alpha(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PETSC_UNUSED PetscBool imex)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  if (!th->Function) SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call TSSetIFunction2()");
-  ierr = PetscLogEventBegin(TS_FunctionEval,ts,X,V,F);CHKERRQ(ierr);
-  PetscStackPush("TS user implicit function");
-  ierr = (*th->Function)(ts,t,X,V,A,F,th->FunCtx);CHKERRQ(ierr);
-  PetscStackPop;
-  ierr = PetscLogEventEnd(TS_FunctionEval,ts,X,V,F);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeIJacobian2_Alpha"
-static PetscErrorCode TSComputeIJacobian2_Alpha(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PETSC_UNUSED PetscBool imex)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  if (!th->Jacobian) SETERRQ(((PetscObject)ts)->comm,PETSC_ERR_USER,"Must call TSSetIJacobian2()");
-  ierr = PetscLogEventBegin(TS_JacobianEval,ts,X,V,J);CHKERRQ(ierr);
-  PetscStackPush("TS user implicit Jacobian");
-  ierr = (*th->Jacobian)(ts,t,X,V,A,shiftV,shiftA,J,P,th->JacCtx);CHKERRQ(ierr);
-  PetscStackPop;
-  ierr = PetscLogEventEnd(TS_JacobianEval,ts,X,V,J);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "TSSetSolution2_Alpha"
@@ -830,10 +746,6 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ts->ops->snesfunction   = SNESTSFormFunction_Alpha;
   ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha;
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIFunction2_C",TSSetIFunction2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetIJacobian2_C",TSSetIJacobian2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIFunction2_C",TSComputeIFunction2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSComputeIJacobian2_C",TSComputeIJacobian2_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha);CHKERRQ(ierr);
@@ -862,6 +774,82 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   PetscFunctionReturn(0);
 }
 EXTERN_C_END
+
+/* ------------------------------------------------------------ */
+
+#undef __FUNCT__
+#define __FUNCT__ "DMTSDuplicate"
+static PetscErrorCode DMTSDuplicate(DMTS oldtsdm,DMTS newtsdm)
+{
+  PetscObject    oldobj = (PetscObject)oldtsdm;
+  PetscObject    newobj = (PetscObject)newtsdm;
+  PetscErrorCode ierr;
+  PetscFunctionBegin;
+  ierr = PetscFunctionListDuplicate(oldobj->qlist,&newobj->qlist);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "DMTSSetIFunction2"
+PetscErrorCode DMTSSetIFunction2(DM dm,TSIFunction2 fun,void *ctx)
+{
+  DMTS           tsdm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = DMGetDMTSWrite(dm,&tsdm);CHKERRQ(ierr);
+  tsdm->ops->duplicate = DMTSDuplicate;
+  if (fun) {ierr = PetscObjectComposeFunction((PetscObject)tsdm,"TSIFunction2_C",fun);CHKERRQ(ierr);}
+  if (ctx) {ierr = DMTSSetIFunction(dm,NULL,ctx);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "DMTSSetIJacobian2"
+PetscErrorCode DMTSSetIJacobian2(DM dm,TSIJacobian2 jac,void *ctx)
+{
+  DMTS           tsdm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = DMGetDMTSWrite(dm,&tsdm);CHKERRQ(ierr);
+  tsdm->ops->duplicate = DMTSDuplicate;
+  if (jac) {ierr = PetscObjectComposeFunction((PetscObject)tsdm,"TSIJacobian2_C",jac);CHKERRQ(ierr);}
+  if (ctx) {ierr = DMTSSetIJacobian(dm,NULL,ctx);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "DMTSGetIFunction2"
+PetscErrorCode DMTSGetIFunction2(DM dm,TSIFunction2 *fun,void **ctx)
+{
+  DMTS           tsdm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = DMGetDMTS(dm,&tsdm);CHKERRQ(ierr);
+  if (fun) {ierr = PetscObjectQueryFunction((PetscObject)tsdm,"TSIFunction2_C",(PetscVoidFunction*)fun);CHKERRQ(ierr);}
+  if (ctx) {ierr = DMTSGetIFunction(dm,NULL,ctx);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "DMTSGetIJacobian2"
+PetscErrorCode DMTSGetIJacobian2(DM dm,TSIJacobian2 *jac,void **ctx)
+{
+  DMTS           tsdm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
+  ierr = DMGetDMTS(dm,&tsdm);CHKERRQ(ierr);
+  if (jac) {ierr = PetscObjectQueryFunction((PetscObject)tsdm,"TSIJacobian2_C",(PetscVoidFunction*)jac);CHKERRQ(ierr);}
+  if (ctx) {ierr = DMTSGetIJacobian(dm,NULL,ctx);CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
 
 /* ------------------------------------------------------------ */
 
@@ -896,11 +884,15 @@ $  fun(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,Vec F,ctx);
 @*/
 PetscErrorCode TSSetIFunction2(TS ts,Vec F,TSIFunction2 fun,void *ctx)
 {
+  DM             dm;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   if (F) PetscValidHeaderSpecific(F,VEC_CLASSID,2);
-  ierr = PetscUseMethod(ts,"TSSetIFunction2_C",(TS,Vec,TSIFunction2,void*),(ts,F,fun,ctx));CHKERRQ(ierr);
+  if (F) {ierr = TSSetIFunction(ts,F,NULL,NULL);CHKERRQ(ierr);}
+  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
+  ierr = DMTSSetIFunction2(dm,fun,ctx);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -950,12 +942,16 @@ $  jac(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,PetscReal v,PetscReal a,Mat *J,M
 @*/
 PetscErrorCode TSSetIJacobian2(TS ts,Mat J,Mat P,TSIJacobian2 jac,void *ctx)
 {
+  DM             dm;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   if (J) PetscValidHeaderSpecific(J,MAT_CLASSID,2);
   if (P) PetscValidHeaderSpecific(P,MAT_CLASSID,3);
-  ierr = PetscUseMethod(ts,"TSSetIJacobian2_C",(TS,Mat,Mat,TSIJacobian2,void*),(ts,J,P,jac,ctx));CHKERRQ(ierr);
+  if (J || P) {ierr = TSSetIJacobian(ts,J,P,NULL,NULL);CHKERRQ(ierr);}
+  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
+  ierr = DMTSSetIJacobian2(dm,jac,ctx);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -963,7 +959,11 @@ PetscErrorCode TSSetIJacobian2(TS ts,Mat J,Mat P,TSIJacobian2 jac,void *ctx)
 #define __FUNCT__ "TSComputeIFunction2"
 PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PetscBool imex)
 {
+  DM             dm;
+  TSIFunction2   IFunction2;
+  void           *ctx;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidHeaderSpecific(X,VEC_CLASSID,3);
@@ -971,9 +971,15 @@ PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,Pet
   PetscValidHeaderSpecific(A,VEC_CLASSID,5);
   PetscValidHeaderSpecific(F,VEC_CLASSID,6);
   PetscValidLogicalCollectiveBool(ts,imex,7);
-  ierr = PetscUseMethod(ts,"TSComputeIFunction2_C",
-                        (TS,PetscReal,Vec,Vec,Vec,Vec,PetscBool),
-                        (ts,t,X,V,A,F,imex));CHKERRQ(ierr);
+  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
+  ierr = DMTSGetIFunction2(dm,&IFunction2,&ctx);CHKERRQ(ierr);
+  if (IFunction2) {
+    PetscStackPush("TS user implicit function");
+    ierr = IFunction2(ts,t,X,V,A,F,ctx);CHKERRQ(ierr);
+    PetscStackPop;
+  } else {
+    ierr = TSComputeIFunction(ts,t,X,A,F,imex);CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
 
@@ -981,7 +987,11 @@ PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,Pet
 #define __FUNCT__ "TSComputeIJacobian2"
 PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PetscBool imex)
 {
+  DM             dm;
+  TSIJacobian2   IJacobian2;
+  void           *ctx;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
   PetscValidHeaderSpecific(X,VEC_CLASSID,3);
@@ -990,9 +1000,20 @@ PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
   PetscValidHeaderSpecific(J,MAT_CLASSID,8);
   PetscValidHeaderSpecific(P,MAT_CLASSID,9);
   PetscValidLogicalCollectiveBool(ts,imex,7);
-  ierr = PetscUseMethod(ts,"TSComputeIJacobian2_C",
-                        (TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,PetscBool),
-                        (ts,t,X,V,A,shiftV,shiftA,J,P,imex));CHKERRQ(ierr);
+  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
+  ierr = DMTSGetIJacobian2(dm,&IJacobian2,&ctx);CHKERRQ(ierr);
+  if (IJacobian2) {
+    PetscStackPush("TS user implicit Jacobian");
+    ierr = IJacobian2(ts,t,X,V,A,shiftV,shiftA,J,P,ctx);CHKERRQ(ierr);
+    PetscStackPop;
+  } else {
+#if PETSC_VERSION_LT(3,5,0)
+    MatStructure m;
+    ierr = TSComputeIJacobian(ts,t,X,A,shiftA,&J,&P,&m,imex);CHKERRQ(ierr);
+#else
+    ierr = TSComputeIJacobian(ts,t,X,A,shiftA,J,P,imex);CHKERRQ(ierr);
+#endif
+  }
   PetscFunctionReturn(0);
 }
 

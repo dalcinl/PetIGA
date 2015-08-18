@@ -551,6 +551,43 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
+PetscErrorCode IGATSFormIJacobian_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN; return IGATSFormIJacobian(ts,t,U,V,shift,*J,*P,ctx);}
+#define IGATSFormIJacobian IGATSFormIJacobian_Legacy
+#endif
+
+#undef  __FUNCT__
+#define __FUNCT__ "TSSetIGA"
+PetscErrorCode TSSetIGA(TS ts,IGA iga)
+{
+  DM             dm;
+  Vec            vec;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,2);
+  PetscCheckSameComm(ts,1,iga,2);
+  ierr = PetscObjectCompose((PetscObject)ts,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerTS(ts);CHKERRQ(ierr);
+
+  ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
+  ierr = DMTSSetIFunction(dm,IGATSFormIFunction,iga);CHKERRQ(ierr);
+  ierr = DMTSSetIJacobian(dm,IGATSFormIJacobian,iga);CHKERRQ(ierr);
+  ierr = TSSetDM(ts,dm);CHKERRQ(ierr);
+  ierr = DMCreateGlobalVector(dm,&vec);CHKERRQ(ierr);
+  ierr = TSSetSolution(ts,vec);CHKERRQ(ierr);
+  ierr = VecDestroy(&vec);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+
+  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
+  ierr = DMTSSetIFunction2(dm,IGATSFormIFunction2,iga);CHKERRQ(ierr);
+  ierr = DMTSSetIJacobian2(dm,IGATSFormIJacobian2,iga);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 /*
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_TS"
@@ -585,13 +622,6 @@ PetscErrorCode IGASetOptionsHandlerTS(TS ts)
   ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
-PetscErrorCode IGATSFormIJacobian_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN; return IGATSFormIJacobian(ts,t,U,V,shift,*J,*P,ctx);}
-#define IGATSFormIJacobian IGATSFormIJacobian_Legacy
-#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateTS"

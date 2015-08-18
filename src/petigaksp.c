@@ -246,6 +246,35 @@ PetscErrorCode IGAKSPFormOperators(KSP ksp,Mat A,Mat B,void *ctx)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGAKSPFormOperators_Legacy(KSP,Mat,Mat,MatStructure*,void*);
+PetscErrorCode IGAKSPFormOperators_Legacy(KSP ksp,Mat A,Mat B,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN;return IGAKSPFormOperators(ksp,A,B,ctx);}
+#define IGAKSPFormOperators IGAKSPFormOperators_Legacy
+#endif
+
+#undef  __FUNCT__
+#define __FUNCT__ "KSPSetIGA"
+PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
+{
+  DM             dm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,2);
+  PetscCheckSameComm(ksp,1,iga,2);
+  ierr = PetscObjectCompose((PetscObject)ksp,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerKSP(ksp);CHKERRQ(ierr);
+
+  ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
+  ierr = DMKSPSetComputeRHS(dm,IGAKSPFormRHS,iga);CHKERRQ(ierr);
+  ierr = DMKSPSetComputeOperators(dm,IGAKSPFormOperators,iga);CHKERRQ(ierr);
+  ierr = KSPSetDM(ksp,dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 /*
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_KSP"

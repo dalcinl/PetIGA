@@ -181,6 +181,35 @@ PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,5,0)
+PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
+PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStructure *m,void *ctx)
+{*m = SAME_NONZERO_PATTERN;return IGASNESFormJacobian(snes,U,*J,*P,ctx);}
+#define IGASNESFormJacobian IGASNESFormJacobian_Legacy
+#endif
+
+#undef  __FUNCT__
+#define __FUNCT__ "SNESSetIGA"
+PetscErrorCode SNESSetIGA(SNES snes,IGA iga)
+{
+  DM             dm;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(snes,SNES_CLASSID,1);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,2);
+  PetscCheckSameComm(snes,1,iga,2);
+  ierr = PetscObjectCompose((PetscObject)snes,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+  ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
+
+  ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
+  ierr = DMSNESSetFunction(dm,IGASNESFormFunction,iga);CHKERRQ(ierr);
+  ierr = DMSNESSetJacobian(dm,IGASNESFormJacobian,iga);CHKERRQ(ierr);
+  ierr = SNESSetDM(snes,dm);CHKERRQ(ierr);
+  ierr = DMDestroy(&dm);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
 /*
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_SNES"
@@ -216,12 +245,6 @@ PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
-PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN;return IGASNESFormJacobian(snes,U,*J,*P,ctx);}
-#define IGASNESFormJacobian IGASNESFormJacobian_Legacy
-#endif
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateSNES"

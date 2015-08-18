@@ -197,7 +197,11 @@ PetscErrorCode IGATSFormIFunction2(TS ts,PetscReal t,Vec U,Vec V,Vec A,Vec F,voi
   PetscValidHeaderSpecific(iga,IGA_CLASSID,7);
 
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = IGAComputeIFunction2(iga,a,A,v,V,t,U,F);CHKERRQ(ierr);
+  if (iga->form->ops->IFunction2) {
+    ierr = IGAComputeIFunction2(iga,a,A,v,V,t,U,F);CHKERRQ(ierr);
+  } else {
+    ierr = IGAComputeIFunction(iga,a,A,t,U,F);CHKERRQ(ierr);
+  }
   PetscFunctionReturn(0);
 }
 
@@ -220,7 +224,11 @@ PetscErrorCode IGATSFormIJacobian2(TS ts,PetscReal t,Vec U,Vec V,Vec A,PetscReal
   PetscValidHeaderSpecific(iga,IGA_CLASSID,10);
 
   ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = IGAComputeIJacobian2(iga,a,A,v,V,t,U,P);CHKERRQ(ierr);
+  if (iga->form->ops->IFunction2) {
+    ierr = IGAComputeIJacobian2(iga,a,A,v,V,t,U,P);CHKERRQ(ierr);
+  } else {
+    ierr = IGAComputeIJacobian(iga,a,A,t,U,P);CHKERRQ(ierr);
+  }
   if (J != P) {
     ierr = MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
     ierr = MatAssemblyEnd  (J,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);

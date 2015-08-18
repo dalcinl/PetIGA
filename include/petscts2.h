@@ -1,9 +1,14 @@
 #if !defined(__PETSCTS2_H)
 #define __PETSCTS2_H
+#include <petscdm.h>
 #include <petscts.h>
 
 typedef PetscErrorCode (*TSIFunction2)(TS,PetscReal,Vec,Vec,Vec,Vec,void*);
 typedef PetscErrorCode (*TSIJacobian2)(TS,PetscReal,Vec,Vec,Vec,PetscReal,PetscReal,Mat,Mat,void*);
+PETSC_EXTERN PetscErrorCode DMTSSetIFunction2(DM,TSIFunction2,void*);
+PETSC_EXTERN PetscErrorCode DMTSSetIJacobian2(DM,TSIJacobian2,void*);
+PETSC_EXTERN PetscErrorCode DMTSGetIFunction2(DM,TSIFunction2*,void**);
+PETSC_EXTERN PetscErrorCode DMTSGetIJacobian2(DM,TSIJacobian2*,void**);
 PETSC_EXTERN PetscErrorCode TSSetIFunction2(TS,Vec,TSIFunction2,void*);
 PETSC_EXTERN PetscErrorCode TSSetIJacobian2(TS,Mat,Mat,TSIJacobian2,void*);
 PETSC_EXTERN PetscErrorCode TSComputeIFunction2(TS,PetscReal,Vec,Vec,Vec,Vec,PetscBool);

@@ -819,16 +819,13 @@ PETSC_EXTERN PetscErrorCode IGAComputeScalar(IGA iga,Vec U,
 #define PCIGAEBE "igaebe"
 #define PCIGABBB "igabbb"
 
-PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
 PETSC_EXTERN PetscErrorCode IGAComputeVector(IGA iga,Vec B);
 PETSC_EXTERN PetscErrorCode IGAComputeMatrix(IGA iga,Mat A);
 PETSC_EXTERN PetscErrorCode IGAComputeSystem(IGA iga,Mat A,Vec B);
 
-PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);
 PETSC_EXTERN PetscErrorCode IGAComputeFunction(IGA iga,Vec U,Vec F);
 PETSC_EXTERN PetscErrorCode IGAComputeJacobian(IGA iga,Vec U,Mat J);
 
-PETSC_EXTERN PetscErrorCode IGACreateTS(IGA iga,TS *ts);
 PETSC_EXTERN PetscErrorCode IGAComputeIFunction(IGA iga,
                                                 PetscReal a,Vec V,
                                                 PetscReal t,Vec U,
@@ -853,8 +850,6 @@ PETSC_EXTERN PetscErrorCode IGAComputeRHSFunction(IGA iga,
 PETSC_EXTERN PetscErrorCode IGAComputeRHSJacobian(IGA iga,
                                                   PetscReal t,Vec U,
                                                   Mat J);
-
-PETSC_EXTERN PetscErrorCode IGACreateTS2(IGA iga, TS *ts);
 PETSC_EXTERN PetscErrorCode IGAComputeIFunction2(IGA iga,
                                                  PetscReal a,Vec vecA,
                                                  PetscReal v,Vec vecV,
@@ -865,6 +860,15 @@ PETSC_EXTERN PetscErrorCode IGAComputeIJacobian2(IGA iga,
                                                  PetscReal v,Vec vecV,
                                                  PetscReal t,Vec vecU,
                                                  Mat matJ);
+
+PETSC_EXTERN PetscErrorCode KSPSetIGA(KSP ksp,IGA iga);
+PETSC_EXTERN PetscErrorCode SNESSetIGA(SNES snes,IGA iga);
+PETSC_EXTERN PetscErrorCode TSSetIGA(TS ts,IGA iga);
+
+PETSC_EXTERN PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp);
+PETSC_EXTERN PetscErrorCode IGACreateSNES(IGA iga,SNES *snes);
+PETSC_EXTERN PetscErrorCode IGACreateTS(IGA iga,TS *ts);
+PETSC_EXTERN PetscErrorCode IGACreateTS2(IGA iga, TS *ts);
 
 /* ---------------------------------------------------------------- */
 
