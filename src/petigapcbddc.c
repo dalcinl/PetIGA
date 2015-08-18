@@ -274,8 +274,10 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     PetscInt  *rank = iga->proc_ranks;
     PetscInt  *shape = iga->node_gwidth;
     PetscInt  np=0,ip[8];
+    MPI_Comm  comm;
     IS        isp;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) wrap[i] = iga->axis[i]->periodic;
 #define forall1(a) for ((a)=0; (a)<2; (a)++)
 #define forall2(a,b) forall1(a) forall1(b)
@@ -305,9 +307,12 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 #undef forall2
 #undef forall3
     ierr = PetscSortInt(np,ip);CHKERRQ(ierr);
-
-    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
-    ierr = ISCreateBlock(PETSC_COMM_SELF,dof,np,ip,PETSC_COPY_VALUES,&isp);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,6,0)
+    comm = PETSC_COMM_SELF;
+#else
+    ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
+#endif
+    ierr = ISCreateBlock(comm,dof,np,ip,PETSC_COPY_VALUES,&isp);CHKERRQ(ierr);
     ierr = PCBDDCSetPrimalVerticesLocalIS(pc,isp);CHKERRQ(ierr);
     ierr = ISDestroy(&isp);CHKERRQ(ierr);
   }
