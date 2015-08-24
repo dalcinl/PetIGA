@@ -210,9 +210,9 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
     PetscInt isum[2],imin[2],imax[2],ival[2] = {1,1};
     for (i=0; i<dim; i++) {ival[0] *= iga->node_lwidth[i]; ival[1] *= iga->elem_width[i];}
     ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-    ierr = MPI_Allreduce(ival,isum,2,MPIU_INT,MPIU_SUM,comm);CHKERRQ(ierr);
-    ierr = MPI_Allreduce(ival,imin,2,MPIU_INT,MPIU_MIN,comm);CHKERRQ(ierr);
-    ierr = MPI_Allreduce(ival,imax,2,MPIU_INT,MPIU_MAX,comm);CHKERRQ(ierr);
+    ierr = MPI_Allreduce(ival,isum,2,MPIU_INT,MPI_SUM,comm);CHKERRQ(ierr);
+    ierr = MPI_Allreduce(ival,imin,2,MPIU_INT,MPI_MIN,comm);CHKERRQ(ierr);
+    ierr = MPI_Allreduce(ival,imax,2,MPIU_INT,MPI_MAX,comm);CHKERRQ(ierr);
     ierr = PetscViewerASCIIPrintf(viewer,"Partition - MPI: processors=[%D,%D,%D] total=%D\n",
                                   sizes[0],sizes[1],sizes[2],size);CHKERRQ(ierr);
     ierr = PetscViewerASCIIPrintf(viewer,"Partition - nnp: sum=%D min=%D max=%D max/min=%g\n",
