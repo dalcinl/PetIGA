@@ -588,26 +588,6 @@ PetscErrorCode TSSetIGA(TS ts,IGA iga)
   PetscFunctionReturn(0);
 }
 
-/*
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_OptionsHandler_TS"
-static PetscErrorCode IGA_OptionsHandler_TS(PetscObject obj,void *ctx)
-{
-  TS             ts = (TS)obj;
-  IGA            iga;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-  ierr = PetscObjectQuery((PetscObject)ts,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) PetscFunctionReturn(0);
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscFunctionReturn(0);
-}
-static PetscErrorCode OptHdlDel(PetscObject obj,void *ctx) {return 0;}
-*/
-
 #undef  __FUNCT__
 #define __FUNCT__ "IGASetOptionsHandlerTS"
 PetscErrorCode IGASetOptionsHandlerTS(TS ts)
@@ -617,7 +597,6 @@ PetscErrorCode IGASetOptionsHandlerTS(TS ts)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ts,IGA_OptionsHandler_TS,OptHdlDel,NULL);CHKERRQ(ierr);*/
   ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerSNES(snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);

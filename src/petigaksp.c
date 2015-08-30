@@ -275,25 +275,6 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   PetscFunctionReturn(0);
 }
 
-/*
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_OptionsHandler_KSP"
-static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
-{
-  KSP            ksp = (KSP)obj;
-  IGA            iga;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
-  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-  ierr = PetscObjectQuery((PetscObject)ksp,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) PetscFunctionReturn(0);
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscFunctionReturn(0);
-}
-*/
-
 #if PETSC_VERSION_LT(3,5,0)
 #define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
@@ -303,8 +284,10 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,void *ctx)
 static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
+  DM             dm;
+  PetscBool      match,hasmat;
   Mat            mat;
-  IGA            iga;
+  IGA            iga = NULL;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -312,10 +295,17 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *c
 #if PETSC_VERSION_LT(3,6,0)
   if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
 #endif
-  ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
-  if (!mat) PetscFunctionReturn(0);
-  PetscValidHeaderSpecific(mat,MAT_CLASSID,1);
-  ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = PetscObjectQuery((PetscObject)pc,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
+  ierr = PCGetOperatorsSet(pc,NULL,&hasmat);CHKERRQ(ierr);
+  if (!iga && dm) {
+    ierr = PetscObjectTypeCompare((PetscObject)dm,DMIGA,&match);CHKERRQ(ierr);
+    if (match) {ierr = DMIGAGetIGA(dm,&iga);CHKERRQ(ierr);}
+  }
+  if (!iga && hasmat) {
+    ierr = PCGetOperators(pc,NULL,&mat);CHKERRQ(ierr);
+    ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  }
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   /* */
@@ -336,7 +326,6 @@ PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
-  /*ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,OptHdlDel,NULL);CHKERRQ(ierr);*/
   ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerPC(pc);CHKERRQ(ierr);
   PetscFunctionReturn(0);
