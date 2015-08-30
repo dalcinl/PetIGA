@@ -140,7 +140,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = PetscMalloc1((size_t)m,&ipiv);CHKERRQ(ierr);
     lwork = -1; work = &lwkopt;
     LAPACKgetri_(&m,values,&m,ipiv,work,&lwork,&info);
-    lwork = (info==0) ? (PetscBLASInt)work[0] : m*128;
+    lwork = (info==0) ? (PetscBLASInt)PetscRealPart(work[0]) : m*128;
     ierr = PetscMalloc1((size_t)lwork,&work);CHKERRQ(ierr);
 
     ierr = IGABeginElement(iga,&element);CHKERRQ(ierr);
