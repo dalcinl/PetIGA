@@ -170,6 +170,11 @@ void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
   if (axis->nel==1 && !axis->periodic) (void)PetscStrcpy(buf,"*");
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscViewerASCIIPushSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE)
+#define PetscViewerASCIIPopSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAPrint"
 PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
@@ -226,7 +231,7 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
       PetscInt *nel = iga->elem_width,  tnel = 1, *sel = iga->elem_start;
       for (i=0; i<dim; i++) {tnnp *= nnp[i]; tnel *= nel[i];}
       ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
-      ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPushSynchronized(viewer);CHKERRQ(ierr);
       ierr = PetscViewerASCIISynchronizedPrintf(viewer,"[%d] (%D,%D,%D): ",
                                                 (int)rank,ranks[0],ranks[1],ranks[2]);CHKERRQ(ierr);
       ierr = PetscViewerASCIISynchronizedPrintf(viewer,"nnp=[%D:%D|%D:%D|%D:%D]=[%D|%D|%D]=%D  ",
@@ -240,7 +245,7 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
                                                 sel[2],sel[2]+nel[2]-1,
                                                 nel[0],nel[1],nel[2],tnel);CHKERRQ(ierr);
       ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
-      ierr = PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE);CHKERRQ(ierr);
+      ierr = PetscViewerASCIIPopSynchronized(viewer);CHKERRQ(ierr);
     }
   }
   PetscFunctionReturn(0);
