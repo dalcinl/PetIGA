@@ -190,12 +190,12 @@ int main(int argc, char *argv[]) {
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,"No minimum found.");
     }
 
-    PetscScalar in = 0.5*(U[imin][insert[imin]]+U[imin][insert[imin]+1]);
+    PetscReal in = 0.5*(U[imin][insert[imin]]+U[imin][insert[imin]+1]);
     for(j=N[imin];j>insert[imin];j--) U[imin][j] = U[imin][j-1];
     U[imin][insert[imin]+1] = in;
     N[imin] += 1;
 
-    printf("Step %d: Error %.16e\n",step,min_error);
+    printf("Step %d: Error %.16e\n",(int)step,(double)min_error);
 
     step += 1;
   }

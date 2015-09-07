@@ -131,7 +131,7 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
   ierr = TSGetSolution(ts,&X);CHKERRQ(ierr);
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
-  ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%g %g %g\n",(double)t,(double)x[0],(double)x[1]);CHKERRQ(ierr);
+  ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%g %g %g\n",(double)t,(double)PetscRealPart(x[0]),(double)PetscRealPart(x[1]));CHKERRQ(ierr);
   ierr = VecRestoreArrayRead(X,&x);CHKERRQ(ierr);
   ierr = TSGetConvergedReason(ts,&reason);CHKERRQ(ierr);
   if (reason) {ierr = PetscFClose(PETSC_COMM_SELF,fp);CHKERRQ(ierr); fp = NULL;}

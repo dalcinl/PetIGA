@@ -39,7 +39,7 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
     Fe[a*4+0] = Na*u - Na * Peaks(x,y);
     Fe[a*4+1] = Na_x*v_x + Na_y*v_y - Na * 1.0;
     Fe[a*4+2] = Na*w + Na_x*w_x + Na_y*w_y - Na * 1.0;
-    Fe[a*4+3] = Na_x*r_x + Na_y*r_y - Na * 1*exp(r);
+    Fe[a*4+3] = Na_x*r_x + Na_y*r_y - Na * 1.0*exp(r);
   }
   return 0;
 }
@@ -69,7 +69,7 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
       Je[a*nen*16+0*nen*4+b*4+0] = Na*Nb;
       Je[a*nen*16+1*nen*4+b*4+1] = Na_x*Nb_x + Na_y*Nb_y;
       Je[a*nen*16+2*nen*4+b*4+2] = Na*Nb + Na_x*Nb_x + Na_y*Nb_y;
-      Je[a*nen*16+3*nen*4+b*4+3] = Na_x*Nb_x + Na_y*Nb_y - Na*Nb * 1*exp(r);
+      Je[a*nen*16+3*nen*4+b*4+3] = Na_x*Nb_x + Na_y*Nb_y - Na*Nb * 1.0*exp(r);
     }
   }
   return 0;
@@ -107,7 +107,7 @@ PetscErrorCode FunctionCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
   Fe[0] = u - Peaks(x,y);
   Fe[1] = -(v_xx + v_yy) - 1.0;
   Fe[2] = -(w_xx + w_yy) + w - 1.0;
-  Fe[3] = -(r_xx + r_yy) - 1*exp(r);
+  Fe[3] = -(r_xx + r_yy) - 1.0*exp(r);
   return 0;
 }
 
