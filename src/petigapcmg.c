@@ -116,40 +116,52 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
 #define __FUNCT__ "IGAPreparePCMG"
 PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
 {
-  DM             dm;
   PetscBool      match,set;
+  const char     *prefix = NULL;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
 
-  ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
+  ierr = PCGetOptionsPrefix(pc,&prefix);CHKERRQ(ierr);
   ierr = PetscObjectTypeCompare((PetscObject)pc,PCMG,&match);CHKERRQ(ierr);
-  if (match && !dm) {
-    const char *prefix = NULL;
-    PetscBool  wraps[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
-    PetscInt   i,dim,dof,*N = iga->node_sizes,*n = iga->node_lwidth;
-    PetscInt   levels;
-    ierr = PCGetOptionsPrefix(pc,&prefix);CHKERRQ(ierr);
+  if (!match) PetscFunctionReturn(0);
+
+  {
+    DM        da;
+    PetscBool wraps[3] = {PETSC_FALSE,PETSC_FALSE,PETSC_FALSE};
+    PetscInt  i,dim,dof,*N = iga->node_sizes,*n = iga->node_lwidth;
+    PetscInt  levels;
+    /* Use the Galerkin process to compute coarse-level operators */
+    ierr = PetscOptionsHasName(prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
+    if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
+    /* Honor -pc_mg_levels 1 explicitly passed in the command line */
+    ierr = PetscOptionsHasName(prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
+    ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
+    if (set && levels == 1) PetscFunctionReturn(0);
     /* Use a DMDA to generate the grid hierarchy with low-order levels */
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (i=0; i<dim; i++) wraps[i] = iga->axis[i]->periodic;
-    ierr = IGACreateDMDA(iga,dof,N,n,wraps,PETSC_TRUE,1,&dm);CHKERRQ(ierr);
-    ierr = DMSetOptionsPrefix(dm,prefix);CHKERRQ(ierr);
-    ierr = PCSetDM(pc,dm);CHKERRQ(ierr);
-    ierr = DMDestroy(&dm);CHKERRQ(ierr);
-    /* Compute number of MG levels */
-    ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
-    ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
-    ierr = PetscOptionsHasName(prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
-    if (!set && levels < 2) {ierr = DMDAComputeCoarsenLevels(dm,&levels);CHKERRQ(ierr);}
-    if (!set && levels > 1) {ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);}
-    ierr = DMDAComputeCoarsenFactor(dm);CHKERRQ(ierr);
-    /* Use the Galerkin process to compute coarse-level operators */
-    ierr = PetscOptionsHasName(prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
-    if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
+    ierr = IGACreateDMDA(iga,dof,N,n,wraps,PETSC_TRUE,1,&da);CHKERRQ(ierr);
+    ierr = DMSetOptionsPrefix(da,prefix);CHKERRQ(ierr);
+    ierr = PCSetDM(pc,da);CHKERRQ(ierr);
+    /* Compute number of multigrid levels */
+    if (levels <= 1) {
+#if PETSC_VERSION_GE(3,6,0) && PETSC_VERSION_LT(3,6,2)
+      PCMGType mgtype;
+      ierr = PCMGGetType(pc,&mgtype);CHKERRQ(ierr);
+      ierr = DMDAComputeCoarsenLevels(da,&levels);CHKERRQ(ierr);
+      ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);
+      ierr = PCMGSetType(pc,mgtype);CHKERRQ(ierr);
+#else
+      ierr = DMDAComputeCoarsenLevels(da,&levels);CHKERRQ(ierr);
+      ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);
+#endif
+    }
+    ierr = DMDAComputeCoarsenFactor(da);CHKERRQ(ierr);
+    ierr = DMDestroy(&da);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
