@@ -1,17 +1,18 @@
 #include "petiga.h"
 
-PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm);
+PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
 #undef  __FUNCT__
 #define __FUNCT__ "IGACreateDrawDM"
-PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
+PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
 {
   MPI_Comm        comm;
   PetscInt        i,dim,nsd;
   PetscInt        sizes[3] = {1, 1, 1};
   PetscInt        width[3] = {1, 1, 1};
   PetscBool       wraps[3] = {PETSC_TRUE, PETSC_TRUE, PETSC_TRUE};
+  PetscInt        resolution[3] = {1,1,1};
   PetscInt        n,N;
   Vec             X;
   PetscErrorCode  ierr;
@@ -19,18 +20,22 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
+  if (res) PetscValidIntPointer(res,3);
   PetscValidPointer(dm,2);
   IGACheckSetUpStage1(iga,1);
 
-  /* compute global and local sizes */
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   dim = PetscClipInterval(dim,1,3); /* silent GCC -O3 warning */
+  /* determine resolution */
+  for (i=0; i<dim; i++) resolution[i] = (res && res[i] != PETSC_DECIDE) ? res[i] : iga->axis[i]->p;
+  for (i=0; i<dim; i++) resolution[i] = PetscMax(resolution[i],1);
+  /* compute global and local sizes */
   if (!iga->collocation) {
     const PetscInt *pranks = iga->proc_ranks;
     const PetscInt *psizes = iga->proc_sizes;
     for (i=0; i<dim; i++) {
-      sizes[i] = iga->elem_sizes[i]*iga->axis[i]->p + 1;
-      width[i] = iga->elem_width[i]*iga->axis[i]->p + (pranks[i] == psizes[i]-1);
+      sizes[i] = iga->elem_sizes[i]*resolution[i] + 1;
+      width[i] = iga->elem_width[i]*resolution[i] + (pranks[i] == psizes[i]-1);
     }
   } else {
     for (i=0; i<dim; i++) {
@@ -61,14 +66,23 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,DM *dm)
 #define __FUNCT__ "IGAGetDrawDM"
 PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm)
 {
-  PetscInt       i;
+  const char     *prefix;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(dm,2);
   IGACheckSetUpStage2(iga,1);
   if (!iga->draw_dm) {
-    ierr = IGACreateDrawDM(iga,iga->dof,&iga->draw_dm);CHKERRQ(ierr);
+    /* determine resolution */
+    PetscInt i,dim,num,resolution[3] = {1,1,1};
+    ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    dim = num = PetscClipInterval(dim,1,3);
+    for (i=0; i<dim; i++) resolution[i] = iga->axis[i]->p;
+    ierr = PetscOptionsGetIntArray(prefix,"-iga_draw_resolution",resolution,&num,NULL);CHKERRQ(ierr);
+    if (num == 1) for (i=1; i<dim; i++) resolution[i] = resolution[0];
+    /* create DMDA draw context */
+    ierr = IGACreateDrawDM(iga,iga->dof,resolution,&iga->draw_dm);CHKERRQ(ierr);
     if (iga->fieldname)
       for (i=0; i<iga->dof; i++)
         {ierr = DMDASetFieldName(iga->draw_dm,i,iga->fieldname[i]);CHKERRQ(ierr);}
@@ -82,19 +96,19 @@ extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
 EXTERN_C_END
 
 static
-PetscReal GrevillePoint(PetscInt index,IGAAxis axis)
+PetscReal GrevillePoint(PetscInt index,PETSC_UNUSED PetscInt step,IGAAxis axis)
 {
   if (PetscUnlikely(axis->p == 0)) return 0;
   return IGA_Greville(index,axis->p,axis->U);
 }
 
 static
-PetscReal LagrangePoint(PetscInt index,IGAAxis axis)
+PetscReal LagrangePoint(PetscInt index,PetscInt step,IGAAxis axis)
 {
   if (PetscUnlikely(axis->p == 0)) return 0;
   {
     PetscInt n = axis->nel;
-    PetscInt p = axis->p;
+    PetscInt p = step;
     PetscInt e = index / p;
     PetscInt i = index % p;
     PetscReal u0,u1;
@@ -115,7 +129,7 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscScalar    *arrayX=NULL;
   PetscScalar    *arrayU=NULL;
   IGAProbe       probe;
-  PetscReal     (*ComputePoint)(PetscInt,IGAAxis);
+  PetscReal     (*ComputePoint)(PetscInt,PetscInt,IGAAxis);
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -126,15 +140,17 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUp(iga,1);
 
+  ierr = IGAGetDrawDM(iga,&da);CHKERRQ(ierr);
+  ierr = DMGetGlobalVector(da,&U);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject)U,((PetscObject)vec)->name);CHKERRQ(ierr);
+
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
   dim = PetscClipInterval(dim,1,3);
   nsd = PetscClipInterval(nsd,dim,3);
 
-  ierr = IGAGetDrawDM(iga,&da);CHKERRQ(ierr);
   ierr = DMGetCoordinates(da,&X);CHKERRQ(ierr);
-  ierr = DMGetGlobalVector(da,&U);CHKERRQ(ierr);
   ierr = VecGetArray(X,&arrayX);CHKERRQ(ierr);
   ierr = VecGetArray(U,&arrayU);CHKERRQ(ierr);
 
@@ -150,14 +166,17 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
     PetscInt is,iw,js,jw,ks,kw;
     PetscInt c,i,j,k,xpos=0,upos=0;
     const PetscInt *shift = iga->node_shift;
+    PetscInt M[3],resolution[3] = {1,1,1};
+    ierr = DMDAGetInfo(da,NULL,&M[0],&M[1],&M[2],NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) resolution[i] = (M[i]-1)/iga->elem_sizes[i];
     ierr = DMDAGetCorners(da,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
     ierr = PetscMalloc1((size_t)dof,&uval);CHKERRQ(ierr);
     for (k=ks; k<ks+kw; k++) {
-      uvw[2] = ComputePoint(k+shift[2],iga->axis[2]);
+      uvw[2] = ComputePoint(k+shift[2],resolution[2],iga->axis[2]);
       for (j=js; j<js+jw; j++) {
-        uvw[1] = ComputePoint(j+shift[1],iga->axis[1]);
+        uvw[1] = ComputePoint(j+shift[1],resolution[1],iga->axis[1]);
         for (i=is; i<is+iw; i++) {
-          uvw[0] = ComputePoint(i+shift[0],iga->axis[0]);
+          uvw[0] = ComputePoint(i+shift[0],resolution[0],iga->axis[0]);
           {
             ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
             ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);
@@ -175,12 +194,9 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   ierr = VecRestoreArray(X,&arrayX);CHKERRQ(ierr);
   ierr = VecRestoreArray(U,&arrayU);CHKERRQ(ierr);
 
-  ierr = PetscObjectSetName((PetscObject)U,((PetscObject)vec)->name);CHKERRQ(ierr);
   ierr = VecView(U,viewer);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject)U,NULL);CHKERRQ(ierr);
-
   ierr = DMRestoreGlobalVector(da,&U);CHKERRQ(ierr);
-
   PetscFunctionReturn(0);
 }
 
