@@ -41,7 +41,7 @@ static const PetscInt primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
 static const PetscInt nprimes  = (PetscInt)(sizeof(primes)/sizeof(PetscInt));
 
 PETSC_STATIC_INLINE
-PetscBool CoarsenFactor(PetscInt dim,const PetscInt M[3],PetscInt factor[3])
+PetscBool CoarsenFactor(PetscInt dim,const PetscInt M[3],const PetscInt P[3],PetscInt factor[3])
 {
   PetscInt tiny = 2*3; /* */
   PetscInt i,j;
@@ -51,6 +51,9 @@ PetscBool CoarsenFactor(PetscInt dim,const PetscInt M[3],PetscInt factor[3])
     return PETSC_FALSE;
   if (M[0] <= tiny && M[1] <= tiny && M[2] <= tiny)
     return PETSC_FALSE;
+  for (i=0; i<dim; i++)
+    if (M[i] <= P[i])
+      return PETSC_FALSE;
   /* Compute minimum possible coarsening for each direction */
   for (i=0; i<dim; i++)
     for (j=0; j<nprimes; j++)
@@ -73,7 +76,7 @@ static
 #define __FUNCT__ "DMDAComputeCoarsenLevels"
 PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 {
-  PetscInt       i,dim,M[3];
+  PetscInt       i,dim,M[3],P[3];
   DMBoundaryType btype[3];
   PetscInt       factor[3] = {1,1,1};
   PetscInt       levels = 1;
@@ -82,9 +85,9 @@ PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm,DM_CLASSID,1);
   PetscValidIntPointer(outlevels,2);
-  ierr = DMDAGetInfo(dm,&dim,&M[0],&M[1],&M[2],NULL,NULL,NULL,NULL,NULL,&btype[0],&btype[1],&btype[2],NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(dm,&dim,&M[0],&M[1],&M[2],&P[0],&P[1],&P[2],NULL,NULL,&btype[0],&btype[1],&btype[2],NULL);CHKERRQ(ierr);
   for (i=0; i<dim; i++) if (btype[i] == DM_BOUNDARY_NONE) M[i] -= 1;
-  while (CoarsenFactor(dim,M,factor) && levels < 64)
+  while (CoarsenFactor(dim,M,P,factor) && levels < 64)
     {for (i=0; i<dim; i++) M[i] /= factor[i]; levels++;}
   *outlevels = levels;
   PetscFunctionReturn(0);
@@ -95,16 +98,16 @@ static
 #define __FUNCT__ "DMDAComputeCoarsenFactor"
 PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
 {
-  PetscInt       i,dim,M[3];
+  PetscInt       i,dim,M[3],P[3];
   DMBoundaryType btype[3];
   PetscInt       factor[3] = {1,1,1};
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = DMDAGetInfo(dm,&dim,&M[0],&M[1],&M[2],NULL,NULL,NULL,NULL,NULL,&btype[0],&btype[1],&btype[2],NULL);CHKERRQ(ierr);
+  ierr = DMDAGetInfo(dm,&dim,&M[0],&M[1],&M[2],&P[0],&P[1],&P[2],NULL,NULL,&btype[0],&btype[1],&btype[2],NULL);CHKERRQ(ierr);
   for (i=0; i<dim; i++) if (btype[i] == DM_BOUNDARY_NONE) M[i] -= 1;
-  (void)CoarsenFactor(dim,M,factor);
+  (void)CoarsenFactor(dim,M,P,factor);
   ierr = DMDASetCoarseningFactor(dm,factor[0],factor[1],factor[2]);CHKERRQ(ierr);
   ierr = DMCoarsenHookAdd(dm,DMDACoarsenHook_PCMG,NULL,NULL);CHKERRQ(ierr);
   ierr = PetscInfo6(dm,"DA dimensions (%3D,%3D,%3D) coarsen factors (%3D,%3D,%3D)\n",M[0],M[1],M[2],factor[0],factor[1],factor[2]);CHKERRQ(ierr);
