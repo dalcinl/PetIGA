@@ -417,7 +417,9 @@ static PetscErrorCode TSSetFromOptions_Alpha(PetscOptions *PetscOptionsObject,TS
     ierr = TSAlphaSetParams(ts,th->Alpha_m,th->Alpha_f,th->Gamma);CHKERRQ(ierr);
     ierr = PetscOptionsBool("-ts_alpha_adapt","Use time-step adaptivity with the Alpha method","TSAlpha2UseAdapt",adapt,&adapt,&flg);CHKERRQ(ierr);
     if (flg) {ierr = TSAlphaUseAdapt(ts,adapt);CHKERRQ(ierr);}
+#if PETSC_VERSION_LT(3,6,0)
     ierr = SNESSetFromOptions(ts->snes);CHKERRQ(ierr);
+#endif
   }
   ierr = PetscOptionsTail();CHKERRQ(ierr);
   PetscFunctionReturn(0);
