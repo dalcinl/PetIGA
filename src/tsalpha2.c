@@ -1307,8 +1307,10 @@ PetscErrorCode TSAlpha2SetParams(TS ts,PetscReal alpha_m,PetscReal alpha_f,Petsc
   Not Collective
 
   Input Parameter:
-+  ts - timestepping context
-.  \alpha_m - algorithmic parameter
+.  ts - timestepping context
+
+  Output Parameters:
++  \alpha_m - algorithmic parameter
 .  \alpha_f - algorithmic parameter
 .  \gamma   - algorithmic parameter
 -  \beta    - algorithmic parameter
