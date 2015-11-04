@@ -53,6 +53,7 @@ petigats2.c \
 petigaopts.c \
 tsalpha1.c \
 tsalpha2.c \
+tsbdf.c \
 
 SOURCEF = \
 petigaftn.F90 \

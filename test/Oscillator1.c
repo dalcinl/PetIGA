@@ -140,6 +140,7 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 
 EXTERN_C_BEGIN
 extern PetscErrorCode TSCreate_Alpha1(TS);
+extern PetscErrorCode TSCreate_BDF(TS);
 EXTERN_C_END
 
 #undef  __FUNCT__
@@ -147,6 +148,9 @@ EXTERN_C_END
 int main(int argc, char *argv[])
 {
   TS             ts;
+  SNES           snes;
+  KSP            ksp;
+  PC             pc;
   Vec            R;
   Mat            J;
   Vec            X;
@@ -159,6 +163,7 @@ int main(int argc, char *argv[])
 
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
+  ierr = TSRegister(TSBDF,TSCreate_BDF);CHKERRQ(ierr);
 
   ierr = PetscOptionsBegin(PETSC_COMM_SELF,"","Oscillator1 Options","TS");CHKERRQ(ierr);
   ierr = PetscOptionsReal("-frequency","Frequency",__FILE__,user.Omega,&user.Omega,NULL);CHKERRQ(ierr);
@@ -173,6 +178,13 @@ int main(int argc, char *argv[])
   ierr = TSSetDuration(ts,PETSC_MAX_INT,5*(2*PETSC_PI));CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
   if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
+
+  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
+  ierr = SNESSetType(snes,SNESKSPONLY);CHKERRQ(ierr);
+  ierr = SNESGetKSP(snes,&ksp);CHKERRQ(ierr);
+  ierr = KSPSetType(ksp,KSPPREONLY);CHKERRQ(ierr);
+  ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
+  ierr = PCSetType(pc,PCLU);CHKERRQ(ierr);
 
   ierr = VecCreateSeq(PETSC_COMM_SELF,2,&R);CHKERRQ(ierr);
   ierr = VecSetUp(R);CHKERRQ(ierr);

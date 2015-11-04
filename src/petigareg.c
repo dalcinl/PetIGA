@@ -24,6 +24,7 @@ EXTERN_C_END
 EXTERN_C_BEGIN
 extern PetscErrorCode TSCreate_Alpha1(TS);
 extern PetscErrorCode TSCreate_Alpha2(TS);
+extern PetscErrorCode TSCreate_BDF(TS);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
@@ -57,6 +58,7 @@ PetscErrorCode IGARegisterAll(void)
   ierr = TSRegisterAll();CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
+  ierr = TSRegister(TSBDF,TSCreate_BDF);CHKERRQ(ierr);
   ierr = DMRegisterAll();CHKERRQ(ierr);
   ierr = DMRegister(DMIGA,DMCreate_IGA);CHKERRQ(ierr);
   PetscFunctionReturn(0);
