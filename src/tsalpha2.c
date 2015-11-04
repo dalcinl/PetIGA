@@ -32,6 +32,10 @@ static PetscErrorCode TSRollBack_Alpha(TS);
   ts->time_step = next_time_step;
 #endif
 
+#if PETSC_VERSION_LT(3,7,0)
+#define TSAdaptCheckStage(adapt,ts,t,X,accept) TSAdaptCheckStage(adapt,ts,accept)
+#endif
+
 typedef struct {
 
   PetscReal stage_time;
@@ -158,7 +162,7 @@ static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
   ierr = TS_SNESSolve(ts,NULL,X1);CHKERRQ(ierr);
   ierr = VecCopy(th->V1,V1);CHKERRQ(ierr);
   ierr = TSPostStage(ts,th->stage_time,0,&X1);CHKERRQ(ierr);
-  ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
+  ierr = TSAdaptCheckStage(ts->adapt,ts,th->stage_time,X1,&stageok);CHKERRQ(ierr);
   if (!stageok) goto finally;
 
   th->stage_time += ts->time_step;
@@ -169,7 +173,7 @@ static PetscErrorCode TSAlpha_InitStep(TS ts,PetscBool *initok)
   ierr = TS_SNESSolve(ts,NULL,X2);CHKERRQ(ierr);
   ierr = VecCopy(th->V1,V2);CHKERRQ(ierr);
   ierr = TSPostStage(ts,th->stage_time,0,&X2);CHKERRQ(ierr);
-  ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
+  ierr = TSAdaptCheckStage(ts->adapt,ts,th->stage_time,X1,&stageok);CHKERRQ(ierr);
   if (!stageok) goto finally;
 
   ierr = TSSetTimeStep(ts,time_step);CHKERRQ(ierr);
@@ -230,7 +234,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
     ierr = TS_SNESSolve(ts,NULL,th->X1);CHKERRQ(ierr);
     ierr = TSPostStage(ts,th->stage_time,0,&th->X1);CHKERRQ(ierr);
-    ierr = TSAdaptCheckStage(ts->adapt,ts,&stageok);CHKERRQ(ierr);
+    ierr = TSAdaptCheckStage(ts->adapt,ts,th->stage_time,th->X1,&stageok);CHKERRQ(ierr);
     if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
 
     ierr = TSEvaluateStep2(ts,th->order,ts->vec_sol,th->vec_dot,NULL);CHKERRQ(ierr);
