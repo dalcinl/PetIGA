@@ -242,10 +242,10 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   if (!f) PetscFunctionReturn(0);
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
 
   if (graph) {
     PetscInt i,dim,dof;

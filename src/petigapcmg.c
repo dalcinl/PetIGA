@@ -141,10 +141,10 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
     PetscInt  i,dim,dof,*N = iga->node_sizes,*n = iga->node_lwidth;
     PetscInt  levels;
     /* Use the Galerkin process to compute coarse-level operators */
-    ierr = PetscOptionsHasName(NULL,prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
     if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
     /* Honor -pc_mg_levels 1 explicitly passed in the command line */
-    ierr = PetscOptionsHasName(NULL,prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
     ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
     if (set && levels == 1) PetscFunctionReturn(0);
     /* Use a DMDA to generate the grid hierarchy with low-order levels */
