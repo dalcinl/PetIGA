@@ -7,6 +7,10 @@
 #include <petsc/private/dmdaimpl.h>
 #endif
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscOptionsHasName(op,pr,nm,set) PetscOptionsHasName(pr,nm,set)
+#endif
+
 #if PETSC_VERSION_LT(3,5,0)
 #define DMBoundaryType       DMDABoundaryType
 #define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
@@ -137,10 +141,10 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
     PetscInt  i,dim,dof,*N = iga->node_sizes,*n = iga->node_lwidth;
     PetscInt  levels;
     /* Use the Galerkin process to compute coarse-level operators */
-    ierr = PetscOptionsHasName(prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(NULL,prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
     if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
     /* Honor -pc_mg_levels 1 explicitly passed in the command line */
-    ierr = PetscOptionsHasName(prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(NULL,prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
     ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
     if (set && levels == 1) PetscFunctionReturn(0);
     /* Use a DMDA to generate the grid hierarchy with low-order levels */

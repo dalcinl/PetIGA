@@ -273,6 +273,12 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscOptionsSetValue(op,nm,vl)       PetscOptionsSetValue(nm,vl)
+#define PetscOptionsClearValue(op,nm)        PetscOptionsClearValue(nm)
+#define PetscOptionsGetBool(op,pr,nm,vl,set) PetscOptionsGetBool(pr,nm,vl,set)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAViewFromOptions"
 PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[])
@@ -288,10 +294,10 @@ PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   if (!prefix) {ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);}
-  ierr = PetscOptionsGetBool(NULL,"-viewer_binary_skip_info",&skipinfo,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsSetValue("-viewer_binary_skip_info","");CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,NULL,"-viewer_binary_skip_info",&skipinfo,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsSetValue(NULL,"-viewer_binary_skip_info","");CHKERRQ(ierr);
   ierr = PetscOptionsGetViewer(comm,prefix,option,&viewer,&format,&flg);CHKERRQ(ierr);
-  if (!skipinfo) {ierr = PetscOptionsClearValue("-viewer_binary_skip_info");CHKERRQ(ierr);}
+  if (!skipinfo) {ierr = PetscOptionsClearValue(NULL,"-viewer_binary_skip_info");CHKERRQ(ierr);}
   if (!flg) PetscFunctionReturn(0);
   ierr = PetscViewerPushFormat(viewer,format);CHKERRQ(ierr);
   ierr = IGAView(iga,viewer);CHKERRQ(ierr);
@@ -759,6 +765,10 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscObjectProcessOptionsHandlers(op,ob) PetscObjectProcessOptionsHandlers(ob)
+#endif
+
 #if PETSC_VERSION_LT(3,6,0)
 PETSC_EXTERN PetscErrorCode PetscOptionsEnumArray(const char[],const char[],const char[],const char *const *list,PetscEnum[],PetscInt*,PetscBool*);
 #endif
@@ -962,7 +972,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_draw",  "Draw to screen",                  "IGAView",NULL);CHKERRQ(ierr);
 
-    ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscObjectProcessOptionsHandlers(PetscOptionsObject,(PetscObject)iga);CHKERRQ(ierr);
     ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
     if (setup) {ierr = IGASetUp(iga);CHKERRQ(ierr);}

@@ -536,12 +536,15 @@ static PetscErrorCode TSSetUp_BDF(TS ts)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+typedef PetscOptions PetscOptionItems;
+#endif
 #if PETSC_VERSION_LT(3,6,0)
 #define PetscOptionsHead(obj,head) ((void)(obj),PetscOptionsHead(head))
 #endif
 #undef __FUNCT__
 #define __FUNCT__ "TSSetFromOptions_BDF"
-static PetscErrorCode TSSetFromOptions_BDF(PetscOptions *PetscOptionsObject,TS ts)
+static PetscErrorCode TSSetFromOptions_BDF(PetscOptionItems *PetscOptionsObject,TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
   PetscErrorCode ierr;

@@ -503,12 +503,15 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+typedef PetscOptions PetscOptionItems;
+#endif
 #if PETSC_VERSION_LT(3,6,0)
 #define PetscOptionsHead(obj,head) ((void)(obj),PetscOptionsHead(head))
 #endif
 #undef __FUNCT__
 #define __FUNCT__ "TSSetFromOptions_Alpha"
-static PetscErrorCode TSSetFromOptions_Alpha(PetscOptions *PetscOptionsObject,TS ts)
+static PetscErrorCode TSSetFromOptions_Alpha(PetscOptionItems *PetscOptionsObject,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;

@@ -279,9 +279,12 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
 #define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
 
+#if PETSC_VERSION_LT(3,7,0)
+typedef PetscOptions PetscOptionItems;
+#endif
 #undef  __FUNCT__
 #define __FUNCT__ "IGA_OptionsHandler_PC"
-static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *ctx)
+static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
   DM             dm;
@@ -314,6 +317,10 @@ static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED void *c
   /* */
   PetscFunctionReturn(0);
 }
+#if PETSC_VERSION_LT(3,7,0)
+static PetscErrorCode IGA_OptionsHandler_PC_Legacy(PetscObject obj,void *ctx) {return IGA_OptionsHandler_PC(NULL,obj,ctx);}
+#define IGA_OptionsHandler_PC IGA_OptionsHandler_PC_Legacy
+#endif
 
 static PetscErrorCode OptHdlDel(PETSC_UNUSED PetscObject obj,PETSC_UNUSED void *ctx) {return 0;}
 

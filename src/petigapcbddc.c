@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscOptionsGetBool(op,pr,nm,vl,set) PetscOptionsGetBool(pr,nm,vl,set)
+#endif
+
 #if PETSC_VERSION_LT(3,6,0)
 #if PETSC_VERSION_LT(3,5,0) || !defined(PETSC_HAVE_PCBDDC)
 #define PCBDDCSetPrimalVerticesLocalIS(pc,is) (0)
@@ -238,10 +242,10 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   if (!f) PetscFunctionReturn(0);
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetBool(NULL,prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
 
   if (graph) {
     PetscInt i,dim,dof;

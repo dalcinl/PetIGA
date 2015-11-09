@@ -256,9 +256,12 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,7,0)
+typedef PetscOptions PetscOptionItems;
+#endif
 #undef  __FUNCT__
 #define __FUNCT__ "DMSetFromOptions_IGA"
-static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptions *PetscOptionsObject,DM dm)
+static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;

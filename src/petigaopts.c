@@ -1,5 +1,19 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscOptionsHasName(op,pr,nm,set)       PetscOptionsHasName(pr,nm,set)
+#define PetscOptionsSetValue(op,nm,vl)          PetscOptionsSetValue(nm,vl)
+#define PetscOptionsPrefixPush(op,pr)           PetscOptionsPrefixPush(pr)
+#define PetscOptionsPrefixPop(op)               PetscOptionsPrefixPop()
+#define PetscOptionsClearValue(op,nm)           PetscOptionsClearValue(nm)
+#define PetscOptionsGetBool(op,pr,nm,vl,set)    PetscOptionsGetBool(pr,nm,vl,set)
+#define PetscOptionsGetEnum(op,pr,nm,el,dv,set) PetscOptionsGetEnum(pr,nm,el,dv,set)
+#define PetscOptionsGetInt(op,pr,nm,vl,set)     PetscOptionsGetInt(pr,nm,vl,set)
+#define PetscOptionsGetReal(op,pr,nm,vl,set)    PetscOptionsGetReal(pr,nm,vl,set)
+#define PetscOptionsGetScalar(op,pr,nm,vl,set)  PetscOptionsGetScalar(pr,nm,vl,set)
+#define PetscOptionsGetString(op,pr,nm,s,n,set) PetscOptionsGetString(pr,nm,s,n,set)
+#endif
+
 #undef  __FUNCT__
 #define __FUNCT__ "IGAOptionsAlias"
 PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char name[])
@@ -12,17 +26,17 @@ PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char
   PetscFunctionBegin;
   PetscValidCharPointer(alias,1);
   PetscValidCharPointer(name,3);
-  ierr = PetscOptionsHasName(NULL,alias,&flag);CHKERRQ(ierr);
+  ierr = PetscOptionsHasName(NULL,NULL,alias,&flag);CHKERRQ(ierr);
   if (flag) {
-    ierr = PetscOptionsGetString(NULL,alias,value,sizeof(value),&flag);CHKERRQ(ierr);
+    ierr = PetscOptionsGetString(NULL,NULL,alias,value,sizeof(value),&flag);CHKERRQ(ierr);
   } else if (defval) {
-    ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
+    ierr = PetscOptionsHasName(NULL,prefix,name,&flag);CHKERRQ(ierr);
     if (flag) PetscFunctionReturn(0);
     ierr = PetscStrncpy(value,defval,sizeof(value));CHKERRQ(ierr);
   } else PetscFunctionReturn(0);
-  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPush(prefix);CHKERRQ(ierr);}
-  ierr = PetscOptionsSetValue(name,value);CHKERRQ(ierr);
-  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPop();CHKERRQ(ierr);}
+  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPush(NULL,prefix);CHKERRQ(ierr);}
+  ierr = PetscOptionsSetValue(NULL,name,value);CHKERRQ(ierr);
+  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPop(NULL);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -34,11 +48,11 @@ PetscErrorCode IGAOptionsDefault(const char prefix[],const char name[],const cha
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
+  ierr = PetscOptionsHasName(NULL,prefix,name,&flag);CHKERRQ(ierr);
   if (flag) PetscFunctionReturn(0);
-  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPush(prefix);CHKERRQ(ierr);}
-  ierr = PetscOptionsSetValue(name,value);CHKERRQ(ierr);
-  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPop();CHKERRQ(ierr);}
+  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPush(NULL,prefix);CHKERRQ(ierr);}
+  ierr = PetscOptionsSetValue(NULL,name,value);CHKERRQ(ierr);
+  if (prefix && prefix[0]) {ierr = PetscOptionsPrefixPop(NULL);CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
 
@@ -49,7 +63,7 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
   PetscBool      flag = PETSC_FALSE;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = PetscOptionsHasName(prefix,name,&flag);CHKERRQ(ierr);
+  ierr = PetscOptionsHasName(NULL,prefix,name,&flag);CHKERRQ(ierr);
   if (flag) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Disabled option: %s",name);
   PetscFunctionReturn(0);
 }
@@ -59,7 +73,7 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
 PetscEnum IGAGetOptEnum(const char prefix[],const char name[],const char *const elist[],PetscEnum defval)
 {
   PetscErrorCode ierr;
-  ierr = PetscOptionsGetEnum(prefix,name,elist,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetEnum(NULL,prefix,name,elist,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return defval;
 }
 
@@ -69,7 +83,7 @@ const char* IGAGetOptString(const char prefix[],const char name[],const char def
 {
   PetscErrorCode ierr; static char buffer[1024];
   ierr = PetscStrncpy(buffer,defval,sizeof(buffer));CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  ierr = PetscOptionsGetString(prefix,name,buffer,sizeof(buffer),NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetString(NULL,prefix,name,buffer,sizeof(buffer),NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return buffer;
 }
 
@@ -78,7 +92,7 @@ const char* IGAGetOptString(const char prefix[],const char name[],const char def
 PetscBool IGAGetOptBool(const char prefix[],const char name[],PetscBool defval)
 {
   PetscErrorCode ierr;
-  ierr = PetscOptionsGetBool(prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetBool(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return defval;
 }
 
@@ -87,7 +101,7 @@ PetscBool IGAGetOptBool(const char prefix[],const char name[],PetscBool defval)
 PetscInt IGAGetOptInt(const char prefix[],const char name[],PetscInt defval)
 {
   PetscErrorCode ierr;
-  ierr = PetscOptionsGetInt(prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetInt(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return defval;
 }
 
@@ -96,7 +110,7 @@ PetscInt IGAGetOptInt(const char prefix[],const char name[],PetscInt defval)
 PetscReal IGAGetOptReal(const char prefix[],const char name[],PetscReal defval)
 {
   PetscErrorCode ierr;
-  ierr = PetscOptionsGetReal(prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetReal(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return defval;
 }
 
@@ -105,7 +119,7 @@ PetscReal IGAGetOptReal(const char prefix[],const char name[],PetscReal defval)
 PetscScalar IGAGetOptScalar(const char prefix[],const char name[],PetscScalar defval)
 {
   PetscErrorCode ierr;
-  ierr = PetscOptionsGetScalar(prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
+  ierr = PetscOptionsGetScalar(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
   (void)__FUNCT__; return defval;
 }
 

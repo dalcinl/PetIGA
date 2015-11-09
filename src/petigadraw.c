@@ -1,5 +1,9 @@
 #include "petiga.h"
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscOptionsGetIntArray(op,pr,nm,vl,n,set) PetscOptionsGetIntArray(pr,nm,vl,n,set)
+#endif
+
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
@@ -79,7 +83,7 @@ PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm)
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
     dim = num = PetscClipInterval(dim,1,3);
     for (i=0; i<dim; i++) resolution[i] = iga->axis[i]->p;
-    ierr = PetscOptionsGetIntArray(prefix,"-iga_draw_resolution",resolution,&num,NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsGetIntArray(NULL,prefix,"-iga_draw_resolution",resolution,&num,NULL);CHKERRQ(ierr);
     if (num == 1) for (i=1; i<dim; i++) resolution[i] = resolution[0];
     /* create DMDA draw context */
     ierr = IGACreateDrawDM(iga,iga->dof,resolution,&iga->draw_dm);CHKERRQ(ierr);
