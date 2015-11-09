@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
   if(rank == size-1){
     PetscScalar value;
     ierr = VecGetValues(x,1,&index,&value);CHKERRQ(ierr);
-    PetscPrintf(PETSC_COMM_SELF,"x[%d]=%g\n",index,(double)value);
+    ierr = PetscPrintf(PETSC_COMM_SELF,"x[%d]=%g\n",index,(double)value);CHKERRQ(ierr);
   }
 
   ierr = IGAWriteVec(iga,x,"ClassicalShell.out");CHKERRQ(ierr);
@@ -215,8 +215,7 @@ int main(int argc, char *argv[]) {
   ierr = IGADrawVecVTK(iga,x,"ClassicalShell.vts");CHKERRQ(ierr);
 #endif
 
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsHasName(NULL,"-draw",&draw);CHKERRQ(ierr);
+  PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

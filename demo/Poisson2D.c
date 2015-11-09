@@ -70,12 +70,6 @@ int main(int argc, char *argv[]) {
   ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
 
-  PetscBool flag = PETSC_FALSE;
-  PetscReal secs = -1;
-  ierr = PetscOptionsHasName(0,"-sleep",&flag);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(0,"-sleep",&secs,0);CHKERRQ(ierr);
-  if (flag) {ierr = PetscSleep(secs);CHKERRQ(ierr);}
-
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }

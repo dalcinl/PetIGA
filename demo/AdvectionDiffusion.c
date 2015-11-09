@@ -110,8 +110,7 @@ int main(int argc, char *argv[]) {
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);

@@ -112,23 +112,15 @@ int main(int argc, char *argv[]) {
     ierr = TSDestroy(&ts);CHKERRQ(ierr);
   }
 
-  PetscBool save = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-save",&save,NULL);CHKERRQ(ierr);
+  PetscBool save = IGAGetOptBool(NULL,"-save",PETSC_FALSE);
   if (save) {ierr = IGAWrite(iga,"Bratu-geometry.dat");CHKERRQ(ierr);}
   if (save) {ierr = IGAWriteVec(iga,x,"Bratu-solution.dat");CHKERRQ(ierr);}
 
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = IGADestroy(&iga);CHKERRQ(ierr);
-
-  PetscBool flag = PETSC_FALSE;
-  PetscReal secs = -1;
-  ierr = PetscOptionsHasName(0,"-pause",&flag);CHKERRQ(ierr);
-  ierr = PetscOptionsGetReal(0,"-pause",&secs,0);CHKERRQ(ierr);
-  if (flag) {ierr = PetscSleep(secs);CHKERRQ(ierr);}
 
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;

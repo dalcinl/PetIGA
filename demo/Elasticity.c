@@ -126,14 +126,12 @@ int main(int argc, char *argv[]) {
   ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
 
   // Save geometry and solution vector
-  PetscBool save = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-save",&save,NULL);CHKERRQ(ierr);
+  PetscBool save = IGAGetOptBool(NULL,"-save",PETSC_FALSE);
   if (save) {ierr = IGAWrite(iga,"Elasticity-geometry.dat");CHKERRQ(ierr);}
   if (save) {ierr = IGAWriteVec(iga,x,"Elasticity-solution.dat");CHKERRQ(ierr);}
 
   // Draw solution vector
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   // Cleanup

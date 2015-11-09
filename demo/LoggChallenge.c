@@ -142,8 +142,7 @@ int main(int argc, char *argv[]) {
                      "Time: %f [assembly: %f (%.0f\%), solve: %f (%.0f\%)]\n",
                      error,rnorm,its,tt,ta,ta/tt*100,ts,ts/tt*100);CHKERRQ(ierr);
 
-  PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsGetBool(NULL,"-draw",&draw,NULL);CHKERRQ(ierr);
+  PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
