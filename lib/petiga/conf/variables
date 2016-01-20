@@ -15,6 +15,9 @@ ifndef PETSC_CONF_DIR
   endif
 endif
 include $(PETSC_CONF_DIR)/variables
+ifeq ($(PETSC_ARCH),)
+  PETSC_ARCH = arch-default
+endif
 
 PETIGA_INCLUDE = -I$(PETIGA_DIR)/$(PETSC_ARCH)/include -I$(PETIGA_DIR)/include
 PETIGA_LIB_DIR = $(PETIGA_DIR)/$(PETSC_ARCH)/lib
