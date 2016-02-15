@@ -3,6 +3,8 @@
 
 #include <petsc.h>
 #include <petscblaslapack.h>
+
+#if PETSC_VERSION_LT(3,7,0)
 #if defined(PETSC_BLASLAPACK_UNDERSCORE)
    #define sgetri_ sgetri_
    #define dgetri_ dgetri_
@@ -44,5 +46,6 @@ extern void LAPACKgetri_(PetscBLASInt*,PetscScalar*,PetscBLASInt*,
                          PetscBLASInt*,PetscScalar*,PetscBLASInt*,
                          PetscBLASInt*);
 EXTERN_C_END
+#endif/*PETSC<3.7+*/
 
 #endif/*PETIGABL_H*/
