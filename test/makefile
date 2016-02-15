@@ -198,6 +198,8 @@ runex20b:
 	-@./Oscillator1 $(OPTS) -ts_max_steps 10 -ts_type alpha1 -ts_alpha_radius 0.8
 runex20c:
 	-@./Oscillator1 $(OPTS) -ts_max_steps 10 -ts_type alpha1 -ts_alpha_adapt -damping 0.1
+runex20d:
+	-@./Oscillator1 $(OPTS) -ts_max_steps 10 -ts_type alpha1 -ts_alpha_adapt -damping 0.1 -ts_alpha_alpha_m 1 -ts_alpha_alpha_f 1 -ts_alpha_gamma 1
 runex22a:
 	-@./Oscillator1 $(OPTS) -ts_max_steps 10 -ts_type bdf -ts_bdf_order 2
 runex22b:
@@ -206,7 +208,7 @@ runex22c:
 	-@./Oscillator1 $(OPTS) -ts_max_steps 10 -ts_type bdf -ts_bdf_adapt -damping 0.1
 Oscillator1 = \
 Oscillator1.PETSc \
-runex20a runex20b runex20c \
+runex20a runex20b runex20c runex20d \
 runex22a runex22b runex22c \
 Oscillator1.rm
 
@@ -219,9 +221,11 @@ runex21b:
 	-@./Oscillator2 $(OPTS) -ts_max_steps 10 -ts_alpha_radius 0.8
 runex21c:
 	-@./Oscillator2 $(OPTS) -ts_max_steps 10 -ts_alpha_adapt -damping 0.1
+runex21d:
+	-@./Oscillator2 $(OPTS) -ts_max_steps 10 -ts_alpha_adapt -damping 0.1 -ts_alpha_alpha_m 1 -ts_alpha_alpha_f 1 -ts_alpha_gamma 1
 Oscillator2 = \
 Oscillator2.PETSc \
-runex20a runex20b runex20c \
+runex21a runex21b runex21c runex21d \
 Oscillator2.rm
 
 

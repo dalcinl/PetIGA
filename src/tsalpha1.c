@@ -210,7 +210,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     th->status = TS_STEP_PENDING;
 
     ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
-    ierr = TSAdaptCandidateAdd(ts->adapt,"",th->order,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = TSAdaptCandidateAdd(ts->adapt,"",/*order=*/2,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
     ierr = TSAdaptChoose(ts->adapt,ts,ts->time_step,&next_scheme,&next_time_step,&accept);CHKERRQ(ierr);
     if (!accept) {
       ts->ptime += next_time_step;
@@ -245,10 +245,11 @@ static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PETSC_UNUS
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  if (order == 0) SETERRQ(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"No time-step adaptivity implemented for 1st order alpha method; Run with -ts_adapt_type none");
-  if (order == th->order) {
+  if (th->status != TS_STEP_PENDING) {
+    if (order != th->order) SETERRQ2(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"Cannot evaluate step at order %D, method order is %D",order,th->order);
     ierr = VecCopy(th->X1,U);CHKERRQ(ierr);
-  } else if (order == th->order-1) {
+  } else {
+    if (order+1 != 2) SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"Cannot evaluate step at order %D",order);
     if (ts->steps > 0) {
       PetscReal a = 1 + ts->time_step_prev/ts->time_step;
       PetscScalar scal[3]; Vec vecs[3];
