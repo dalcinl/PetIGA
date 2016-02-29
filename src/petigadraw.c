@@ -4,6 +4,13 @@
 #define PetscOptionsGetIntArray(op,pr,nm,vl,n,set) PetscOptionsGetIntArray(pr,nm,vl,n,set)
 #endif
 
+#if PETSC_VERSION_LT(3,7,0)
+#define PetscDrawClear PetscDrawSynchronizedClear
+#define PetscDrawFlush PetscDrawSynchronizedFlush
+#define PetscDrawCollectiveBegin(draw) 0;do{(void)draw;}while(0)
+#define PetscDrawCollectiveEnd(draw)   0;do{(void)draw;}while(0)
+#endif
+
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
@@ -261,6 +268,9 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
   ierr = MPI_Comm_rank(comm,&rank);CHKERRQ(ierr);
 
+  ierr = PetscDrawCheckResizedWindow(draw);CHKERRQ(ierr);
+  ierr = PetscDrawClear(draw);CHKERRQ(ierr);
+
   for (i=0; i<2; i++) {
     IGAAxis axis; PetscReal Ua,Ub;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
@@ -269,8 +279,6 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     else    { ymin = (double)Ua; ymax = (double)Ub; ylen = ymax-ymin; yb = 0.05*ylen;}
   }
   ierr = PetscDrawSetCoordinates(draw,xmin-xb,ymin-yb,xmax+xb,ymax+yb);CHKERRQ(ierr);
-
-  ierr = PetscDrawSynchronizedClear(draw);CHKERRQ(ierr);
 
   if (size > 1) { /* Processor grid */
     PetscInt *r = iga->proc_ranks;
@@ -300,10 +308,13 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
       if (!i) { x0 = (double)Ua; x = (double)Ub;}
       else    { y0 = (double)Ua; y = (double)Ub;}
     }
+    ierr = PetscDrawCollectiveBegin(draw);CHKERRQ(ierr);
     ierr = PetscDrawRectangle(draw,x0,y0,x,y,c,c,c,c);CHKERRQ(ierr);
-    ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
+    ierr = PetscDrawCollectiveEnd(draw);CHKERRQ(ierr);
+    ierr = PetscDrawFlush(draw);CHKERRQ(ierr);
   }
 
+  ierr = PetscDrawCollectiveBegin(draw);CHKERRQ(ierr);
   if (!rank) { /* Element grid */
     int c = PETSC_DRAW_BLACK;
     IGAAxis axis;
@@ -324,8 +335,10 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
       ierr = PetscDrawLine(draw,xmin,y,xmax,y,c);CHKERRQ(ierr);
     }
   }
-  ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
+  ierr = PetscDrawCollectiveEnd(draw);CHKERRQ(ierr);
+  ierr = PetscDrawFlush(draw);CHKERRQ(ierr);
 
+  ierr = PetscDrawCollectiveBegin(draw);CHKERRQ(ierr);
   if (!rank) { /* Quadrature/Collocation points */
     int c = PETSC_DRAW_RED;
     IGABasis *BD = iga->basis;
@@ -341,8 +354,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
       }
     }
   }
-  ierr = PetscDrawSynchronizedFlush(draw);CHKERRQ(ierr);
-
+  ierr = PetscDrawCollectiveEnd(draw);CHKERRQ(ierr);
+  ierr = PetscDrawFlush(draw);CHKERRQ(ierr);
   ierr = PetscDrawPause(draw);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
