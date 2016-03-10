@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
   ierr = TSCreate(PETSC_COMM_SELF,&ts);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA2);CHKERRQ(ierr);
   ierr = TSSetDuration(ts,PETSC_MAX_INT,5*(2*PETSC_PI));CHKERRQ(ierr);
+  ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_STEPOVER);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
   if (out) {ierr = TSMonitorSet(ts,Monitor,output,NULL);CHKERRQ(ierr);}
 

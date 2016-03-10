@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
     ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
     ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
     ierr = TSSetDuration(ts,10000,0.1);CHKERRQ(ierr);
+    ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
     ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
     ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
     ierr = SNESSetTolerances(snes,PETSC_DEFAULT,1e-5,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);

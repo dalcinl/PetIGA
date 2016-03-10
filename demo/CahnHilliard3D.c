@@ -382,6 +382,7 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-10);CHKERRQ(ierr);
+  ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
 
