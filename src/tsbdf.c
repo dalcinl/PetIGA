@@ -8,10 +8,17 @@
 #include <petsc/private/tsimpl.h>                /*I   "petscts.h"   I*/
 #endif
 
-/*
+
 static PetscBool  cited = PETSC_FALSE;
-static const char citation[] = "";
-*/
+static const char citation[] =
+  "@book{Brenan1995,\n"
+  "  title     = {Numerical Solution of Initial-Value Problems in Differential-Algebraic Equations},\n"
+  "  author    = {Brenan, K. and Campbell, S. and Petzold, L.},\n"
+  "  publisher = {Society for Industrial and Applied Mathematics},\n"
+  "  year      = {1995},\n"
+  "  doi       = {10.1137/1.9781611971224},\n}\n";
+
+
 
 #if PETSC_VERSION_LT(3,5,0)
 #define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
@@ -29,8 +36,8 @@ static PetscErrorCode TSRollBack_BDF(TS);
 
 typedef struct {
   PetscInt  order;
-  PetscReal time[4+1];
-  Vec       work[4+1];
+  PetscReal time[5+1];
+  Vec       work[5+1];
   PetscReal shift;
   Vec       vec_dot;
   Vec       vec_sol;
@@ -38,200 +45,6 @@ typedef struct {
   PetscBool    adapt;
   TSStepStatus status;
 } TS_BDF;
-
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_VecDot"
-static PetscErrorCode TSBDF_VecDot(TS ts,PetscInt order,PetscReal t,Vec X,Vec Xdot,PetscReal *shift)
-{
-  TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       i,n = order+1;
-  PetscReal      *time = th->time;
-  Vec            vecs[6];
-  PetscReal      time_step = t - time[1];
-  PetscReal      a = (time[1]-time[2])/time_step;
-  PetscReal      b = (time[2]-time[3])/time_step;
-  PetscScalar    alpha[6];
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  switch (order) {
-  case 1:
-    alpha[0] = +1.0;
-    alpha[1] = -1.0;
-    break;
-  case 2:
-    alpha[0] = +(a+2)/(a+1) ;
-    alpha[1] = -(a+1)/a     ;
-    alpha[2] = +1/(a*(a+1)) ;
-    break;
-  case 3:
-    alpha[0] = +1+1/(a+1)+1/(a+b+1)     ;
-    alpha[1] = -(a+1)*(a+b+1)/(a*(a+b)) ;
-    alpha[2] = +(a+b+1)/(a*b*(a+1))     ;
-    alpha[3] = -(a+1)/(b*(a+b)*(a+b+1)) ;
-    break;
-  default:
-    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented",order);
-  }
-
-  vecs[0] = X;
-  for (i=1; i<n; i++) vecs[i]   = th->work[i];
-  for (i=0; i<n; i++) alpha[i] /= time_step;
-
-  if (shift) *shift = PetscRealPart(alpha[0]);
-  ierr = VecZeroEntries(Xdot);CHKERRQ(ierr);
-  ierr = VecMAXPY(Xdot,n,alpha,vecs);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_VecLTE"
-static PetscErrorCode TSBDF_VecLTE(TS ts,PetscInt order,Vec lte)
-{
-  TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       i,n = order+1;
-  PetscReal      *time = th->time;
-  Vec            *vecs = th->work;
-  PetscReal      h = (time[0]-time[1]);
-  PetscReal      a = (time[1]-time[2])/h;
-  PetscReal      b = (time[2]-time[3])/h;
-  PetscReal      c = (time[3]-time[4])/h;
-  PetscReal      scale;
-  PetscScalar    alpha[6];
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  switch (order) {
-  case 1:
-    scale    = -1.0 ;
-    alpha[0] = +1.0 ;
-    alpha[1] = -1.0 ;
-    break;
-  case 2:
-    scale    = -1.0/2       ;
-    alpha[0] = +2/(a+1)     ;
-    alpha[1] = -2/a         ;
-    alpha[2] = +2/(a*(a+1)) ;
-    break;
-  case 3:
-    scale    = -(a+1)*(a+1)/(6*(a+2)) ;
-    alpha[0] = +6/((a+1)*(a+b+1))     ;
-    alpha[1] = -6/(a*(a+b))           ;
-    alpha[2] = +6/(a*b*(a+1))         ;
-    alpha[3] = -6/(b*(a+b)*(a+b+1))   ;
-    break;
-  case 4:
-    scale    = -(a+1)*(a+1)*(a+b+1)*(a+b+1)/(24*(a*a+a*b+4*a+2*b+3)) ;
-    alpha[0] = +24/((a+1)*(a+b+1)*(a+b+c+1))                         ;
-    alpha[1] = -24/(a*(a+b)*(a+b+c))                                 ;
-    alpha[2] = +24/(a*b*(a+1)*(b+c))                                 ;
-    alpha[3] = -24/(b*c*(a+b)*(a+b+1))                               ;
-    alpha[4] = +24/(c*(b+c)*(a+b+c)*(a+b+c+1))                       ;
-    break;
-  default:
-    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
-  }
-  for (i=0; i<n; i++) alpha[i] *= scale;
-  ierr = VecZeroEntries(lte);CHKERRQ(ierr);
-  ierr = VecMAXPY(lte,n,alpha,vecs);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_Predictor"
-static PetscErrorCode TSBDF_Predictor(TS ts,PetscInt order,PetscReal t,Vec X)
-{
-  TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       n = order;
-  PetscReal      *time = th->time+1;
-  Vec            *vecs = th->work+1;
-  PetscReal      h = (time[0]-time[1]);
-  PetscReal      a = (time[1]-time[2])/h;
-  PetscReal      b = (time[2]-time[3])/h;
-  PetscReal      s = (t-time[0])/h;
-  PetscScalar    alpha[6];
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  switch (order) {
-  case 1:
-    ierr = VecCopy(vecs[0],X);CHKERRQ(ierr);
-    PetscFunctionReturn(0);
-  case 2:
-    alpha[0] = +s+1 ;
-    alpha[1] = -s   ;
-    break;
-  case 3:
-    alpha[0] = +(s+1)*(a+s+1)/(a+1) ;
-    alpha[1] = -s*(a+s+1)/a         ;
-    alpha[2] = +s*(s+1)/(a*(a+1))   ;
-    break;
-  case 4:
-    alpha[0] = +(s+1)*(a+s+1)*(a+b+s+1)/((a+1)*(a+b+1)) ;
-    alpha[1] = -s*(a+s+1)*(a+b+s+1)/(a*(a+b))           ;
-    alpha[2] = +s*(s+1)*(a+b+s+1)/(a*b*(a+1))           ;
-    alpha[3] = -s*(s+1)*(a+s+1)/(b*(a+b)*(a+b+1))       ;
-    break;
-  default:
-    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
-  }
-  ierr = VecZeroEntries(X);CHKERRQ(ierr);
-  ierr = VecMAXPY(X,n,alpha,vecs);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_Interpolate"
-static PetscErrorCode TSBDF_Interpolate(TS ts,PetscInt order,PetscReal t,Vec X)
-{
-  TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       n = order+1;
-  PetscReal      *time = th->time;
-  Vec            *vecs = th->work;
-  PetscReal      h = (time[0]-time[1]);
-  PetscReal      a = (time[1]-time[2])/h;
-  PetscReal      b = (time[2]-time[3])/h;
-  PetscReal      s = (t-time[1])/h;
-  PetscScalar    alpha[6];
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  switch (order) {
-  case 1:
-    alpha[0] = +s   ;
-    alpha[1] = -s+1 ;
-    break;
-  case 2:
-    alpha[0] = +s*(a+s)/(a+1)     ;
-    alpha[1] = -(a+s)*(s-1)/a     ;
-    alpha[2] = +s*(s-1)/(a*(a+1)) ;
-    break;
-  case 3:
-    alpha[0] = +s*(a+s)*(a+b+s)/((a+1)*(a+b+1)) ;
-    alpha[1] = -(a+s)*(s-1)*(a+b+s)/(a*(a+b))   ;
-    alpha[2] = +s*(s-1)*(a+b+s)/(a*b*(a+1))     ;
-    alpha[3] = -s*(a+s)*(s-1)/(b*(a+b)*(a+b+1)) ;
-    break;
-  default:
-    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
-  }
-  ierr = VecZeroEntries(X);CHKERRQ(ierr);
-  ierr = VecMAXPY(X,n,alpha,vecs);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "BDF_ClipTimestep"
-static PetscReal BDF_ClipTimestep(PetscInt order,PetscReal h,PetscReal next_h)
-{
-  const PetscInt  k = order-2;
-  const PetscReal R[] = {
-    /* k = 2 */ 2.414, /*  1+sqrt(2)    */
-    /* k = 3 */ 1.618, /* (1+sqrt(5))/2 */
-    /* k = 4 */ 1.280, /*               */
-    1.127, 1.044 };
-  return (k >= 0 && next_h/h > R[k]) ? h*R[k] : next_h;
-}
 
 #undef __FUNCT__
 #define __FUNCT__ "TSBDF_Advance"
@@ -254,75 +67,263 @@ static PetscErrorCode TSBDF_Advance(TS ts,PetscReal t,Vec X)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TS_SNESSolve"
-static PetscErrorCode TS_SNESSolve(TS ts,Vec b,Vec x)
+#define __FUNCT__ "TSBDF_VecDot"
+static PetscErrorCode TSBDF_VecDot(TS ts,PetscInt order,PetscReal t,Vec X,Vec Xdot,PetscReal *shift)
 {
-  PetscInt       nits,lits;
+  TS_BDF         *th = (TS_BDF*)ts->data;
+  PetscInt       i,n = order+1;
+  PetscReal      *time = th->time;
+  Vec            vecs[6];
+  PetscReal      h = (t      -time[1]);
+  PetscReal      a = (time[1]-time[2])/h;
+  PetscReal      b = (time[2]-time[3])/h;
+  PetscReal      c = (time[3]-time[4])/h;
+  PetscScalar    alpha[6];
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = SNESSolve(ts->snes,b,x);CHKERRQ(ierr);
-  ierr = SNESGetIterationNumber(ts->snes,&nits);CHKERRQ(ierr);
-  ierr = SNESGetLinearSolveIterations(ts->snes,&lits);CHKERRQ(ierr);
-  ts->snes_its += nits; ts->ksp_its += lits;
+  switch (order) {
+  case 1:
+    alpha[0] = +1.0;
+    alpha[1] = -1.0;
+    break;
+  case 2:
+    alpha[0] = +(a+2)/(a+1) ;
+    alpha[1] = -(a+1)/a     ;
+    alpha[2] = +1/(a*(a+1)) ;
+    break;
+  case 3:
+    alpha[0] = +1+1/(a+1)+1/(a+b+1)     ;
+    alpha[1] = -(a+1)*(a+b+1)/(a*(a+b)) ;
+    alpha[2] = +(a+b+1)/(a*b*(a+1))     ;
+    alpha[3] = -(a+1)/(b*(a+b)*(a+b+1)) ;
+    break;
+  case 4:
+    alpha[0] = +1+1/(a+1)+1/(a+b+1)+1/(a+b+c+1)           ;
+    alpha[1] = -(a+1)*(a+b+1)*(a+b+c+1)/(a*(a+b)*(a+b+c)) ;
+    alpha[2] = +(a+b+1)*(a+b+c+1)/(a*b*(a+1)*(b+c))       ;
+    alpha[3] = -(a+1)*(a+b+c+1)/(b*c*(a+b)*(a+b+1))       ;
+    alpha[4] = +(a+1)*(a+b+1)/(c*(b+c)*(a+b+c)*(a+b+c+1) );
+    break;
+  default:
+    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented",order);
+  }
+
+  vecs[0] = X;
+  for (i=1; i<n; i++) vecs[i]   = th->work[i];
+  for (i=0; i<n; i++) alpha[i] /= ts->time_step;
+
+  if (shift) *shift = PetscRealPart(alpha[0]);
+  ierr = VecZeroEntries(Xdot);CHKERRQ(ierr);
+  ierr = VecMAXPY(Xdot,n,alpha,vecs);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSBDF_VecLTE"
+static PetscErrorCode TSBDF_VecLTE(TS ts,PetscInt order,Vec lte)
+{
+  TS_BDF         *th = (TS_BDF*)ts->data;
+  PetscInt       i,n = order+2;
+  PetscReal      *time = th->time;
+  Vec            *vecs = th->work;
+  PetscReal      h = (time[0]-time[1]);
+  PetscReal      a = (time[1]-time[2])/h;
+  PetscReal      b = (time[2]-time[3])/h;
+  PetscReal      c = (time[3]-time[4])/h;
+  PetscReal      d = (time[4]-time[5])/h;
+  PetscReal      scale;
+  PetscScalar    alpha[6];
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  switch (order) {
+  case 0:
+    scale    = -1.0 ;
+    alpha[0] = +1.0 ;
+    alpha[1] = -1.0 ;
+    break;
+  case 1:
+    scale    = -1.0/2       ;
+    alpha[0] = +2/(a+1)     ;
+    alpha[1] = -2/a         ;
+    alpha[2] = +2/(a*(a+1)) ;
+    break;
+  case 2:
+    scale    = -(a+1)*(a+1)/(6*(a+2)) ;
+    alpha[0] = +6/((a+1)*(a+b+1))     ;
+    alpha[1] = -6/(a*(a+b))           ;
+    alpha[2] = +6/(a*b*(a+1))         ;
+    alpha[3] = -6/(b*(a+b)*(a+b+1))   ;
+    break;
+  case 3:
+    scale    = -(a+1)*(a+1)*(a+b+1)*(a+b+1)/(24*(a*a+a*b+4*a+2*b+3)) ;
+    alpha[0] = +24/((a+1)*(a+b+1)*(a+b+c+1))                         ;
+    alpha[1] = -24/(a*(a+b)*(a+b+c))                                 ;
+    alpha[2] = +24/(a*b*(a+1)*(b+c))                                 ;
+    alpha[3] = -24/(b*c*(a+b)*(a+b+1))                               ;
+    alpha[4] = +24/(c*(b+c)*(a+b+c)*(a+b+c+1))                       ;
+    break;
+  case 4:
+    scale    = -(a+1)*(a+1)*(a+b+1)*(a+b+1)*(a+b+c+1)*(a+b+c+1)/(120*(a*a*a+2*a*a*b+a*a*c+6*a*a+a*b*b+a*b*c+8*a*b+4*a*c+9*a+2*b*b+2*b*c+6*b+3*c+4));
+    alpha[0] = +120/((a+1)*(a+b+1)*(a+b+c+1)*(a+b+c+d+1))   ;
+    alpha[1] = -120/(a*(a+b)*(a+b+c)*(a+b+c+d))             ;
+    alpha[2] = +120/(a*b*(a+1)*(b+c)*(b+c+d))               ;
+    alpha[3] = -120/(b*c*(a+b)*(c+d)*(a+b+1))               ;
+    alpha[4] = +120/(c*d*(b+c)*(a+b+c)*(a+b+c+1))           ;
+    alpha[5] = -120/(d*(c+d)*(b+c+d)*(a+b+c+d)*(a+b+c+d+1)) ;
+    break;
+  default:
+    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
+  }
+  for (i=0; i<n; i++) alpha[i] *= scale;
+  ierr = VecZeroEntries(lte);CHKERRQ(ierr);
+  ierr = VecMAXPY(lte,n,alpha,vecs);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSBDF_Predictor"
+static PetscErrorCode TSBDF_Predictor(TS ts,PetscInt order,PetscReal t,Vec X)
+{
+  TS_BDF         *th = (TS_BDF*)ts->data;
+  PetscReal      *time = th->time+1;
+  Vec            *vecs = th->work+1;
+  PetscReal      h = (time[0]-time[1]);
+  PetscReal      a = (time[1]-time[2])/h;
+  PetscReal      b = (time[2]-time[3])/h;
+  PetscReal      c = (time[3]-time[4])/h;
+  PetscReal      s = (t-time[0])/h;
+  PetscScalar    alpha[6];
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  switch (order) {
+  case 0:
+    ierr = VecCopy(vecs[0],X);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  case 1:
+    alpha[0] = +s+1 ;
+    alpha[1] = -s   ;
+    break;
+  case 2:
+    alpha[0] = +(s+1)*(a+s+1)/(a+1) ;
+    alpha[1] = -s*(a+s+1)/a         ;
+    alpha[2] = +s*(s+1)/(a*(a+1))   ;
+    break;
+  case 3:
+    alpha[0] = +(s+1)*(a+s+1)*(a+b+s+1)/((a+1)*(a+b+1)) ;
+    alpha[1] = -s*(a+s+1)*(a+b+s+1)/(a*(a+b))           ;
+    alpha[2] = +s*(s+1)*(a+b+s+1)/(a*b*(a+1))           ;
+    alpha[3] = -s*(s+1)*(a+s+1)/(b*(a+b)*(a+b+1))       ;
+    break;
+  case 4:
+    alpha[0] = +(s+1)*(a+s+1)*(a+b+s+1)*(a+b+c+s+1)/((a+1)*(a+b+1)*(a+b+c+1)) ;
+    alpha[1] = -s*(a+s+1)*(a+b+s+1)*(a+b+c+s+1)/(a*(a+b)*(a+b+c))             ;
+    alpha[2] = +s*(s+1)*(a+b+s+1)*(a+b+c+s+1)/(a*b*(a+1)*(b+c))               ;
+    alpha[3] = -s*(s+1)*(a+s+1)*(a+b+c+s+1)/(b*c*(a+b)*(a+b+1))               ;
+    alpha[4] = +s*(s+1)*(a+s+1)*(a+b+s+1)/(c*(b+c)*(a+b+c)*(a+b+c+1))         ;
+    break;
+  default:
+    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
+  }
+  ierr = VecZeroEntries(X);CHKERRQ(ierr);
+  ierr = VecMAXPY(X,order+1,alpha,vecs);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "TSBDF_Interpolate"
+static PetscErrorCode TSBDF_Interpolate(TS ts,PetscInt order,PetscReal t,Vec X)
+{
+  TS_BDF         *th = (TS_BDF*)ts->data;
+  PetscReal      *time = th->time;
+  Vec            *vecs = th->work;
+  PetscReal      h = (time[0]-time[1]);
+  PetscReal      a = (time[1]-time[2])/h;
+  PetscReal      b = (time[2]-time[3])/h;
+  PetscReal      c = (time[3]-time[4])/h;
+  PetscReal      s = (t-time[1])/h;
+  PetscScalar    alpha[6];
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  switch (order) {
+  case 0:
+    ierr = VecCopy(vecs[0],X);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  case 1:
+    alpha[0] = +s   ;
+    alpha[1] = -s+1 ;
+    break;
+  case 2:
+    alpha[0] = +s*(a+s)/(a+1)     ;
+    alpha[1] = -(a+s)*(s-1)/a     ;
+    alpha[2] = +s*(s-1)/(a*(a+1)) ;
+    break;
+  case 3:
+    alpha[0] = +s*(a+s)*(a+b+s)/((a+1)*(a+b+1)) ;
+    alpha[1] = -(a+s)*(s-1)*(a+b+s)/(a*(a+b))   ;
+    alpha[2] = +s*(s-1)*(a+b+s)/(a*b*(a+1))     ;
+    alpha[3] = -s*(a+s)*(s-1)/(b*(a+b)*(a+b+1)) ;
+    break;
+  case 4:
+    alpha[0] = +s*(a+s)*(a+b+s)*(a+b+c+s)/((a+1)*(a+b+1)*(a+b+c+1));
+    alpha[1] = -(a+s)*(s-1)*(a+b+s)*(a+b+c+s)/(a*(a+b)*(a+b+c));
+    alpha[2] = +s*(s-1)*(a+b+s)*(a+b+c+s)/(a*b*(a+1)*(b+c));
+    alpha[3] = -s*(a+s)*(s-1)*(a+b+c+s)/(b*c*(a+b)*(a+b+1));
+    alpha[4] = +s*(a+s)*(s-1)*(a+b+s)/(c*(b+c)*(a+b+c)*(a+b+c+1));
+    break;
+  default:
+    SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented ",order);
+  }
+  ierr = VecZeroEntries(X);CHKERRQ(ierr);
+  ierr = VecMAXPY(X,order+1,alpha,vecs);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "TSBDF_SolveStep"
-static PetscErrorCode TSBDF_SolveStep(TS ts,PetscReal t,Vec X,PetscBool *stageok)
+static PetscErrorCode TSBDF_SolveStep(TS ts,PetscReal t,Vec X,PetscBool *accept)
 {
+  PetscInt       nits,lits;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   ierr = TSPreStage(ts,t);CHKERRQ(ierr);
-  ierr = TS_SNESSolve(ts,NULL,X);CHKERRQ(ierr);
+  ierr = SNESSolve(ts->snes,NULL,X);CHKERRQ(ierr);
+  ierr = SNESGetIterationNumber(ts->snes,&nits);CHKERRQ(ierr);
+  ierr = SNESGetLinearSolveIterations(ts->snes,&lits);CHKERRQ(ierr);
+  ts->snes_its += nits; ts->ksp_its += lits;
   ierr = TSPostStage(ts,t,0,&X);CHKERRQ(ierr);
-  ierr = TSAdaptCheckStage(ts->adapt,ts,t,X,stageok);CHKERRQ(ierr);
+  ierr = TSAdaptCheckStage(ts->adapt,ts,t,X,accept);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "TSBDF_AdaptStep"
-static PetscErrorCode TSBDF_AdaptStep(TS ts,PetscInt order,PetscReal *next_h,PetscBool *accept)
-{
-  PetscInt       next_scheme;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
-  ierr = TSAdaptCandidateAdd(ts->adapt,"",order,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
-  ierr = TSAdaptChoose(ts->adapt,ts,ts->time_step,&next_scheme,next_h,accept);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_InitialStep"
-static PetscErrorCode TSBDF_InitialStep(TS ts,PetscBool *stageok)
+static PetscErrorCode TSBDF_AdaptStep(TS ts,PetscInt rejections,PetscBool *accept,PetscReal *next_h)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       i,order = th->order;
-  PetscReal      tau,ratio = 1 + PetscPowReal(2,2-order); /*3,2,1.5,1.25*/
+  PetscInt       order = PetscMin(th->order,ts->steps);
+  PetscReal      next_time_step = ts->time_step;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-
-  ierr = TSBDF_Advance(ts,ts->ptime,ts->vec_sol);CHKERRQ(ierr);
-  for (tau=0, i=0; i<=order; i++) tau = 1 + tau*ratio;
-  ts->time_step /= tau;
-
-  th->order = 0;
-  while (++th->order <= order) {
-    th->time[0] = ts->ptime + ts->time_step;
-    ierr = TSBDF_Predictor(ts,th->order,th->time[0],th->work[0]);CHKERRQ(ierr);
-    ierr = TSBDF_SolveStep(ts,th->time[0],th->work[0],stageok);CHKERRQ(ierr);
-    if (!*stageok) break;
-    ierr = TSBDF_Advance(ts,th->time[0],th->work[0]);CHKERRQ(ierr);
-    ts->ptime += ts->time_step;
-    ts->time_step *= ratio;
+  if (!ts->steps) {
+    *accept = PETSC_TRUE;
+    *next_h = ts->time_step;
+    PetscFunctionReturn(0);
   }
-  th->order = order;
+  {
+    PetscInt scheme; char name[2] = {'0', 0}; name[0] += (char)order;
+    ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
+    ierr = TSAdaptCandidateAdd(ts->adapt,name,order+1,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = TSAdaptChoose(ts->adapt,ts,ts->time_step,&scheme,&next_time_step,accept);CHKERRQ(ierr);
+  }
+  if (ts->steps < th->order) next_time_step = PetscMin(ts->time_step,next_time_step);
+
+  *next_h = next_time_step;
   PetscFunctionReturn(0);
 }
 
@@ -333,34 +334,29 @@ static PetscErrorCode TSStep_BDF(TS ts)
   TS_BDF         *th = (TS_BDF*)ts->data;
   PetscBool      stageok,accept = PETSC_TRUE;
   PetscInt       rejections = 0;
-  PetscInt       order = th->order;
+  PetscInt       order = PetscClipInterval(th->order,0,ts->steps);
   PetscReal      next_time_step = ts->time_step;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  /*ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);*/
+  ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
 
   th->status = TS_STEP_INCOMPLETE;
   ierr = VecCopy(ts->vec_sol,th->vec_sol);CHKERRQ(ierr);
   ierr = TSBDF_Advance(ts,ts->ptime,ts->vec_sol);CHKERRQ(ierr);
 
-  if (!th->adapt) th->order = PetscMin(th->order,ts->steps+1);
   while (!ts->reason && th->status != TS_STEP_COMPLETE) {
     ierr = TSPreStep(ts);CHKERRQ(ierr);
 
-    if (th->adapt && ts->steps == 0) {
-      ierr = TSBDF_InitialStep(ts,&stageok);CHKERRQ(ierr);
-      if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
-    }
-
     th->time[0] = ts->ptime + ts->time_step;
-    ierr = TSBDF_Predictor(ts,th->order,th->time[0],th->work[0]);CHKERRQ(ierr);
+    ierr = TSBDF_Predictor(ts,order,th->time[0],th->work[0]);CHKERRQ(ierr);
     ierr = TSBDF_SolveStep(ts,th->time[0],th->work[0],&stageok);CHKERRQ(ierr);
-    if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
+    if (!stageok) goto reject_step;
 
     th->status = TS_STEP_PENDING;
     ierr = VecCopy(th->work[0],ts->vec_sol);CHKERRQ(ierr);
-    ierr = TSBDF_AdaptStep(ts,th->order,&next_time_step,&accept);CHKERRQ(ierr);
+    ierr = TSBDF_AdaptStep(ts,rejections,&accept,&next_time_step);CHKERRQ(ierr);
+
     if (!accept) {
       th->status = TS_STEP_INCOMPLETE;
       ts->ptime += next_time_step;
@@ -370,15 +366,14 @@ static PetscErrorCode TSStep_BDF(TS ts)
     }
 
     th->status = TS_STEP_COMPLETE;
-    th->order = order;
     ts->ptime += ts->time_step;
-    ts->time_step = BDF_ClipTimestep(th->order,ts->time_step,next_time_step);
+    ts->time_step = next_time_step;
     ts->steps++;
     break;
 
   reject_step:
-    ts->reject++;
-    if (!ts->reason && ++rejections > ts->max_reject && ts->max_reject >= 0) {
+    accept = PETSC_FALSE; rejections++; ts->reject++;
+    if (!ts->reason && ts->max_reject >= 0 && rejections > ts->max_reject) {
       ierr = PetscInfo2(ts,"Step=%D, step rejections %D greater than current TS allowed, stopping solve\n",ts->steps,rejections);CHKERRQ(ierr);
       ts->reason = TS_DIVERGED_STEP_REJECTED;
     }
@@ -394,7 +389,7 @@ static PetscErrorCode TSEvaluateStep_BDF(TS ts,PetscInt order,Vec X,PETSC_UNUSED
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = TSBDF_VecLTE(ts,order+1,X);CHKERRQ(ierr);
+  ierr = TSBDF_VecLTE(ts,order,X);CHKERRQ(ierr);
   ierr = VecAXPY(X,1.0,th->work[0]);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -430,7 +425,7 @@ static PetscErrorCode TSRollBack_BDF(TS ts)
 static PetscErrorCode SNESTSFormFunction_BDF(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
-  PetscInt       order = th->order;
+  PetscInt       order = PetscMin(th->order,ts->steps+1);
   PetscReal      t = th->time[0];
   Vec            V = th->vec_dot;
   PetscErrorCode ierr;
@@ -529,7 +524,10 @@ static PetscErrorCode TSSetUp_BDF(TS ts)
   } else {
     PetscBool isbasic; TSAdapt_Basic *basic = (TSAdapt_Basic*)ts->adapt->data;
     ierr = PetscObjectTypeCompare((PetscObject)ts->adapt,TSADAPTBASIC,&isbasic);CHKERRQ(ierr);
-    if (isbasic)  basic->clip[1] = BDF_ClipTimestep(th->order,1,basic->clip[1]);
+    if (isbasic)  {
+      basic->clip[0] = PetscMax(basic->clip[0],0.25);
+      basic->clip[1] = PetscMin(basic->clip[1],2.00);
+    }
   }
 
   ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
@@ -596,7 +594,7 @@ static PetscErrorCode TSBDFSetOrder_BDF(TS ts,PetscInt order)
 
   PetscFunctionBegin;
   if (order == th->order) PetscFunctionReturn(0);
-  if (order < 1 || order > 3) SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented",order);
+  if (order < 1 || order > 4) SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"BDF Order %D not implemented",order);
   th->order = order;
   PetscFunctionReturn(0);
 }
