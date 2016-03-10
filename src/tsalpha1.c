@@ -393,6 +393,10 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
     ierr = TSAdaptSetType(ts->adapt,TSADAPTNONE);CHKERRQ(ierr);
   } else {
     ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_prev);CHKERRQ(ierr);
+#if PETSC_VERSION_GE(3,7,0)
+    if (ts->exact_final_time == TS_EXACTFINALTIME_UNSPECIFIED)
+      ts->exact_final_time = TS_EXACTFINALTIME_MATCHSTEP;
+#endif
   }
   ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);

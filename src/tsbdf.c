@@ -528,6 +528,10 @@ static PetscErrorCode TSSetUp_BDF(TS ts)
       basic->clip[0] = PetscMax(basic->clip[0],0.25);
       basic->clip[1] = PetscMin(basic->clip[1],2.00);
     }
+#if PETSC_VERSION_GE(3,7,0)
+    if (ts->exact_final_time == TS_EXACTFINALTIME_UNSPECIFIED)
+      ts->exact_final_time = TS_EXACTFINALTIME_MATCHSTEP;
+#endif
   }
 
   ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);

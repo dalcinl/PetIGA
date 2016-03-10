@@ -497,6 +497,10 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
     if (match) {ts->adapt->ops->choose = TSAdaptChoose_Alpha;}
     ierr = VecDuplicate(ts->vec_sol,&th->vec_sol_prev);CHKERRQ(ierr);
     ierr = VecDuplicate(ts->vec_sol,&th->vec_dot_prev);CHKERRQ(ierr);
+#if PETSC_VERSION_GE(3,7,0)
+    if (ts->exact_final_time == TS_EXACTFINALTIME_UNSPECIFIED)
+      ts->exact_final_time = TS_EXACTFINALTIME_MATCHSTEP;
+#endif
   }
   ierr = TSGetSNES(ts,&ts->snes);CHKERRQ(ierr);
   PetscFunctionReturn(0);
