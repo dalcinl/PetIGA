@@ -638,10 +638,11 @@ static PetscErrorCode TSBDFUseAdapt_BDF(TS ts,PetscBool use)
 
 .seealso:  TS, TSCreate(), TSSetType()
 M*/
+PETSC_EXTERN PetscErrorCode TSCreate_BDF(TS);
+
 EXTERN_C_BEGIN
 #undef __FUNCT__
 #define __FUNCT__ "TSCreate_BDF"
-PetscErrorCode TSCreate_BDF(TS ts);
 PetscErrorCode TSCreate_BDF(TS ts)
 {
   TS_BDF         *th;

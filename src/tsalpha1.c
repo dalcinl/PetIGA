@@ -537,10 +537,11 @@ static PetscErrorCode TSAlphaGetParams_Alpha(TS ts,PetscReal *alpha_m,PetscReal 
 
 .seealso:  TS, TSCreate(), TSSetType()
 M*/
+PETSC_EXTERN PetscErrorCode TSCreate_Alpha1(TS);
+
 EXTERN_C_BEGIN
 #undef __FUNCT__
 #define __FUNCT__ "TSCreate_Alpha1"
-PetscErrorCode TSCreate_Alpha1(TS ts);
 PetscErrorCode TSCreate_Alpha1(TS ts)
 {
   TS_Alpha       *th;
