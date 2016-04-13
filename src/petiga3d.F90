@@ -51,9 +51,9 @@ pure subroutine IGA_BasisFuns_3D(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N2(dim**2,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N3(dim**3,ina*jna*kna,inq,jnq,knq)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: N4(dim**4,ina*jna*kna,inq,jnq,knq)
-  integer(kind=IGA_INTEGER_KIND)  :: ia, iq
-  integer(kind=IGA_INTEGER_KIND)  :: ja, jq
-  integer(kind=IGA_INTEGER_KIND)  :: ka, kq
+  integer(kind=IGA_INTEGER_KIND)  :: iq
+  integer(kind=IGA_INTEGER_KIND)  :: jq
+  integer(kind=IGA_INTEGER_KIND)  :: kq
   do kq=1,knq; do jq=1,jnq; do iq=1,inq
      call TensorBasisFuns(&
           order,&

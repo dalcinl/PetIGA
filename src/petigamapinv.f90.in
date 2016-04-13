@@ -20,7 +20,6 @@ pure subroutine InverseMap(&
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E3(    nsd,nsd,nsd,dim)
   real   (kind=IGA_REAL_KIND   ), intent(out) :: E4(nsd,nsd,nsd,nsd,dim)
 
-  integer(kind=IGA_INTEGER_KIND)  :: node
   integer(kind=IGA_INTEGER_KIND)  :: i, j, k, l
   integer(kind=IGA_INTEGER_KIND)  :: a, b, c, d
 

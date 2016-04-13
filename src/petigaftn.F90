@@ -547,7 +547,7 @@ module PetIGA
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:,:) ! dim,nen
       scalar (kind=IGA_SCALAR_KIND)  :: V
-      integer a, c, i
+      integer a, i
       V = 0
       do a = 1, size(U,2) ! nen
          do i = 1, size(N,1) ! dim
@@ -561,7 +561,7 @@ module PetIGA
       real   (kind=IGA_REAL_KIND  ), intent(in) :: N(:,:,:) ! dim,dim,nen
       scalar (kind=IGA_SCALAR_KIND), intent(in) :: U(:)     ! nen
       scalar (kind=IGA_SCALAR_KIND)  :: V
-      integer a, c, i
+      integer a, i
       V = 0
       do a = 1, size(U,1) ! nen
          do i = 1, size(N,1) ! dim
