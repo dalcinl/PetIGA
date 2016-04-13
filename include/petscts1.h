@@ -3,7 +3,9 @@
 #include <petscts.h>
 
 #define TSALPHA1 "alpha1"
+#if PETSC_VERSION_LT(3,7,0)
 PETSC_EXTERN PetscErrorCode TSAlphaUseAdapt(TS,PetscBool);
+#endif
 
 #define TSBDF "bdf"
 PETSC_EXTERN PetscErrorCode TSBDFSetOrder(TS,PetscInt);
