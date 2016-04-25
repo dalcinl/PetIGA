@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
   ierr = IGASetBoundaryValue(iga,0,1,0,U_right);CHKERRQ(ierr);
 
   /* Residual and Tangent user routines */
-  ierr = IGASetFormIFunction2(iga,ElasticRod_IFunction,&user);CHKERRQ(ierr);
-  ierr = IGASetFormIJacobian2(iga,ElasticRod_IJacobian,&user);CHKERRQ(ierr);
+  ierr = IGASetFormI2Function(iga,ElasticRod_IFunction,&user);CHKERRQ(ierr);
+  ierr = IGASetFormI2Jacobian(iga,ElasticRod_IJacobian,&user);CHKERRQ(ierr);
 
   /* Timestepper, t_final=5.0, delta_t = 0.01 */
   TS ts;
@@ -74,14 +74,14 @@ int main(int argc, char *argv[]) {
 
   /* Initial conditions, U[center] = 1.0, V[:] = 0.0 */
   Vec U,V; PetscInt n;
-  ierr = TSGetSolution2(ts,&U,&V);CHKERRQ(ierr);
+  ierr = TS2GetSolution(ts,&U,&V);CHKERRQ(ierr);
   ierr = VecGetSize(U,&n);CHKERRQ(ierr);
   ierr = VecSetValue(U,n/2,1.0,INSERT_VALUES);CHKERRQ(ierr);
   ierr = VecAssemblyBegin(U);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(U);CHKERRQ(ierr);
 
   /* Solve */
-  ierr = TSSolve2(ts,U,V);CHKERRQ(ierr);
+  ierr = TSSolve(ts,NULL);CHKERRQ(ierr);
   if (0) { /* write final solution */
     ierr = IGAWriteVec(iga,U,"ElasticRod_U.dat");CHKERRQ(ierr);
     ierr = IGAWriteVec(iga,V,"ElasticRod_V.dat");CHKERRQ(ierr);

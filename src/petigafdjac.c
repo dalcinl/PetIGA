@@ -122,9 +122,9 @@ PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,
                                    PetscReal t,const PetscScalar U[],
                                    PetscScalar J[],PETSC_UNUSED void *ctx)
 {
-  typedef        IGAFormIFunction2 IGAFormFunType;
+  typedef        IGAFormI2Function IGAFormFunType;
   IGAForm        form = p->parent->parent->form;
-  IGAFormFunType Function = form->ops->IFunction2;
+  IGAFormFunType Function = form->ops->I2Function;
   void           *FunCtx  = form->ops->IFunCtx;
   PetscInt       i,M = p->neq*p->dof;
   PetscInt       j,N = p->nen*p->dof;

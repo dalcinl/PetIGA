@@ -249,23 +249,23 @@ PetscErrorCode IGAFormSetIJacobian(IGAForm form,IGAFormIJacobian IJacobian,void 
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIFunction2"
-PetscErrorCode IGAFormSetIFunction2(IGAForm form,IGAFormIFunction2 IFunction,void *IFunCtx)
+#define __FUNCT__ "IGAFormSetI2Function"
+PetscErrorCode IGAFormSetI2Function(IGAForm form,IGAFormI2Function IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
   PetscValidPointer(form,1);
-  form->ops->IFunction2 = IFunction;
+  form->ops->I2Function = IFunction;
   form->ops->IFunCtx    = IFunCtx;
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIJacobian2"
-PetscErrorCode IGAFormSetIJacobian2(IGAForm form,IGAFormIJacobian2 IJacobian,void *IJacCtx)
+#define __FUNCT__ "IGAFormSetI2Jacobian"
+PetscErrorCode IGAFormSetI2Jacobian(IGAForm form,IGAFormI2Jacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
   PetscValidPointer(form,1);
-  form->ops->IJacobian2 = IJacobian;
+  form->ops->I2Jacobian = IJacobian;
   form->ops->IJacCtx    = IJacCtx;
   PetscFunctionReturn(0);
 }
@@ -663,7 +663,7 @@ PetscErrorCode IGASetFormIJacobian(IGA iga,IGAFormIJacobian IJacobian,void *IJac
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIFunction2"
+#define __FUNCT__ "IGASetFormI2Function"
 /*@
    IGASetFormIFunction - Set the function which computes the residual vector
    F(t,U_tt,U_t,U)=0 for use with implicit time stepping routines.
@@ -696,21 +696,21 @@ $  PetscErrorCode IFunction(IGAPoint p,PetscReal dt,
 
 .keywords: IGA, options
 @*/
-PetscErrorCode IGASetFormIFunction2(IGA iga,IGAFormIFunction2 IFunction,void *IFunCtx)
+PetscErrorCode IGASetFormI2Function(IGA iga,IGAFormI2Function IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  iga->form->ops->IFunction2 = IFunction;
+  iga->form->ops->I2Function = IFunction;
   iga->form->ops->IFunCtx    = IFunCtx;
   PetscFunctionReturn(0);
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIJacobian2"
+#define __FUNCT__ "IGASetFormI2Jacobian"
 /*@
-   IGASetFormIJacobian2 - Set the function to compute the Jacobian matrix
+   IGASetFormI2Jacobian - Set the function to compute the Jacobian matrix
    J = a*dF/dU_tt + v*dF/dU_t + dF/dU  where F(t,U_tt,U_t,U) is
-   the function you provided with IGASetFormIFunction2().
+   the function you provided with IGASetFormI2Function().
 
    Logically Collective on IGA
 
@@ -740,11 +740,11 @@ $  PetscErrorCode IJacobian(IGAPoint p,PetscReal dt,
 
 .keywords: IGA, options
 @*/
-PetscErrorCode IGASetFormIJacobian2(IGA iga,IGAFormIJacobian2 IJacobian,void *IJacCtx)
+PetscErrorCode IGASetFormI2Jacobian(IGA iga,IGAFormI2Jacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  iga->form->ops->IJacobian2 = IJacobian;
+  iga->form->ops->I2Jacobian = IJacobian;
   iga->form->ops->IJacCtx    = IJacCtx;
   PetscFunctionReturn(0);
 }

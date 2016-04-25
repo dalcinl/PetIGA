@@ -749,9 +749,9 @@ PetscErrorCode TSAlphaGetParams(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,Pets
   PetscFunctionReturn(0);
 }
 
-#endif /* XXX */
+#endif
 
-#else /* PETSc >= 3.7 */
+#else/* PETSc >= 3.7 */
 PETSC_EXTERN PetscErrorCode TSCreate_Alpha(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_Alpha1(TS ts) {return TSCreate_Alpha(ts);}
 #endif

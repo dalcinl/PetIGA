@@ -1,3 +1,6 @@
+#include <petscts.h>
+#if PETSC_VERSION_LT(3,7,0)
+
 /*
   Code for timestepping with implicit generalized-\alpha method
   for second order systems.
@@ -25,16 +28,14 @@ static const char citation[] =
 #if PETSC_VERSION_LT(3,5,0)
 #define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
 #define TSPostStage(ts,t,n,x) 0
-static PetscErrorCode TSRollBack_Alpha(TS);
-#define TSRollBack(ts) \
-  TSRollBack_Alpha(ts); \
-  ts->ptime -= next_time_step; \
-  ts->time_step = next_time_step;
 #endif
 
 #if PETSC_VERSION_LT(3,7,0)
 #define TSAdaptCheckStage(adapt,ts,t,X,accept) TSAdaptCheckStage(adapt,ts,accept)
 #endif
+
+static PetscErrorCode TSRollBack_Alpha(TS);
+static PetscErrorCode TS2EvaluateStep_Alpha(TS,PetscInt,Vec,Vec,PetscBool*);
 
 typedef struct {
 
@@ -226,7 +227,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = TSPreStep(ts);CHKERRQ(ierr);
     if (ts->steps == 0) {
       ierr = TSAlpha_InitStep(ts,&stageok);CHKERRQ(ierr);
-      if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
+      if (!stageok) goto reject_step;
     }
 
     ierr = TSAlpha_StageTime(ts);CHKERRQ(ierr);
@@ -234,30 +235,31 @@ static PetscErrorCode TSStep_Alpha(TS ts)
     ierr = TSPreStage(ts,th->stage_time);CHKERRQ(ierr);
     ierr = TS_SNESSolve(ts,NULL,th->X1);CHKERRQ(ierr);
     ierr = TSPostStage(ts,th->stage_time,0,&th->X1);CHKERRQ(ierr);
-    ierr = TSAdaptCheckStage(ts->adapt,ts,th->stage_time,th->X1,&stageok);CHKERRQ(ierr);
-    if (!stageok) {accept = PETSC_FALSE; goto reject_step;}
+    ierr = TSAdaptCheckStage(ts->adapt,ts,th->stage_time,th->Xa,&stageok);CHKERRQ(ierr);
+    if (!stageok) goto reject_step;
 
-    ierr = TSEvaluateStep2(ts,th->order,ts->vec_sol,th->vec_dot,NULL);CHKERRQ(ierr);
+    ierr = VecCopy(th->X1,ts->vec_sol);CHKERRQ(ierr);
+    ierr = VecCopy(th->V1,th->vec_dot);CHKERRQ(ierr);
     th->status = TS_STEP_PENDING;
-
     ierr = TSAdaptCandidatesClear(ts->adapt);CHKERRQ(ierr);
     ierr = TSAdaptCandidateAdd(ts->adapt,"",/*order=*/2,1,1.0,1.0,PETSC_TRUE);CHKERRQ(ierr);
     ierr = TSAdaptChoose(ts->adapt,ts,ts->time_step,&next_scheme,&next_time_step,&accept);CHKERRQ(ierr);
+    th->status = accept ? TS_STEP_COMPLETE : TS_STEP_INCOMPLETE;
     if (!accept) {
-      ts->ptime += next_time_step;
-      ierr = TSRollBack(ts);CHKERRQ(ierr);
-      th->status = TS_STEP_INCOMPLETE;
+      ierr = TSRollBack_Alpha(ts);CHKERRQ(ierr);
+      ts->time_step = next_time_step;
       goto reject_step;
     }
 
     ts->ptime += ts->time_step;
     ts->time_step = next_time_step;
+#if PETSC_VERSION_LT(3,7,0)
     ts->steps++;
-    th->status = TS_STEP_COMPLETE;
+#endif
     break;
 
   reject_step:
-    ts->reject++;
+    ts->reject++; accept = PETSC_FALSE;
     if (!ts->reason && ++rejections > ts->max_reject && ts->max_reject >= 0) {
       ts->reason = TS_DIVERGED_STEP_REJECTED;
       ierr = PetscInfo2(ts,"Step=%D, step rejections %D greater than current TS allowed, stopping solve\n",ts->steps,rejections);CHKERRQ(ierr);
@@ -266,19 +268,6 @@ static PetscErrorCode TSStep_Alpha(TS ts)
 
   if (th->vec_sol_prev && !ts->reason) {ierr = VecCopy(th->X0,th->vec_sol_prev);CHKERRQ(ierr);}
   if (th->vec_dot_prev && !ts->reason) {ierr = VecCopy(th->V0,th->vec_dot_prev);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSEvaluateStep_Alpha"
-static PetscErrorCode TSEvaluateStep_Alpha(TS ts,PetscInt order,Vec U,PETSC_UNUSED PetscBool *done)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  if (!th->work) {ierr = VecDuplicate(ts->vec_sol,&th->work);CHKERRQ(ierr);}
-  ierr = TSEvaluateStep2(ts,order,U,th->work,NULL);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -292,20 +281,6 @@ static PetscErrorCode TSRollBack_Alpha(TS ts)
   PetscFunctionBegin;
   ierr = VecCopy(th->X0,ts->vec_sol);CHKERRQ(ierr);
   ierr = VecCopy(th->V0,th->vec_dot);CHKERRQ(ierr);
-  th->status = TS_STEP_INCOMPLETE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSInterpolate_Alpha"
-static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  if (!th->work) {ierr = VecDuplicate(ts->vec_sol,&th->work);CHKERRQ(ierr);}
-  ierr = TSInterpolate2(ts,t,X,th->work);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -321,7 +296,7 @@ static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec 
   PetscFunctionBegin;
   ierr = TSAlpha_StageVecs(ts,X);CHKERRQ(ierr);
   /* F = Function(ta,Xa,Va,Aa) */
-  ierr = TSComputeIFunction2(ts,ta,Xa,Va,Aa,F,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeI2Function(ts,ta,Xa,Va,Aa,F);CHKERRQ(ierr);
   ierr = VecScale(F,th->scale_F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -347,9 +322,9 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
   /* J,P = Jacobian(ta,Xa,Va,Aa) */
 #if PETSC_VERSION_LT(3,5,0)
   *m = SAME_NONZERO_PATTERN;
-  ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeI2Jacobian(ts,ta,Xa,Va,Aa,dVdX,dAdX,*J,*P);CHKERRQ(ierr);
 #else
-  ierr = TSComputeIJacobian2(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
+  ierr = TSComputeI2Jacobian(ts,ta,Xa,Va,Aa,dVdX,dAdX,J,P);CHKERRQ(ierr);
 #endif
   PetscFunctionReturn(0);
 }
@@ -388,11 +363,8 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   ierr = TSReset_Alpha(ts);CHKERRQ(ierr);
   ierr = PetscFree(ts->data);CHKERRQ(ierr);
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",NULL);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSEvaluateStep2_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TS2SetSolution_C",NULL);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TS2GetSolution_C",NULL);CHKERRQ(ierr);
 
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2UseAdapt_C",NULL);CHKERRQ(ierr);
   ierr = PetscObjectComposeFunction((PetscObject)ts,"TSAlpha2SetRadius_C",NULL);CHKERRQ(ierr);
@@ -434,7 +406,7 @@ static PetscErrorCode TSAdaptChoose_Alpha(TSAdapt adapt,TS ts,PetscReal h,PetscI
     PetscReal enormX,enormV;
     if (!basic->Y) {ierr = VecDuplicate(ts->vec_sol,&basic->Y);CHKERRQ(ierr);}
     if (!th->work) {ierr = VecDuplicate(ts->vec_sol,&th->work);CHKERRQ(ierr);}
-    ierr = TSEvaluateStep2(ts,order-1,basic->Y,th->work,NULL);CHKERRQ(ierr);
+    ierr = TS2EvaluateStep_Alpha(ts,order-1,basic->Y,th->work,NULL);CHKERRQ(ierr);
     ierr = TSErrorWeightedNorm(ts,th->X1,basic->Y,adapt->wnormtype,&enormX);CHKERRQ(ierr);
     ierr = TSErrorWeightedNorm(ts,th->V1,th->work,adapt->wnormtype,&enormV);CHKERRQ(ierr);
     enorm = PetscSqrtReal(PetscSqr(enormX)/2 + PetscSqr(enormV)/2);
@@ -564,8 +536,8 @@ static PetscErrorCode TSView_Alpha(TS ts,PetscViewer viewer)
 /* ------------------------------------------------------------ */
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSetSolution2_Alpha"
-static PetscErrorCode TSSetSolution2_Alpha(TS ts,Vec X,Vec V)
+#define __FUNCT__ "TS2SetSolution_Alpha"
+static PetscErrorCode TS2SetSolution_Alpha(TS ts,Vec X,Vec V)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -579,8 +551,8 @@ static PetscErrorCode TSSetSolution2_Alpha(TS ts,Vec X,Vec V)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSGetSolution2_Alpha"
-static PetscErrorCode TSGetSolution2_Alpha(TS ts,Vec *X, Vec *V)
+#define __FUNCT__ "TS2GetSolution_Alpha"
+static PetscErrorCode TS2GetSolution_Alpha(TS ts,Vec *X, Vec *V)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -595,39 +567,8 @@ static PetscErrorCode TSGetSolution2_Alpha(TS ts,Vec *X, Vec *V)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "TSSolve2_Alpha"
-static PetscErrorCode TSSolve2_Alpha(TS ts,Vec X,Vec V)
-{
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
-  ierr = TSSolve(ts,X);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSInterpolate2_Alpha"
-static PetscErrorCode TSInterpolate2_Alpha(TS ts,PetscReal t,Vec X,Vec V)
-{
-  TS_Alpha       *th = (TS_Alpha*)ts->data;
-  PetscReal      dt  = ts->ptime - t;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  ierr = VecCopy(th->vec_dot,V);CHKERRQ(ierr);
-  ierr = VecAXPY(V,-dt*(1-th->Gamma),th->A0);CHKERRQ(ierr);
-  ierr = VecAXPY(V,-dt*th->Gamma,th->A1);CHKERRQ(ierr);
-  ierr = VecCopy(ts->vec_sol,X);CHKERRQ(ierr);
-  ierr = VecAXPY(X,-dt,V);CHKERRQ(ierr);
-  ierr = VecAXPY(X,-dt*dt*((PetscReal)0.5-th->Beta),th->A0);CHKERRQ(ierr);
-  ierr = VecAXPY(X,-dt*dt*th->Beta,th->A1);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSEvaluateStep2_Alpha"
-static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PETSC_UNUSED PetscBool *done)
+#define __FUNCT__ "TS2EvaluateStep_Alpha"
+static PetscErrorCode TS2EvaluateStep_Alpha(TS ts,PetscInt order,Vec X,Vec V,PETSC_UNUSED PetscBool *done)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscErrorCode ierr;
@@ -640,7 +581,12 @@ static PetscErrorCode TSEvaluateStep2_Alpha(TS ts,PetscInt order,Vec X,Vec V,PET
   } else {
     if (order+1 != 2) SETERRQ1(PetscObjectComm((PetscObject)ts),PETSC_ERR_USER,"Cannot evaluate step at order %D",order);
     if (ts->steps > 0) {
-      PetscReal a = 1 + ts->time_step_prev/ts->time_step;
+#if PETSC_VERSION_LT(3,7,0)
+      PetscReal   h = ts->time_step, h_prev = ts->time_step_prev;
+#else
+      PetscReal   h = ts->time_step, h_prev = ts->ptime - ts->ptime_prev;
+#endif
+      PetscReal   a = 1 + h_prev/h;
       PetscScalar scal[3]; Vec vecX[3],vecV[3];
       scal[0] = +1/a;   scal[1] = -1/(a-1); scal[2] = +1/(a*(a-1));
       vecX[0] = th->X1; vecX[1] = th->X0;   vecX[2] = th->vec_sol_prev;
@@ -752,19 +698,14 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
   ts->ops->setup          = TSSetUp_Alpha;
   ts->ops->setfromoptions = TSSetFromOptions_Alpha;
   ts->ops->step           = TSStep_Alpha;
-  ts->ops->evaluatestep   = TSEvaluateStep_Alpha;
 #if PETSC_VERSION_GE(3,5,0)
   ts->ops->rollback       = TSRollBack_Alpha;
 #endif
-  ts->ops->interpolate    = TSInterpolate_Alpha;
   ts->ops->snesfunction   = SNESTSFormFunction_Alpha;
   ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha;
 
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSetSolution2_C",TSSetSolution2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSGetSolution2_C",TSGetSolution2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSSolve2_C",TSSolve2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSInterpolate2_C",TSInterpolate2_Alpha);CHKERRQ(ierr);
-  ierr = PetscObjectComposeFunction((PetscObject)ts,"TSEvaluateStep2_C",TSEvaluateStep2_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TS2SetSolution_C",TS2SetSolution_Alpha);CHKERRQ(ierr);
+  ierr = PetscObjectComposeFunction((PetscObject)ts,"TS2GetSolution_C",TS2GetSolution_Alpha);CHKERRQ(ierr);
 
 #if PETSC_VERSION_LT(3,5,0)
   ierr = PetscNewLog(ts,TS_Alpha,&th);CHKERRQ(ierr);
@@ -790,405 +731,6 @@ PetscErrorCode TSCreate_Alpha2(TS ts)
 EXTERN_C_END
 
 /* ------------------------------------------------------------ */
-
-#undef __FUNCT__
-#define __FUNCT__ "DMTSDuplicate"
-static PetscErrorCode DMTSDuplicate(DMTS oldtsdm,DMTS newtsdm)
-{
-  PetscObject    oldobj = (PetscObject)oldtsdm;
-  PetscObject    newobj = (PetscObject)newtsdm;
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  ierr = PetscFunctionListDuplicate(oldobj->qlist,&newobj->qlist);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "DMTSSetIFunction2"
-PetscErrorCode DMTSSetIFunction2(DM dm,TSIFunction2 fun,void *ctx)
-{
-  DMTS           tsdm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = DMGetDMTSWrite(dm,&tsdm);CHKERRQ(ierr);
-  tsdm->ops->duplicate = DMTSDuplicate;
-  if (fun) {ierr = PetscObjectComposeFunction((PetscObject)tsdm,"TSIFunction2_C",fun);CHKERRQ(ierr);}
-  if (ctx) {ierr = DMTSSetIFunction(dm,NULL,ctx);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "DMTSSetIJacobian2"
-PetscErrorCode DMTSSetIJacobian2(DM dm,TSIJacobian2 jac,void *ctx)
-{
-  DMTS           tsdm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = DMGetDMTSWrite(dm,&tsdm);CHKERRQ(ierr);
-  tsdm->ops->duplicate = DMTSDuplicate;
-  if (jac) {ierr = PetscObjectComposeFunction((PetscObject)tsdm,"TSIJacobian2_C",jac);CHKERRQ(ierr);}
-  if (ctx) {ierr = DMTSSetIJacobian(dm,NULL,ctx);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "DMTSGetIFunction2"
-PetscErrorCode DMTSGetIFunction2(DM dm,TSIFunction2 *fun,void **ctx)
-{
-  DMTS           tsdm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = DMGetDMTS(dm,&tsdm);CHKERRQ(ierr);
-  if (fun) {ierr = PetscObjectQueryFunction((PetscObject)tsdm,"TSIFunction2_C",(PetscVoidFunction*)fun);CHKERRQ(ierr);}
-  if (ctx) {ierr = DMTSGetIFunction(dm,NULL,ctx);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "DMTSGetIJacobian2"
-PetscErrorCode DMTSGetIJacobian2(DM dm,TSIJacobian2 *jac,void **ctx)
-{
-  DMTS           tsdm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  ierr = DMGetDMTS(dm,&tsdm);CHKERRQ(ierr);
-  if (jac) {ierr = PetscObjectQueryFunction((PetscObject)tsdm,"TSIJacobian2_C",(PetscVoidFunction*)jac);CHKERRQ(ierr);}
-  if (ctx) {ierr = DMTSGetIJacobian(dm,NULL,ctx);CHKERRQ(ierr);}
-  PetscFunctionReturn(0);
-}
-
-/* ------------------------------------------------------------ */
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSetIFunction2"
-/*@C
-   TSSetIFunction2 - Set the function to compute F(t,U,U_t,U_tt) where F = 0 is the DAE to be solved.
-
-   Logically Collective on TS
-
-   Input Parameters:
-+  ts  - the TS context obtained from TSCreate()
-.  F   - vector to hold the residual (or NULL to have it created internally)
-.  fun - the function evaluation routine
--  ctx - user-defined context for private data for the function evaluation routine (may be NULL)
-
-   Calling sequence of fun:
-$  fun(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,Vec F,ctx);
-
-+  t    - time at step/stage being solved
-.  U    - state vector
-.  U_t  - time derivative of state vector
-.  U_tt - second time derivative of state vector
-.  F    - function vector
--  ctx  - [optional] user-defined context for matrix evaluation routine (may be NULL)
-
-   Level: beginner
-
-.keywords: TS, TSALPHA2, timestep, set, ODE, DAE, Function
-
-.seealso: TSALPHA2, TSSetIJacobian2()
-@*/
-PetscErrorCode TSSetIFunction2(TS ts,Vec F,TSIFunction2 fun,void *ctx)
-{
-  DM             dm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (F) PetscValidHeaderSpecific(F,VEC_CLASSID,2);
-  if (F) {ierr = TSSetIFunction(ts,F,NULL,NULL);CHKERRQ(ierr);}
-  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
-  ierr = DMTSSetIFunction2(dm,fun,ctx);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSetIJacobian2"
-/*@C
-   TSSetIJacobian - Set the function to compute the matrix dF/dU + v*dF/dU_t  + a*dF/dU_tt
-        where F(t,U,U_t,U_tt) is the function you provided with TSSetIFunction2().
-
-   Logically Collective on TS
-
-   Input Parameters:
-+  ts  - the TS context obtained from TSCreate()
-.  J   - Jacobian matrix
-.  P   - preconditioning matrix for J (may be same as J)
-.  jac - the Jacobian evaluation routine
--  ctx - user-defined context for private data for the Jacobian evaluation routine (may be NULL)
-
-   Calling sequence of jac:
-$  jac(TS ts,PetscReal t,Vec U,Vec U_t,Vec U_tt,PetscReal v,PetscReal a,Mat *J,Mat *P,MatStructure *m,void *ctx);
-
-+  t    - time at step/stage being solved
-.  U    - state vector
-.  U_t  - time derivative of state vector
-.  U_tt - second time derivative of state vector
-.  v    - shift for U_t
-.  a    - shift for U_tt
-.  J    - Jacobian of G(U) = F(t,U,W+v*U,W'+a*U), equivalent to dF/dU + v*dF/dU_t  + a*dF/dU_tt
-.  P    - preconditioning matrix for J, may be same as J
-.  m    - flag indicating information about the preconditioner matrix
-          structure (same as flag in KSPSetOperators())
--  ctx  - [optional] user-defined context for matrix evaluation routine
-
-   Notes:
-   The matrices J and P are exactly the matrices that are used by SNES for the nonlinear solve.
-
-   The matrix dF/dU + v*dF/dU_t + a*dF/dU_tt you provide turns out to be
-   the Jacobian of G(U) = F(t,U,W+v*U,W'+a*U) where F(t,U,U_t,U_tt) = 0 is the DAE to be solved.
-   The time integrator internally approximates U_t by W+v*U and U_tt by W'+a*U  where the positive "shift"
-   parameters 'a' and 'b' and vectors W, W' depend on the integration method, step size, and past states.
-
-   Level: beginner
-
-.keywords: TS, TSALPHA2, timestep, set, ODE, DAE, Jacobian
-
-.seealso: TSALPHA2, TSSetIFunction2()
-@*/
-PetscErrorCode TSSetIJacobian2(TS ts,Mat J,Mat P,TSIJacobian2 jac,void *ctx)
-{
-  DM             dm;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (J) PetscValidHeaderSpecific(J,MAT_CLASSID,2);
-  if (P) PetscValidHeaderSpecific(P,MAT_CLASSID,3);
-  if (J || P) {ierr = TSSetIJacobian(ts,J,P,NULL,NULL);CHKERRQ(ierr);}
-  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
-  ierr = DMTSSetIJacobian2(dm,jac,ctx);CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeIFunction2"
-PetscErrorCode TSComputeIFunction2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F,PetscBool imex)
-{
-  DM             dm;
-  TSIFunction2   IFunction2;
-  void           *ctx;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
-  PetscValidHeaderSpecific(A,VEC_CLASSID,5);
-  PetscValidHeaderSpecific(F,VEC_CLASSID,6);
-  PetscValidLogicalCollectiveBool(ts,imex,7);
-  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
-  ierr = DMTSGetIFunction2(dm,&IFunction2,&ctx);CHKERRQ(ierr);
-  if (IFunction2) {
-    PetscStackPush("TS user implicit function");
-    ierr = IFunction2(ts,t,X,V,A,F,ctx);CHKERRQ(ierr);
-    PetscStackPop;
-  } else {
-    ierr = TSComputeIFunction(ts,t,X,A,F,imex);CHKERRQ(ierr);
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeIJacobian2"
-PetscErrorCode TSComputeIJacobian2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,PetscBool imex)
-{
-  DM             dm;
-  TSIJacobian2   IJacobian2;
-  void           *ctx;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
-  PetscValidHeaderSpecific(A,VEC_CLASSID,5);
-  PetscValidHeaderSpecific(J,MAT_CLASSID,8);
-  PetscValidHeaderSpecific(P,MAT_CLASSID,9);
-  PetscValidLogicalCollectiveBool(ts,imex,7);
-  ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
-  ierr = DMTSGetIJacobian2(dm,&IJacobian2,&ctx);CHKERRQ(ierr);
-  if (IJacobian2) {
-    PetscStackPush("TS user implicit Jacobian");
-    ierr = IJacobian2(ts,t,X,V,A,shiftV,shiftA,J,P,ctx);CHKERRQ(ierr);
-    PetscStackPop;
-  } else {
-#if PETSC_VERSION_LT(3,5,0)
-    MatStructure m;
-    ierr = TSComputeIJacobian(ts,t,X,A,shiftA,&J,&P,&m,imex);CHKERRQ(ierr);
-#else
-    ierr = TSComputeIJacobian(ts,t,X,A,shiftA,J,P,imex);CHKERRQ(ierr);
-#endif
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSetSolution2"
-/*@
-   TSSetSolution2 - Sets the initial solution and time-derivative vectors
-   for use by the TSALPHA2 routines.
-
-   Logically Collective on TS and Vec
-
-   Input Parameters:
-+  ts - the TS context
-.  X - the solution vector
--  V - the time-derivative vector
-
-   Level: beginner
-
-.keywords: TS, TSALPHA2, timestep, set, solution, initial conditions
-@*/
-PetscErrorCode TSSetSolution2(TS ts,Vec X,Vec V)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,2);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,3);
-  ierr = PetscUseMethod(ts,"TSSetSolution2_C",(TS,Vec,Vec),(ts,X,V));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSGetSolution2"
-/*@
-   TSGetSolution2 - Returns the solution and time-derivative vectors
-   at the present timestep. It is valid to call this routine inside
-   the function that you are evaluating in order to move to the new
-   timestep. This vector not changed until the solution at the next
-   timestep has been calculated.
-
-   Not Collective, but Vec returned is parallel if TS is parallel
-
-   Input Parameter:
-.  ts - the TS context
-
-   Output Parameter:
-+  X - the vector containing the solution
--  V - the vector containing the time-derivative
-
-   Level: intermediate
-
-.seealso: TSGetTimeStep()
-
-.keywords: TS, TSALPHA2, timestep, get, solution
-@*/
-PetscErrorCode TSGetSolution2(TS ts,Vec *X, Vec *V)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  if (X) PetscValidPointer(X,2);
-  if (V) PetscValidPointer(V,3);
-  ierr = PetscUseMethod(ts,"TSGetSolution2_C",(TS,Vec*,Vec*),(ts,X,V));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSSolve2"
-/*@
-   TSSolve2 - Steps the requested number of timesteps.
-
-   Collective on TS
-
-   Input Parameter:
-+  ts - the TS context
-.  X - the solution vector (can be null if TSSetSolution2() was used, otherwise must contain the initial conditions)
--  V - the time-derivative vector (can be null if TSSetSolution2() was used, otherwise must contain the initial conditions)
-
-   Level: beginner
-
-.keywords: TS, TSALPHA2, timestep, solve
-
-.seealso: TSALPHA2, TSSetSolution2()
-@*/
-PetscErrorCode TSSolve2(TS ts,Vec X,Vec V)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,2);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,3);
-  ierr = PetscUseMethod(ts,"TSSolve2_C",(TS,Vec,Vec),(ts,X,V));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSInterpolate2"
-/*@
-   TSInterpolate2 - Interpolate the solution computed during the previous step to an arbitrary location in the interval
-
-   Collective on TS
-
-   Input Argument:
-+  ts - time stepping context
--  t - time to interpolate to
-
-   Output Argument:
-+  X - solution at given time
--  V - time-derivative at given time
-
-.keywords: TS, TSALPHA2, timestep, solve
-
-.seealso: TSALPHA2, TSSolve2(), TSGetSolution2()
-@*/
-PetscErrorCode TSInterpolate2(TS ts,PetscReal t,Vec X,Vec V)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
-  if (t < ts->ptime - ts->time_step_prev || t > ts->ptime) SETERRQ3(PetscObjectComm((PetscObject)ts),PETSC_ERR_ARG_OUTOFRANGE,"Requested time %g not in last time steps [%g,%g]",t,(double)(ts->ptime-ts->time_step_prev),(double)ts->ptime);
-  ierr = PetscUseMethod(ts,"TSInterpolate2_C",(TS,PetscReal,Vec,Vec),(ts,t,X,V));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "TSEvaluateStep2"
-/*@
-   TSEvaluateStep - Evaluate the solution at the end of a time step with a given order of accuracy.
-
-   Collective on TS
-
-   Input Arguments:
-+  ts - time stepping context
-.  order - desired order of accuracy
--  done - whether the step was evaluated at this order (pass NULL to generate an error if not available)
-
-   Output Arguments:
-+  X - solution at the end of the current step
--  V - derivative at the end of the current step
-
-   Level: advanced
-
-   Notes:
-   This function cannot be called until all stages have been evaluated.
-   It is normally called by adaptive controllers before a step has been accepted and may also be called by the user after TSStep() has returned.
-
-.seealso: TSStep(), TSAdapt
-@*/
-PetscErrorCode TSEvaluateStep2(TS ts,PetscInt order,Vec X,Vec V,PetscBool *done)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(ts,TS_CLASSID,1);
-  PetscValidHeaderSpecific(X,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(V,VEC_CLASSID,4);
-  ierr = PetscUseMethod(ts,"TSEvaluateStep2_C",(TS,PetscInt,Vec,Vec,PetscBool*),(ts,order,X,V,done));CHKERRQ(ierr);
-  PetscFunctionReturn(0);
-}
-
 /* ------------------------------------------------------------ */
 
 #undef __FUNCT__
@@ -1351,3 +893,5 @@ PetscErrorCode TSAlpha2GetParams(TS ts,PetscReal *alpha_m,PetscReal *alpha_f,Pet
   ierr = PetscUseMethod(ts,"TSAlpha2GetParams_C",(TS,PetscReal*,PetscReal*,PetscReal*,PetscReal*),(ts,alpha_m,alpha_f,gamma,beta));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+#endif/* PETSc >= 3.7 */

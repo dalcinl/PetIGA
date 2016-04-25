@@ -583,8 +583,8 @@ PetscErrorCode TSSetIGA(TS ts,IGA iga)
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = TSGetDM(ts,&dm);CHKERRQ(ierr);
-  ierr = DMTSSetIFunction2(dm,IGATSFormIFunction2,iga);CHKERRQ(ierr);
-  ierr = DMTSSetIJacobian2(dm,IGATSFormIJacobian2,iga);CHKERRQ(ierr);
+  ierr = DMTSSetI2Function(dm,IGATSFormI2Function,iga);CHKERRQ(ierr);
+  ierr = DMTSSetI2Jacobian(dm,IGATSFormI2Jacobian,iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 

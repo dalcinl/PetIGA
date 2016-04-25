@@ -256,88 +256,6 @@ PetscScalar EstimateSecondDerivative(AppCtx user)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "CHAdapt"
-PetscErrorCode CHAdapt(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
-{
-  SNES                 snes;
-  SNESConvergedReason  snesreason;
-  PetscReal            dt,normE,normX,Emax,scale;
-  PetscErrorCode       ierr;
-  PetscFunctionBegin;
-
-  AppCtx *th = (AppCtx *)ctx;
-
-  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  th->time[0]=t-dt;
-  PetscScalar energy;
-  ierr = IGAComputeScalar(th->iga,X,1,&energy,Stats,ctx);CHKERRQ(ierr);
-  th->energy[0] = PetscRealPart(energy);
-
-  if (!th->E){
-    th->energy[1] = 1.01*th->energy[0];
-    th->energy[2] = 1.02*th->energy[0];
-    th->time[1] = -dt;
-    th->time[2] = -2.0*dt;
-  }
-
-  PetscReal scale_min = 0.5;
-  PetscReal scale_max = 1.5;
-  PetscReal    dt_min = 1.0e-15;
-  PetscReal    dt_max = 1.0e+10;
-  PetscReal      rtol = 1.0e-3;
-  PetscReal      atol = 1.0e-3;
-  PetscReal       rho = 0.9;
-  //PetscScalar       dE2 = EstimateSecondDerivative(*th);
-
-  /* If the SNES fails, reject the step and reduce the step by the
-     maximum amount */
-  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
-  ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
-  if (snesreason < 0 || th->energy[0] > th->energy[1]) {
-    *ok = PETSC_FALSE;
-    *nextdt *= scale_min;
-    *nextdt = PetscMax(*nextdt,dt_min);
-    PetscFunctionReturn(0);
-  }
-
-  /* first-order aproximation to the local error */
-  /* E = (X0 + dt*Xdot) - X */
-  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  if (!th->E) {ierr = VecDuplicate(th->X0,&th->E);CHKERRQ(ierr);}
-  ierr = VecWAXPY(th->E,dt,Xdot,th->X0);CHKERRQ(ierr);
-  ierr = VecAXPY(th->E,-1,X);CHKERRQ(ierr);
-  ierr = VecNorm(th->E,NORM_2,&normE);CHKERRQ(ierr);
-  /* compute maximum allowable error */
-  ierr = VecNorm(X,NORM_2,&normX);CHKERRQ(ierr);
-  if (normX == 0) {ierr = VecNorm(th->X0,NORM_2,&normX);CHKERRQ(ierr);}
-  Emax =  rtol * normX + atol;
-  /* compute next time step */
-  if (normE > 0) {
-    scale = rho * PetscRealPart(PetscSqrtScalar((PetscScalar)(Emax/normE)));
-    scale = PetscMax(scale,scale_min);
-    scale = PetscMin(scale,scale_max);
-    if (!(*ok))
-      scale = PetscMin(1.0,scale);
-    *nextdt *= scale;
-  }
-  /* accept or reject step */
-  if (normE <= Emax){
-    ierr = VecCopy(X,th->X0);CHKERRQ(ierr);
-    th->energy[2] = th->energy[1];
-    th->energy[1] = th->energy[0];
-    th->time[2] = th->time[1];
-    th->time[1] = th->time[0];
-    *ok = PETSC_TRUE;
-  }else{
-    *ok = PETSC_FALSE;
-  }
-
-  *nextdt = PetscMax(*nextdt,dt_min);
-  *nextdt = PetscMin(*nextdt,dt_max);
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
@@ -383,11 +301,9 @@ int main(int argc, char *argv[]) {
   ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-10);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-
-  user.E = NULL;
-  ierr = TSAlphaSetAdapt(ts,CHAdapt,&user);CHKERRQ(ierr);
+  ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
 
   if (monitor) {
     user.iga = iga;

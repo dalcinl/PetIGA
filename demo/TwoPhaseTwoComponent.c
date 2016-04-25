@@ -173,27 +173,6 @@ PetscErrorCode Jacobian(IGAPoint p,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "GeometricAdaptivity"
-PetscErrorCode GeometricAdaptivity(TS ts,PetscReal t,Vec X,Vec Xdot, PetscReal *nextdt,PetscBool *ok,void *ctx)
-{
-  PetscErrorCode       ierr;
-  PetscReal            dt;
-  SNES                 snes;
-  SNESConvergedReason  snesreason;
-  ierr = TSGetTimeStep(ts,&dt);CHKERRQ(ierr);
-  ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);
-  ierr = SNESGetConvergedReason(snes,&snesreason);CHKERRQ(ierr);
-  if (snesreason < 0) {
-    *ok = PETSC_FALSE;
-    *nextdt = 0.9*dt;
-    PetscFunctionReturn(0);
-  }
-  *ok = PETSC_TRUE;
-  *nextdt = PetscMin(1.01*dt,1000);
-  return 0;
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "InitialCondition"
 PetscErrorCode InitialCondition(IGA iga,Vec U,AppCtx *user)
 {
@@ -342,9 +321,9 @@ int main(int argc, char *argv[]) {
   ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.95);CHKERRQ(ierr);
-  ierr = TSAlphaSetAdapt(ts,GeometricAdaptivity,NULL);CHKERRQ(ierr);
+  ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
   ierr = TSMonitorSet(ts,Monitor,&user,NULL);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 

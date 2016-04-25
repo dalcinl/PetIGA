@@ -173,7 +173,7 @@ PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 
   PetscFunctionBegin;
   if (!fp) {ierr = PetscFOpen(PETSC_COMM_SELF,filename,"w",&fp);CHKERRQ(ierr);}
-  ierr = TSGetSolution2(ts,&X,&V);CHKERRQ(ierr);
+  ierr = TS2GetSolution(ts,&X,&V);CHKERRQ(ierr);
   ierr = VecGetArrayRead(X,&x);CHKERRQ(ierr);
   ierr = VecGetArrayRead(V,&v);CHKERRQ(ierr);
   ierr = PetscFPrintf(PETSC_COMM_SELF,fp,"%g %g %g\n",(double)t,(double)PetscRealPart(x[0]),(double)PetscRealPart(v[0]));CHKERRQ(ierr);
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
   ierr = MatCreateSeqDense(PETSC_COMM_SELF,1,1,NULL,&J);CHKERRQ(ierr);
   ierr = MatSetUp(J);CHKERRQ(ierr);
   if (user.Xi) {
-    ierr = TSSetIFunction2(ts,R,Residual2,&user);CHKERRQ(ierr);
-    ierr = TSSetIJacobian2(ts,J,J,Tangent2,&user);CHKERRQ(ierr);
+    ierr = TSSetI2Function(ts,R,Residual2,&user);CHKERRQ(ierr);
+    ierr = TSSetI2Jacobian(ts,J,J,Tangent2,&user);CHKERRQ(ierr);
   } else {
     ierr = TSSetIFunction(ts,R,Residual1,&user);CHKERRQ(ierr);
     ierr = TSSetIJacobian(ts,J,J,Tangent1,&user);CHKERRQ(ierr);
@@ -245,9 +245,9 @@ int main(int argc, char *argv[])
   ierr = VecRestoreArray(X,&x);CHKERRQ(ierr);
   ierr = VecRestoreArray(V,&v);CHKERRQ(ierr);
 
-  ierr = TSSetSolution2(ts,X,V);CHKERRQ(ierr);
+  ierr = TS2SetSolution(ts,X,V);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-  ierr = TSSolve2(ts,X,V);CHKERRQ(ierr);
+  ierr = TSSolve(ts,NULL);CHKERRQ(ierr);
 
   ierr = VecDestroy(&X);CHKERRQ(ierr);
   ierr = VecDestroy(&V);CHKERRQ(ierr);

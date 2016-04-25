@@ -57,8 +57,10 @@ PetscErrorCode IGARegisterAll(void)
   ierr = PCRegister(PCIGABBB,PCCreate_IGABBB);CHKERRQ(ierr);
   ierr = TSRegisterAll();CHKERRQ(ierr);
   ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,7,0)
   ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
   ierr = TSRegister(TSBDF,TSCreate_BDF);CHKERRQ(ierr);
+#endif
   ierr = DMRegisterAll();CHKERRQ(ierr);
   ierr = DMRegister(DMIGA,DMCreate_IGA);CHKERRQ(ierr);
   PetscFunctionReturn(0);

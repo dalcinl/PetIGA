@@ -1,3 +1,6 @@
+#include <petscts.h>
+#if PETSC_VERSION_LT(3,7,0)
+
 /*
   Code for timestepping with BDF methods
 */
@@ -766,3 +769,5 @@ PetscErrorCode TSBDFUseAdapt(TS ts,PetscBool use)
   ierr = PetscTryMethod(ts,"TSBDFUseAdapt_C",(TS,PetscBool),(ts,use));CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
+
+#endif/* PETSc >= 3.7 */
