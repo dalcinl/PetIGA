@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
 
   ierr = TS2SetSolution(ts,X,V);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-  ierr = TSSolve(ts,NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,X);CHKERRQ(ierr);
 
   ierr = VecDestroy(&X);CHKERRQ(ierr);
   ierr = VecDestroy(&V);CHKERRQ(ierr);

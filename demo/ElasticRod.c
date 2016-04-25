@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   ierr = VecAssemblyEnd(U);CHKERRQ(ierr);
 
   /* Solve */
-  ierr = TSSolve(ts,NULL);CHKERRQ(ierr);
+  ierr = TSSolve(ts,U);CHKERRQ(ierr);
   if (0) { /* write final solution */
     ierr = IGAWriteVec(iga,U,"ElasticRod_U.dat");CHKERRQ(ierr);
     ierr = IGAWriteVec(iga,V,"ElasticRod_V.dat");CHKERRQ(ierr);
