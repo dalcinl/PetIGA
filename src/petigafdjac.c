@@ -115,8 +115,8 @@ PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,
 }
 
 #undef  __FUNCT__
-#define __FUNCT__ "IGAFormIJacobian2FD"
-PetscErrorCode IGAFormIJacobian2FD(IGAPoint p,
+#define __FUNCT__ "IGAFormI2JacobianFD"
+PetscErrorCode IGAFormI2JacobianFD(IGAPoint p,
                                    PetscReal a,const PetscScalar A[],
                                    PetscReal v,const PetscScalar V[],
                                    PetscReal t,const PetscScalar U[],
