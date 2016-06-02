@@ -220,7 +220,6 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscBool      graph = PETSC_FALSE;
 #endif
   PetscBool      boundary = PETSC_TRUE;
-  PetscBool      nullspace = PETSC_TRUE;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -245,7 +244,6 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_boundary",&boundary,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_nullspace",&nullspace,NULL);CHKERRQ(ierr);
 
   if (graph) {
     PetscInt i,dim,dof;
@@ -364,10 +362,5 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = ISDestroy(&isn);CHKERRQ(ierr);
   }
 
-  if (nullspace) {
-    MatNullSpace nsp;
-    ierr = MatGetNullSpace(mat,&nsp);CHKERRQ(ierr);
-    if (nsp) {ierr = PCBDDCSetNullSpace(pc,nsp);CHKERRQ(ierr);}
-  }
   PetscFunctionReturn(0);
 }
