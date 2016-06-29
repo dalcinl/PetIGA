@@ -86,19 +86,19 @@ endif
 
 perf-test-Bratu: NEL=128
 perf-test-Bratu:
-	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 -log_summary Bratu-c99.log
-	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -f90 -log_summary Bratu-f90.log
-	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx -log_summary Bratu-cxx.log
-	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad -log_summary Bratu-fad.log
+	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 -log_view "ascii:Bratu-c99.log"
+	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -f90 -log_view "ascii:Bratu-f90.log"
+	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx -log_view "ascii:Bratu-cxx.log"
+	$(TASKSET) ./Bratu -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad -log_view "ascii:Bratu-fad.log"
 	grep IGAFormFunction Bratu-c99.log Bratu-f90.log Bratu-cxx.log Bratu-fad.log
 	grep IGAFormJacobian Bratu-c99.log Bratu-f90.log Bratu-cxx.log Bratu-fad.log
 
 perf-test-CahnHilliardPrimal: NEL=128
 perf-test-CahnHilliardPrimal: OPTS=-ksp_pc_side right -ts_max_steps 3
 perf-test-CahnHilliardPrimal:
-	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 $(OPTS) -log_summary CHPrimal-c99.log
-	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx $(OPTS) -log_summary CHPrimal-cxx.log
-	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad $(OPTS) -log_summary CHPrimal-fad.log
+	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 $(OPTS) -log_view "ascii:CHPrimal-c99.log"
+	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx $(OPTS) -log_view "ascii:CHPrimal-cxx.log"
+	$(TASKSET) ./CahnHilliardPrimal -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad $(OPTS) -log_view "ascii:CHPrimal-fad.log"
 	grep TSStep           CHPrimal-c99.log CHPrimal-cxx.log CHPrimal-fad.log
 	grep IGAFormIFunction CHPrimal-c99.log CHPrimal-cxx.log CHPrimal-fad.log
 	grep IGAFormIJacobian CHPrimal-c99.log CHPrimal-cxx.log CHPrimal-fad.log
@@ -106,9 +106,9 @@ perf-test-CahnHilliardPrimal:
 perf-test-CahnHilliardMixed: NEL=128
 perf-test-CahnHilliardMixed: OPTS=-ksp_pc_side right -ts_max_steps 3
 perf-test-CahnHilliardMixed:
-	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 $(OPTS) -log_summary CHMixed-c99.log
-	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx $(OPTS) -log_summary CHMixed-cxx.log
-	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad $(OPTS) -log_summary CHMixed-fad.log
+	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -c99 $(OPTS) -log_view "ascii:CHMixed-c99.log"
+	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -cxx $(OPTS) -log_view "ascii:CHMixed-cxx.log"
+	$(TASKSET) ./CahnHilliardMixed  -dim $(DIM) -deg $(DEG) -nel $(NEL) -fad $(OPTS) -log_view "ascii:CHMixed-fad.log"
 	grep TSStep           CHMixed-c99.log CHMixed-cxx.log CHMixed-fad.log
 	grep IGAFormIFunction CHMixed-c99.log CHMixed-cxx.log CHMixed-fad.log
 	grep IGAFormIJacobian CHMixed-c99.log CHMixed-cxx.log CHMixed-fad.log

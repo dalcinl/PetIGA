@@ -28,7 +28,7 @@ bind(C, name="FunctionF90")
   scalar (kind=IGA_SCALAR_KIND ), intent(in)  :: UU(p%nen)
   scalar (kind=IGA_SCALAR_KIND ), intent(out) :: FF(p%neq)
   real   (kind=IGA_REAL_KIND   ), pointer :: N(:), grad_N(:,:)
-  scalar (kind=IGA_SCALAR_KIND ) :: u, grad_u(p%dim), del2_u
+  scalar (kind=IGA_SCALAR_KIND ) :: u, grad_u(p%dim)
   real   (kind=IGA_SCALAR_KIND ) :: lambda_exp_u
   integer(kind=IGA_INTEGER_KIND) :: a
 
