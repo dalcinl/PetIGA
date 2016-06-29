@@ -22,9 +22,8 @@
   _4_ierr = MPI_Scan(&__ctmp,&__end,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __start = __end - __ctmp;\
   _4_ierr = MPI_Scan(&__nrows,&__rstart,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __rstart = __rstart - __nrows;
 
-PETSC_EXTERN PetscErrorCode MatHeaderReplace(Mat,Mat);
-static       PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
-static       PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
+static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
+static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
 
 #undef  __FUNCT__
 #define __FUNCT__ "MatView_MPI_IGA"
