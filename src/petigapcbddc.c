@@ -52,9 +52,9 @@ PetscInt Color(const PetscInt shape[3],
   L[0] = start[0]; R[0] = start[0] + width[0] - 1;
   L[1] = start[1]; R[1] = start[1] + width[1] - 1;
   L[2] = start[2]; R[2] = start[2] + width[2] - 1;
-  if (i<L[0]) r = i - L[0]; if (i>R[0]) r = i - R[0];
-  if (j<L[1]) g = j - L[1]; if (j>R[1]) g = j - R[1];
-  if (k<L[2]) b = k - L[2]; if (k>R[2]) b = k - R[2];
+  if (i<L[0]) {r = i - L[0];} if (i>R[0]) {r = i - R[0];}
+  if (j<L[1]) {g = j - L[1];} if (j>R[1]) {g = j - R[1];}
+  if (k<L[2]) {b = k - L[2];} if (k>R[2]) {b = k - R[2];}
   C[0] = shape[0] - width[0] + 1;
   C[1] = shape[1] - width[1] + 1;
   return Index(C,r,g,b);

@@ -5,7 +5,6 @@ pure subroutine InverseMap(&
      X1,X2,X3,X4,&
      dX,&
      E1,E2,E3,E4)
-  use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
   !integer(kind=IGA_INTEGER_KIND),parameter   :: nsd = 1,2,3
@@ -74,4 +73,5 @@ pure subroutine InverseMap(&
 
 end subroutine InverseMap
 
+include 'petigadet.f90.in'
 include 'petigainv.f90.in'

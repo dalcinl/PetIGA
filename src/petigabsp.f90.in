@@ -1,7 +1,6 @@
 ! -*- f90 -*-
 
 pure subroutine NewtonCotesPoints(n,U0,U1,X)
-  use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: n
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: U0, U1
@@ -16,7 +15,6 @@ end subroutine NewtonCotesPoints
 
 
 pure subroutine GaussLobattoPoints(n,U0,U1,X)
-  use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: n
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: U0, U1
@@ -97,7 +95,6 @@ end subroutine GaussLobattoPoints
 
 
 pure subroutine LagrangeBasisFunsDers(xx,p,d,X,B)
-  use PetIGA
   implicit none
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: p, d
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: xx

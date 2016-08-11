@@ -25,7 +25,7 @@ PetscInt IGA_PART2D_INNER(PetscInt size,
 {
   PetscInt m,n;
   m = (PetscInt)(0.5 + sqrt(((double)M)/((double)N)*((double)size)));
-  if (m == 0) m = 1; while (m > 0 && size % m) m--;
+  if (m == 0) {m = 1;} while (m > 0 && size % m) m--;
   n = size / m;
   *_m = m; *_n = n;
   return IGA_CUT2D(M,N,m,n);
@@ -56,7 +56,7 @@ PetscInt IGA_PART3D_INNER(PetscInt size,
   PetscInt mm,nn,pp,CC;
   /**/
   m = (PetscInt)(0.5 + pow(((double)M*M)/((double)N*P)*size,1./3.));
-  if (m == 0) m = 1; while (m > 0 && size % m) m--;
+  if (m == 0) {m = 1;} while (m > 0 && size % m) m--;
   /**/
   IGA_PART2D(size/m,N,P,&n,&p);
   C = IGA_CUT3D(M,N,P,m,n,p);

@@ -460,5 +460,5 @@ pure subroutine Jacobian(nen,N,X,J)
   M = matmul(F,transpose(F))
   J = sqrt(abs(Determinant(dim,M)))
 end subroutine Jacobian
-include 'petigainv.f90.in'
+include 'petigadet.f90.in'
 end subroutine IGA_BoundaryArea_3D

@@ -5,7 +5,6 @@ pure subroutine GeometryMap(&
      nen,X,&
      M0,M1,M2,M3,M4,&
      X0,X1,X2,X3,X4)
-  use PetIGA
   implicit none
   !integer(kind=IGA_INTEGER_KIND),parameter   :: dim = 1,2,3
   !integer(kind=IGA_INTEGER_KIND),parameter   :: nsd = 1,2,3
