@@ -9,71 +9,10 @@ subroutine IGA_Basis_BSpline(k,uu,p,d,U,B) &
   real   (kind=IGA_REAL_KIND   ), intent(in)       :: U(0:k+p)
   real   (kind=IGA_REAL_KIND   ), intent(out)      :: B(0:4,0:p)
   real   (kind=IGA_REAL_KIND   )  :: ders(0:p,0:d)
-  call BasisFunsDers(k,uu,p,d,U,ders)
+  call BSplineBasisFunsDers(k,uu,p,d,U,ders)
   B = 0; B(0:d,:) = transpose(ders)
 contains
-pure subroutine BasisFunsDers(i,uu,p,n,U,ders)
-  use PetIGA
-  implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in)  :: i, p, n
-  real   (kind=IGA_REAL_KIND   ), intent(in)  :: uu, U(0:i+p)
-  real   (kind=IGA_REAL_KIND   ), intent(out) :: ders(0:p,0:n)
-  integer(kind=IGA_INTEGER_KIND)  :: j, k, r, s1, s2, rk, pk, j1, j2
-  real   (kind=IGA_REAL_KIND   )  :: saved, temp, d
-  real   (kind=IGA_REAL_KIND   )  :: left(p), right(p)
-  real   (kind=IGA_REAL_KIND   )  :: ndu(0:p,0:p), a(0:1,0:p)
-  ndu(0,0) = 1
-  do j = 1, p
-     left(j)  = uu - U(i+1-j)
-     right(j) = U(i+j) - uu
-     saved = 0
-     do r = 0, j-1
-        ndu(j,r) = right(r+1) + left(j-r)
-        temp = ndu(r,j-1) / ndu(j,r)
-        ndu(r,j) = saved + right(r+1) * temp
-        saved = left(j-r) * temp
-     end do
-     ndu(j,j) = saved
-  end do
-  ders(:,0) = ndu(:,p)
-  do r = 0, p
-     s1 = 0; s2 = 1;
-     a(0,0) = 1
-     do k = 1, n
-        d = 0
-        rk = r-k; pk = p-k;
-        if (r >= k) then
-           a(s2,0) = a(s1,0) / ndu(pk+1,rk)
-           d =  a(s2,0) * ndu(rk,pk)
-        end if
-        if (rk > -1) then
-           j1 = 1
-        else
-           j1 = -rk
-        end if
-        if (r-1 <= pk) then
-           j2 = k-1
-        else
-           j2 = p-r
-        end if
-        do j = j1, j2
-           a(s2,j) = (a(s1,j) - a(s1,j-1)) / ndu(pk+1,rk+j)
-           d =  d + a(s2,j) * ndu(rk+j,pk)
-        end do
-        if (r <= pk) then
-           a(s2,k) = - a(s1,k-1) / ndu(pk+1,r)
-           d =  d + a(s2,k) * ndu(r,pk)
-        end if
-        ders(r,k) = d
-        j = s1; s1 = s2; s2 = j;
-     end do
-  end do
-  r = p
-  do k = 1, n
-     ders(:,k) = ders(:,k) * r
-     r = r * (p-k)
-  end do
-end subroutine BasisFunsDers
+include 'petigabsb.f90.in'
 end subroutine IGA_Basis_BSpline
 
 
@@ -94,7 +33,17 @@ subroutine IGA_Basis_Lagrange(k,uu,p,d,U,B) &
   call NewtonCotesPoints(p+1,U(k),U(k+1),X)
   call LagrangeBasisFunsDers(uu,p,d,X,B)
 contains
-include 'petigabsp.f90.in'
+include 'petigalgb.f90.in'
+pure subroutine NewtonCotesPoints(n,U0,U1,X)
+  implicit none
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: n
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: U0, U1
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: X(0:n-1)
+  integer(kind=IGA_INTEGER_KIND)  :: i
+  do i = 0, n-1
+     X(i) = U0 + i * (U1-U0)/(n-1)
+  end do
+end subroutine NewtonCotesPoints
 end subroutine IGA_Basis_Lagrange
 
 
@@ -115,8 +64,10 @@ subroutine IGA_Basis_Spectral(k,uu,p,d,U,B) &
   call GaussLobattoPoints(p+1,U(k),U(k+1),X)
   call LagrangeBasisFunsDers(uu,p,d,X,B)
 contains
-include 'petigabsp.f90.in'
+include 'petigaglp.f90.in'
+include 'petigalgb.f90.in'
 end subroutine IGA_Basis_Spectral
+
 
 subroutine IGA_LobattoPoints(n,x0,x1,X) &
   bind(C, name="IGA_LobattoPoints")
@@ -125,7 +76,7 @@ subroutine IGA_LobattoPoints(n,x0,x1,X) &
   integer(kind=IGA_INTEGER_KIND), intent(in),value  :: n
   real   (kind=IGA_REAL_KIND   ), intent(in),value  :: x0, x1
   real   (kind=IGA_REAL_KIND   ), intent(out)       :: X(0:n-1)
-  call GaussLobattoPoints(n,X0,X1,X)
+  call GaussLobattoPoints(n,x0,x1,X)
 contains
-include 'petigabsp.f90.in'
+include 'petigaglp.f90.in'
 end subroutine IGA_LobattoPoints
