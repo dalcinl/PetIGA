@@ -5,6 +5,10 @@
 #define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
 #endif
 
+#if PETSC_VERSION_LT(3,8,0)
+#define MatCreateSubMatrix MatGetSubMatrix
+#endif
+
 #if !defined(PetscCalloc2)
 #define PetscCalloc2(m1,r1,m2,r2)             \
   (PetscMalloc1((m1),(r1))                 || \
@@ -68,7 +72,7 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   }
 
   /* Do permutation and view matrix */
-  ierr = MatGetSubMatrix(A,is,is,MAT_INITIAL_MATRIX,&Anatural);CHKERRQ(ierr);
+  ierr = MatCreateSubMatrix(A,is,is,MAT_INITIAL_MATRIX,&Anatural);CHKERRQ(ierr);
   ierr = PetscObjectGetOptionsPrefix((PetscObject)A,&prefix);CHKERRQ(ierr);
   ierr = PetscObjectSetOptionsPrefix((PetscObject)Anatural,prefix);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject)Anatural,((PetscObject)A)->name);CHKERRQ(ierr);
@@ -131,7 +135,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   }
 
   /* Do permutation and copy values */
-  ierr = MatGetSubMatrix(Anatural,is,is,MAT_INITIAL_MATRIX,&Apetsc);CHKERRQ(ierr);
+  ierr = MatCreateSubMatrix(Anatural,is,is,MAT_INITIAL_MATRIX,&Apetsc);CHKERRQ(ierr);
   ierr = MatCopy(Apetsc,A,SAME_NONZERO_PATTERN);CHKERRQ(ierr);
 
   ierr = MatDestroy(&Anatural);CHKERRQ(ierr);
