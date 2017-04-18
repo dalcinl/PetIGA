@@ -24,6 +24,7 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   IGA            iga;
   DM             dm;
   Vec            dmvec;
+  const char*    name;
   PetscBool      isvtk,isdraw;
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -35,6 +36,8 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   if (isdraw) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = DMGetGlobalVector(dm,&dmvec);CHKERRQ(ierr);
+  ierr = PetscObjectGetName((PetscObject)v,&name);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject)dmvec,name);CHKERRQ(ierr);
   ierr = VecCopy(v,dmvec);CHKERRQ(ierr);
   ierr = VecView(dmvec,viewer);CHKERRQ(ierr);
   ierr = DMRestoreGlobalVector(dm,&dmvec);CHKERRQ(ierr);

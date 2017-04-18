@@ -24,6 +24,25 @@
 #define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
 
+static PetscErrorCode OrthonormalizeVecs_Private(PetscInt n, Vec vecs[])
+{
+  PetscInt       i,j;
+  PetscScalar    *alphas;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = PetscMalloc1(n,&alphas);CHKERRQ(ierr);
+  for (i=0;i<n;i++) {
+    ierr = VecMDot(vecs[i],i,vecs,alphas);CHKERRQ(ierr);
+    for (j=0; j<i; j++) alphas[j] *= -1.;
+    ierr = VecMAXPY(vecs[i],i,alphas,vecs);CHKERRQ(ierr);
+    ierr = VecNormalize(vecs[i],NULL);CHKERRQ(ierr);
+  }
+  ierr = PetscFree(alphas);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+
+
 PETSC_STATIC_INLINE
 PetscInt Index(const PetscInt N[],PetscInt i,PetscInt j,PetscInt k)
 {
@@ -222,6 +241,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   PetscBool      graph = PETSC_FALSE;
 #endif
   PetscBool      boundary[2] = {PETSC_TRUE,PETSC_TRUE};
+  PetscBool      minimal = PETSC_FALSE;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -245,8 +265,10 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_primal",&primal,NULL);CHKERRQ(ierr);
+  num  = 2;
   ierr = PetscOptionsGetBoolArray(((PetscObject)pc)->options,prefix,"-iga_set_bddc_boundary",boundary,&num,NULL);CHKERRQ(ierr);
   if (num == 1) boundary[1] = boundary[0];
+  ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_minimal",&minimal,NULL);CHKERRQ(ierr);
 
   if (graph) {
     PetscInt i,dim,dof;
@@ -320,6 +342,123 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = ISCreateBlock(comm,dof,np,ip,PETSC_COPY_VALUES,&isp);CHKERRQ(ierr);
     ierr = PCBDDCSetPrimalVerticesLocalIS(pc,isp);CHKERRQ(ierr);
     ierr = ISDestroy(&isp);CHKERRQ(ierr);
+  }
+
+  if (minimal) {
+    MatNullSpace           nnsp;
+    Vec                   *nnsp_v = NULL,*v, mask, fat;
+    ISLocalToGlobalMapping l2g;
+    PetscScalar            *vals,*ma;
+    const PetscScalar      *fa;
+    PetscInt               nl,dim,nnsp_size,n,i,s,ni,bs,*idxs;
+    PetscInt               mid[3] = {0,0,0};
+    PetscInt               width[3][2] = {{0,1},{0,1},{0,1}};
+    PetscBool              nnsp_has_cnst = PETSC_TRUE;
+
+    nnsp_size = 0;
+    ierr = MatGetNearNullSpace(mat,&nnsp);CHKERRQ(ierr);
+    if (nnsp) {
+      ierr = MatNullSpaceGetVecs(nnsp,&nnsp_has_cnst,&nnsp_size,(const Vec**)&nnsp_v);CHKERRQ(ierr);
+    }
+    s = nnsp_has_cnst ? 1 : 0;
+    n = nnsp_size + s;
+
+    ierr = PetscMalloc1(n,&v);CHKERRQ(ierr);
+    ierr = MatGetLocalToGlobalMapping(mat,&l2g,NULL);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingGetSize(l2g,&ni);CHKERRQ(ierr);
+    ierr = ISLocalToGlobalMappingGetBlockSize(l2g,&bs);CHKERRQ(ierr);
+    ierr = PetscMalloc2(ni/bs,&idxs,ni,&vals);CHKERRQ(ierr);
+    for (i=0;i<ni/bs;i++) {
+      PetscInt j;
+
+      idxs[i] = i;
+      for (j=0;j<bs;j++) vals[bs*i+j] = 1.0;
+    }
+
+    for (i=0;i<n;i++) {
+      ierr = MatCreateVecs(mat,&v[i],NULL);CHKERRQ(ierr);
+    }
+
+    ierr = IGACreateVec(iga,&fat);CHKERRQ(ierr);
+    ierr = VecSetValuesBlockedLocal(fat,ni/bs,idxs,vals,ADD_VALUES);CHKERRQ(ierr);
+    ierr = VecAssemblyBegin(fat);CHKERRQ(ierr);
+
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    for (i=0;i<dim;i++) {
+      PetscInt lend = iga->node_lstart[i] + iga->node_lwidth[i];
+      PetscInt gend = iga->node_gstart[i] + iga->node_gwidth[i];
+      mid[i]        = iga->node_gwidth[i] - (gend-lend)/2 - 1;
+      width[i][0]   = iga->node_lstart[i] - iga->node_gstart[i];
+      width[i][1]   = width[i][0] + iga->node_lwidth[i];
+    }
+    for (i=0;i<ni;i++) vals[i] = 0.0;
+    if (0 < mid[0] && mid[0] < iga->node_gwidth[0]-1) {
+      PetscInt j,k;
+      for (k = width[2][0]; k < width[2][1]; k++) {
+        for (j = width[1][0]; j < width[1][1]; j++) {
+          PetscInt b, ii = k*iga->node_gwidth[0]*iga->node_gwidth[1] + j*iga->node_gwidth[0] + mid[0];
+          for (b=0;b<bs;b++) vals[bs*ii+b] = 1.0;
+        }
+      }
+    }
+    if (0 < mid[1] && mid[1] < iga->node_gwidth[1]-1) {
+      PetscInt j,k;
+      for (k = width[2][0]; k < width[2][1]; k++) {
+        for (j = width[0][0]; j < width[0][1]; j++) {
+          PetscInt b, ii = k*iga->node_gwidth[0]*iga->node_gwidth[1] + mid[1]*iga->node_gwidth[0] + j;
+          for (b=0;b<bs;b++) vals[bs*ii+b] = 1.0;
+        }
+      }
+    }
+    if (0 < mid[2] && mid[2] < iga->node_gwidth[2]-1) {
+      PetscInt j,k;
+      for (k = width[1][0]; k < width[1][1]; k++) {
+        for (j = width[0][0]; j < width[0][1]; j++) {
+          PetscInt b, ii = mid[2]*iga->node_gwidth[0]*iga->node_gwidth[1] + k*iga->node_gwidth[0] + j;
+          for (b=0;b<bs;b++) vals[bs*ii+b] = 1.0;
+        }
+      }
+    }
+    ierr = IGACreateVec(iga,&mask);CHKERRQ(ierr);
+    ierr = VecSetValuesBlockedLocal(mask,ni/bs,idxs,vals,ADD_VALUES);CHKERRQ(ierr);
+    ierr = VecAssemblyBegin(mask);CHKERRQ(ierr);
+
+    ierr = VecAssemblyEnd(fat);CHKERRQ(ierr);
+    ierr = PetscObjectSetName((PetscObject)fat,"FATINT");CHKERRQ(ierr);
+    ierr = VecViewFromOptions(fat,NULL,"-view_fat");CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(mask);CHKERRQ(ierr);
+    ierr = PetscObjectSetName((PetscObject)mask,"INITMASK");CHKERRQ(ierr);
+    ierr = VecViewFromOptions(mask,NULL,"-view_init_mask");CHKERRQ(ierr);
+    ierr = VecGetArrayRead(fat,&fa);CHKERRQ(ierr);
+    ierr = VecGetArray(mask,&ma);CHKERRQ(ierr);
+    ierr = VecGetLocalSize(mask,&nl);CHKERRQ(ierr);
+    for (i=0;i<nl;i++) {
+      /* m = (2.^m == f) */
+      PetscReal t = PetscPowReal(2.0,PetscRealPart(ma[i]));
+
+      ma[i] = (PetscScalar)(PetscAbsReal(t-PetscRealPart(fa[i])) < PETSC_SMALL ? 1.0 : 0.0);
+    }
+    ierr = VecRestoreArrayRead(fat,&fa);CHKERRQ(ierr);
+    ierr = VecRestoreArray(mask,&ma);CHKERRQ(ierr);
+    ierr = PetscObjectSetName((PetscObject)mask,"MASK");CHKERRQ(ierr);
+    ierr = VecViewFromOptions(mask,NULL,"-view_mask");CHKERRQ(ierr);
+    for (i=0;i<nnsp_size;i++) {
+      ierr = VecPointwiseMult(v[i+s],nnsp_v[i],mask);CHKERRQ(ierr);
+    }
+    if (s) {
+      ierr = VecCopy(mask,v[0]);CHKERRQ(ierr);
+    }
+    ierr = OrthonormalizeVecs_Private(n,v);CHKERRQ(ierr);
+    ierr = MatNullSpaceCreate(PetscObjectComm((PetscObject)mat),PETSC_FALSE,n,v,&nnsp);CHKERRQ(ierr);
+    ierr = MatSetNearNullSpace(mat,nnsp);CHKERRQ(ierr);
+    ierr = MatNullSpaceDestroy(&nnsp);CHKERRQ(ierr);
+    for (i=0;i<n;i++) {
+      ierr = VecDestroy(&v[i]);CHKERRQ(ierr);
+    }
+    ierr = VecDestroy(&mask);CHKERRQ(ierr);
+    ierr = VecDestroy(&fat);CHKERRQ(ierr);
+    ierr = PetscFree(v);CHKERRQ(ierr);
+    ierr = PetscFree2(idxs,vals);CHKERRQ(ierr);
   }
 
   if (boundary[0] || boundary[1]) {
