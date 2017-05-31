@@ -142,7 +142,11 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
     PetscInt  levels;
     /* Use the Galerkin process to compute coarse-level operators */
     ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,8,0)
     if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
+#else
+    if (!set) {ierr = PCMGSetGalerkin(pc,PC_MG_GALERKIN_BOTH);CHKERRQ(ierr);}
+#endif
     /* Honor -pc_mg_levels 1 explicitly passed in the command line */
     ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
     ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
