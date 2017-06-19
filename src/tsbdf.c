@@ -25,16 +25,6 @@ static const char citation[] =
 
 
 
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
-#define TSPostStage(ts,t,n,x) 0
-static PetscErrorCode TSRollBack_BDF(TS);
-#define TSRollBack(ts) \
-  TSRollBack_BDF(ts); \
-  ts->ptime -= next_time_step; \
-  ts->time_step = next_time_step;
-#endif
-
 #if PETSC_VERSION_LT(3,7,0)
 #define TSAdaptCheckStage(adapt,ts,t,X,accept) TSAdaptCheckStage(adapt,ts,accept)
 #endif
@@ -420,12 +410,7 @@ static PetscErrorCode SNESTSFormFunction_BDF(PETSC_UNUSED SNES snes,Vec X,Vec F,
 
 static PetscErrorCode SNESTSFormJacobian_BDF(PETSC_UNUSED SNES snes,
                                              PETSC_UNUSED Vec X,
-#if PETSC_VERSION_LT(3,5,0)
-                                             Mat *J,Mat *P,MatStructure *m,
-#else
-                                             Mat J,Mat P,
-#endif
-                                             TS ts)
+                                             Mat J,Mat P,TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
   PetscReal      t = th->time[0];
@@ -435,12 +420,7 @@ static PetscErrorCode SNESTSFormJacobian_BDF(PETSC_UNUSED SNES snes,
 
   PetscFunctionBegin;
   /* J,P = Jacobian(t,X,V) */
-#if PETSC_VERSION_LT(3,5,0)
-  *m = SAME_NONZERO_PATTERN;
-  ierr = TSComputeIJacobian(ts,t,X,V,dVdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
-#else
   ierr = TSComputeIJacobian(ts,t,X,V,dVdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -617,18 +597,12 @@ PetscErrorCode TSCreate_BDF(TS ts)
   ts->ops->setfromoptions = TSSetFromOptions_BDF;
   ts->ops->step           = TSStep_BDF;
   ts->ops->evaluatestep   = TSEvaluateStep_BDF;
-#if PETSC_VERSION_GE(3,5,0)
   ts->ops->rollback       = TSRollBack_BDF;
-#endif
   ts->ops->interpolate    = TSInterpolate_BDF;
   ts->ops->snesfunction   = SNESTSFormFunction_BDF;
   ts->ops->snesjacobian   = SNESTSFormJacobian_BDF;
 
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(ts,TS_BDF,&th);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(ts,&th);CHKERRQ(ierr);
-#endif
   ts->data = (void*)th;
 
   th->order  = 2;

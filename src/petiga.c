@@ -713,10 +713,6 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
 PETSC_EXTERN PetscErrorCode PetscOptionsEnumArray(const char[],const char[],const char[],const char *const *list,PetscEnum[],PetscInt*,PetscBool*);
 #endif
 
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscOptionsFList PetscOptionsList
-#endif
-
 /*@
    IGASetFromOptions - Call this in your code to allow IGA options to
    be set from the command line. This routine should be called before
@@ -954,12 +950,6 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 #endif /* PETSC_HAVE_MPIUNI */
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LT(3,5,0)
-#define DMBoundaryType       DMDABoundaryType
-#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
-#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
-#endif
 
 PetscErrorCode IGACreateDMDA(IGA iga,
                              PetscInt bs,

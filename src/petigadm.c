@@ -94,20 +94,6 @@ static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
   ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmap);CHKERRQ(ierr);
   dm->ltogmap = iga->lgmap;
-#if PETSC_VERSION_LT(3,5,0)
-  if (iga->dof == 1) {
-    ierr = PetscObjectReference((PetscObject)iga->lgmap);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
-    dm->ltogmapb = iga->lgmap;
-  } else {
-    ISLocalToGlobalMapping lgmapb;
-    ierr = PetscObjectQuery((PetscObject)iga->lgmap,"__IGA_lgmapb",(PetscObject*)&lgmapb);CHKERRQ(ierr);
-    PetscValidHeaderSpecific(lgmapb,IS_LTOGM_CLASSID,1);
-    ierr = PetscObjectReference((PetscObject)lgmapb);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingDestroy(&dm->ltogmapb);CHKERRQ(ierr);
-    dm->ltogmapb = lgmapb;
-  }
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -143,7 +129,6 @@ static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
   ierr = IGALocalToGlobalEnd(iga,l,g,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_GE(3,5,0)
 static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -160,7 +145,6 @@ static PetscErrorCode DMLocalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
   ierr = IGALocalToLocalEnd(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#endif
 
 static PetscErrorCode DMCreateGlobalVector_IGA(DM dm,Vec *gvec)
 {
@@ -194,16 +178,10 @@ static PetscErrorCode DMCreateLocalVector_IGA(DM dm,Vec *lvec)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-static PetscErrorCode DMCreateMatrix_IGA(DM dm,MatType mtype,Mat *J)
-#else
 static PetscErrorCode DMCreateMatrix_IGA(DM dm,Mat *J)
-#endif
 {
   IGA            iga = DMIGACast(dm)->iga;
-#if PETSC_VERSION_GE(3,5,0)
   MatType        mtype = dm->mattype;
-#endif
   MatType        save;
   PetscErrorCode ierr;
   PetscFunctionBegin;
@@ -293,7 +271,6 @@ static PetscErrorCode DMLoad_IGA(DM dm,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_GE(3,5,0)
 static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -309,7 +286,6 @@ static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
   ierr = DMSetUp(*newdm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#endif
 
 static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
 {
@@ -425,11 +401,7 @@ PetscErrorCode DMCreate_IGA(DM dm)
   PetscFunctionBegin;
   PetscValidPointer(dm,1);
 
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(dm,DM_IGA,&dd);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(dm,&dd);CHKERRQ(ierr);
-#endif
   dm->data = dd;
 
   dm->ops->destroy                      = DMDestroy_IGA;
@@ -442,18 +414,13 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->createlocalvector            = DMCreateLocalVector_IGA;
   dm->ops->creatematrix                 = DMCreateMatrix_IGA;
 
-#if PETSC_VERSION_LT(3,5,0)
-  dm->ops->getlocaltoglobalmappingblock = DMGetLocalToGlobalMapping_IGA;
-#endif
   dm->ops->getlocaltoglobalmapping      = DMGetLocalToGlobalMapping_IGA;
   dm->ops->globaltolocalbegin           = DMGlobalToLocalBegin_IGA;
   dm->ops->globaltolocalend             = DMGlobalToLocalEnd_IGA;
   dm->ops->localtoglobalbegin           = DMLocalToGlobalBegin_IGA;
   dm->ops->localtoglobalend             = DMLocalToGlobalEnd_IGA;
-#if PETSC_VERSION_GE(3,5,0)
   dm->ops->localtolocalbegin            = DMLocalToLocalBegin_IGA;
   dm->ops->localtolocalend              = DMLocalToLocalEnd_IGA;
-#endif
   /*
   dm->ops->getcoloring                  = DMCreateColoring_IGA;
   dm->ops->createinterpolation          = DMCreateInterpolation_IGA;
@@ -464,9 +431,7 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->getinjection                 = DMCreateInjection_IGA;
   dm->ops->getaggregates                = DMCreateAggregates_IGA;
   */
-#if PETSC_VERSION_GE(3,5,0)
   dm->ops->clone                        = DMClone_IGA;
-#endif
   dm->ops->createcoordinatedm           = DMCreateCoordinateDM_IGA;
   dm->ops->createsubdm                  = DMCreateSubDM_IGA;
   dm->ops->createfieldis                = DMCreateFieldIS_IGA;

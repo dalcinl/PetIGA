@@ -200,11 +200,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     gstart  = bbb->ghost_start;
     gwidth  = bbb->ghost_width;
     overlap = bbb->overlap;
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingGetIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingGetBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
     rstart /= dof; rend /= dof;
 
@@ -248,11 +244,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
             ierr = PetscLogFlops((PetscLogDouble)(n*n));CHKERRQ(ierr);
           }
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingRestoreIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
@@ -359,11 +351,7 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(pc,PC_BBB,&bbb);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(pc,&bbb);CHKERRQ(ierr);
-#endif
   pc->data = (void*)bbb;
 
   bbb->overlap[0] = PETSC_DECIDE;

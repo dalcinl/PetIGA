@@ -28,16 +28,6 @@ static const char citation[] =
   "  issn    = {0045-7825},\n"
   "  doi     = {http://dx.doi.org/10.1016/S0045-7825(00)00203-6}\n}\n";
 
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscCitationsRegister(a,b) ((void)a,(void)b,0)
-#define TSPostStage(ts,t,n,x) 0
-static PetscErrorCode TSRollBack_Alpha(TS);
-#define TSRollBack(ts) \
-  TSRollBack_Alpha(ts); \
-  ts->ptime -= next_time_step; \
-  ts->time_step = next_time_step;
-#endif
-
 #if PETSC_VERSION_LT(3,7,0)
 #define TSAdaptCheckStage(adapt,ts,t,X,accept) TSAdaptCheckStage(adapt,ts,accept)
 #endif
@@ -299,12 +289,7 @@ static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes,Vec X,Vec 
 
 static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
                                                PETSC_UNUSED Vec X,
-#if PETSC_VERSION_LT(3,5,0)
-                                               Mat *J,Mat *P,MatStructure *m,
-#else
-                                               Mat J,Mat P,
-#endif
-                                               TS ts)
+                                               Mat J,Mat P,TS ts)
 {
   TS_Alpha       *th = (TS_Alpha*)ts->data;
   PetscReal      ta = th->stage_time;
@@ -314,12 +299,7 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes,
 
   PetscFunctionBegin;
   /* J,P = Jacobian(ta,Xa,Va) */
-#if PETSC_VERSION_LT(3,5,0)
-  *m = SAME_NONZERO_PATTERN;
-  ierr = TSComputeIJacobian(ts,ta,Xa,Va,dVdX,J,P,m,PETSC_FALSE);CHKERRQ(ierr);
-#else
   ierr = TSComputeIJacobian(ts,ta,Xa,Va,dVdX,J,P,PETSC_FALSE);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -521,18 +501,12 @@ PetscErrorCode TSCreate_Alpha1(TS ts)
   ts->ops->setfromoptions = TSSetFromOptions_Alpha;
   ts->ops->step           = TSStep_Alpha;
   ts->ops->evaluatestep   = TSEvaluateStep_Alpha;
-#if PETSC_VERSION_GE(3,5,0)
   ts->ops->rollback       = TSRollBack_Alpha;
-#endif
   ts->ops->interpolate    = TSInterpolate_Alpha;
   ts->ops->snesfunction   = SNESTSFormFunction_Alpha;
   ts->ops->snesjacobian   = SNESTSFormJacobian_Alpha;
 
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(ts,TS_Alpha,&th);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(ts,&th);CHKERRQ(ierr);
-#endif
   ts->data = (void*)th;
 
   th->Alpha_m = 0.5;

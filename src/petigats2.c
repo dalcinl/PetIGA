@@ -227,11 +227,6 @@ PetscErrorCode IGATSFormI2Jacobian(TS ts,PetscReal t,Vec U,Vec V,Vec A,PetscReal
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
-#define IGATSFormIJacobian  IGATSFormIJacobian_Legacy
-#endif
-
 /*@
    IGACreateTS2 - Creates a TS (time stepper) which uses the same
    communicators as the IGA.

@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   const PetscReal *N0,(*N1)[3];

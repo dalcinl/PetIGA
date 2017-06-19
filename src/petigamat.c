@@ -1,30 +1,9 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
-#endif
-
 #if PETSC_VERSION_LT(3,8,0)
 #define MatCreateSubMatrix MatGetSubMatrix
 #endif
-
-#if !defined(PetscCalloc2)
-#define PetscCalloc2(m1,r1,m2,r2)             \
-  (PetscMalloc1((m1),(r1))                 || \
-   PetscMalloc1((m2),(r2))                 || \
-   PetscMemzero(*(r1),(m1)*sizeof(**(r1))) || \
-   PetscMemzero(*(r2),(m2)*sizeof(**(r2))))
-#endif
-
-#undef  MatPreallocateInitialize
-#define MatPreallocateInitialize(comm,nrows,ncols,dnz,onz) 0; \
-{ \
-  PetscErrorCode _4_ierr; PetscInt __nrows = (nrows),__ctmp = (ncols),__rstart,__start,__end; \
-  _4_ierr = PetscCalloc2((size_t)__nrows,&dnz,(size_t)__nrows,&onz);CHKERRQ(_4_ierr); \
-  __start = 0; __end = __start;                                         \
-  _4_ierr = MPI_Scan(&__ctmp,&__end,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __start = __end - __ctmp;\
-  _4_ierr = MPI_Scan(&__nrows,&__rstart,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __rstart = __rstart - __nrows;
 
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
@@ -159,9 +138,6 @@ static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
   ierr = MatCreateIS(comm,bs,m,n,M,N,iga->map->mapping,&B);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = MatSetLocalToGlobalMappingBlock(B,iga->map->bmapping,iga->map->bmapping);CHKERRQ(ierr);
-#endif
   ierr = MatDuplicate(Alocal,op,&Blocal);CHKERRQ(ierr);
   ierr = MatISSetLocalMat(B,Blocal);CHKERRQ(ierr);
   ierr = MatDestroy(&Blocal);CHKERRQ(ierr);
@@ -307,13 +283,8 @@ PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt 
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = ISLocalToGlobalMappingApply(ltog,1,row,row);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingApply(ltog,*cnt,col,col);CHKERRQ(ierr);
-#else
   ierr = ISLocalToGlobalMappingApplyBlock(ltog,1,row,row);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingApplyBlock(ltog,*cnt,col,col);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
@@ -415,9 +386,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
   ierr = MatSetLocalToGlobalMapping(A,rmap->mapping,cmap->mapping);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = MatSetLocalToGlobalMappingBlock(A,rmap->bmapping,cmap->bmapping);CHKERRQ(ierr);
-#endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
@@ -473,11 +441,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     {
       PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;
       ierr = PetscMalloc1((size_t)nnz,&indices);CHKERRQ(ierr);
-      #if PETSC_VERSION_LT(3,5,0)
-      ierr = PetscMalloc2((size_t)bs,PetscInt,&ubrows,(size_t)(nnz*bs),PetscInt,&ubcols);CHKERRQ(ierr);
-      #else
       ierr = PetscMalloc2((size_t)bs,&ubrows,(size_t)(nnz*bs),&ubcols);CHKERRQ(ierr);
-      #endif
       for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
         for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
           for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
@@ -530,13 +494,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (aij || baij || sbaij) {
     PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;PetscScalar *values=NULL;
-    #if PETSC_VERSION_LT(3,5,0)
-    ierr = PetscMalloc2((size_t)bs,PetscInt,&ubrows,(size_t)(nnz*bs),PetscInt,&ubcols);CHKERRQ(ierr);
-    ierr = PetscMalloc2((size_t)nnz,PetscInt,&indices,(size_t)(nnz*bs*nnz*bs),PetscScalar,&values);CHKERRQ(ierr);
-    #else
     ierr = PetscMalloc2((size_t)bs,&ubrows,(size_t)(nnz*bs),&ubcols);CHKERRQ(ierr);
     ierr = PetscMalloc2((size_t)nnz,&indices,(size_t)(nnz*bs*nnz*bs),&values);CHKERRQ(ierr);
-    #endif
     ierr = PetscMemzero(values,(size_t)(nnz*bs*nnz*bs)*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
       for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)

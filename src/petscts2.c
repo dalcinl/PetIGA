@@ -221,12 +221,7 @@ PetscErrorCode TSComputeI2Jacobian(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
     ierr = I2Jacobian(ts,t,X,V,A,shiftV,shiftA,J,P,ctx);CHKERRQ(ierr);
     PetscStackPop;
   } else {
-#if PETSC_VERSION_LT(3,5,0)
-    MatStructure m;
-    ierr = TSComputeIJacobian(ts,t,X,A,shiftA,&J,&P,&m,PETSC_FALSE);CHKERRQ(ierr);
-#else
     ierr = TSComputeIJacobian(ts,t,X,A,shiftA,J,P,PETSC_FALSE);CHKERRQ(ierr);
-#endif
   }
   PetscFunctionReturn(0);
 }

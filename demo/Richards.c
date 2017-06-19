@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 #define SQ(A) ((A)*(A))
 
 typedef struct {

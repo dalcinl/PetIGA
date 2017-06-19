@@ -11,12 +11,6 @@
 #define PetscOptionsHasName(op,pr,nm,set) PetscOptionsHasName(pr,nm,set)
 #endif
 
-#if PETSC_VERSION_LT(3,5,0)
-#define DMBoundaryType       DMDABoundaryType
-#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
-#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
-#endif
-
 static
 PetscErrorCode DMDASetCoarseningFactor(DM da,PetscInt coarsen_x,PetscInt coarsen_y,PetscInt coarsen_z)
 {

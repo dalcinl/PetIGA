@@ -236,13 +236,6 @@ PetscErrorCode IGAKSPFormOperators(KSP ksp,Mat A,Mat B,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGAKSPFormOperators_Legacy(KSP,Mat,Mat,MatStructure*,void*);
-PetscErrorCode IGAKSPFormOperators_Legacy(KSP ksp,Mat A,Mat B,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN;return IGAKSPFormOperators(ksp,A,B,ctx);}
-#define IGAKSPFormOperators IGAKSPFormOperators_Legacy
-#endif
-
 PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
 {
   DM             dm;
@@ -262,10 +255,6 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LT(3,5,0)
-#define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
-#endif
 
 #if PETSC_VERSION_LT(3,7,0)
 typedef PetscOptions PetscOptionItems;

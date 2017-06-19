@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscInt i;
@@ -181,13 +177,11 @@ int main(int argc, char *argv[])
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
-#if PETSC_VERSION_GE(3,5,0)
   {
     DM newdm;
     ierr = DMClone(dm,&newdm);CHKERRQ(ierr);
     ierr = DMDestroy(&newdm);CHKERRQ(ierr);
   }
-#endif
   {
     DM cdm;
     ierr = DMGetCoordinateDM(dm,&cdm);CHKERRQ(ierr);

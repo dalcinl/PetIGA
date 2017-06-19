@@ -5,7 +5,7 @@
 #endif
 
 #if PETSC_VERSION_LT(3,6,0)
-#if PETSC_VERSION_LT(3,5,0) || !defined(PETSC_HAVE_PCBDDC)
+#if !defined(PETSC_HAVE_PCBDDC)
 #define PCBDDCSetPrimalVerticesLocalIS(pc,is) (0)
 #define PCBDDCSetNeumannBoundariesLocal(pc,is) (0)
 #define PCBDDCSetDirichletBoundariesLocal(pc,is) (0)
@@ -17,10 +17,6 @@
 #define PCBDDCSetNeumannBoundaries(pc,is) (0)
 #define PCBDDCSetDirichletBoundaries(pc,is) (0)
 #endif
-#endif
-
-#if PETSC_VERSION_LT(3,5,0)
-#define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
 #endif
 
 PETSC_STATIC_INLINE
@@ -338,20 +334,11 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
           }
     }
     ierr = IGAComputeBDDCBoundary(dim,dof,shape,atbnd,count,field,&nd,&id,&nn,&in);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    comm = PETSC_COMM_SELF;
-#else
     ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
-#endif
     ierr = ISCreateGeneral(comm,nd,id,PETSC_OWN_POINTER,&isd);CHKERRQ(ierr);
     ierr = ISCreateGeneral(comm,nn,in,PETSC_OWN_POINTER,&isn);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = PCBDDCSetDirichletBoundaries(pc,isd);CHKERRQ(ierr);
-    ierr = PCBDDCSetNeumannBoundaries(pc,isn);CHKERRQ(ierr);
-#else
     ierr = PCBDDCSetDirichletBoundariesLocal(pc,isd);CHKERRQ(ierr);
     ierr = PCBDDCSetNeumannBoundariesLocal(pc,isn);CHKERRQ(ierr);
-#endif
     ierr = ISDestroy(&isd);CHKERRQ(ierr);
     ierr = ISDestroy(&isn);CHKERRQ(ierr);
   }

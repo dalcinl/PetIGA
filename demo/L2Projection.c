@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 static PetscScalar Linear(PetscInt dim,PetscReal x[3])
 {
   PetscInt i; double f = 0;

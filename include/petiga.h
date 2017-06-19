@@ -8,6 +8,11 @@
 */
 
 #include <petsc.h>
+
+#if PETSC_VERSION_LT(3,5,0)
+#error "PetIGA requires PETSc 3.5 or higher"
+#endif
+
 #if PETSC_VERSION_LT(3,6,0)
 #include <petsc-private/petscimpl.h>
 #else
@@ -924,19 +929,6 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
     } while (0)
 #else
 #define IGACheckFormOp(iga,arg,FormOp) do {} while (0)
-#endif
-
-/* ---------------------------------------------------------------- */
-
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscMalloc1(m1,r1) \
-  PetscMalloc((m1)*sizeof(**(r1)),r1)
-#define PetscCalloc1(m1,r1) \
-  (PetscMalloc1((m1),r1) || PetscMemzero(*(r1),(m1)*sizeof(**(r1))))
-#endif
-
-#if PETSC_VERSION_LT(3,4,0)
-#error "PetIGA requires PETSc 3.4 or higher"
 #endif
 
 /* ---------------------------------------------------------------- */

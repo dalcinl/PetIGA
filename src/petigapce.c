@@ -119,13 +119,8 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
     ierr = IGAElementGetSizes(element,NULL,&nen,&dof);CHKERRQ(ierr);
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = MatGetLocalToGlobalMappingBlock(A,&map,NULL);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingGetIndices(map,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = MatGetLocalToGlobalMapping(A,&map,NULL);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetBlockIndices(map,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = MatGetOwnershipRange(A,&start,&end);CHKERRQ(ierr);
     start /= dof; end /= dof;
 
@@ -163,11 +158,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     }
     ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(map,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
@@ -248,11 +239,7 @@ PetscErrorCode PCCreate_IGAEBE(PC pc)
   PC_EBE         *ebe = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(pc,PC_EBE,&ebe);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(pc,&ebe);CHKERRQ(ierr);
-#endif
   pc->data = (void*)ebe;
 
   pc->ops->setup               = PCSetUp_EBE;

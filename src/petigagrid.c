@@ -225,34 +225,11 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
     ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
     ierr = IGA_Grid_GetAO(g,&g->ao);CHKERRQ(ierr);
     ierr = AOApplicationToPetsc(g->ao,nghost,ighost);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    { LGMap lgmapb;
-    ierr = ISLocalToGlobalMappingCreate(g->comm,nghost,ighost,PETSC_OWN_POINTER,&lgmapb);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingUnBlock(lgmapb,g->dof,&g->lgmap);CHKERRQ(ierr);
-    if (g->lgmap != lgmapb) {ierr = PetscObjectCompose((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject)lgmapb);CHKERRQ(ierr);}
-    ierr = ISLocalToGlobalMappingDestroy(&lgmapb);CHKERRQ(ierr); }
-#else
     ierr = ISLocalToGlobalMappingCreate(g->comm,g->dof,nghost,ighost,PETSC_OWN_POINTER,&g->lgmap);CHKERRQ(ierr);
-#endif
   }
   *lgmap = g->lgmap;
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LT(3,5,0)
-static PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
-{
-  PetscErrorCode ierr;
-  PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(lgmapb,2);
-  if (!g->lgmap) {ierr = IGA_Grid_GetLGMap(g,&g->lgmap);CHKERRQ(ierr);}
-  if (g->dof == 1) {*lgmapb = g->lgmap; PetscFunctionReturn(0);}
-  ierr = PetscObjectQuery((PetscObject)g->lgmap,"__IGA_lgmapb",(PetscObject*)lgmapb);CHKERRQ(ierr);
-  PetscValidHeaderSpecific(*lgmapb,IS_LTOGM_CLASSID,1);
-  PetscFunctionReturn(0);
-}
-#endif
 
 PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
 {
@@ -273,10 +250,6 @@ PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
     ierr = PetscLayoutSetSize(g->map,N);CHKERRQ(ierr);
     ierr = IGA_Grid_GetLGMap(g,&lgmap);CHKERRQ(ierr);
     ierr = PetscLayoutSetISLocalToGlobalMapping(g->map,lgmap);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = IGA_Grid_GetLGMapBlock(g,&lgmap);CHKERRQ(ierr);
-    ierr = PetscLayoutSetISLocalToGlobalMappingBlock(g->map,lgmap);CHKERRQ(ierr);
-#endif
     ierr = PetscLayoutSetUp(g->map);CHKERRQ(ierr);
   }
 
@@ -342,11 +315,6 @@ PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-#define ISCreateBlock(comm,bs,n,idx,mode,is) \
-        ISCreateBlock(comm,bs,n,idx,((mode)==PETSC_USE_POINTER)?PETSC_COPY_VALUES:(mode),is)
-#endif
-
 PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
 {
   PetscErrorCode ierr;
@@ -359,26 +327,16 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
     Vec gvec,lvec;
     PetscInt nghost;
     const PetscInt *ighost;
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = IGA_Grid_GetLGMapBlock(g,&lgmap);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingGetIndices(lgmap,&ighost);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingGetSize(lgmap,&nghost);CHKERRQ(ierr);
-#else
     ierr = IGA_Grid_GetLGMap(g,&lgmap);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetBlockIndices(lgmap,&ighost);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetSize(lgmap,&nghost);CHKERRQ(ierr);
     nghost /= g->dof;
-#endif
     ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nghost,ighost,PETSC_USE_POINTER,&isghost);CHKERRQ(ierr);
     ierr = VecScatterCreate(gvec,isghost,lvec,NULL,&g->g2l);CHKERRQ(ierr);
     ierr = ISDestroy(&isghost);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingRestoreIndices(lgmap,&ighost);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(lgmap,&ighost);CHKERRQ(ierr);
-#endif
   }
   *g2l = g->g2l;
   PetscFunctionReturn(0);
@@ -606,13 +564,8 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
               inatural[pos] = i + j * jstride + k * kstride;
               pos++;
             }
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = IGA_Grid_GetLGMapBlock(g,&lgmap);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingApply(lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
-#else
     ierr = IGA_Grid_GetLGMap(g,&lgmap);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingApplyBlock(lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
-#endif
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,iglobal,PETSC_OWN_POINTER,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
     ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);

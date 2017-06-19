@@ -22,10 +22,6 @@ year = {2010},
 
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 PETSC_STATIC_INLINE
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {

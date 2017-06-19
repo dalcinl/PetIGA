@@ -173,13 +173,6 @@ PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGASNESFormJacobian_Legacy(SNES,Vec,Mat*,Mat*,MatStructure*,void*);
-PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN;return IGASNESFormJacobian(snes,U,*J,*P,ctx);}
-#define IGASNESFormJacobian IGASNESFormJacobian_Legacy
-#endif
-
 PetscErrorCode SNESSetIGA(SNES snes,IGA iga)
 {
   DM             dm;
