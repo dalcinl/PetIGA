@@ -132,8 +132,6 @@ void IGA_Part3D(PetscInt size,
   *_m = m; *_n = n; *_p = p;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "IGA_Partition"
 PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
                              PetscInt dim,const PetscInt N[],
                              PetscInt n[],PetscInt i[])
@@ -180,8 +178,6 @@ void IGA_Dist1D(PetscInt size,PetscInt rank,
   *s = rank * (N/size) + (((N % size) > rank) ? rank : (N % size));
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "IGA_Distribute"
 PetscErrorCode IGA_Distribute(PetscInt dim,
                               const PetscInt size[],const PetscInt rank[],
                               const PetscInt N[],PetscInt n[],PetscInt s[])

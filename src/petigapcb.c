@@ -50,8 +50,6 @@ static PetscInt ComputeOverlap(const PetscInt lgmap[],PetscInt bs,
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = NULL;
@@ -72,8 +70,6 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_BBB_CreateMatrix"
 static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
 {
   MPI_Comm       comm = ((PetscObject)A)->comm;
@@ -120,8 +116,6 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
  PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_BBB"
 static PetscErrorCode PCSetUp_BBB(PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -271,8 +265,6 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 #if PETSC_VERSION_LT(3,7,0)
 typedef PetscOptions PetscOptionItems;
 #endif
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetFromOptions_BBB"
 static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -297,8 +289,6 @@ static PetscErrorCode PCSetFromOptions_BBB_Legacy(PC pc) {return PCSetFromOption
 #define PCSetFromOptions_BBB PCSetFromOptions_BBB_Legacy
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApply_BBB"
 static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -309,8 +299,6 @@ static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApplyTranspose_BBB"
 static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -321,8 +309,6 @@ static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCView_BBB"
 static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -344,8 +330,6 @@ static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCReset_BBB"
 static PetscErrorCode PCReset_BBB(PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -357,8 +341,6 @@ static PetscErrorCode PCReset_BBB(PC pc)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCDestroy_BBB"
 static PetscErrorCode PCDestroy_BBB(PC pc)
 {
   PetscErrorCode ierr;
@@ -370,8 +352,6 @@ static PetscErrorCode PCDestroy_BBB(PC pc)
 }
 
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "PCCreate_IGABBB"
 PetscErrorCode PCCreate_IGABBB(PC pc);
 PetscErrorCode PCCreate_IGABBB(PC pc)
 {

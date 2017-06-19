@@ -10,8 +10,6 @@ typedef struct {
   Mat mat;
 } PC_EBE;
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_EBE_CreateMatrix"
 static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A,Mat *B)
 {
   MPI_Comm       comm = ((PetscObject)A)->comm;
@@ -85,8 +83,6 @@ static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],PetscInt bs,
   return Nout;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_EBE"
 static PetscErrorCode PCSetUp_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -183,8 +179,6 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
 }
 
 /*
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetFromOptions_EBE"
 static PetscErrorCode PCSetFromOptions_EBE(PetscOptions *PetscOptionsObject,PC pc)
 {
   PetscFunctionBegin;
@@ -192,8 +186,6 @@ static PetscErrorCode PCSetFromOptions_EBE(PetscOptions *PetscOptionsObject,PC p
 }
 */
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApply_EBE"
 static PetscErrorCode PCApply_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -203,8 +195,6 @@ static PetscErrorCode PCApply_EBE(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApplyTranspose_EBE"
 static PetscErrorCode PCApplyTranspose_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -214,8 +204,6 @@ static PetscErrorCode PCApplyTranspose_EBE(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCView_EBE"
 static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -234,8 +222,6 @@ static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCReset_EBE"
 static PetscErrorCode PCReset_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -245,8 +231,6 @@ static PetscErrorCode PCReset_EBE(PC pc)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCDestroy_EBE"
 static PetscErrorCode PCDestroy_EBE(PC pc)
 {
   PetscErrorCode ierr;
@@ -258,8 +242,6 @@ static PetscErrorCode PCDestroy_EBE(PC pc)
 
 
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "PCCreate_IGAEBE"
 PetscErrorCode PCCreate_IGAEBE(PC pc);
 PetscErrorCode PCCreate_IGAEBE(PC pc)
 {

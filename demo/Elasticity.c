@@ -23,8 +23,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
 {
   AppCtx    *user  = (AppCtx *)ctx;
@@ -57,8 +55,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscInt       i,dim;

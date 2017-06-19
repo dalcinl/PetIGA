@@ -27,8 +27,6 @@ PETSC_STATIC_INLINE PetscReal Prod(PetscInt dim,const PetscReal x[])
   return r;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Error"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscInt  i,j,dim = p->dim;
@@ -57,8 +55,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -90,8 +86,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
                (double)(a),(double)(b));              \
   } while(0)
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscInt       i,dim;

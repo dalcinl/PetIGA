@@ -281,7 +281,4 @@
                #Template " unavailable for dim=%D, nen=%D, dof=%D",   \
                q->dim,q->nen,q->dof);return PETSC_ERR_USER;}}while(0)
 
-#define StringizeArg(s) #s
-#define Stringize(s) StringizeArg(s)
-
 #endif

@@ -1,5 +1,11 @@
 #include <petsc.h>
 #include <petscts2.h>
+#if PETSC_VERSION_LT(3,8,0)
+#  ifdef PETSC_FUNCTION_NAME
+#    undef  __FUNCT__
+#    define __FUNCT__ PETSC_FUNCTION_NAME
+#  endif
+#endif
 
 typedef struct {
   PetscReal Omega;   /* natural frequency */
@@ -37,8 +43,6 @@ static void Exact(double t,
   if (vt) *vt = v;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Solution"
 PetscErrorCode Solution(TS ts,PetscReal t,Vec X,void *ctx)
 {
   UserParams     *user = (UserParams*)ctx;
@@ -57,8 +61,6 @@ PetscErrorCode Solution(TS ts,PetscReal t,Vec X,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual1"
 PetscErrorCode Residual1(TS ts,PetscReal t,Vec X,Vec A,Vec R,void *ctx)
 {
   UserParams        *user = (UserParams*)ctx;
@@ -82,8 +84,6 @@ PetscErrorCode Residual1(TS ts,PetscReal t,Vec X,Vec A,Vec R,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent1"
 PetscErrorCode Tangent1(TS ts,PetscReal t,Vec X,Vec A,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
   UserParams     *user = (UserParams*)ctx;
@@ -110,8 +110,6 @@ PetscErrorCode Tangent1_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat
 #define Tangent1 Tangent1_Legacy
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual2"
 PetscErrorCode Residual2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec R,void *ctx)
 {
   UserParams         *user = (UserParams*)ctx;
@@ -137,8 +135,6 @@ PetscErrorCode Residual2(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec R,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent2"
 PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P,void *ctx)
 {
   UserParams     *user = (UserParams*)ctx;
@@ -160,8 +156,6 @@ PetscErrorCode Tangent2(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,Pet
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Monitor"
 PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 {
   const char        *filename = (const char*)ctx;
@@ -188,8 +182,6 @@ EXTERN_C_BEGIN
 extern PetscErrorCode TSCreate_Alpha2(TS);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   TS             ts;

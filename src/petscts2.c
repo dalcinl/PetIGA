@@ -8,8 +8,9 @@
 #include <petsc/private/tsimpl.h>                /*I   "petscts.h"   I*/
 #endif
 
-#undef __FUNCT__
-#define __FUNCT__ "DMTSDuplicate"
+#undef  __FUNCT__
+#define __FUNCT__ PETSC_FUNCTION_NAME
+
 static PetscErrorCode DMTSDuplicate(DMTS oldtsdm,DMTS newtsdm)
 {
   PetscObject    oldobj = (PetscObject)oldtsdm;
@@ -20,8 +21,6 @@ static PetscErrorCode DMTSDuplicate(DMTS oldtsdm,DMTS newtsdm)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DMTSSetI2Function"
 PetscErrorCode DMTSSetI2Function(DM dm,TSI2Function fun,void *ctx)
 {
   DMTS           tsdm;
@@ -36,8 +35,6 @@ PetscErrorCode DMTSSetI2Function(DM dm,TSI2Function fun,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DMTSSetI2Jacobian"
 PetscErrorCode DMTSSetI2Jacobian(DM dm,TSI2Jacobian jac,void *ctx)
 {
   DMTS           tsdm;
@@ -52,8 +49,6 @@ PetscErrorCode DMTSSetI2Jacobian(DM dm,TSI2Jacobian jac,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DMTSGetI2Function"
 PetscErrorCode DMTSGetI2Function(DM dm,TSI2Function *fun,void **ctx)
 {
   DMTS           tsdm;
@@ -67,8 +62,6 @@ PetscErrorCode DMTSGetI2Function(DM dm,TSI2Function *fun,void **ctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DMTSGetI2Jacobian"
 PetscErrorCode DMTSGetI2Jacobian(DM dm,TSI2Jacobian *jac,void **ctx)
 {
   DMTS           tsdm;
@@ -84,8 +77,6 @@ PetscErrorCode DMTSGetI2Jacobian(DM dm,TSI2Jacobian *jac,void **ctx)
 
 /* ------------------------------------------------------------ */
 
-#undef __FUNCT__
-#define __FUNCT__ "TSSetI2Function"
 /*@C
    TSSetI2Function - Set the function to compute F(t,U,U_t,U_tt) where F = 0 is the DAE to be solved.
 
@@ -127,8 +118,6 @@ PetscErrorCode TSSetI2Function(TS ts,Vec F,TSI2Function fun,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSSetI2Jacobian"
 /*@C
    TSSetIJacobian - Set the function to compute the matrix dF/dU + v*dF/dU_t  + a*dF/dU_tt
         where F(t,U,U_t,U_tt) is the function you provided with TSSetI2Function().
@@ -186,8 +175,6 @@ PetscErrorCode TSSetI2Jacobian(TS ts,Mat J,Mat P,TSI2Jacobian jac,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeI2Function"
 PetscErrorCode TSComputeI2Function(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F)
 {
   DM             dm;
@@ -213,8 +200,6 @@ PetscErrorCode TSComputeI2Function(TS ts,PetscReal t,Vec X,Vec V,Vec A,Vec F)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSComputeI2Jacobian"
 PetscErrorCode TSComputeI2Jacobian(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal shiftV,PetscReal shiftA,Mat J,Mat P)
 {
   DM             dm;
@@ -246,8 +231,6 @@ PetscErrorCode TSComputeI2Jacobian(TS ts,PetscReal t,Vec X,Vec V,Vec A,PetscReal
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TS2SetSolution"
 /*@
    TS2SetSolution - Sets the initial solution and time-derivative vectors
    for use by the TSALPHA2 routines.
@@ -274,8 +257,6 @@ PetscErrorCode TS2SetSolution(TS ts,Vec X,Vec V)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TS2GetSolution"
 /*@
    TS2GetSolution - Returns the solution and time-derivative vectors
    at the present timestep. It is valid to call this routine inside

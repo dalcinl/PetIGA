@@ -5,8 +5,6 @@
 #include <petsc/private/petscimpl.h>
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_Create"
 PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
 {
   IGA_Grid       g;
@@ -31,8 +29,6 @@ PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_Init"
 PetscErrorCode IGA_Grid_Init(IGA_Grid g,
                              PetscInt dim,PetscInt dof,
                              const PetscInt sizes[],
@@ -64,8 +60,6 @@ PetscErrorCode IGA_Grid_Init(IGA_Grid g,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_Reset"
 PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
 {
   PetscInt       i;
@@ -91,8 +85,6 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_Destroy"
 PetscErrorCode IGA_Grid_Destroy(IGA_Grid *grid)
 {
   IGA_Grid       g;
@@ -107,8 +99,6 @@ PetscErrorCode IGA_Grid_Destroy(IGA_Grid *grid)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_LocalIndices"
 PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid g,PetscInt bs,PetscInt *nlocal,PetscInt *indices[])
 {
   PetscInt       nloc;
@@ -143,8 +133,6 @@ PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid g,PetscInt bs,PetscInt *nlocal,Pet
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GhostIndices"
 PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,PetscInt *indices[])
 {
   PetscInt       nght;
@@ -186,8 +174,6 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_SetAO"
 PetscErrorCode IGA_Grid_SetAO(IGA_Grid g,AO ao)
 {
   PetscErrorCode ierr;
@@ -200,8 +186,6 @@ PetscErrorCode IGA_Grid_SetAO(IGA_Grid g,AO ao)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetAO"
 PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
 {
   PetscErrorCode ierr;
@@ -218,8 +202,6 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_SetLGMap"
 PetscErrorCode IGA_Grid_SetLGMap(IGA_Grid g,LGMap lgmap)
 {
   PetscErrorCode ierr;
@@ -232,8 +214,6 @@ PetscErrorCode IGA_Grid_SetLGMap(IGA_Grid g,LGMap lgmap)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetLGMap"
 PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 {
   PetscErrorCode ierr;
@@ -260,8 +240,6 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 }
 
 #if PETSC_VERSION_LT(3,5,0)
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetLGMapBlock"
 static PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
 {
   PetscErrorCode ierr;
@@ -276,8 +254,6 @@ static PetscErrorCode IGA_Grid_GetLGMapBlock(IGA_Grid g,LGMap *lgmapb)
 }
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetLayout"
 PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
 {
   PetscErrorCode ierr;
@@ -308,8 +284,6 @@ PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetVecLocal"
 PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
 {
   PetscErrorCode ierr;
@@ -330,8 +304,6 @@ PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetVecGlobal"
 PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
 {
   PetscErrorCode ierr;
@@ -354,8 +326,6 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetVecNatural"
 PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
 {
   PetscErrorCode ierr;
@@ -377,8 +347,6 @@ PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
         ISCreateBlock(comm,bs,n,idx,((mode)==PETSC_USE_POINTER)?PETSC_COPY_VALUES:(mode),is)
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetScatterG2L"
 PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
 {
   PetscErrorCode ierr;
@@ -416,8 +384,6 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetScatterL2G"
 PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
 {
   PetscErrorCode ierr;
@@ -464,8 +430,6 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GetScatterG2N"
 PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
 {
   PetscErrorCode ierr;
@@ -490,8 +454,6 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GlobalToLocal"
 PetscErrorCode IGA_Grid_GlobalToLocal(IGA_Grid g,Vec gvec,Vec lvec)
 {
   PetscErrorCode ierr;
@@ -505,8 +467,6 @@ PetscErrorCode IGA_Grid_GlobalToLocal(IGA_Grid g,Vec gvec,Vec lvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_LocalToGlobal"
 PetscErrorCode IGA_Grid_LocalToGlobal(IGA_Grid g,Vec lvec,Vec gvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -526,8 +486,6 @@ PetscErrorCode IGA_Grid_LocalToGlobal(IGA_Grid g,Vec lvec,Vec gvec,InsertMode ad
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_NaturalToGlobal"
 PetscErrorCode IGA_Grid_NaturalToGlobal(IGA_Grid g,Vec nvec,Vec gvec)
 {
   PetscErrorCode ierr;
@@ -541,8 +499,6 @@ PetscErrorCode IGA_Grid_NaturalToGlobal(IGA_Grid g,Vec nvec,Vec gvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_GlobalToNatural"
 PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid g,Vec gvec,Vec nvec)
 {
   PetscErrorCode ierr;
@@ -556,8 +512,6 @@ PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid g,Vec gvec,Vec nvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_Grid_NewScatterApp"
 PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
                                       const PetscInt shift[],
                                       const PetscInt sizes[],

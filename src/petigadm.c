@@ -15,8 +15,6 @@ typedef struct {
 
 #define DMIGACast(dm) ((DM_IGA*)(dm)->data)
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMIGACreate"
 PetscErrorCode DMIGACreate(IGA iga,DM *dm)
 {
   MPI_Comm       comm;
@@ -36,8 +34,6 @@ PetscErrorCode DMIGACreate(IGA iga,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMIGASetIGA"
 PetscErrorCode DMIGASetIGA(DM dm,IGA iga)
 {
   IGA            dmiga;
@@ -56,8 +52,6 @@ PetscErrorCode DMIGASetIGA(DM dm,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMIGAGetIGA"
 PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga)
 {
   PetscBool      match;
@@ -71,8 +65,6 @@ PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMIGA_GetIGA"
 static PetscErrorCode DMIGA_GetIGA(DM dm,IGA *iga)
 {
   IGA            dmiga = DMIGACast(dm)->iga;
@@ -92,8 +84,6 @@ static PetscErrorCode DMIGA_GetIGA(DM dm,IGA *iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMGetLocalToGlobalMapping_IGA"
 static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -121,8 +111,6 @@ static PetscErrorCode DMGetLocalToGlobalMapping_IGA(DM dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMGlobalToLocalBegin_IGA"
 static PetscErrorCode DMGlobalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -131,8 +119,6 @@ static PetscErrorCode DMGlobalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l
   ierr = IGAGlobalToLocalBegin(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef  __FUNCT__
-#define __FUNCT__ "DMGlobalToLocalEnd_IGA"
 static PetscErrorCode DMGlobalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -141,8 +127,6 @@ static PetscErrorCode DMGlobalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
   ierr = IGAGlobalToLocalEnd(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef  __FUNCT__
-#define __FUNCT__ "DMLocalToGlobalBegin_IGA"
 static PetscErrorCode DMLocalToGlobalBegin_IGA(DM dm,Vec l,InsertMode mode,Vec g)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -151,8 +135,6 @@ static PetscErrorCode DMLocalToGlobalBegin_IGA(DM dm,Vec l,InsertMode mode,Vec g
   ierr = IGALocalToGlobalBegin(iga,l,g,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef  __FUNCT__
-#define __FUNCT__ "DMLocalToGlobalEnd_IGA"
 static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -162,8 +144,6 @@ static PetscErrorCode DMLocalToGlobalEnd_IGA(DM dm,Vec l,InsertMode mode,Vec g)
   PetscFunctionReturn(0);
 }
 #if PETSC_VERSION_GE(3,5,0)
-#undef  __FUNCT__
-#define __FUNCT__ "DMLocalToLocalBegin_IGA"
 static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -172,8 +152,6 @@ static PetscErrorCode DMLocalToLocalBegin_IGA(DM dm,Vec g,InsertMode mode,Vec l)
   ierr = IGALocalToLocalBegin(iga,g,l,mode);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef  __FUNCT__
-#define __FUNCT__ "DMLocalToLocalEnd_IGA"
 static PetscErrorCode DMLocalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -184,8 +162,6 @@ static PetscErrorCode DMLocalToLocalEnd_IGA(DM dm,Vec g,InsertMode mode,Vec l)
 }
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateGlobalVector_IGA"
 static PetscErrorCode DMCreateGlobalVector_IGA(DM dm,Vec *gvec)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -202,8 +178,6 @@ static PetscErrorCode DMCreateGlobalVector_IGA(DM dm,Vec *gvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateLocalVector_IGA"
 static PetscErrorCode DMCreateLocalVector_IGA(DM dm,Vec *lvec)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -220,8 +194,6 @@ static PetscErrorCode DMCreateLocalVector_IGA(DM dm,Vec *lvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateMatrix_IGA"
 #if PETSC_VERSION_LT(3,5,0)
 static PetscErrorCode DMCreateMatrix_IGA(DM dm,MatType mtype,Mat *J)
 #else
@@ -244,8 +216,6 @@ static PetscErrorCode DMCreateMatrix_IGA(DM dm,Mat *J)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMDestroy_IGA"
 static PetscErrorCode DMDestroy_IGA(DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -259,8 +229,6 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
 #if PETSC_VERSION_LT(3,7,0)
 typedef PetscOptions PetscOptionItems;
 #endif
-#undef  __FUNCT__
-#define __FUNCT__ "DMSetFromOptions_IGA"
 static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -275,8 +243,6 @@ static PetscErrorCode DMSetFromOptions_IGA_Legacy(DM dm) {return DMSetFromOption
 #define DMSetFromOptions_IGA DMSetFromOptions_IGA_Legacy
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMSetUp_IGA"
 static PetscErrorCode DMSetUp_IGA(DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -302,8 +268,6 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMView_IGA"
 static PetscErrorCode DMView_IGA(DM dm,PetscViewer viewer)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -314,8 +278,6 @@ static PetscErrorCode DMView_IGA(DM dm,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMLoad_IGA"
 static PetscErrorCode DMLoad_IGA(DM dm,PetscViewer viewer)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -332,8 +294,6 @@ static PetscErrorCode DMLoad_IGA(DM dm,PetscViewer viewer)
 }
 
 #if PETSC_VERSION_GE(3,5,0)
-#undef  __FUNCT__
-#define __FUNCT__ "DMClone_IGA"
 static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -351,8 +311,6 @@ static PetscErrorCode DMClone_IGA(DM dm,DM *newdm)
 }
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateCoordinateDM_IGA"
 static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -368,8 +326,6 @@ static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateSubDM_IGA"
 static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields[],IS *is,DM *subdm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -410,8 +366,6 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DMCreateFieldIS_IGA"
 static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fieldNames,IS **fields)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -445,8 +399,6 @@ static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fiel
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreateFieldDecomposition_IGA"
 static PetscErrorCode DMCreateFieldDecomposition_IGA(DM dm,PetscInt *len,char ***namelist,IS **islist,DM **dmlist)
 {
   PetscInt       i,numFields;
@@ -465,8 +417,6 @@ static PetscErrorCode DMCreateFieldDecomposition_IGA(DM dm,PetscInt *len,char **
 }
 
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "DMCreate_IGA"
 PetscErrorCode DMCreate_IGA(DM dm);
 PetscErrorCode DMCreate_IGA(DM dm)
 {

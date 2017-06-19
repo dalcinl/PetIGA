@@ -27,8 +27,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Laplace"
 PetscErrorCode Laplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dim = p->dim;
@@ -43,8 +41,6 @@ PetscErrorCode Laplace(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Neumann"
 PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -55,8 +51,6 @@ PetscErrorCode Neumann(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   if (!p->atboundary)
@@ -74,8 +68,6 @@ PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "LaplaceCollocation"
 PetscErrorCode LaplaceCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -90,8 +82,6 @@ PetscErrorCode LaplaceCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void 
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "DirichletCollocation"
 PetscErrorCode DirichletCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -103,8 +93,6 @@ PetscErrorCode DirichletCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,voi
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "NeumannCollocation"
 PetscErrorCode NeumannCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -121,8 +109,6 @@ PetscErrorCode Neumann0Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void
 {(void)NeumannCollocation(p,K,F,ctx); F[0] = 0.0; return 0;}
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "SystemCollocation"
 PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   if (!p->atboundary) return LaplaceCollocation(p,K,F,ctx);
@@ -139,8 +125,6 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
     return Neumann0Collocation(p,K,F,ctx);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -153,8 +137,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;

@@ -16,6 +16,13 @@
 #include "petscts1.h"
 #include "petscts2.h"
 
+#if PETSC_VERSION_LT(3,8,0)
+#  ifdef PETSC_FUNCTION_NAME
+#    undef  __FUNCT__
+#    define __FUNCT__ PETSC_FUNCTION_NAME
+#  endif
+#endif
+
 typedef ISLocalToGlobalMapping LGMap;
 #define LGMap LGMap
 

@@ -11,6 +11,8 @@
 #include <petsc/private/tsimpl.h>                /*I   "petscts.h"   I*/
 #endif
 
+#undef  __FUNCT__
+#define __FUNCT__ PETSC_FUNCTION_NAME
 
 static PetscBool  cited = PETSC_FALSE;
 static const char citation[] =
@@ -49,8 +51,6 @@ typedef struct {
   TSStepStatus status;
 } TS_BDF;
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_Advance"
 static PetscErrorCode TSBDF_Advance(TS ts,PetscReal t,Vec X)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -69,8 +69,6 @@ static PetscErrorCode TSBDF_Advance(TS ts,PetscReal t,Vec X)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_VecDot"
 static PetscErrorCode TSBDF_VecDot(TS ts,PetscInt order,PetscReal t,Vec X,Vec Xdot,PetscReal *shift)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -122,8 +120,6 @@ static PetscErrorCode TSBDF_VecDot(TS ts,PetscInt order,PetscReal t,Vec X,Vec Xd
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_VecLTE"
 static PetscErrorCode TSBDF_VecLTE(TS ts,PetscInt order,Vec lte)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -185,8 +181,6 @@ static PetscErrorCode TSBDF_VecLTE(TS ts,PetscInt order,Vec lte)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_Predictor"
 static PetscErrorCode TSBDF_Predictor(TS ts,PetscInt order,PetscReal t,Vec X)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -235,8 +229,6 @@ static PetscErrorCode TSBDF_Predictor(TS ts,PetscInt order,PetscReal t,Vec X)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_Interpolate"
 static PetscErrorCode TSBDF_Interpolate(TS ts,PetscInt order,PetscReal t,Vec X)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -285,8 +277,6 @@ static PetscErrorCode TSBDF_Interpolate(TS ts,PetscInt order,PetscReal t,Vec X)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_SolveStep"
 static PetscErrorCode TSBDF_SolveStep(TS ts,PetscReal t,Vec X,PetscBool *accept)
 {
   PetscInt       nits,lits;
@@ -303,8 +293,6 @@ static PetscErrorCode TSBDF_SolveStep(TS ts,PetscReal t,Vec X,PetscBool *accept)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDF_AdaptStep"
 static PetscErrorCode TSBDF_AdaptStep(TS ts,PetscInt rejections,PetscBool *accept,PetscReal *next_h)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -330,8 +318,6 @@ static PetscErrorCode TSBDF_AdaptStep(TS ts,PetscInt rejections,PetscBool *accep
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSStep_BDF"
 static PetscErrorCode TSStep_BDF(TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -384,8 +370,6 @@ static PetscErrorCode TSStep_BDF(TS ts)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSEvaluateStep_BDF"
 static PetscErrorCode TSEvaluateStep_BDF(TS ts,PetscInt order,Vec X,PETSC_UNUSED PetscBool *done)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -397,8 +381,6 @@ static PetscErrorCode TSEvaluateStep_BDF(TS ts,PetscInt order,Vec X,PETSC_UNUSED
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSInterpolate_BDF"
 static PetscErrorCode TSInterpolate_BDF(TS ts,PetscReal t,Vec X)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -410,8 +392,6 @@ static PetscErrorCode TSInterpolate_BDF(TS ts,PetscReal t,Vec X)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSRollBack_BDF"
 static PetscErrorCode TSRollBack_BDF(TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -423,8 +403,6 @@ static PetscErrorCode TSRollBack_BDF(TS ts)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SNESTSFormFunction_BDF"
 static PetscErrorCode SNESTSFormFunction_BDF(PETSC_UNUSED SNES snes,Vec X,Vec F,TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -440,8 +418,6 @@ static PetscErrorCode SNESTSFormFunction_BDF(PETSC_UNUSED SNES snes,Vec X,Vec F,
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SNESTSFormJacobian_BDF"
 static PetscErrorCode SNESTSFormJacobian_BDF(PETSC_UNUSED SNES snes,
                                              PETSC_UNUSED Vec X,
 #if PETSC_VERSION_LT(3,5,0)
@@ -468,8 +444,6 @@ static PetscErrorCode SNESTSFormJacobian_BDF(PETSC_UNUSED SNES snes,
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSReset_BDF"
 static PetscErrorCode TSReset_BDF(TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -483,8 +457,6 @@ static PetscErrorCode TSReset_BDF(TS ts)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSDestroy_BDF"
 static PetscErrorCode TSDestroy_BDF(TS ts)
 {
   PetscErrorCode ierr;
@@ -506,8 +478,6 @@ typedef struct {
   Vec       Y;
 } TSAdapt_Basic;
 
-#undef __FUNCT__
-#define __FUNCT__ "TSSetUp_BDF"
 static PetscErrorCode TSSetUp_BDF(TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -547,8 +517,6 @@ typedef PetscOptions PetscOptionItems;
 #if PETSC_VERSION_LT(3,6,0)
 #define PetscOptionsHead(obj,head) ((void)(obj),PetscOptionsHead(head))
 #endif
-#undef __FUNCT__
-#define __FUNCT__ "TSSetFromOptions_BDF"
 static PetscErrorCode TSSetFromOptions_BDF(PetscOptionItems *PetscOptionsObject,TS ts)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -576,8 +544,6 @@ static PetscErrorCode TSSetFromOptions_BDF_Legacy(TS ts) {return TSSetFromOption
 #define TSSetFromOptions_BDF TSSetFromOptions_BDF_Legacy
 #endif
 
-#undef __FUNCT__
-#define __FUNCT__ "TSView_BDF"
 static PetscErrorCode TSView_BDF(TS ts,PetscViewer viewer)
 {
   TS_BDF         *th = (TS_BDF*)ts->data;
@@ -593,8 +559,6 @@ static PetscErrorCode TSView_BDF(TS ts,PetscViewer viewer)
 
 /* ------------------------------------------------------------ */
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFSetOrder_BDF"
 static PetscErrorCode TSBDFSetOrder_BDF(TS ts,PetscInt order)
 {
   TS_BDF *th = (TS_BDF*)ts->data;
@@ -606,8 +570,6 @@ static PetscErrorCode TSBDFSetOrder_BDF(TS ts,PetscInt order)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFGetOrder_BDF"
 static PetscErrorCode TSBDFGetOrder_BDF(TS ts,PetscInt *order)
 {
   TS_BDF *th = (TS_BDF*)ts->data;
@@ -617,8 +579,6 @@ static PetscErrorCode TSBDFGetOrder_BDF(TS ts,PetscInt *order)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFUseAdapt_BDF"
 static PetscErrorCode TSBDFUseAdapt_BDF(TS ts,PetscBool use)
 {
   TS_BDF *th = (TS_BDF*)ts->data;
@@ -644,8 +604,6 @@ M*/
 PETSC_EXTERN PetscErrorCode TSCreate_BDF(TS);
 
 EXTERN_C_BEGIN
-#undef __FUNCT__
-#define __FUNCT__ "TSCreate_BDF"
 PetscErrorCode TSCreate_BDF(TS ts)
 {
   TS_BDF         *th;
@@ -686,8 +644,6 @@ EXTERN_C_END
 
 /* ------------------------------------------------------------ */
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFSetOrder"
 /*@
   TSBDFSetOrder - Set the order of the BDF method
 
@@ -714,8 +670,6 @@ PetscErrorCode TSBDFSetOrder(TS ts,PetscInt order)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFGetOrder"
 /*@
   TSBDFGetOrder - Get the order of the BDF method
 
@@ -741,8 +695,6 @@ PetscErrorCode TSBDFGetOrder(TS ts,PetscInt *order)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "TSBDFUseAdapt"
 /*@
   TSBDFUseAdapt - Use time-step adaptivity with the BDF method
 

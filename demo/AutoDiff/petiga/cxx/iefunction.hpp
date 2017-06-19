@@ -18,8 +18,6 @@ PetscErrorCode IEFunction(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal
 #include "lookup.hpp"
 
 extern "C"
-#undef  __FUNCT__
-#define __FUNCT__ Stringize(IEFunctionCXX)
 PetscErrorCode IEFunctionCXX(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal t,const PetscScalar U[],PetscReal t0,const PetscScalar U0[],PetscScalar F[],void *ctx)
 {
   IGAFormIEFunction IEFunctionP = NULL;

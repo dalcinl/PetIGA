@@ -9,8 +9,6 @@ PetscScalar Peaks(PetscReal x, PetscReal y)
     /**/ - 1.0/3 * exp(-pow(X+1,2) - pow(Y,2));
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Function"
 PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *ctx)
 {
   PetscInt nen=p->nen;
@@ -44,8 +42,6 @@ PetscErrorCode Function(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *c
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *ctx)
 {
   PetscInt nen=p->nen;
@@ -75,8 +71,6 @@ PetscErrorCode Jacobian(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *c
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "FunctionCollocation"
 PetscErrorCode FunctionCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar *Fe,void *ctx)
 {
   PetscReal xy[2];
@@ -111,8 +105,6 @@ PetscErrorCode FunctionCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "JacobianCollocation"
 PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar *Je,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -137,8 +129,6 @@ PetscErrorCode JacobianCollocation(IGAPoint p,const PetscScalar *Ue,PetscScalar 
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   IGA             iga;

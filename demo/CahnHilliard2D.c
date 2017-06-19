@@ -6,8 +6,6 @@ typedef struct {
   PetscReal Eprev;
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "Mobility"
 void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M)
 {
   if (M)   *M   = c*(1-c);
@@ -15,8 +13,6 @@ void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M
   if (d2M) *d2M = -2;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ChemicalPotential"
 void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,PetscReal *d2mu)
 {
   PetscReal theta  = user->theta;
@@ -36,8 +32,6 @@ void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,Pet
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "GinzburgLandauFreeEnergy"
 PetscReal GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,AppCtx *user)
 {
   PetscReal theta = user->theta;
@@ -46,8 +40,6 @@ PetscReal GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,AppCtx 
   return E;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Stats"
 PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -65,8 +57,6 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "StatsMonitor"
 PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   AppCtx         *user = (AppCtx *)mctx;
@@ -91,8 +81,6 @@ PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -144,8 +132,6 @@ PetscErrorCode Residual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
@@ -210,8 +196,6 @@ PetscErrorCode Tangent(IGAPoint p,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(IGA iga,Vec C,AppCtx *user)
 {
   MPI_Comm       comm;
@@ -228,8 +212,6 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec C,AppCtx *user)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   IGA            iga;
@@ -243,8 +225,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;

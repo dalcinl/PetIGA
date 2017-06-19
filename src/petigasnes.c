@@ -20,8 +20,6 @@ PetscBool IGAElementNextFormJacobian(IGAElement element,IGAFormJacobian *jac,voi
   return PETSC_TRUE;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeFunction"
 PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
 {
   Vec               localU;
@@ -81,8 +79,6 @@ PetscErrorCode IGAComputeFunction(IGA iga,Vec vecU,Vec vecF)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeJacobian"
 PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
 {
   Vec               localU;
@@ -142,8 +138,6 @@ PetscErrorCode IGAComputeJacobian(IGA iga,Vec vecU,Mat matJ)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASNESFormFunction"
 PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -159,8 +153,6 @@ PetscErrorCode IGASNESFormFunction(SNES snes,Vec U,Vec F,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASNESFormJacobian"
 PetscErrorCode IGASNESFormJacobian(SNES snes,Vec U,Mat J,Mat P,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -188,8 +180,6 @@ PetscErrorCode IGASNESFormJacobian_Legacy(SNES snes,Vec U,Mat *J,Mat *P,MatStruc
 #define IGASNESFormJacobian IGASNESFormJacobian_Legacy
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "SNESSetIGA"
 PetscErrorCode SNESSetIGA(SNES snes,IGA iga)
 {
   DM             dm;
@@ -210,8 +200,6 @@ PetscErrorCode SNESSetIGA(SNES snes,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsHandlerSNES"
 PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
 {
   KSP            ksp;
@@ -225,8 +213,6 @@ PetscErrorCode IGASetOptionsHandlerSNES(SNES snes)
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateSNES"
 PetscErrorCode IGACreateSNES(IGA iga,SNES *snes)
 {
   MPI_Comm       comm;

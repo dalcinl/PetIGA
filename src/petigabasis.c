@@ -8,8 +8,6 @@ const char *const IGABasisTypes[] = {
   /* */
   "IGABasisType","IGA_BASIS_",NULL};
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisCreate"
 PetscErrorCode IGABasisCreate(IGABasis *_basis)
 {
   IGABasis       basis;
@@ -21,8 +19,6 @@ PetscErrorCode IGABasisCreate(IGABasis *_basis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisDestroy"
 PetscErrorCode IGABasisDestroy(IGABasis *_basis)
 {
   IGABasis       basis;
@@ -37,8 +33,6 @@ PetscErrorCode IGABasisDestroy(IGABasis *_basis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisReset"
 PetscErrorCode IGABasisReset(IGABasis basis)
 {
   PetscErrorCode ierr;
@@ -58,8 +52,6 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisReference"
 PetscErrorCode IGABasisReference(IGABasis basis)
 {
   PetscFunctionBegin;
@@ -68,8 +60,6 @@ PetscErrorCode IGABasisReference(IGABasis basis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisSetType"
 PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type)
 {
   PetscErrorCode ierr;
@@ -90,8 +80,6 @@ extern void IGA_Basis_Lagrange(PetscInt i,PetscReal u,PetscInt p,PetscInt d,cons
 extern void IGA_Basis_Spectral(PetscInt i,PetscReal u,PetscInt p,PetscInt d,const PetscReal U[],PetscReal L[]);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisInitQuadrature"
 PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
 {
   PetscInt       p,m,n;
@@ -235,8 +223,6 @@ extern PetscInt  IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal
 extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABasisInitCollocation"
 PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
 {
   PetscInt       p,m,n;

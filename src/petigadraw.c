@@ -14,8 +14,6 @@
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateDrawDM"
 PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
 {
   MPI_Comm        comm;
@@ -73,8 +71,6 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetDrawDM"
 PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm)
 {
   const char     *prefix;
@@ -130,8 +126,6 @@ PetscReal LagrangePoint(PetscInt index,PetscInt step,IGAAxis axis)
   }
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGADrawVec"
 PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
 {
   PetscInt       dof,dim,nsd;
@@ -211,8 +205,6 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGADrawVecVTK"
 PetscErrorCode IGADrawVecVTK(IGA iga,Vec vec,const char filename[])
 {
   MPI_Comm       comm;
@@ -236,8 +228,6 @@ EXTERN_C_BEGIN
 extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGADraw"
 PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
 {
   PetscInt       i,j,dim;

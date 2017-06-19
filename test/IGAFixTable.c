@@ -26,8 +26,6 @@ static PetscReal Forcing(PetscInt dim,PetscReal x[])
   return f;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System1"
 PetscErrorCode System1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dim = p->dim;
@@ -47,8 +45,6 @@ PetscErrorCode System1(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System2"
 PetscErrorCode System2(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dim = p->dim;
@@ -69,8 +65,6 @@ PetscErrorCode System2(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x[3] = {0,0,0};
@@ -79,8 +73,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscErrorCode  ierr;

@@ -20,8 +20,6 @@ typedef struct {
   void (*model) (IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx);
 } AppCtx;
 
-#undef __FUNCT__
-#define __FUNCT__ "NeoHookeanModel"
 void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -121,8 +119,6 @@ void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pe
   D[5][4]=D[4][5];
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "StVenantModel"
 void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -206,8 +202,6 @@ void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pets
   D[5][4]=D[4][5];
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MooneyRivlinModel1"
 void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -323,8 +317,6 @@ void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MooneyRivlinModel2"
 void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -507,8 +499,6 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "GeneralModel"
 void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -816,8 +806,6 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
 
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DeltaE"
 void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3], PetscScalar (*B)[3])
 {
   // Given F and basis values, returns B
@@ -842,8 +830,6 @@ void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3],
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -869,8 +855,6 @@ PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -988,8 +972,6 @@ PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   // Initialization of PETSc

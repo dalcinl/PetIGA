@@ -36,8 +36,6 @@ PetscScalar SUPG(PetscReal tau, PetscReal W[3], PetscScalar R[3])
   return r;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -115,8 +113,6 @@ PetscErrorCode Residual(IGAPoint p,
 }
 
 /*
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
@@ -127,8 +123,6 @@ PetscErrorCode Tangent(IGAPoint p,
 }
 */
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,PetscReal t,Vec U)
 {
   PetscErrorCode ierr;
@@ -164,8 +158,6 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,PetscReal t,Vec U)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;

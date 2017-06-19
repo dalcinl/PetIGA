@@ -18,8 +18,6 @@
 #endif
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDASetCoarseningFactor"
 PetscErrorCode DMDASetCoarseningFactor(DM da,PetscInt coarsen_x,PetscInt coarsen_y,PetscInt coarsen_z)
 {
   DM_DA *dd = (DM_DA*)da->data;
@@ -76,8 +74,6 @@ PetscErrorCode DMDACoarsenHook_PCMG(DM dm,DM dmc,void *ctx)
 {(void)dm; (void)ctx; return DMDAComputeCoarsenFactor(dmc);}
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDAComputeCoarsenLevels"
 PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 {
   PetscInt       i,dim,M[3],P[3];
@@ -98,8 +94,6 @@ PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 }
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDAComputeCoarsenFactor"
 PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
 {
   PetscInt       i,dim,M[3],P[3];
@@ -119,8 +113,6 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPreparePCMG"
 PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
 {
   PetscBool      match,set;

@@ -70,8 +70,6 @@ PetscInt STENCIL[7][3] = {{ 0,  0, -1},
                           { 0,  0, +1}};
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeBDDCGraph"
 PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
                                    const PetscBool wrap[3],const PetscInt shape[3],
                                    const PetscInt start[3],const PetscInt width[3],
@@ -146,8 +144,6 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
 }
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeBDDCBoundary"
 PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt shape[3],
                                       PetscBool atbnd[][2],PetscInt count[][2],PetscInt *field[][2],
                                       PetscInt *_ndirichlet,PetscInt *_idirichlet[],
@@ -205,8 +201,6 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPreparePCBDDC"
 PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 {
   Mat            mat;

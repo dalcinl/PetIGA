@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointCreate"
 PetscErrorCode IGAPointCreate(IGAPoint *_point)
 {
   IGAPoint       point;
@@ -14,8 +12,6 @@ PetscErrorCode IGAPointCreate(IGAPoint *_point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointDestroy"
 PetscErrorCode IGAPointDestroy(IGAPoint *_point)
 {
   IGAPoint       point;
@@ -30,8 +26,6 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointReference"
 PetscErrorCode IGAPointReference(IGAPoint point)
 {
   PetscFunctionBegin;
@@ -40,8 +34,6 @@ PetscErrorCode IGAPointReference(IGAPoint point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFreeWork"
 static
 PetscErrorCode IGAPointFreeWork(IGAPoint point)
 {
@@ -62,8 +54,6 @@ PetscErrorCode IGAPointFreeWork(IGAPoint point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointReset"
 PetscErrorCode IGAPointReset(IGAPoint point)
 {
   PetscErrorCode ierr;
@@ -79,8 +69,6 @@ PetscErrorCode IGAPointReset(IGAPoint point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointInit"
 PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
 {
   PetscErrorCode ierr;
@@ -110,8 +98,6 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetParent"
 PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element)
 {
   PetscFunctionBegin;
@@ -121,8 +107,6 @@ PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetIndex"
 PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 {
   PetscFunctionBegin;
@@ -132,8 +116,6 @@ PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetCount"
 PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
 {
   PetscFunctionBegin;
@@ -143,8 +125,6 @@ PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointAtBoundary"
 PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side)
 {
   PetscFunctionBegin;
@@ -156,8 +136,6 @@ PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetSizes"
 PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
   PetscFunctionBegin;
@@ -171,8 +149,6 @@ PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,Petsc
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetDims"
 PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscInt *npd)
 {
   PetscFunctionBegin;
@@ -186,8 +162,6 @@ PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscI
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetQuadrature"
 PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
                                      PetscReal *weight,
                                      PetscReal *detJac)
@@ -201,8 +175,6 @@ PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetBasisFuns"
 PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[])
 {
   PetscFunctionBegin;
@@ -216,8 +188,6 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetShapeFuns"
 PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[])
 {
   PetscFunctionBegin;
@@ -240,8 +210,6 @@ extern void IGA_GetInvGradGeomMap (PetscInt nen,PetscInt nsd,PetscInt dim,
                                    const PetscReal N[],const PetscReal C[],PetscReal G[]);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormScale"
 static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
 {
   PetscFunctionBegin;
@@ -258,8 +226,6 @@ static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormGeomMap"
 PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[])
 {
   PetscFunctionBegin;
@@ -277,8 +243,6 @@ PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormGradGeomMap"
 PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
 {
   PetscReal L[3] = {1,1,1};
@@ -306,8 +270,6 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormInvGradGeomMap"
 PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
 {
   PetscReal L[3] = {1,1,1};
@@ -363,13 +325,9 @@ extern void IGA_GetDer4 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal 
                          const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormPoint"
 PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[])
 { return IGAPointFormGeomMap(p,x); }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormValue"
 PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -380,8 +338,6 @@ PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormGrad"
 PetscErrorCode IGAPointFormGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -392,8 +348,6 @@ PetscErrorCode IGAPointFormGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormHess"
 PetscErrorCode IGAPointFormHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -404,8 +358,6 @@ PetscErrorCode IGAPointFormHess(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormDel2"
 PetscErrorCode IGAPointFormDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -416,8 +368,6 @@ PetscErrorCode IGAPointFormDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormDer3"
 PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -428,8 +378,6 @@ PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointFormDer4"
 PetscErrorCode IGAPointFormDer4(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -440,8 +388,6 @@ PetscErrorCode IGAPointFormDer4(IGAPoint p,const PetscScalar U[],PetscScalar u[]
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointEvaluate"
 PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
@@ -469,8 +415,6 @@ PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],P
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetWorkVec"
 PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
 {
   PetscErrorCode ierr;
@@ -489,8 +433,6 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointGetWorkMat"
 PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
 {
   PetscErrorCode ierr;
@@ -510,8 +452,6 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointAddArray"
 PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],PetscScalar A[])
 {
   PetscInt  i;
@@ -528,8 +468,6 @@ PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointAddVec"
 PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F[])
 {
   PetscInt       m;
@@ -543,8 +481,6 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPointAddMat"
 PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K[])
 {
   PetscInt       m,n;

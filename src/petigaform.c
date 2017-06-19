@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetForm"
 PetscErrorCode IGAGetForm(IGA iga,IGAForm *form)
 {
   PetscFunctionBegin;
@@ -11,8 +9,6 @@ PetscErrorCode IGAGetForm(IGA iga,IGAForm *form)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetForm"
 PetscErrorCode IGASetForm(IGA iga,IGAForm form)
 {
   PetscErrorCode ierr;
@@ -26,8 +22,6 @@ PetscErrorCode IGASetForm(IGA iga,IGAForm form)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormCreate"
 PetscErrorCode IGAFormCreate(IGAForm *_form)
 {
   PetscInt       a,s;
@@ -48,8 +42,6 @@ PetscErrorCode IGAFormCreate(IGAForm *_form)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormDestroy"
 PetscErrorCode IGAFormDestroy(IGAForm *_form)
 {
   PetscInt       a,s;
@@ -71,8 +63,6 @@ PetscErrorCode IGAFormDestroy(IGAForm *_form)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormReset"
 PetscErrorCode IGAFormReset(IGAForm form)
 {
   PetscErrorCode ierr;
@@ -87,8 +77,6 @@ PetscErrorCode IGAFormReset(IGAForm form)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormReference"
 PetscErrorCode IGAFormReference(IGAForm form)
 {
   PetscFunctionBegin;
@@ -121,8 +109,6 @@ void IGAFormBCSetEntry(IGAFormBC bc,PetscInt field,PetscScalar value)
   bc->value[k] = value;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetBoundaryValue"
 PetscErrorCode IGAFormSetBoundaryValue(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)
 {
   PetscFunctionBegin;
@@ -134,8 +120,6 @@ PetscErrorCode IGAFormSetBoundaryValue(IGAForm form,PetscInt axis,PetscInt side,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetBoundaryLoad"
 PetscErrorCode IGAFormSetBoundaryLoad(IGAForm form,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)
 {
   PetscFunctionBegin;
@@ -147,8 +131,6 @@ PetscErrorCode IGAFormSetBoundaryLoad(IGAForm form,PetscInt axis,PetscInt side,P
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetBoundaryForm"
 PetscErrorCode IGAFormSetBoundaryForm(IGAForm form,PetscInt axis,PetscInt side,PetscBool flag)
 {
   PetscFunctionBegin;
@@ -158,8 +140,6 @@ PetscErrorCode IGAFormSetBoundaryForm(IGAForm form,PetscInt axis,PetscInt side,P
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormClearBoundary"
 PetscErrorCode IGAFormClearBoundary(IGAForm form,PetscInt axis,PetscInt side)
 {
   PetscFunctionBegin;
@@ -171,8 +151,6 @@ PetscErrorCode IGAFormClearBoundary(IGAForm form,PetscInt axis,PetscInt side)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetVector"
 PetscErrorCode IGAFormSetVector(IGAForm form,IGAFormVector Vector,void *VecCtx)
 {
   PetscFunctionBegin;
@@ -182,8 +160,6 @@ PetscErrorCode IGAFormSetVector(IGAForm form,IGAFormVector Vector,void *VecCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetMatrix"
 PetscErrorCode IGAFormSetMatrix(IGAForm form,IGAFormMatrix Matrix,void *MatCtx)
 {
   PetscFunctionBegin;
@@ -193,8 +169,6 @@ PetscErrorCode IGAFormSetMatrix(IGAForm form,IGAFormMatrix Matrix,void *MatCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetSystem"
 PetscErrorCode IGAFormSetSystem(IGAForm form,IGAFormSystem System,void *SysCtx)
 {
   PetscFunctionBegin;
@@ -204,8 +178,6 @@ PetscErrorCode IGAFormSetSystem(IGAForm form,IGAFormSystem System,void *SysCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetFunction"
 PetscErrorCode IGAFormSetFunction(IGAForm form,IGAFormFunction Function,void *FunCtx)
 {
   PetscFunctionBegin;
@@ -215,8 +187,6 @@ PetscErrorCode IGAFormSetFunction(IGAForm form,IGAFormFunction Function,void *Fu
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetJacobian"
 PetscErrorCode IGAFormSetJacobian(IGAForm form,IGAFormJacobian Jacobian,void *JacCtx)
 {
   PetscFunctionBegin;
@@ -226,8 +196,6 @@ PetscErrorCode IGAFormSetJacobian(IGAForm form,IGAFormJacobian Jacobian,void *Ja
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIFunction"
 PetscErrorCode IGAFormSetIFunction(IGAForm form,IGAFormIFunction IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
@@ -237,8 +205,6 @@ PetscErrorCode IGAFormSetIFunction(IGAForm form,IGAFormIFunction IFunction,void 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIJacobian"
 PetscErrorCode IGAFormSetIJacobian(IGAForm form,IGAFormIJacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
@@ -248,8 +214,6 @@ PetscErrorCode IGAFormSetIJacobian(IGAForm form,IGAFormIJacobian IJacobian,void 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetI2Function"
 PetscErrorCode IGAFormSetI2Function(IGAForm form,IGAFormI2Function IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
@@ -259,8 +223,6 @@ PetscErrorCode IGAFormSetI2Function(IGAForm form,IGAFormI2Function IFunction,voi
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetI2Jacobian"
 PetscErrorCode IGAFormSetI2Jacobian(IGAForm form,IGAFormI2Jacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
@@ -270,8 +232,6 @@ PetscErrorCode IGAFormSetI2Jacobian(IGAForm form,IGAFormI2Jacobian IJacobian,voi
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIEFunction"
 PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,void *IEFunCtx)
 {
   PetscFunctionBegin;
@@ -281,8 +241,6 @@ PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,vo
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetIEJacobian"
 PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,void *IEJacCtx)
 {
   PetscFunctionBegin;
@@ -292,8 +250,6 @@ PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,vo
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetRHSFunction"
 PetscErrorCode IGAFormSetRHSFunction(IGAForm form,IGAFormRHSFunction RHSFunction,void *RHSFunCtx)
 {
   PetscFunctionBegin;
@@ -303,8 +259,6 @@ PetscErrorCode IGAFormSetRHSFunction(IGAForm form,IGAFormRHSFunction RHSFunction
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormSetRHSJacobian"
 PetscErrorCode IGAFormSetRHSJacobian(IGAForm form,IGAFormRHSJacobian RHSJacobian,void *RHSJacCtx)
 {
   PetscFunctionBegin;
@@ -316,8 +270,6 @@ PetscErrorCode IGAFormSetRHSJacobian(IGAForm form,IGAFormRHSJacobian RHSJacobian
 
 /* --------------------------------------------------------------- */
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFixTable"
 PetscErrorCode IGASetFixTable(IGA iga,Vec U)
 {
   Vec               local;
@@ -369,8 +321,6 @@ PetscErrorCode IGASetFixTable(IGA iga,Vec U)
 #endif
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetBoundaryValue"
 PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)
 {
   PetscErrorCode ierr;
@@ -386,8 +336,6 @@ PetscErrorCode IGASetBoundaryValue(IGA iga,PetscInt axis,PetscInt side,PetscInt 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetBoundaryLoad"
 PetscErrorCode IGASetBoundaryLoad(IGA iga,PetscInt axis,PetscInt side,PetscInt field,PetscScalar value)
 {
   PetscErrorCode ierr;
@@ -403,8 +351,6 @@ PetscErrorCode IGASetBoundaryLoad(IGA iga,PetscInt axis,PetscInt side,PetscInt f
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetBoundaryForm"
 PetscErrorCode IGASetBoundaryForm(IGA iga,PetscInt axis,PetscInt side,PetscBool flag)
 {
   PetscErrorCode ierr;
@@ -418,8 +364,6 @@ PetscErrorCode IGASetBoundaryForm(IGA iga,PetscInt axis,PetscInt side,PetscBool 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormVector"
 /*@
    IGASetFormSystem - Set the user callback to form the vector
    which represents the discretized L(w).
@@ -450,8 +394,6 @@ PetscErrorCode IGASetFormVector(IGA iga,IGAFormVector Vector,void *VecCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormMatrix"
 /*@
    IGASetFormSystem - Set the user callback to form the matrix and vector
    which represents the discretized a(w,u).
@@ -482,8 +424,6 @@ PetscErrorCode IGASetFormMatrix(IGA iga,IGAFormMatrix Matrix,void *MatCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormSystem"
 /*@
    IGASetFormSystem - Set the user callback to form the matrix and vector
    which represents the discretized a(w,u) = L(w).
@@ -515,8 +455,6 @@ PetscErrorCode IGASetFormSystem(IGA iga,IGAFormSystem System,void *SysCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormFunction"
 /*@
    IGASetFormFunction - Set the function which computes the residual vector
    F(U)=0 for use with nonlinear problems.
@@ -548,8 +486,6 @@ PetscErrorCode IGASetFormFunction(IGA iga,IGAFormFunction Function,void *FunCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormJacobian"
 /*@
    IGASetFormIJacobian - Set the function to compute the Jacobian matrix
    J = dF/dU where F(U) is the residual function you provided with IGASetFormIFunction().
@@ -581,8 +517,6 @@ PetscErrorCode IGASetFormJacobian(IGA iga,IGAFormJacobian Jacobian,void *JacCtx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIFunction"
 /*@
    IGASetFormIFunction - Set the function which computes the residual vector
    F(t,U_t,U)=0 for use with implicit time stepping routines.
@@ -621,8 +555,6 @@ PetscErrorCode IGASetFormIFunction(IGA iga,IGAFormIFunction IFunction,void *IFun
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIJacobian"
 /*@
    IGASetFormIJacobian - Set the function to compute the Jacobian matrix
    J = a*dF/dU_t + dF/dU where F(t,U_t,U) is the residual function
@@ -662,8 +594,6 @@ PetscErrorCode IGASetFormIJacobian(IGA iga,IGAFormIJacobian IJacobian,void *IJac
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormI2Function"
 /*@
    IGASetFormIFunction - Set the function which computes the residual vector
    F(t,U_tt,U_t,U)=0 for use with implicit time stepping routines.
@@ -705,8 +635,6 @@ PetscErrorCode IGASetFormI2Function(IGA iga,IGAFormI2Function IFunction,void *IF
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormI2Jacobian"
 /*@
    IGASetFormI2Jacobian - Set the function to compute the Jacobian matrix
    J = a*dF/dU_tt + v*dF/dU_t + dF/dU  where F(t,U_tt,U_t,U) is
@@ -749,8 +677,6 @@ PetscErrorCode IGASetFormI2Jacobian(IGA iga,IGAFormI2Jacobian IJacobian,void *IJ
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIEFunction"
 /*@
    IGASetFormIEFunction - Set the function which computes the residual vector
    F(t,U_t,U,U0)=0 for use with explicit or implicit time stepping routines.
@@ -792,8 +718,6 @@ PetscErrorCode IGASetFormIEFunction(IGA iga,IGAFormIEFunction IEFunction,void *I
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormIEJacobian"
 /*@
    IGASetFormIEJacobian - Set the function to compute the Jacobian matrix
    J = a*dF/dU_t + dF/dU where F(t,U_t,U,U0) is the function you provided with
@@ -836,8 +760,6 @@ PetscErrorCode IGASetFormIEJacobian(IGA iga,IGAFormIEJacobian IEJacobian,void *I
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormRHSFunction"
 /*@
 
    IGASetFormRHSFunction - Set the function to compute the right-hand side function
@@ -874,8 +796,6 @@ PetscErrorCode IGASetFormRHSFunction(IGA iga,IGAFormRHSFunction RHSFunction,void
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFormRHSJacobian"
 /*@
    IGASetFormRHSJacobian - Set the function to compute the Jacobian matrix
    J = dF/dU where F(t,U) is the right-hand side function you provided with

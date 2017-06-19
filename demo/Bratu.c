@@ -29,8 +29,6 @@ extern PetscErrorCode Bratu_IJacobian(IGAPoint,
                                       PetscScalar *F,void *ctx);
 EXTERN_C_END
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;

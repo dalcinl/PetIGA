@@ -1,5 +1,11 @@
 #include <petsc.h>
 #include <petscts1.h>
+#if PETSC_VERSION_LT(3,8,0)
+#  ifdef PETSC_FUNCTION_NAME
+#    undef  __FUNCT__
+#    define __FUNCT__ PETSC_FUNCTION_NAME
+#  endif
+#endif
 
 typedef struct {
   PetscReal Omega;   /* natural frequency */
@@ -37,8 +43,6 @@ static void Exact(double t,
   if (vt) *vt = v;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Solution"
 PetscErrorCode Solution(TS ts,PetscReal t,Vec X,void *ctx)
 {
   UserParams     *user = (UserParams*)ctx;
@@ -57,8 +61,6 @@ PetscErrorCode Solution(TS ts,PetscReal t,Vec X,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
 {
   UserParams        *user = (UserParams*)ctx;
@@ -83,8 +85,6 @@ PetscErrorCode Residual(TS ts,PetscReal t,Vec X,Vec V,Vec R,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(TS ts,PetscReal t,Vec X,Vec A,PetscReal shift,Mat J,Mat P,void *ctx)
 {
   UserParams     *user = (UserParams*)ctx;
@@ -116,8 +116,6 @@ PetscErrorCode Tangent_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat 
 #define Tangent Tangent_Legacy
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "Monitor"
 PetscErrorCode Monitor(TS ts,PetscInt i,PetscReal t,Vec U,void *ctx)
 {
   const char        *filename = (const char*)ctx;
@@ -143,8 +141,6 @@ extern PetscErrorCode TSCreate_Alpha1(TS);
 extern PetscErrorCode TSCreate_BDF(TS);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   TS             ts;

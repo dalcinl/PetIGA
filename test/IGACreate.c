@@ -4,8 +4,6 @@
 #define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "Scalar"
 PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscInt i;
@@ -13,8 +11,6 @@ PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Vector"
 PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -29,8 +25,6 @@ PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Matrix"
 PetscErrorCode Matrix(IGAPoint p,PetscScalar *K,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -50,8 +44,6 @@ PetscErrorCode Matrix(IGAPoint p,PetscScalar *K,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -73,8 +65,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscInt       dim,dof;

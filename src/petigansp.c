@@ -30,8 +30,6 @@ PetscReal ComputePoint(PetscInt index,IGAAxis axis,IGABasisType btype)
 
 PETSC_STATIC_INLINE PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateCoordinates"
 PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
 {
   MPI_Comm       comm;
@@ -118,8 +116,6 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateRigidBody"
 PetscErrorCode IGACreateRigidBody(IGA iga,MatNullSpace *nsp)
 {
   Vec            coords;

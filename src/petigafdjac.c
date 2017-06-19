@@ -10,8 +10,6 @@ PetscReal DeltaWP(PetscInt N,const PetscScalar U[])
   return sqrteps * PetscSqrtReal(1 + normU);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormJacobianFD"
 PetscErrorCode IGAFormJacobianFD(IGAPoint p,
                                  const PetscScalar U[],
                                  PetscScalar J[],PETSC_UNUSED void *ctx)
@@ -41,8 +39,6 @@ PetscErrorCode IGAFormJacobianFD(IGAPoint p,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormIJacobianFD"
 PetscErrorCode IGAFormIJacobianFD(IGAPoint p,
                                   PetscReal s,const PetscScalar V[],
                                   PetscReal t,const PetscScalar U[],
@@ -77,8 +73,6 @@ PetscErrorCode IGAFormIJacobianFD(IGAPoint p,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormIEJacobianFD"
 PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,
                                    PetscReal s, const PetscScalar V[],
                                    PetscReal t, const PetscScalar U[],
@@ -114,8 +108,6 @@ PetscErrorCode IGAFormIEJacobianFD(IGAPoint p,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormI2JacobianFD"
 PetscErrorCode IGAFormI2JacobianFD(IGAPoint p,
                                    PetscReal a,const PetscScalar A[],
                                    PetscReal v,const PetscScalar V[],
@@ -155,8 +147,6 @@ PetscErrorCode IGAFormI2JacobianFD(IGAPoint p,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFormRHSJacobianFD"
 PetscErrorCode IGAFormRHSJacobianFD(IGAPoint p,
                                     PetscReal t,const PetscScalar U[],
                                     PetscScalar J[],PETSC_UNUSED void *ctx)

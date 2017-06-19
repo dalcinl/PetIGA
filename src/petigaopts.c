@@ -14,8 +14,6 @@
 #define PetscOptionsGetString(op,pr,nm,s,n,set) PetscOptionsGetString(pr,nm,s,n,set)
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAOptionsAlias"
 PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char name[])
 {
   const char     *prefix = NULL; /* XXX */
@@ -40,8 +38,6 @@ PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAOptionsDefault"
 PetscErrorCode IGAOptionsDefault(const char prefix[],const char name[],const char value[])
 {
   PetscBool      flag = PETSC_FALSE;
@@ -56,8 +52,6 @@ PetscErrorCode IGAOptionsDefault(const char prefix[],const char name[],const cha
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAOptionsReject"
 PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
 {
   PetscBool      flag = PETSC_FALSE;
@@ -68,59 +62,47 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetOptEnum"
 PetscEnum IGAGetOptEnum(const char prefix[],const char name[],const char *const elist[],PetscEnum defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetEnum(NULL,prefix,name,elist,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return defval;
+  return defval;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetString"
 const char* IGAGetOptString(const char prefix[],const char name[],const char defval[])
 {
   PetscErrorCode ierr; static char buffer[1024];
   ierr = PetscStrncpy(buffer,defval,sizeof(buffer));CHKERRABORT(PETSC_COMM_WORLD,ierr);
   ierr = PetscOptionsGetString(NULL,prefix,name,buffer,sizeof(buffer),NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return buffer;
+  return buffer;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetOptBool"
 PetscBool IGAGetOptBool(const char prefix[],const char name[],PetscBool defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetBool(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return defval;
+  return defval;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetOptInt"
 PetscInt IGAGetOptInt(const char prefix[],const char name[],PetscInt defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetInt(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return defval;
+  return defval;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetReal"
 PetscReal IGAGetOptReal(const char prefix[],const char name[],PetscReal defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetReal(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return defval;
+  return defval;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetScalar"
 PetscScalar IGAGetOptScalar(const char prefix[],const char name[],PetscScalar defval)
 {
   PetscErrorCode ierr;
   ierr = PetscOptionsGetScalar(NULL,prefix,name,&defval,NULL);CHKERRABORT(PETSC_COMM_WORLD,ierr);
-  (void)__FUNCT__; return defval;
+  return defval;
 }
 
 
@@ -131,8 +113,6 @@ PETSC_EXTERN PetscErrorCode PetscOptionsEnumArray(const char[],const char[],cons
 extern PetscOptionsObjectType PetscOptionsObject;
 #define ManSection(str) ((str) ? (str) : "None")
 
-#undef  __FUNCT__
-#define __FUNCT__ "PetscOptionsGetEnumArray"
 PetscErrorCode PetscOptionsGetEnumArray(const char pre[],const char name[],const char *const *list,PetscEnum dvalue[],PetscInt *nmax,PetscBool *set)
 {
   char           *svalue;
@@ -178,8 +158,6 @@ PetscErrorCode PetscOptionsGetEnumArray(const char pre[],const char name[],const
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PetscOptionsEnumArray"
 PetscErrorCode PetscOptionsEnumArray(const char opt[],const char text[],const char man[],const char *const *list,PetscEnum value[],PetscInt *n,PetscBool *set)
 {
   PetscInt       i,nlist = 0;

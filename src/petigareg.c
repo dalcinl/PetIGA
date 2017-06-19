@@ -45,8 +45,6 @@ PetscLogEvent IGA_FormJacobian = 0;
 PetscLogEvent IGA_FormIFunction = 0;
 PetscLogEvent IGA_FormIJacobian = 0;
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARegisterAll"
 PetscErrorCode IGARegisterAll(void)
 {
   PetscErrorCode ierr;
@@ -66,8 +64,6 @@ PetscErrorCode IGARegisterAll(void)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAFinalizePackage"
 PetscErrorCode IGAFinalizePackage(void)
 {
   PetscErrorCode ierr;
@@ -80,8 +76,6 @@ PetscErrorCode IGAFinalizePackage(void)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAInitializePackage"
 PetscErrorCode IGAInitializePackage(void)
 {
   PetscErrorCode ierr;
@@ -108,8 +102,6 @@ PetscErrorCode IGAInitializePackage(void)
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "PetscDLLibraryRegister_petiga"
 PetscErrorCode PetscDLLibraryRegister_petiga(void);
 PetscErrorCode PetscDLLibraryRegister_petiga(void)
 {

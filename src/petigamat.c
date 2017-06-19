@@ -29,8 +29,6 @@
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatView_MPI_IGA"
 static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 {
   PetscViewerFormat format;
@@ -84,8 +82,6 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatLoad_MPI_IGA"
 static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 {
   MPI_Comm       comm;
@@ -146,8 +142,6 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 }
 
 #if PETSC_VERSION_LT(3,6,0)
-#undef  __FUNCT__
-#define __FUNCT__ "MatDuplicate_IS"
 static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
 {
   IGA            iga;
@@ -178,8 +172,6 @@ static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
 }
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatDuplicate_IGA"
 static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
 {
   MPI_Comm       comm;
@@ -290,8 +282,6 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = NULL;
@@ -313,8 +303,6 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "L2GApplyBlock"
 PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
 {
   PetscErrorCode ierr;
@@ -330,8 +318,6 @@ PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt 
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "UnblockIndices"
 PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
 {
   PetscInt n,c;
@@ -345,8 +331,6 @@ PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const Pets
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "FilterLowerTriangular"
 PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 {
   PetscInt i,n;
@@ -358,8 +342,6 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateMat"
 /*@
    IGACreateMat - Creates a matrix with the correct parallel layout
    required for computing a matrix using the discretization
