@@ -67,8 +67,8 @@ bind(C, name="ElasticRod_IJacobian")
 
   real   (kind=IGA_REAL_KIND   ), pointer :: N(:)
   real   (kind=IGA_REAL_KIND   ), pointer :: grad_N(:,:)
-  scalar (kind=IGA_SCALAR_KIND )  :: A(p%dof), V(p%dof), U(p%dof)
-  scalar (kind=IGA_SCALAR_KIND )  :: grad_U(p%dof,p%dim)
+  !scalar (kind=IGA_SCALAR_KIND )  :: A(p%dof), V(p%dof), U(p%dof)
+  !scalar (kind=IGA_SCALAR_KIND )  :: grad_U(p%dof,p%dim)
   integer(kind=IGA_INTEGER_KIND)  :: ia, ib
 
   N      => IGA_Shape0(p)
