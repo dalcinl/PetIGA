@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
   PetscReal dx = 1.0/PetscMax(N[0],N[1]);
   PetscReal dt = 0.5 * dx/sqrt(user.gravity*user.a);
   ierr = TSSetTimeStep(ts,dt);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1000.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 

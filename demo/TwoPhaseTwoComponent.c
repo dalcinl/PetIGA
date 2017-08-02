@@ -302,7 +302,7 @@ int main(int argc, char *argv[]) {
 
   TS     ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1.0e6);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);

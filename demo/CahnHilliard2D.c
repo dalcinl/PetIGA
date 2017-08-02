@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-11);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
 

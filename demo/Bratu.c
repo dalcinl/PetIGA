@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     SNES snes;
     ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
     ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
-    ierr = TSSetDuration(ts,10000,0.1);CHKERRQ(ierr);
+    ierr = TSSetMaxTime(ts,0.1);CHKERRQ(ierr);
     ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
     ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
     ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);

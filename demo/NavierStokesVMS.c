@@ -394,7 +394,7 @@ int main(int argc, char *argv[]) {
   ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1000.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   if (output) {ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);}
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
