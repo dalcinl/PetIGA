@@ -2,6 +2,7 @@
 
 PETIGA_DIR ?= $(CURDIR)
 include ./lib/petiga/conf/variables
+-include makefile.in
 
 OBJDIR := $(PETSC_ARCH)/obj
 MODDIR := $(PETSC_ARCH)/include
