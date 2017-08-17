@@ -7,6 +7,7 @@
 
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
+static PetscErrorCode MatGetVecs_IGA(Mat,Vec*,Vec*);
 
 static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 {
@@ -28,7 +29,7 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   /* Map natural ordering to PETSc ordering and create IS */
@@ -78,7 +79,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   /* Create and load the matrix in natural ordering */
@@ -120,6 +121,21 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+static PetscErrorCode MatGetVecs_IGA(Mat A,Vec *right,Vec *left)
+{
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(PetscObjectComm((PetscObject)A),PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
+
+  if (right) {ierr = IGACreateVec(iga,right);CHKERRQ(ierr);}
+  if (left)  {ierr = IGACreateVec(iga,left );CHKERRQ(ierr);}
+  PetscFunctionReturn(0);
+}
+
 #if PETSC_VERSION_LT(3,6,0)
 static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
 {
@@ -150,16 +166,14 @@ static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
 
 static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
 {
-  MPI_Comm       comm;
   IGA            iga;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidPointer(B,3);
-  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(PetscObjectComm((PetscObject)A),PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   { /* MatDuplicate */
@@ -177,6 +191,9 @@ static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
     ierr = MatShellGetOperation(A,MATOP_LOAD,(PetscVoidFunction*)&matload);CHKERRQ(ierr);
     if (matview == MatView_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_VIEW,(PetscVoidFunction)matview);CHKERRQ(ierr);}
     if (matload == MatLoad_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_LOAD,(PetscVoidFunction)matload);CHKERRQ(ierr);}
+  }
+  {  /* MatCreateVecs */
+    ierr = MatShellSetOperation(*B,MATOP_GET_VECS,(PetscVoidFunction)MatGetVecs_IGA);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -204,7 +221,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
     k = IGA_NextKnot(m,U,k,+1);
     *first = k - p - 1;
   }
-  
+
   { /* compute index of the rightmost overlapping basis */
     PetscInt k = i + p + 1;
     k = IGA_NextKnot(m,U,k,-1);
@@ -376,6 +393,9 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   if (!is && size > 1) { /* Change MatView/MatLoad to handle matrix in natural ordering */
     ierr = MatShellSetOperation(A,MATOP_VIEW,(PetscVoidFunction)MatView_MPI_IGA);CHKERRQ(ierr);
     ierr = MatShellSetOperation(A,MATOP_LOAD,(PetscVoidFunction)MatLoad_MPI_IGA);CHKERRQ(ierr);
+  }
+  { /* Change MatCreateVecs to propagate composed objects */
+    ierr = MatShellSetOperation(A,MATOP_GET_VECS,(PetscVoidFunction)MatGetVecs_IGA);CHKERRQ(ierr);
   }
   { /* Change MatDuplicate to propagate composed objects and method overrides */
     PetscErrorCode (*matduplicate)(Mat,MatDuplicateOption,Mat*);
