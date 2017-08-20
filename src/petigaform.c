@@ -395,7 +395,7 @@ PetscErrorCode IGASetFormVector(IGA iga,IGAFormVector Vector,void *VecCtx)
 }
 
 /*@
-   IGASetFormSystem - Set the user callback to form the matrix and vector
+   IGASetFormMatrix - Set the user callback to form the matrix
    which represents the discretized a(w,u).
 
    Logically collective on IGA
