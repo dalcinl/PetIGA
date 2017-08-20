@@ -5,6 +5,10 @@
 #include <petsc/private/vecimpl.h>
 #endif
 
+#if PETSC_VERSION_LT(3,8,0)
+#define PETSCVIEWERGLVIS "glvis"
+#endif
+
 static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 {
   IGA            iga;
@@ -20,15 +24,17 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   IGA            iga;
   DM             dm;
   Vec            dmvec;
-  PetscBool      isvtk,isdraw;
+  PetscBool      match;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&isvtk);CHKERRQ(ierr);
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&isdraw);CHKERRQ(ierr);
-  if (isvtk)  {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
-  if (isdraw) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&match);CHKERRQ(ierr);
+  if (match)  {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&match);CHKERRQ(ierr);
+  if (match) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERGLVIS,&match);CHKERRQ(ierr);
+  if (match) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = DMGetGlobalVector(dm,&dmvec);CHKERRQ(ierr);
   ierr = VecCopy(v,dmvec);CHKERRQ(ierr);
