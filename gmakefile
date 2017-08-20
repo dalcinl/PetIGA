@@ -44,12 +44,13 @@ else                   # Show the full command line
 endif
 
 pcc = $(if $(findstring CONLY,$(PETSC_LANGUAGE)),CC,CXX)
-PETSC_COMPILE.c = $(call quiet,$(pcc)) $(PCC_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(C_DEPFLAGS) -c
-PETSC_COMPILE.cxx = $(call quiet,CXX) $(CXX_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(CXX_DEPFLAGS) -c
+COMPILE.cc = $(call quiet,$(pcc)) $(PCC_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(C_DEPFLAGS) -c
+COMPILE.cxx = $(call quiet,CXX) $(CXX_FLAGS) $(CFLAGS) $(CCPPFLAGS) $(CXX_DEPFLAGS) -c
 ifneq ($(FC_MODULE_OUTPUT_FLAG),)
-PETSC_COMPILE.F = $(call quiet,FC) $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) $(FC_MODULE_OUTPUT_FLAG)$(MODDIR) -c
+COMPILE.fc = $(call quiet,FC) $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) $(FC_MODULE_OUTPUT_FLAG)$(MODDIR) -c
 else
-PETSC_COMPILE.F = $(call quiet,,FC) cd $(MODDIR) && $(FC) $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) -c
+FCMOD = cd $(MODDIR) && $(FC)
+COMPILE.fc = $(call quiet,FCMOD) $(FC_FLAGS) $(FFLAGS) $(FCPPFLAGS) $(FC_DEPFLAGS) -c
 endif
 
 langs := c cxx F90
@@ -80,13 +81,13 @@ else
 endif
 
 $(OBJDIR)/%.o : %.c | $$(@D)/.DIR
-	$(PETSC_COMPILE.c) $(abspath $<) -o $@
+	$(COMPILE.cc) $(abspath $<) -o $@
 
 $(OBJDIR)/%.o : %.cxx | $$(@D)/.DIR
-	$(PETSC_COMPILE.cxx) $(abspath $<) -o $@
+	$(COMPILE.cxx) $(abspath $<) -o $@
 
-$(OBJDIR)/%.o : %.F90 | $(MODDIR)/.DIR $$(@D)/.DIR
-	$(PETSC_COMPILE.F) $(abspath $<) -o $(abspath $@)
+$(OBJDIR)/%.o : %.F90 | $$(@D)/.DIR $(MODDIR)/.DIR
+	$(COMPILE.fc) $(abspath $<) -o $(if $(FCMOD),$(abspath $@),$@)
 
 # Hack: manual dependencies on object files
 petiga.mod.o:= $(OBJDIR)/src/petigaftn.o

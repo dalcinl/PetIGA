@@ -168,11 +168,7 @@ int main(int argc, char *argv[])
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(dm,&b);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = DMCreateMatrix(dm,NULL,&A);CHKERRQ(ierr);
-#else
   ierr = DMCreateMatrix(dm,&A);CHKERRQ(ierr);
-#endif
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 

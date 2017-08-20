@@ -305,11 +305,9 @@ int main(int argc, char *argv[]) {
   ierr = TSSetMaxTime(ts,1.0e6);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.95);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,8,0)
   ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
-#endif
   ierr = TSMonitorSet(ts,Monitor,&user,NULL);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 

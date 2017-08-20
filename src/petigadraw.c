@@ -1,16 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscOptionsGetIntArray(op,pr,nm,vl,n,set) PetscOptionsGetIntArray(pr,nm,vl,n,set)
-#endif
-
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscDrawClear PetscDrawSynchronizedClear
-#define PetscDrawFlush PetscDrawSynchronizedFlush
-#define PetscDrawCollectiveBegin(draw) 0;do{(void)draw;}while(0)
-#define PetscDrawCollectiveEnd(draw)   0;do{(void)draw;}while(0)
-#endif
-
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 

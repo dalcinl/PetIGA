@@ -136,34 +136,6 @@ static PetscErrorCode MatGetVecs_IGA(Mat A,Vec *right,Vec *left)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,6,0)
-static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
-{
-  IGA            iga;
-  MPI_Comm       comm;
-  PetscInt       bs,m,n,M,N;
-  Mat            A=mat,Alocal,B,Blocal;
-  PetscErrorCode ierr;
-
-  PetscFunctionBegin;
-  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
-  ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
-  ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
-  ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
-  ierr = MatISGetLocalMat(A,&Alocal);CHKERRQ(ierr);
-  ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  ierr = MatCreateIS(comm,bs,m,n,M,N,iga->map->mapping,&B);CHKERRQ(ierr);
-  ierr = MatDuplicate(Alocal,op,&Blocal);CHKERRQ(ierr);
-  ierr = MatISSetLocalMat(B,Blocal);CHKERRQ(ierr);
-  ierr = MatDestroy(&Blocal);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  *newmat = B;
-  PetscFunctionReturn(0);
-}
-#endif
-
 static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
 {
   IGA            iga;
@@ -384,9 +356,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscVoidFunction f = NULL;
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
     is = f ? PETSC_TRUE: PETSC_FALSE;
-#if PETSC_VERSION_LT(3,6,0)
-    if (is) {ierr = MatShellSetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IS);CHKERRQ(ierr);}
-#endif
   }
 
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);

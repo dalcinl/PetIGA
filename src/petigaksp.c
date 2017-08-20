@@ -256,9 +256,6 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-typedef PetscOptions PetscOptionItems;
-#endif
 static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
@@ -270,9 +267,6 @@ static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *Petsc
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
-#if PETSC_VERSION_LT(3,6,0)
-  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-#endif
   ierr = PetscObjectQuery((PetscObject)pc,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
   ierr = PCGetOperatorsSet(pc,NULL,&hasmat);CHKERRQ(ierr);
@@ -292,10 +286,6 @@ static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *Petsc
   /* */
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_LT(3,7,0)
-static PetscErrorCode IGA_OptionsHandler_PC_Legacy(PetscObject obj,void *ctx) {return IGA_OptionsHandler_PC(NULL,obj,ctx);}
-#define IGA_OptionsHandler_PC IGA_OptionsHandler_PC_Legacy
-#endif
 
 static PetscErrorCode OptHdlDel(PETSC_UNUSED PetscObject obj,PETSC_UNUSED void *ctx) {return 0;}
 

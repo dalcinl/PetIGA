@@ -1,9 +1,5 @@
 #include "petiga.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/vecimpl.h>
-#else
 #include <petsc/private/vecimpl.h>
-#endif
 
 #if PETSC_VERSION_LT(3,8,0)
 #define PETSCVIEWERGLVIS "glvis"

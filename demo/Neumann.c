@@ -158,11 +158,7 @@ int main(int argc, char *argv[]) {
   } else {
     MatNullSpace nsp;
     ierr = MatGetNullSpace(A,&nsp);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = MatNullSpaceRemove(nsp,x,NULL);CHKERRQ(ierr);
-#else
     ierr = MatNullSpaceRemove(nsp,x);CHKERRQ(ierr);
-#endif
   }
 
   PetscReal error;

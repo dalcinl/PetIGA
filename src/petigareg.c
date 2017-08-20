@@ -1,13 +1,7 @@
 #include "petiga.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/pcimpl.h>
-#include <petsc-private/tsimpl.h>
-#include <petsc-private/dmimpl.h>
-#else
 #include <petsc/private/pcimpl.h>
 #include <petsc/private/tsimpl.h>
 #include <petsc/private/dmimpl.h>
-#endif
 
 PETSC_EXTERN PetscBool IGAPackageInitialized;
 PETSC_EXTERN PetscBool IGARegisterAllCalled;
@@ -19,12 +13,6 @@ PETSC_EXTERN PetscFunctionList DMList;
 EXTERN_C_BEGIN
 extern PetscErrorCode PCCreate_IGAEBE(PC);
 extern PetscErrorCode PCCreate_IGABBB(PC);
-EXTERN_C_END
-
-EXTERN_C_BEGIN
-extern PetscErrorCode TSCreate_Alpha1(TS);
-extern PetscErrorCode TSCreate_Alpha2(TS);
-extern PetscErrorCode TSCreate_BDF(TS);
 EXTERN_C_END
 
 EXTERN_C_BEGIN
@@ -53,12 +41,6 @@ PetscErrorCode IGARegisterAll(void)
   ierr = PCRegisterAll();CHKERRQ(ierr);
   ierr = PCRegister(PCIGAEBE,PCCreate_IGAEBE);CHKERRQ(ierr);
   ierr = PCRegister(PCIGABBB,PCCreate_IGABBB);CHKERRQ(ierr);
-  ierr = TSRegisterAll();CHKERRQ(ierr);
-  ierr = TSRegister(TSALPHA1,TSCreate_Alpha1);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,7,0)
-  ierr = TSRegister(TSALPHA2,TSCreate_Alpha2);CHKERRQ(ierr);
-  ierr = TSRegister(TSBDF,TSCreate_BDF);CHKERRQ(ierr);
-#endif
   ierr = DMRegisterAll();CHKERRQ(ierr);
   ierr = DMRegister(DMIGA,DMCreate_IGA);CHKERRQ(ierr);
   PetscFunctionReturn(0);

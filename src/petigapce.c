@@ -1,10 +1,6 @@
 #include "petiga.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/pcimpl.h>
-#else
+#include <petscblaslapack.h>
 #include <petsc/private/pcimpl.h>
-#endif
-#include "petigabl.h"
 
 typedef struct {
   Mat mat;

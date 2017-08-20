@@ -27,11 +27,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 
   *newiga = NULL;
-#if PETSC_VERSION_LT(3,6,0)
-  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#else
   ierr = PetscHeaderCreate(iga,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#endif
   *newiga = iga;
 
   iga->dim = -1;
@@ -164,11 +160,6 @@ void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
   if (axis->nel==1 && !axis->periodic) (void)PetscStrcpy(buf,"*");
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscViewerASCIIPushSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE)
-#define PetscViewerASCIIPopSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE)
-#endif
-
 PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
 {
   PetscBool      match;
@@ -262,12 +253,6 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   if (match) { ierr = IGADraw(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
   PetscFunctionReturn(0);
 }
-
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscOptionsSetValue(op,nm,vl)       PetscOptionsSetValue(nm,vl)
-#define PetscOptionsClearValue(op,nm)        PetscOptionsClearValue(nm)
-#define PetscOptionsGetBool(op,pr,nm,vl,set) PetscOptionsGetBool(pr,nm,vl,set)
-#endif
 
 PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[])
 {
@@ -705,14 +690,6 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscObjectProcessOptionsHandlers(op,ob) PetscObjectProcessOptionsHandlers(ob)
-#endif
-
-#if PETSC_VERSION_LT(3,6,0)
-PETSC_EXTERN PetscErrorCode PetscOptionsEnumArray(const char[],const char[],const char[],const char *const *list,PetscEnum[],PetscInt*,PetscBool*);
-#endif
-
 /*@
    IGASetFromOptions - Call this in your code to allow IGA options to
    be set from the command line. This routine should be called before
@@ -997,11 +974,7 @@ PetscErrorCode IGACreateDMDA(IGA iga,
     ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
   }
   ierr = DMDACreate(((PetscObject)iga)->comm,&da);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,6,0)
-  ierr = DMDASetDim(da,dim);CHKERRQ(ierr);
-#else
   ierr = DMSetDimension(da,dim);CHKERRQ(ierr);
-#endif
   ierr = DMDASetDof(da,bs);CHKERRQ(ierr);
   ierr = DMDASetNumProcs(da,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
   ierr = DMDASetSizes(da,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);

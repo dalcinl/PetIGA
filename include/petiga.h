@@ -9,17 +9,11 @@
 
 #include <petsc.h>
 
-#if PETSC_VERSION_LT(3,5,0)
-#error "PetIGA requires PETSc 3.5 or higher"
+#if PETSC_VERSION_LT(3,7,0)
+#error "PetIGA requires PETSc 3.7 or higher"
 #endif
 
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/petscimpl.h>
-#else
 #include <petsc/private/petscimpl.h>
-#endif
-#include "petscts1.h"
-#include "petscts2.h"
 
 #if PETSC_VERSION_LT(3,8,0)
 #  ifdef PETSC_FUNCTION_NAME
@@ -943,6 +937,18 @@ PETSC_EXTERN PetscBool      IGAGetOptBool(const char prefix[],const char name[],
 PETSC_EXTERN PetscInt       IGAGetOptInt(const char prefix[],const char name[],PetscInt defval);
 PETSC_EXTERN PetscReal      IGAGetOptReal(const char prefix[],const char name[],PetscReal defval);
 PETSC_EXTERN PetscScalar    IGAGetOptScalar(const char prefix[],const char name[],PetscScalar defval);
+
+/* ---------------------------------------------------------------- */
+
+#if PETSC_VERSION_LT(3,8,0)
+PETSC_EXTERN PetscErrorCode TSSetMaxSteps(TS,PetscInt);
+PETSC_EXTERN PetscErrorCode TSGetMaxSteps(TS,PetscInt*);
+PETSC_EXTERN PetscErrorCode TSSetMaxTime(TS,PetscReal);
+PETSC_EXTERN PetscErrorCode TSGetMaxTime(TS,PetscReal*);
+#endif
+#define TSALPHA1 TSALPHA
+PETSC_EXTERN PetscErrorCode TSAlphaUseAdapt(TS,PetscBool);
+#else
 
 /* ---------------------------------------------------------------- */
 

@@ -1,13 +1,5 @@
 #include <petiga.h>
-#if PETSC_VERSION_LT(3,6,0)
-#include "petsc-private/dmimpl.h"
-#else
 #include "petsc/private/dmimpl.h"
-#endif
-
-#if PETSC_VERSION_(3,4,0)
-#define VecSetDM(v,dm) PetscObjectCompose((PetscObject)v,"__PETSc_dm",(PetscObject)dm)
-#endif
 
 typedef struct {
   IGA iga;
@@ -204,9 +196,6 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-typedef PetscOptions PetscOptionItems;
-#endif
 static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
@@ -216,14 +205,11 @@ static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscO
   ierr = IGASetFromOptions(iga);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_LT(3,6,0)
-static PetscErrorCode DMSetFromOptions_IGA_Legacy(DM dm) {return DMSetFromOptions_IGA(NULL,dm);}
-#define DMSetFromOptions_IGA DMSetFromOptions_IGA_Legacy
-#endif
 
 static PetscErrorCode DMSetUp_IGA(DM dm)
 {
   IGA            iga = DMIGACast(dm)->iga;
+  PetscInt       dim,nsd;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -231,16 +217,11 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
   ierr = IGASetUp(iga);CHKERRQ(ierr);
   ierr = DMGetLocalToGlobalMapping_IGA(dm);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&dm->bs);CHKERRQ(ierr);
-#if PETSC_VERSION_GE(3,6,0)
-  {
-    PetscInt dim,nsd;
-    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-    ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
-    ierr = DMSetDimension(dm,dim);CHKERRQ(ierr);
-    if (nsd < 1) nsd = PETSC_DEFAULT;
-    ierr = DMSetCoordinateDim(dm,nsd);CHKERRQ(ierr);
-  }
-#endif
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
+  ierr = DMSetDimension(dm,dim);CHKERRQ(ierr);
+  if (nsd < 1) nsd = PETSC_DEFAULT;
+  ierr = DMSetCoordinateDim(dm,nsd);CHKERRQ(ierr);
   ierr = DMSetVecType(dm,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(dm,iga->mattype);CHKERRQ(ierr);
   PetscFunctionReturn(0);

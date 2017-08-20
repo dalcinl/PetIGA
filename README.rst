@@ -29,7 +29,7 @@ After `installing PETSc
 set appropriate values for ``PETSC_DIR`` and ``PETSC_ARCH`` in your
 environment::
 
-  $ export PETSC_DIR=/home/user/petsc-3.6.0
+  $ export PETSC_DIR=/home/user/petsc
   $ export PETSC_ARCH=arch-linux2-c-debug
 
 Clone the `Git <http://git-scm.com/>`_ repository

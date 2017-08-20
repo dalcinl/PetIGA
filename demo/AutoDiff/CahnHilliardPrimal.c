@@ -131,11 +131,9 @@ int main(int argc, char *argv[]) {
   ierr = TSSetMaxTime(ts,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-11);CHKERRQ(ierr);
 
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,8,0)
   ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
-#endif
   ierr = TSSetMaxSNESFailures(ts,-1);CHKERRQ(ierr);
 
   if (output)  {ierr = TSMonitorSet(ts,OutputMonitor,&params,NULL);CHKERRQ(ierr);}

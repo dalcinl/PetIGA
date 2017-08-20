@@ -1,11 +1,7 @@
 #include "petiga.h"
 #include "petigagrid.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/pcimpl.h>
-#else
+#include <petscblaslapack.h>
 #include <petsc/private/pcimpl.h>
-#endif
-#include "petigabl.h"
 
 typedef struct {
   PetscInt dim,dof;
@@ -254,9 +250,6 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-typedef PetscOptions PetscOptionItems;
-#endif
 static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -265,9 +258,6 @@ static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,6,0)
-  (void)PetscOptionsObject;
-#endif
   for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
   if (flg) for (i=0; i<3; i++) {
@@ -276,10 +266,6 @@ static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,
     }
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_LT(3,6,0)
-static PetscErrorCode PCSetFromOptions_BBB_Legacy(PC pc) {return PCSetFromOptions_BBB(NULL,pc);}
-#define PCSetFromOptions_BBB PCSetFromOptions_BBB_Legacy
-#endif
 
 static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
 {

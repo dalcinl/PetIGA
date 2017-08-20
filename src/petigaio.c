@@ -4,10 +4,6 @@
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
 static       PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
-#if PETSC_VERSION_LT(3,6,0)
-#define PetscViewerBinaryRead(vw,p,n,c,dt) PetscViewerBinaryRead(vw,p,n,dt)
-#endif
-
 PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;

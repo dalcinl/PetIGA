@@ -1,9 +1,5 @@
 #include "petigagrid.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/petscimpl.h>
-#else
 #include <petsc/private/petscimpl.h>
-#endif
 
 PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
 {

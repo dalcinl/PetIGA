@@ -1,24 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscOptionsGetBool(op,pr,nm,vl,set) PetscOptionsGetBool(pr,nm,vl,set)
-#endif
-
-#if PETSC_VERSION_LT(3,6,0)
-#if !defined(PETSC_HAVE_PCBDDC)
-#define PCBDDCSetPrimalVerticesLocalIS(pc,is) (0)
-#define PCBDDCSetNeumannBoundariesLocal(pc,is) (0)
-#define PCBDDCSetDirichletBoundariesLocal(pc,is) (0)
-#endif
-#if !defined(PETSC_HAVE_PCBDDC)
-#define PCBDDCSetLocalAdjacencyGraph(pc,n,x,y,m) \
-        (((m)==PETSC_OWN_POINTER) ? (PetscFree(x)||PetscFree(y)) : 0)
-#define PCBDDCSetNullSpace(pc,nsp) (0)
-#define PCBDDCSetNeumannBoundaries(pc,is) (0)
-#define PCBDDCSetDirichletBoundaries(pc,is) (0)
-#endif
-#endif
-
 PETSC_STATIC_INLINE
 PetscInt Index(const PetscInt N[],PetscInt i,PetscInt j,PetscInt k)
 {
@@ -202,13 +183,8 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
   Mat            mat;
   void           (*f)(void);
   const char     *prefix;
-#if PETSC_VERSION_LT(3,6,0)
-  PetscBool      primal = PETSC_FALSE;
-  PetscBool      graph = PETSC_TRUE;
-#else
   PetscBool      primal = PETSC_TRUE;
   PetscBool      graph = PETSC_FALSE;
-#endif
   PetscBool      boundary = PETSC_TRUE;
   PetscErrorCode ierr;
 
@@ -299,11 +275,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 #undef forall2
 #undef forall3
     ierr = PetscSortInt(np,ip);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,6,0)
-    comm = PETSC_COMM_SELF;
-#else
     ierr = PetscObjectGetComm((PetscObject)pc,&comm);CHKERRQ(ierr);
-#endif
     ierr = ISCreateBlock(comm,dof,np,ip,PETSC_COPY_VALUES,&isp);CHKERRQ(ierr);
     ierr = PCBDDCSetPrimalVerticesLocalIS(pc,isp);CHKERRQ(ierr);
     ierr = ISDestroy(&isp);CHKERRQ(ierr);
