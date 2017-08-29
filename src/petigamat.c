@@ -3,11 +3,12 @@
 
 #if PETSC_VERSION_LT(3,8,0)
 #define MatCreateSubMatrix MatGetSubMatrix
+#define MATOP_CREATE_VECS MATOP_GET_VECS
 #endif
 
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
-static PetscErrorCode MatGetVecs_IGA(Mat,Vec*,Vec*);
+static PetscErrorCode MatCreateVecs_IGA(Mat,Vec*,Vec*);
 
 static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 {
@@ -121,7 +122,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-static PetscErrorCode MatGetVecs_IGA(Mat A,Vec *right,Vec *left)
+static PetscErrorCode MatCreateVecs_IGA(Mat A,Vec *right,Vec *left)
 {
   IGA            iga;
   PetscErrorCode ierr;
@@ -165,7 +166,7 @@ static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
     if (matload == MatLoad_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_LOAD,(PetscVoidFunction)matload);CHKERRQ(ierr);}
   }
   {  /* MatCreateVecs */
-    ierr = MatShellSetOperation(*B,MATOP_GET_VECS,(PetscVoidFunction)MatGetVecs_IGA);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(*B,MATOP_CREATE_VECS,(PetscVoidFunction)MatCreateVecs_IGA);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -364,7 +365,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatShellSetOperation(A,MATOP_LOAD,(PetscVoidFunction)MatLoad_MPI_IGA);CHKERRQ(ierr);
   }
   { /* Change MatCreateVecs to propagate composed objects */
-    ierr = MatShellSetOperation(A,MATOP_GET_VECS,(PetscVoidFunction)MatGetVecs_IGA);CHKERRQ(ierr);
+    ierr = MatShellSetOperation(A,MATOP_CREATE_VECS,(PetscVoidFunction)MatCreateVecs_IGA);CHKERRQ(ierr);
   }
   { /* Change MatDuplicate to propagate composed objects and method overrides */
     PetscErrorCode (*matduplicate)(Mat,MatDuplicateOption,Mat*);
