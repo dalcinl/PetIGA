@@ -1,11 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "Scalar"
 PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscInt i;
@@ -13,8 +7,6 @@ PetscErrorCode Scalar(IGAPoint p,const PetscScalar U[],PetscInt n,PetscScalar *S
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Vector"
 PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -29,8 +21,6 @@ PetscErrorCode Vector(IGAPoint p,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Matrix"
 PetscErrorCode Matrix(IGAPoint p,PetscScalar *K,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -50,8 +40,6 @@ PetscErrorCode Matrix(IGAPoint p,PetscScalar *K,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt dof = p->dof;
@@ -73,8 +61,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscInt       dim,dof;
@@ -182,22 +168,16 @@ int main(int argc, char *argv[])
   ierr = VecDestroy(&x);CHKERRQ(ierr);
   ierr = DMCreateGlobalVector(dm,&b);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = DMCreateMatrix(dm,NULL,&A);CHKERRQ(ierr);
-#else
   ierr = DMCreateMatrix(dm,&A);CHKERRQ(ierr);
-#endif
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = DMDestroy(&dm);CHKERRQ(ierr);
 
   ierr = DMIGACreate(iga,&dm);CHKERRQ(ierr);
-#if PETSC_VERSION_GE(3,5,0)
   {
     DM newdm;
     ierr = DMClone(dm,&newdm);CHKERRQ(ierr);
     ierr = DMDestroy(&newdm);CHKERRQ(ierr);
   }
-#endif
   {
     DM cdm;
     ierr = DMGetCoordinateDM(dm,&cdm);CHKERRQ(ierr);

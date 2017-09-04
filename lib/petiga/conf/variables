@@ -8,8 +8,6 @@ endif
 ifndef PETSC_CONF_DIR
   ifneq ($(wildcard $(PETSC_DIR)/lib/petsc/conf),)
     PETSC_CONF_DIR = $(PETSC_DIR)/lib/petsc/conf
-  else ifneq ($(wildcard $(PETSC_DIR)/conf),)
-    PETSC_CONF_DIR = $(PETSC_DIR)/conf
   else
     $(error Incorrect PETSC_DIR: $(PETSC_DIR))
   endif

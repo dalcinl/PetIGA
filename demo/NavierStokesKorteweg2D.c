@@ -23,8 +23,6 @@ typedef struct {
   PetscReal C3[2],R3;
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -96,8 +94,6 @@ PetscErrorCode Residual(IGAPoint pnt,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -182,8 +178,6 @@ typedef struct {
   PetscScalar rho,ux,uy;
 } Field;
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(IGA iga,PetscReal t,Vec U,AppCtx *user)
 {
   PetscErrorCode ierr;
@@ -216,8 +210,6 @@ PetscErrorCode FormInitialCondition(IGA iga,PetscReal t,Vec U,AppCtx *user)
   PetscFunctionReturn(0); 
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *mctx)
 {
   PetscFunctionBegin;
@@ -229,8 +221,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,voi
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FreeEnergy"
 PetscErrorCode FreeEnergy(PetscScalar rho,PetscScalar rho_x,PetscScalar rho_y,PetscScalar ux,PetscScalar uy,PetscScalar *E_tmp,AppCtx *user)
 {
   PetscFunctionBegin;
@@ -240,8 +230,6 @@ PetscErrorCode FreeEnergy(PetscScalar rho,PetscScalar rho_x,PetscScalar rho_y,Pe
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Energy"
 PetscErrorCode Energy(IGAPoint pnt,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscFunctionBegin;
@@ -257,8 +245,6 @@ PetscErrorCode Energy(IGAPoint pnt,const PetscScalar *U,PetscInt n,PetscScalar *
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "NSKMonitor"
 PetscErrorCode NSKMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
@@ -282,8 +268,6 @@ PetscErrorCode NSKMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   // Petsc Initialization rite of passage 
@@ -353,7 +337,7 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1000.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);

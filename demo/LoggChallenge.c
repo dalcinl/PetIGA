@@ -14,18 +14,12 @@ on Google+. The challenge:
 */
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 PetscReal Forcing(PetscReal x, PetscReal y)
 {
   PetscReal pi = M_PI;
   return 2*pi*pi * sin(pi*x) * sin(pi*y);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscReal x = p->point[0];
@@ -54,8 +48,6 @@ PetscReal Solution(PetscReal x, PetscReal y)
   return sin(pi*x) * sin(pi*y);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x = p->point[0];
@@ -64,8 +56,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;

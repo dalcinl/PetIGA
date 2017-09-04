@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeScalar"
 /*@
    IGAComputeScalar - Evaluates a functional of a given vector
 
@@ -101,8 +99,6 @@ typedef struct {
 
 static const size_t intpow[4][5] = {{1,0,0,0,0},{1,1,1,1,1},{1,2,4,8,16},{1,3,9,27,81}};
 
-#undef  __FUNCT__
-#define __FUNCT__ "ErrorSqr"
 static PetscErrorCode ErrorSqr(IGAPoint p,const PetscScalar U[],PetscInt dof,PetscScalar errsqr[],void *ctx)
 {
   ErrorCtx       *app = (ErrorCtx*)ctx;
@@ -124,8 +120,6 @@ static PetscErrorCode ErrorSqr(IGAPoint p,const PetscScalar U[],PetscInt dof,Pet
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeErrorNorm"
 /*@
    IGAComputeErrorNorm - Evaluates L2 norms and H^k seminorms.
 

@@ -17,8 +17,6 @@ PetscErrorCode IJacobian(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal 
 #include "lookup.hpp"
 
 extern "C"
-#undef  __FUNCT__
-#define __FUNCT__ Stringize(IJacobianCXX)
 PetscErrorCode IJacobianCXX(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal t,const PetscScalar U[],PetscScalar J[],void *ctx)
 {
   IGAFormIJacobian IJacobianP = NULL;

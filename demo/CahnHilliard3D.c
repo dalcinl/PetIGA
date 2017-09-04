@@ -8,8 +8,6 @@ typedef struct {
   PetscReal energy[3],time[3];
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "Mobility"
 void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M)
 {
   if (M)   *M   = c*(1-c);
@@ -17,8 +15,6 @@ void Mobility(AppCtx *user,PetscReal c,PetscReal *M,PetscReal *dM,PetscReal *d2M
   if (d2M) *d2M = -2;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "GinzburgLandauFreeEnergy"
 PetscScalar GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,PetscReal cz,AppCtx *user)
 {
   PetscReal E,omc = 1.0-c;
@@ -26,8 +22,6 @@ PetscScalar GinzburgLandauFreeEnergy(PetscReal c,PetscReal cx,PetscReal cy,Petsc
   return E;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Stats"
 PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscFunctionBegin;
@@ -42,8 +36,6 @@ PetscErrorCode Stats(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ChemicalPotential"
 void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,PetscReal *d2mu)
 {
   if (mu) {
@@ -60,8 +52,6 @@ void ChemicalPotential(AppCtx *user,PetscReal c,PetscReal *mu,PetscReal *dmu,Pet
   }
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -118,8 +108,6 @@ PetscErrorCode Residual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
@@ -190,8 +178,6 @@ PetscErrorCode Tangent(IGAPoint p,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],Vec C)
 {
   PetscErrorCode ierr;
@@ -215,8 +201,6 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],V
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *mctx)
 {
   PetscFunctionBegin;
@@ -228,8 +212,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,voi
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "StatsMonitor"
 PetscErrorCode StatsMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
@@ -255,8 +237,6 @@ PetscScalar EstimateSecondDerivative(AppCtx user)
   return dE;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -298,12 +278,13 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-10);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
+  ierr = TSSetMaxSNESFailures(ts,-1);CHKERRQ(ierr);
 
   if (monitor) {
     user.iga = iga;

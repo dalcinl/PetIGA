@@ -8,8 +8,6 @@ const char *const IGARuleTypes[] = {
   /* */
   "IGARuleType","IGA_RULE_",NULL};
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleCreate"
 PetscErrorCode IGARuleCreate(IGARule *_rule)
 {
   IGARule        rule;
@@ -21,8 +19,6 @@ PetscErrorCode IGARuleCreate(IGARule *_rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleDestroy"
 PetscErrorCode IGARuleDestroy(IGARule *_rule)
 {
   IGARule        rule;
@@ -38,8 +34,6 @@ PetscErrorCode IGARuleDestroy(IGARule *_rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleReset"
 PetscErrorCode IGARuleReset(IGARule rule)
 {
   PetscErrorCode ierr;
@@ -52,8 +46,6 @@ PetscErrorCode IGARuleReset(IGARule rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleReference"
 PetscErrorCode IGARuleReference(IGARule rule)
 {
   PetscFunctionBegin;
@@ -62,8 +54,6 @@ PetscErrorCode IGARuleReference(IGARule rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleCopy"
 PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
 {
   PetscErrorCode ierr;
@@ -85,8 +75,6 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleDuplicate"
 PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
 {
   PetscErrorCode ierr;
@@ -98,8 +86,6 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleSetType"
 PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type)
 {
   PetscErrorCode ierr;
@@ -111,8 +97,6 @@ PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleSetSize"
 PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp)
 {
   PetscErrorCode ierr;
@@ -131,8 +115,6 @@ PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp)
 static PetscErrorCode IGA_Rule_GaussLegendre (PetscInt q,PetscReal X[],PetscReal W[]);
 static PetscErrorCode IGA_Rule_GaussLobatto  (PetscInt q,PetscReal X[],PetscReal W[]);
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleSetUp"
 PetscErrorCode IGARuleSetUp(IGARule rule)
 {
   PetscErrorCode (*ComputeRule)(PetscInt,PetscReal[],PetscReal[]) = NULL;
@@ -161,8 +143,6 @@ PetscErrorCode IGARuleSetUp(IGARule rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleSetRule"
 PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const PetscReal w[])
 {
   PetscErrorCode ierr;
@@ -177,8 +157,6 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARuleGetRule"
 PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[])
 {
   PetscFunctionBegin;

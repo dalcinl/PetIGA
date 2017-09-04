@@ -8,10 +8,6 @@
  */
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 #define SQ(A) (A)*(A)
 
 PetscScalar Function(PetscReal x, PetscReal y, PetscReal z)
@@ -21,8 +17,6 @@ PetscScalar Function(PetscReal x, PetscReal y, PetscReal z)
   return exp( -( SQ(x-x0) / (2.*SQ(sigx)) + SQ(y-y0) / (2.*SQ(sigy) ) ) );
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -44,8 +38,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Error"
 PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscReal x[3] = {0,0,0};
@@ -64,8 +56,6 @@ PetscErrorCode Error(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,v
 
 #define MAX_BREAKS 1000
 
-#undef  __FUNCT__
-#define __FUNCT__ "ComputeError"
 PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MAX_BREAKS],PetscInt *N,PetscReal *error)
 {
   PetscErrorCode  ierr;
@@ -111,8 +101,6 @@ PetscErrorCode ComputeError(PetscInt dim,PetscInt p,PetscInt C,PetscReal (*U)[MA
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FindBestKnotToInsert"
 PetscErrorCode FindBestKnotToInsert(PetscInt dim,PetscInt idim,PetscInt p,PetscInt C,PetscReal (*U)[MAX_BREAKS],
 				    PetscInt *N,PetscInt *insert,PetscReal *min_error) 
 {
@@ -149,8 +137,6 @@ PetscErrorCode FindBestKnotToInsert(PetscInt dim,PetscInt idim,PetscInt p,PetscI
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;

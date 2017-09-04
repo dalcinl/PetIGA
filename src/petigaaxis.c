@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisCreate"
 PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
 {
   IGAAxis        axis;
@@ -28,8 +26,6 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisDestroy"
 PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
 {
   IGAAxis        axis;
@@ -45,8 +41,6 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisReset"
 PetscErrorCode IGAAxisReset(IGAAxis axis)
 {
   PetscErrorCode ierr;
@@ -76,8 +70,6 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisReference"
 PetscErrorCode IGAAxisReference(IGAAxis axis)
 {
   PetscFunctionBegin;
@@ -86,8 +78,6 @@ PetscErrorCode IGAAxisReference(IGAAxis axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisCopy"
 /*@
    IGAAxisCopy - Copies an axis. axis <-- base
 
@@ -128,8 +118,6 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisDuplicate"
 PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *_axis)
 {
   IGAAxis        axis;
@@ -143,8 +131,6 @@ PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *_axis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisSetPeriodic"
 /*@
    IGAAxisSetPeriodic - Sets the axis periodicity
 
@@ -166,8 +152,6 @@ PetscErrorCode IGAAxisSetPeriodic(IGAAxis axis,PetscBool periodic)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetPeriodic"
 PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
 {
   PetscFunctionBegin;
@@ -177,8 +161,6 @@ PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisSetDegree"
 /*@
    IGAAxisSetDegree - Sets the axis degree
 
@@ -206,8 +188,6 @@ PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetDegree"
 PetscErrorCode IGAAxisGetDegree(IGAAxis axis,PetscInt *p)
 {
   PetscFunctionBegin;
@@ -221,8 +201,6 @@ EXTERN_C_BEGIN
 extern PetscInt IGA_NextKnot (PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisSetKnots"
 PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 {
   PetscErrorCode ierr;
@@ -281,8 +259,6 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetKnots"
 PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 {
   PetscFunctionBegin;
@@ -294,8 +270,6 @@ PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetLimits"
 PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf)
 {
   PetscFunctionBegin;
@@ -307,8 +281,6 @@ PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetSizes"
 PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
 {
   PetscFunctionBegin;
@@ -320,8 +292,6 @@ PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisGetSpans"
 PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
 {
   PetscErrorCode ierr;
@@ -348,8 +318,6 @@ PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisInit"
 PetscErrorCode IGAAxisInit(IGAAxis axis,PetscInt p,PetscInt m,const PetscReal U[])
 {
   PetscErrorCode ierr;
@@ -361,8 +329,6 @@ PetscErrorCode IGAAxisInit(IGAAxis axis,PetscInt p,PetscInt m,const PetscReal U[
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisInitBreaks"
 PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],PetscInt C)
 {
   PetscInt       i,j,k;
@@ -426,8 +392,6 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisInitUniform"
 /*@
    IGAAxisInitUniform - Initializes an axis with uniformly spaces knots.
 
@@ -508,8 +472,6 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAxisSetUp"
 PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 {
   PetscErrorCode  ierr;

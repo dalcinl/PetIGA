@@ -16,8 +16,6 @@ PetscErrorCode System(const IGAPoint q,PetscScalar K[],PetscScalar F[],void *ctx
 #include "lookup.hpp"
 
 extern "C"
-#undef  __FUNCT__
-#define __FUNCT__ Stringize(SystemCXX)
 PetscErrorCode SystemCXX(IGAPoint q,PetscScalar K[],PetscScalar F[],void *ctx)
 {
   IGAFormSystem SystemP = NULL;

@@ -1,25 +1,13 @@
 #include "petiga.h"
 
 #include <petsclog.h>
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/dmdaimpl.h>
-#else
 #include <petsc/private/dmdaimpl.h>
-#endif
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscOptionsHasName(op,pr,nm,set) PetscOptionsHasName(pr,nm,set)
-#endif
-
-#if PETSC_VERSION_LT(3,5,0)
-#define DMBoundaryType       DMDABoundaryType
-#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
-#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
+#if PETSC_VERSION_LT(3,8,0)
+#define PC_MG_GALERKIN_BOTH PETSC_TRUE
 #endif
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDASetCoarseningFactor"
 PetscErrorCode DMDASetCoarseningFactor(DM da,PetscInt coarsen_x,PetscInt coarsen_y,PetscInt coarsen_z)
 {
   DM_DA *dd = (DM_DA*)da->data;
@@ -76,8 +64,6 @@ PetscErrorCode DMDACoarsenHook_PCMG(DM dm,DM dmc,void *ctx)
 {(void)dm; (void)ctx; return DMDAComputeCoarsenFactor(dmc);}
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDAComputeCoarsenLevels"
 PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 {
   PetscInt       i,dim,M[3],P[3];
@@ -98,8 +84,6 @@ PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 }
 
 static
-#undef  __FUNCT__
-#define __FUNCT__ "DMDAComputeCoarsenFactor"
 PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
 {
   PetscInt       i,dim,M[3],P[3];
@@ -119,8 +103,6 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPreparePCMG"
 PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
 {
   PetscBool      match,set;
@@ -142,7 +124,7 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
     PetscInt  levels;
     /* Use the Galerkin process to compute coarse-level operators */
     ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_galerkin",&set);CHKERRQ(ierr);
-    if (!set) {ierr = PCMGSetGalerkin(pc,PETSC_TRUE);CHKERRQ(ierr);}
+    if (!set) {ierr = PCMGSetGalerkin(pc,PC_MG_GALERKIN_BOTH);CHKERRQ(ierr);}
     /* Honor -pc_mg_levels 1 explicitly passed in the command line */
     ierr = PetscOptionsHasName(((PetscObject)pc)->options,prefix,"-pc_mg_levels",&set);CHKERRQ(ierr);
     ierr = PCMGGetLevels(pc,&levels);CHKERRQ(ierr);
@@ -156,16 +138,8 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
     ierr = PCSetDM(pc,da);CHKERRQ(ierr);
     /* Compute number of multigrid levels */
     if (levels <= 1) {
-#if PETSC_VERSION_GE(3,6,0) && PETSC_VERSION_LT(3,6,2)
-      PCMGType mgtype;
-      ierr = PCMGGetType(pc,&mgtype);CHKERRQ(ierr);
       ierr = DMDAComputeCoarsenLevels(da,&levels);CHKERRQ(ierr);
       ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);
-      ierr = PCMGSetType(pc,mgtype);CHKERRQ(ierr);
-#else
-      ierr = DMDAComputeCoarsenLevels(da,&levels);CHKERRQ(ierr);
-      ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);
-#endif
     }
     ierr = DMDAComputeCoarsenFactor(da);CHKERRQ(ierr);
     ierr = DMDestroy(&da);CHKERRQ(ierr);

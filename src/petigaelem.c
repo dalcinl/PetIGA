@@ -1,7 +1,5 @@
 #include "petiga.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementCreate"
 PetscErrorCode IGAElementCreate(IGAElement *_element)
 {
   IGAElement     element;
@@ -16,8 +14,6 @@ PetscErrorCode IGAElementCreate(IGAElement *_element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementDestroy"
 PetscErrorCode IGAElementDestroy(IGAElement *_element)
 {
   IGAElement     element;
@@ -34,8 +30,6 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementReference"
 PetscErrorCode IGAElementReference(IGAElement element)
 {
   PetscFunctionBegin;
@@ -44,8 +38,6 @@ PetscErrorCode IGAElementReference(IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFreeWork"
 static
 PetscErrorCode IGAElementFreeWork(IGAElement element)
 {
@@ -70,8 +62,6 @@ PetscErrorCode IGAElementFreeWork(IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFreeFix"
 static
 PetscErrorCode IGAElementFreeFix(IGAElement element)
 {
@@ -88,8 +78,6 @@ PetscErrorCode IGAElementFreeFix(IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementReset"
 PetscErrorCode IGAElementReset(IGAElement element)
 {
   PetscErrorCode ierr;
@@ -149,8 +137,6 @@ PetscErrorCode IGAElementReset(IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementInit"
 PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 {
   PetscErrorCode ierr;
@@ -276,8 +262,6 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetElement"
 PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
 {
   PetscFunctionBegin;
@@ -287,8 +271,6 @@ PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGABeginElement"
 PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
 {
   IGAElement     element;
@@ -390,8 +372,6 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGANextElement"
 PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
 {
   PetscInt i,dim  = element->dim;
@@ -429,8 +409,6 @@ PetscBool IGANextElement(PETSC_UNUSED IGA iga,IGAElement element)
   PetscFunctionReturn(PETSC_FALSE);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAEndElement"
 PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
 {
   PetscFunctionBegin;
@@ -446,8 +424,6 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementNextForm"
 PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[3][2])
 {
   PetscInt dim = element->dim;
@@ -470,8 +446,6 @@ PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[3][2])
   PetscFunctionReturn(PETSC_FALSE);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetPoint"
 PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point)
 {
   PetscFunctionBegin;
@@ -481,8 +455,6 @@ PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementBeginPoint"
 PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *_point)
 {
   IGAPoint       point;
@@ -502,8 +474,6 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *_point)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementNextPoint"
 PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
 {
   PetscInt nen  = point->nen;
@@ -621,8 +591,6 @@ PetscBool IGAElementNextPoint(IGAElement element,IGAPoint point)
   PetscFunctionReturn(PETSC_FALSE);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementEndPoint"
 PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
 {
   PetscErrorCode ierr;
@@ -652,8 +620,6 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
  PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetParent"
 PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent)
 {
   PetscFunctionBegin;
@@ -663,8 +629,6 @@ PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetIndex"
 PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index)
 {
   PetscFunctionBegin;
@@ -674,8 +638,6 @@ PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetCount"
 PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count)
 {
   PetscFunctionBegin;
@@ -685,8 +647,6 @@ PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetSizes"
 PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
   PetscFunctionBegin;
@@ -700,8 +660,6 @@ PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetClosure"
 PetscErrorCode IGAElementGetClosure(IGAElement element,PetscInt *nen,const PetscInt *mapping[])
 {
   PetscFunctionBegin;
@@ -713,8 +671,6 @@ PetscErrorCode IGAElementGetClosure(IGAElement element,PetscInt *nen,const Petsc
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetIndices"
 PetscErrorCode IGAElementGetIndices(IGAElement element,
                                     PetscInt *neq,const PetscInt *rowmap[],
                                     PetscInt *nen,const PetscInt *colmap[])
@@ -734,8 +690,6 @@ PetscErrorCode IGAElementGetIndices(IGAElement element,
 
 /* -------------------------------------------------------------------------- */
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementBuildClosure"
 PetscErrorCode IGAElementBuildClosure(IGAElement element)
 {
   PetscFunctionBegin;
@@ -837,8 +791,6 @@ PetscInt IGA_Quadrature_SIZE(const IGABasis BD[],const PetscInt ID[],PetscInt NQ
 #define IGA_BasisFuns_BNDR(BD,ID,NQ,i,s) \
   1,BD[i]->nen,BD[i]->bnd_value[s]
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementBuildTabulation"
 PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 {
   PetscInt axis = PETSC_MAX_INT;
@@ -1083,8 +1035,6 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 
 /* -------------------------------------------------------------------------- */
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetWorkVec"
 PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
 {
   PetscErrorCode ierr;
@@ -1103,8 +1053,6 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetWorkMat"
 PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
 {
   PetscErrorCode ierr;
@@ -1124,8 +1072,6 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementGetValues"
 PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[],PetscScalar *_U[])
 {
   PetscScalar    *U;
@@ -1315,8 +1261,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementBuildFix"
 PetscErrorCode IGAElementBuildFix(IGAElement element)
 {
   PetscFunctionBegin;
@@ -1381,8 +1325,6 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementDelValues"
 PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[])
 {
   PetscFunctionBegin;
@@ -1399,8 +1341,6 @@ PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFixValues"
 PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
 {
   PetscFunctionBegin;
@@ -1418,8 +1358,6 @@ PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFixSystem"
 PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[])
 {
   PetscFunctionBegin;
@@ -1501,8 +1439,6 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFixFunction"
 PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
 {
   PetscFunctionBegin;
@@ -1545,8 +1481,6 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementFixJacobian"
 PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
 {
   PetscFunctionBegin;
@@ -1589,8 +1523,6 @@ PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementAssembleVec"
 PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Vec vec)
 {
   PetscInt       mm,*ii;
@@ -1608,8 +1540,6 @@ PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Ve
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAElementAssembleMat"
 PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Mat mat)
 {
   PetscInt       mm,*ii;

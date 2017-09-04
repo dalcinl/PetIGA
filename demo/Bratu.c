@@ -29,8 +29,6 @@ extern PetscErrorCode Bratu_IJacobian(IGAPoint,
                                       PetscScalar *F,void *ctx);
 EXTERN_C_END
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -95,7 +93,7 @@ int main(int argc, char *argv[]) {
     SNES snes;
     ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
     ierr = TSSetType(ts,TSTHETA);CHKERRQ(ierr);
-    ierr = TSSetDuration(ts,10000,0.1);CHKERRQ(ierr);
+    ierr = TSSetMaxTime(ts,0.1);CHKERRQ(ierr);
     ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
     ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
     ierr = TSGetSNES(ts,&snes);CHKERRQ(ierr);

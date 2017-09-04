@@ -23,8 +23,6 @@ typedef struct {
   PetscReal tau2;
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "Function"
 PetscErrorCode Function(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
@@ -77,8 +75,6 @@ PetscErrorCode Function(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U1,
@@ -144,8 +140,6 @@ PetscErrorCode Jacobian(IGAPoint p,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -204,7 +198,7 @@ int main(int argc, char *argv[]) {
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSBEULER);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,120,10000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxSteps(ts,120);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTime(ts,0.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,dt);CHKERRQ(ierr);

@@ -4,12 +4,6 @@
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
 static       PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
-#if PETSC_VERSION_LT(3,6,0)
-#define PetscViewerBinaryRead(vw,p,n,c,dt) PetscViewerBinaryRead(vw,p,n,dt)
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGALoad"
 PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -74,8 +68,6 @@ PetscErrorCode IGALoad(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASave"
 PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -142,8 +134,6 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_NewGridIO"
 static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
 {
   PetscErrorCode ierr;
@@ -164,8 +154,6 @@ static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetGeometryDim"
 /*@
    IGASetGeometryDim - Sets the dimension of the geometry
 
@@ -199,8 +187,6 @@ PetscErrorCode IGASetGeometryDim(IGA iga,PetscInt dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetGeometryDim"
 PetscErrorCode IGAGetGeometryDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
@@ -210,8 +196,6 @@ PetscErrorCode IGAGetGeometryDim(IGA iga,PetscInt *dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALoadGeometry"
 PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -300,8 +284,6 @@ PetscErrorCode IGALoadGeometry(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASaveGeometry"
 PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -372,8 +354,6 @@ PetscErrorCode IGASaveGeometry(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetPropertyDim"
 /*@
    IGASetPropertyDim - Sets the dimension of the property
 
@@ -401,8 +381,6 @@ PetscErrorCode IGASetPropertyDim(IGA iga,PetscInt dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetPropertyDim"
 PetscErrorCode IGAGetPropertyDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
@@ -412,8 +390,6 @@ PetscErrorCode IGAGetPropertyDim(IGA iga,PetscInt *dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALoadProperty"
 PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -483,8 +459,6 @@ PetscErrorCode IGALoadProperty(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASaveProperty"
 PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer)
 {
   PetscBool      isbinary;
@@ -546,8 +520,6 @@ PetscErrorCode IGASaveProperty(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARead"
 /*@
    IGARead - reads a IGA which has been saved in binary format
 
@@ -584,8 +556,6 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAWrite"
 /*@
    IGAWrite - writes a IGA to a file in binary format
 
@@ -623,8 +593,6 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "VecLoad_Binary_SkipHeader"
 static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
 {
   MPI_Comm       comm;
@@ -670,8 +638,6 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALoadVec"
 PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
 {
   Vec            natural;
@@ -692,8 +658,6 @@ PetscErrorCode IGALoadVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASaveVec"
 PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
 {
   Vec            natural;
@@ -715,8 +679,6 @@ PetscErrorCode IGASaveVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAReadVec"
 PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
 {
   MPI_Comm       comm;
@@ -743,8 +705,6 @@ PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAWriteVec"
 PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
 {
   MPI_Comm       comm;

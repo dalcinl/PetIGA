@@ -36,8 +36,6 @@ PetscScalar SUPG(PetscReal tau, PetscReal W[3], PetscScalar R[3])
   return r;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -115,8 +113,6 @@ PetscErrorCode Residual(IGAPoint p,
 }
 
 /*
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint p,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
@@ -127,8 +123,6 @@ PetscErrorCode Tangent(IGAPoint p,
 }
 */
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,PetscReal t,Vec U)
 {
   PetscErrorCode ierr;
@@ -164,8 +158,6 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,PetscReal t,Vec U)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -230,12 +222,12 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   user.ts = ts;
 
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   //ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   PetscReal dx = 1.0/PetscMax(N[0],N[1]);
   PetscReal dt = 0.5 * dx/sqrt(user.gravity*user.a);
   ierr = TSSetTimeStep(ts,dt);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1000.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
 

@@ -1,12 +1,10 @@
 #include "petiga.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/vecimpl.h>
-#else
 #include <petsc/private/vecimpl.h>
+
+#if PETSC_VERSION_LT(3,8,0)
+#define PETSCVIEWERGLVIS "glvis"
 #endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "VecDuplicate_IGA"
 static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
 {
   IGA            iga;
@@ -17,23 +15,23 @@ static PetscErrorCode VecDuplicate_IGA(Vec g,Vec* gg)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "VecView_IGA"
 static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
 {
   IGA            iga;
   DM             dm;
   Vec            dmvec;
   const char*    name;
-  PetscBool      isvtk,isdraw;
+  PetscBool      match;
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = PetscObjectQuery((PetscObject)v,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&isvtk);CHKERRQ(ierr);
-  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&isdraw);CHKERRQ(ierr);
-  if (isvtk)  {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
-  if (isdraw) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&match);CHKERRQ(ierr);
+  if (match)  {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&match);CHKERRQ(ierr);
+  if (match) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERGLVIS,&match);CHKERRQ(ierr);
+  if (match) {ierr = IGADrawVec(iga,v,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
   ierr = IGAGetNodeDM(iga,&dm);CHKERRQ(ierr);
   ierr = DMGetGlobalVector(dm,&dmvec);CHKERRQ(ierr);
   ierr = PetscObjectGetName((PetscObject)v,&name);CHKERRQ(ierr);
@@ -43,8 +41,6 @@ static PetscErrorCode VecView_IGA(Vec v,PetscViewer viewer)
   ierr = DMRestoreGlobalVector(dm,&dmvec);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef  __FUNCT__
-#define __FUNCT__ "VecLoad_IGA"
 static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
 {
   IGA            iga;
@@ -62,8 +58,6 @@ static PetscErrorCode VecLoad_IGA(Vec v,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateVec"
 /*@
    IGACreateVec - Creates a vector with the correct parallel layout
    required for computing a vector using the discretization
@@ -98,8 +92,6 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateLocalVec"
 PetscErrorCode IGACreateLocalVec(IGA iga,Vec *vec)
 {
   PetscInt       bs,n;
@@ -120,8 +112,6 @@ PetscErrorCode IGACreateLocalVec(IGA iga,Vec *vec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetLocalVec"
 PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
 {
   PetscErrorCode ierr;
@@ -138,8 +128,6 @@ PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARestoreLocalVec"
 PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
 {
   PetscErrorCode ierr;
@@ -156,8 +144,6 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGlobalToLocalBegin"
 PetscErrorCode IGAGlobalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -170,8 +156,6 @@ PetscErrorCode IGAGlobalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGlobalToLocalEnd"
 PetscErrorCode IGAGlobalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -184,8 +168,6 @@ PetscErrorCode IGAGlobalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGlobalToLocal"
 PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -195,8 +177,6 @@ PetscErrorCode IGAGlobalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToGlobalBegin"
 PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -213,8 +193,6 @@ PetscErrorCode IGALocalToGlobalBegin(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToGlobalEnd"
 PetscErrorCode IGALocalToGlobalEnd(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -231,8 +209,6 @@ PetscErrorCode IGALocalToGlobalEnd(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToGlobal"
 PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -242,8 +218,6 @@ PetscErrorCode IGALocalToGlobal(IGA iga,Vec lvec,Vec gvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToLocalBegin"
 PetscErrorCode IGALocalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -257,8 +231,6 @@ PetscErrorCode IGALocalToLocalBegin(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToLocalEnd"
 PetscErrorCode IGALocalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -272,8 +244,6 @@ PetscErrorCode IGALocalToLocalEnd(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGALocalToLocal"
 PetscErrorCode IGALocalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
 {
   PetscErrorCode ierr;
@@ -283,8 +253,6 @@ PetscErrorCode IGALocalToLocal(IGA iga,Vec gvec,Vec lvec,InsertMode addv)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetLocalVecArray"
 PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[])
 {
   PetscErrorCode ierr;
@@ -300,8 +268,6 @@ PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar 
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGARestoreLocalVecArray"
 PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar *array[])
 {
   PetscErrorCode ierr;
@@ -317,8 +283,6 @@ PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscSca
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetNaturalVec"
 PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec)
 {
   PetscFunctionBegin;
@@ -329,8 +293,6 @@ PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGANaturalToGlobal"
 PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec)
 {
   PetscErrorCode ierr;
@@ -344,8 +306,6 @@ PetscErrorCode IGANaturalToGlobal(IGA iga,Vec nvec,Vec gvec)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGlobalToNatural"
 PetscErrorCode IGAGlobalToNatural(IGA iga,Vec gvec,Vec nvec)
 {
   PetscErrorCode ierr;

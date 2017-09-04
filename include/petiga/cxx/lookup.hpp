@@ -176,13 +176,13 @@
 
 #define SelectNen1(Template,dim,nen,dof)              \
   switch (nen) {                                      \
-    HandleNen1(Template,dim,1,dof)                    \
-    HandleNen1(Template,dim,2,dof)                    \
-    HandleNen1(Template,dim,3,dof)                    \
-    HandleNen1(Template,dim,4,dof)                    \
-    HandleNen1(Template,dim,5,dof)                    \
+    HandleDeg1(Template,dim,1,dof)                    \
+    HandleDeg1(Template,dim,2,dof)                    \
+    HandleDeg1(Template,dim,3,dof)                    \
+    HandleDeg1(Template,dim,4,dof)                    \
+    HandleDeg1(Template,dim,5,dof)                    \
     default: break; }
-#define HandleNen1(Template,dim,p,dof)                \
+#define HandleDeg1(Template,dim,p,dof)                \
   EnableDeg##p(                                       \
   case (p+1): {                                       \
     SelectDof(Template,dim,(p+1),dof)                 \
@@ -190,22 +190,22 @@
 
 #define SelectNen2(Template,dim,nen,dof)              \
   switch (nen) {                                      \
-    HandleNen2(Template,dim,1,1,dof)                  \
-    HandleNen2(Template,dim,1,2,dof)                  \
-    HandleNen2(Template,dim,1,3,dof)                  \
-    HandleNen2(Template,dim,2,2,dof)                  \
-    HandleNen2(Template,dim,1,4,dof)                  \
-    HandleNen2(Template,dim,2,3,dof)                  \
-    HandleNen2(Template,dim,2,4,dof)                  \
-    HandleNen2(Template,dim,3,3,dof)                  \
-    HandleNen2(Template,dim,2,5,dof)                  \
-    HandleNen2(Template,dim,3,4,dof)                  \
-    HandleNen2(Template,dim,3,5,dof)                  \
-    HandleNen2(Template,dim,4,4,dof)                  \
-    HandleNen2(Template,dim,4,5,dof)                  \
-    HandleNen2(Template,dim,5,5,dof)                  \
+    HandleDeg2(Template,dim,1,1,dof)                  \
+    HandleDeg2(Template,dim,1,2,dof)                  \
+    HandleDeg2(Template,dim,1,3,dof)                  \
+    HandleDeg2(Template,dim,2,2,dof)                  \
+    HandleDeg2(Template,dim,1,4,dof)                  \
+    HandleDeg2(Template,dim,2,3,dof)                  \
+    HandleDeg2(Template,dim,2,4,dof)                  \
+    HandleDeg2(Template,dim,3,3,dof)                  \
+    HandleDeg2(Template,dim,2,5,dof)                  \
+    HandleDeg2(Template,dim,3,4,dof)                  \
+    HandleDeg2(Template,dim,3,5,dof)                  \
+    HandleDeg2(Template,dim,4,4,dof)                  \
+    HandleDeg2(Template,dim,4,5,dof)                  \
+    HandleDeg2(Template,dim,5,5,dof)                  \
   default: break; }                                  //
-#define HandleNen2(Template,dim,p,q,dof)              \
+#define HandleDeg2(Template,dim,p,q,dof)              \
   EnableDeg##p(EnableDeg##q(                          \
   case ((p+1)*(q+1)): {                               \
     SelectDof(Template,dim,((p+1)*(q+1)),dof)         \
@@ -213,38 +213,38 @@
 
 #define SelectNen3(Template,dim,nen,dof)              \
   switch (nen) {                                      \
-    HandleNen3(Template,dim,1,1,1,dof)                \
-    HandleNen3(Template,dim,1,1,2,dof)                \
-    HandleNen3(Template,dim,1,1,3,dof)                \
-    HandleNen3(Template,dim,1,2,2,dof)                \
-    HandleNen3(Template,dim,1,1,4,dof)                \
-    HandleNen3(Template,dim,1,2,3,dof)                \
-    HandleNen3(Template,dim,2,2,2,dof)                \
-    HandleNen3(Template,dim,1,2,4,dof)                \
-    HandleNen3(Template,dim,1,3,3,dof)                \
-    HandleNen3(Template,dim,2,2,3,dof)                \
-    HandleNen3(Template,dim,1,3,4,dof)                \
-    HandleNen3(Template,dim,2,2,4,dof)                \
-    HandleNen3(Template,dim,2,3,3,dof)                \
-    HandleNen3(Template,dim,1,4,4,dof)                \
-    HandleNen3(Template,dim,2,2,5,dof)                \
-    HandleNen3(Template,dim,2,3,4,dof)                \
-    HandleNen3(Template,dim,3,3,3,dof)                \
-    HandleNen3(Template,dim,2,3,5,dof)                \
-    HandleNen3(Template,dim,2,4,4,dof)                \
-    HandleNen3(Template,dim,3,3,4,dof)                \
-    HandleNen3(Template,dim,2,4,5,dof)                \
-    HandleNen3(Template,dim,3,3,5,dof)                \
-    HandleNen3(Template,dim,3,4,4,dof)                \
-    HandleNen3(Template,dim,2,5,5,dof)                \
-    HandleNen3(Template,dim,3,4,5,dof)                \
-    HandleNen3(Template,dim,4,4,4,dof)                \
-    HandleNen3(Template,dim,3,5,5,dof)                \
-    HandleNen3(Template,dim,4,4,5,dof)                \
-    HandleNen3(Template,dim,4,5,5,dof)                \
-    HandleNen3(Template,dim,5,5,5,dof)                \
+    HandleDeg3(Template,dim,1,1,1,dof)                \
+    HandleDeg3(Template,dim,1,1,2,dof)                \
+    HandleDeg3(Template,dim,1,1,3,dof)                \
+    HandleDeg3(Template,dim,1,2,2,dof)                \
+    HandleDeg3(Template,dim,1,1,4,dof)                \
+    HandleDeg3(Template,dim,1,2,3,dof)                \
+    HandleDeg3(Template,dim,2,2,2,dof)                \
+    HandleDeg3(Template,dim,1,2,4,dof)                \
+    HandleDeg3(Template,dim,1,3,3,dof)                \
+    HandleDeg3(Template,dim,2,2,3,dof)                \
+    HandleDeg3(Template,dim,1,3,4,dof)                \
+    HandleDeg3(Template,dim,2,2,4,dof)                \
+    HandleDeg3(Template,dim,2,3,3,dof)                \
+    HandleDeg3(Template,dim,1,4,4,dof)                \
+    HandleDeg3(Template,dim,2,2,5,dof)                \
+    HandleDeg3(Template,dim,2,3,4,dof)                \
+    HandleDeg3(Template,dim,3,3,3,dof)                \
+    HandleDeg3(Template,dim,2,3,5,dof)                \
+    HandleDeg3(Template,dim,2,4,4,dof)                \
+    HandleDeg3(Template,dim,3,3,4,dof)                \
+    HandleDeg3(Template,dim,2,4,5,dof)                \
+    HandleDeg3(Template,dim,3,3,5,dof)                \
+    HandleDeg3(Template,dim,3,4,4,dof)                \
+    HandleDeg3(Template,dim,2,5,5,dof)                \
+    HandleDeg3(Template,dim,3,4,5,dof)                \
+    HandleDeg3(Template,dim,4,4,4,dof)                \
+    HandleDeg3(Template,dim,3,5,5,dof)                \
+    HandleDeg3(Template,dim,4,4,5,dof)                \
+    HandleDeg3(Template,dim,4,5,5,dof)                \
+    HandleDeg3(Template,dim,5,5,5,dof)                \
   default: break; }                                  //
-#define HandleNen3(Template,dim,p,q,r,dof)            \
+#define HandleDeg3(Template,dim,p,q,r,dof)            \
   EnableDeg##p(EnableDeg##q(EnableDeg##r(             \
   case ((p+1)*(q+1)*(r+1)): {                         \
     SelectDof(Template,dim,((p+1)*(q+1)*(r+1)),dof)   \
@@ -280,8 +280,5 @@
       SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_USER,                        \
                #Template " unavailable for dim=%D, nen=%D, dof=%D",   \
                q->dim,q->nen,q->dof);return PETSC_ERR_USER;}}while(0)
-
-#define StringizeArg(s) #s
-#define Stringize(s) StringizeArg(s)
 
 #endif

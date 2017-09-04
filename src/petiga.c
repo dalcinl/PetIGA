@@ -1,8 +1,6 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreate"
 /*@
    IGACreate - Creates the default IGA context.
 
@@ -29,11 +27,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 
   *newiga = NULL;
-#if PETSC_VERSION_LT(3,6,0)
-  ierr = PetscHeaderCreate(iga,_p_IGA,struct _IGAOps,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#else
   ierr = PetscHeaderCreate(iga,IGA_CLASSID,"IGA","IGA","IGA",comm,IGADestroy,IGAView);CHKERRQ(ierr);
-#endif
   *newiga = iga;
 
   iga->dim = -1;
@@ -54,8 +48,6 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGADestroy"
 /*@
    IGADestroy - Destroys the IGA context.
 
@@ -102,8 +94,6 @@ PetscErrorCode IGADestroy(IGA *_iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAReset"
 PetscErrorCode IGAReset(IGA iga)
 {
   PetscErrorCode ierr;
@@ -170,13 +160,6 @@ void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
   if (axis->nel==1 && !axis->periodic) (void)PetscStrcpy(buf,"*");
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscViewerASCIIPushSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_TRUE)
-#define PetscViewerASCIIPopSynchronized(viewer) PetscViewerASCIISynchronizedAllow(viewer,PETSC_FALSE)
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPrint"
 PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
 {
   PetscBool      match;
@@ -251,8 +234,6 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAView"
 PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 {
   PetscBool      match;
@@ -273,14 +254,6 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscOptionsSetValue(op,nm,vl)       PetscOptionsSetValue(nm,vl)
-#define PetscOptionsClearValue(op,nm)        PetscOptionsClearValue(nm)
-#define PetscOptionsGetBool(op,pr,nm,vl,set) PetscOptionsGetBool(pr,nm,vl,set)
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAViewFromOptions"
 PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[])
 {
 
@@ -306,8 +279,6 @@ PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetComm"
 PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
 {
   PetscFunctionBegin;
@@ -317,8 +288,6 @@ PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetDim"
 /*@
    IGASetDim - Sets the dimension of the parameter space
 
@@ -347,8 +316,6 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetDim"
 PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
@@ -358,8 +325,6 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetDof"
 /*@
    IGASetDof - Sets the number of degrees of freedom per basis
 
@@ -388,8 +353,6 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetDof"
 PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 {
   PetscFunctionBegin;
@@ -399,8 +362,6 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetName"
 PetscErrorCode IGASetName(IGA iga,const char name[])
 {
   PetscErrorCode ierr;
@@ -411,8 +372,6 @@ PetscErrorCode IGASetName(IGA iga,const char name[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetName"
 PetscErrorCode IGAGetName(IGA iga,const char *name[])
 {
   PetscFunctionBegin;
@@ -422,8 +381,6 @@ PetscErrorCode IGAGetName(IGA iga,const char *name[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFieldName"
 /*@
    IGASetFieldName - Sets the names of individual field components in
    multicomponent vectors associated with a IGA.
@@ -461,8 +418,6 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetFieldName"
 PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
 {
   PetscFunctionBegin;
@@ -478,8 +433,6 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOrder"
 /*@
    IGASetOrder - Sets the maximum available derivative order
    for basis and shape functions.
@@ -511,8 +464,6 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetOrder"
 PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
 {
   PetscFunctionBegin;
@@ -522,8 +473,6 @@ PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetBasisType"
 PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
 {
   IGABasis       basis;
@@ -543,8 +492,6 @@ PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetRuleType"
 PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type)
 {
   IGARule        rule;
@@ -560,8 +507,6 @@ PetscErrorCode IGASetRuleType(IGA iga,PetscInt i,IGARuleType type)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetRuleSize"
 PetscErrorCode IGASetRuleSize(IGA iga,PetscInt i,PetscInt nqp)
 {
   IGARule        rule;
@@ -577,8 +522,6 @@ PetscErrorCode IGASetRuleSize(IGA iga,PetscInt i,PetscInt nqp)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetQuadrature"
 PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
 {
   IGARule        rule;
@@ -596,8 +539,6 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetProcessors"
 PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
 {
   PetscMPIInt    size;
@@ -630,8 +571,6 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUseCollocation"
 PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
 {
   PetscFunctionBegin;
@@ -644,8 +583,6 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetAxis"
 /*@
    IGAGetAxis - Returns a pointer to the i^th parametric axis associated with the IGA
 
@@ -691,8 +628,6 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
 
 .keywords: IGA, quadrature rule
 @*/
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetRule"
 PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
 {
   PetscInt dim;
@@ -706,8 +641,6 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetBasis"
 PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
 {
   PetscInt dim;
@@ -721,8 +654,6 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetOptionsPrefix"
 PetscErrorCode IGAGetOptionsPrefix(IGA iga,const char *prefix[])
 {
   PetscErrorCode ierr;
@@ -732,8 +663,6 @@ PetscErrorCode IGAGetOptionsPrefix(IGA iga,const char *prefix[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsPrefix"
 PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[])
 {
   PetscErrorCode ierr;
@@ -743,8 +672,6 @@ PetscErrorCode IGASetOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAPrependOptionsPrefix"
 PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[])
 {
   PetscErrorCode ierr;
@@ -754,8 +681,6 @@ PetscErrorCode IGAPrependOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAAppendOptionsPrefix"
 PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
 {
   PetscErrorCode ierr;
@@ -765,20 +690,6 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-#define PetscObjectProcessOptionsHandlers(op,ob) PetscObjectProcessOptionsHandlers(ob)
-#endif
-
-#if PETSC_VERSION_LT(3,6,0)
-PETSC_EXTERN PetscErrorCode PetscOptionsEnumArray(const char[],const char[],const char[],const char *const *list,PetscEnum[],PetscInt*,PetscBool*);
-#endif
-
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscOptionsFList PetscOptionsList
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetFromOptions"
 /*@
    IGASetFromOptions - Call this in your code to allow IGA options to
    be set from the command line. This routine should be called before
@@ -982,8 +893,6 @@ PetscErrorCode IGASetFromOptions(IGA iga)
 
 PETSC_EXTERN PetscErrorCode IGACreateSubComms1D(IGA,MPI_Comm[]);
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateSubComms1D"
 PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
 {
   MPI_Comm       comm;
@@ -1019,14 +928,6 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-#define DMBoundaryType       DMDABoundaryType
-#define DM_BOUNDARY_NONE     DMDA_BOUNDARY_NONE
-#define DM_BOUNDARY_PERIODIC DMDA_BOUNDARY_PERIODIC
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateDMDA"
 PetscErrorCode IGACreateDMDA(IGA iga,
                              PetscInt bs,
                              const PetscInt  gsizes[],
@@ -1073,11 +974,7 @@ PetscErrorCode IGACreateDMDA(IGA iga,
     ierr = MPI_Comm_free(&subcomms[i]);CHKERRQ(ierr);
   }
   ierr = DMDACreate(((PetscObject)iga)->comm,&da);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,6,0)
-  ierr = DMDASetDim(da,dim);CHKERRQ(ierr);
-#else
   ierr = DMSetDimension(da,dim);CHKERRQ(ierr);
-#endif
   ierr = DMDASetDof(da,bs);CHKERRQ(ierr);
   ierr = DMDASetNumProcs(da,procs[0],procs[1],procs[2]);CHKERRQ(ierr);
   ierr = DMDASetSizes(da,sizes[0],sizes[1],sizes[2]);CHKERRQ(ierr);
@@ -1092,8 +989,6 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateElemDM"
 PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
 {
   PetscErrorCode ierr;
@@ -1107,8 +1002,6 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateGeomDM"
 PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
 {
   PetscErrorCode ierr;
@@ -1122,8 +1015,6 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateNodeDM"
 /*@
    IGACreateNodeDM - Creates a DM using the distributed pattern of the
    nodes of the IGA.
@@ -1161,8 +1052,6 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetElemDM"
 PetscErrorCode IGAGetElemDM(IGA iga,DM *dm)
 {
   PetscErrorCode ierr;
@@ -1175,8 +1064,6 @@ PetscErrorCode IGAGetElemDM(IGA iga,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetGeomDM"
 PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm)
 {
   PetscErrorCode ierr;
@@ -1189,8 +1076,6 @@ PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAGetNodeDM"
 PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
 {
   PetscInt       i;
@@ -1218,8 +1103,6 @@ extern PetscInt  IGA_FindSpan(PetscInt n,PetscInt p,PetscReal u, const PetscReal
 EXTERN_C_END
 
 PETSC_EXTERN PetscErrorCode IGASetUp_Stage1(IGA);
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUp_Stage1"
 PetscErrorCode IGASetUp_Stage1(IGA iga)
 {
   PetscInt       i,dim;
@@ -1422,8 +1305,6 @@ PetscErrorCode IGASetUp_Stage1(IGA iga)
 }
 
 PETSC_EXTERN PetscErrorCode IGASetUp_Stage2(IGA);
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUp_Stage2"
 PetscErrorCode IGASetUp_Stage2(IGA iga)
 {
   PetscErrorCode ierr;
@@ -1489,8 +1370,6 @@ PetscErrorCode IGASetUp_Stage2(IGA iga)
 
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUp_Basic"
 PetscErrorCode IGASetUp_Basic(IGA iga)
 {
   PetscErrorCode ierr;
@@ -1501,8 +1380,6 @@ PetscErrorCode IGASetUp_Basic(IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUp_View"
 static PetscErrorCode IGASetUp_View(IGA iga)
 {
   PetscBool      ascii = PETSC_FALSE;
@@ -1552,8 +1429,6 @@ static PetscErrorCode IGASetUp_View(IGA iga)
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetUp"
 /*@
    IGASetUp - Sets up the internal data structures for the later use
    of the IGA.
@@ -1613,8 +1488,6 @@ PetscErrorCode IGASetUp(IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAClone"
 PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
 {
   MPI_Comm       comm;
@@ -1687,8 +1560,6 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetVecType"
 PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
 {
   char           *vtype;
@@ -1702,8 +1573,6 @@ PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetMatType"
 PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
 {
   char           *mtype;

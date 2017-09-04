@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 static void Function(PetscReal xyz[3],PetscReal *F)
 {
   PetscReal x = xyz[0];
@@ -47,8 +43,6 @@ static void ThirdDer(PetscReal xyz[3],PetscReal D[3][3][3])
   D[2][2][2] = 6;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -76,8 +70,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
       SETERRQ2(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
   } while(0)
 
-#undef  __FUNCT__
-#define __FUNCT__ "Test"
 PetscErrorCode Test(IGAProbe prb,PetscReal u[])
 {
   PetscInt       i,j,k,dim = prb->dim;
@@ -122,8 +114,6 @@ PetscErrorCode Test(IGAProbe prb,PetscReal u[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscBool      collective = PETSC_TRUE;

@@ -20,8 +20,6 @@ PetscBool IGAElementNextFormIJacobian(IGAElement element,IGAFormIJacobian *jac,v
   return PETSC_TRUE;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeIFunction"
 PetscErrorCode IGAComputeIFunction(IGA iga,
                                    PetscReal a,Vec vecV,
                                    PetscReal t,Vec vecU,
@@ -91,8 +89,6 @@ PetscErrorCode IGAComputeIFunction(IGA iga,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeIJacobian"
 PetscErrorCode IGAComputeIJacobian(IGA iga,
                                    PetscReal a,Vec vecV,
                                    PetscReal t,Vec vecU,
@@ -183,8 +179,6 @@ PetscBool IGAElementNextFormIEJacobian(IGAElement element,IGAFormIEJacobian *jac
   return PETSC_TRUE;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeIEFunction"
 PetscErrorCode IGAComputeIEFunction(IGA iga,
                                     PetscReal a, Vec vecV,
                                     PetscReal t, Vec vecU,
@@ -262,8 +256,6 @@ PetscErrorCode IGAComputeIEFunction(IGA iga,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeIEJacobian"
 PetscErrorCode IGAComputeIEJacobian(IGA iga,
                                     PetscReal a, Vec vecV,
                                     PetscReal t, Vec vecU,
@@ -362,8 +354,6 @@ PetscBool IGAElementNextFormRHSJacobian(IGAElement element,IGAFormRHSJacobian *j
   return PETSC_TRUE;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeRHSFunction"
 PetscErrorCode IGAComputeRHSFunction(IGA iga,
                                      PetscReal t,Vec vecU,
                                      Vec vecF)
@@ -425,8 +415,6 @@ PetscErrorCode IGAComputeRHSFunction(IGA iga,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeRHSJacobian"
 PetscErrorCode IGAComputeRHSJacobian(IGA iga,
                                      PetscReal t,Vec vecU,
                                      Mat matJ)
@@ -488,8 +476,6 @@ PetscErrorCode IGAComputeRHSJacobian(IGA iga,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGATSFormIFunction"
 PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -517,8 +503,6 @@ PetscErrorCode IGATSFormIFunction(TS ts,PetscReal t,Vec U,Vec V,Vec F,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGATSFormIJacobian"
 PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat J,Mat P,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -551,15 +535,6 @@ PetscErrorCode IGATSFormIJacobian(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGATSFormIJacobian_Legacy(TS,PetscReal,Vec,Vec,PetscReal,Mat*,Mat*,MatStructure*,void*);
-PetscErrorCode IGATSFormIJacobian_Legacy(TS ts,PetscReal t,Vec U,Vec V,PetscReal shift,Mat *J,Mat *P,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN; return IGATSFormIJacobian(ts,t,U,V,shift,*J,*P,ctx);}
-#define IGATSFormIJacobian IGATSFormIJacobian_Legacy
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "TSSetIGA"
 PetscErrorCode TSSetIGA(TS ts,IGA iga)
 {
   DM             dm;
@@ -588,8 +563,6 @@ PetscErrorCode TSSetIGA(TS ts,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsHandlerTS"
 PetscErrorCode IGASetOptionsHandlerTS(TS ts)
 {
   SNES           snes;
@@ -602,8 +575,6 @@ PetscErrorCode IGASetOptionsHandlerTS(TS ts)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateTS"
 /*@
    IGACreateTS - Creates a TS (time stepper) which uses the same
    communicators as the IGA.

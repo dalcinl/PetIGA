@@ -1,17 +1,11 @@
 #include "petiga.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/pcimpl.h>
-#else
+#include <petscblaslapack.h>
 #include <petsc/private/pcimpl.h>
-#endif
-#include "petigabl.h"
 
 typedef struct {
   Mat mat;
 } PC_EBE;
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_EBE_CreateMatrix"
 static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A,Mat *B)
 {
   MPI_Comm       comm = ((PetscObject)A)->comm;
@@ -85,8 +79,6 @@ static PetscInt ComputeOwnedGlobalIndices(const PetscInt lgmap[],PetscInt bs,
   return Nout;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_EBE"
 static PetscErrorCode PCSetUp_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -123,13 +115,8 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     ierr = IGAGetElement(iga,&element);CHKERRQ(ierr);
     ierr = IGAElementGetSizes(element,NULL,&nen,&dof);CHKERRQ(ierr);
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = MatGetLocalToGlobalMappingBlock(A,&map,NULL);CHKERRQ(ierr);
-    ierr = ISLocalToGlobalMappingGetIndices(map,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = MatGetLocalToGlobalMapping(A,&map,NULL);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetBlockIndices(map,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = MatGetOwnershipRange(A,&start,&end);CHKERRQ(ierr);
     start /= dof; end /= dof;
 
@@ -167,11 +154,7 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
     }
     ierr = IGAEndElement(iga,&element);CHKERRQ(ierr);
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingRestoreIndices(map,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(map,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
@@ -183,8 +166,6 @@ static PetscErrorCode PCSetUp_EBE(PC pc)
 }
 
 /*
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetFromOptions_EBE"
 static PetscErrorCode PCSetFromOptions_EBE(PetscOptions *PetscOptionsObject,PC pc)
 {
   PetscFunctionBegin;
@@ -192,8 +173,6 @@ static PetscErrorCode PCSetFromOptions_EBE(PetscOptions *PetscOptionsObject,PC p
 }
 */
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApply_EBE"
 static PetscErrorCode PCApply_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -203,8 +182,6 @@ static PetscErrorCode PCApply_EBE(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApplyTranspose_EBE"
 static PetscErrorCode PCApplyTranspose_EBE(PC pc,Vec x,Vec y)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -214,8 +191,6 @@ static PetscErrorCode PCApplyTranspose_EBE(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCView_EBE"
 static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -234,8 +209,6 @@ static PetscErrorCode PCView_EBE(PC pc,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCReset_EBE"
 static PetscErrorCode PCReset_EBE(PC pc)
 {
   PC_EBE         *ebe = (PC_EBE*)pc->data;
@@ -245,8 +218,6 @@ static PetscErrorCode PCReset_EBE(PC pc)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCDestroy_EBE"
 static PetscErrorCode PCDestroy_EBE(PC pc)
 {
   PetscErrorCode ierr;
@@ -258,19 +229,13 @@ static PetscErrorCode PCDestroy_EBE(PC pc)
 
 
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "PCCreate_IGAEBE"
 PetscErrorCode PCCreate_IGAEBE(PC pc);
 PetscErrorCode PCCreate_IGAEBE(PC pc)
 {
   PC_EBE         *ebe = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(pc,PC_EBE,&ebe);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(pc,&ebe);CHKERRQ(ierr);
-#endif
   pc->data = (void*)ebe;
 
   pc->ops->setup               = PCSetUp_EBE;

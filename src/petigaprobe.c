@@ -20,8 +20,6 @@ extern void IGA_GetDer3 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal 
 extern void IGA_GetDer4 (PetscInt nen,PetscInt dof,PetscInt dim,const PetscReal N[],const PetscScalar U[],PetscScalar u[]);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeCreate"
 PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
 {
   PetscInt       i;
@@ -120,8 +118,6 @@ PetscErrorCode IGAProbeCreate(IGA iga,Vec A,IGAProbe *_prb)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeDestroy"
 PetscErrorCode IGAProbeDestroy(IGAProbe *_prb)
 {
   IGAProbe       prb;
@@ -175,8 +171,6 @@ PetscErrorCode IGAProbeDestroy(IGAProbe *_prb)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeReference"
 PetscErrorCode IGAProbeReference(IGAProbe prb)
 {
   PetscFunctionBegin;
@@ -185,8 +179,6 @@ PetscErrorCode IGAProbeReference(IGAProbe prb)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeSetOrder"
 PetscErrorCode IGAProbeSetOrder(IGAProbe prb,PetscInt order)
 {
   PetscFunctionBegin;
@@ -197,8 +189,6 @@ PetscErrorCode IGAProbeSetOrder(IGAProbe prb,PetscInt order)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeSetCollective"
 PetscErrorCode IGAProbeSetCollective(IGAProbe prb,PetscBool collective)
 {
   MPI_Comm       comm;
@@ -216,8 +206,6 @@ PetscErrorCode IGAProbeSetCollective(IGAProbe prb,PetscBool collective)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeSetVec"
 PetscErrorCode IGAProbeSetVec(IGAProbe prb,Vec A)
 {
   PetscErrorCode ierr;
@@ -233,20 +221,6 @@ PetscErrorCode IGAProbeSetVec(IGAProbe prb,Vec A)
   PetscFunctionReturn(0);
 }
 
-#if defined(PETSC_USE_DEBUG)
-#undef  PetscValidLogicalCollectiveReal
-#define PetscValidLogicalCollectiveReal(a,b,c)                          \
-  do {                                                                  \
-    PetscErrorCode _7_ierr;                                             \
-    PetscReal b1[2],b2[2];                                              \
-    b1[0] = -b; b1[1] = b;                                              \
-    _7_ierr = MPI_Allreduce(b1,b2,2,MPIU_REAL,MPIU_MAX,PetscObjectComm((PetscObject)a));CHKERRQ(_7_ierr); \
-    if (PetscAbsReal(b2[0]+b2[1])>0) SETERRQ1(PetscObjectComm((PetscObject)a),PETSC_ERR_ARG_WRONG,"Real value must be same on all processes, argument # %d",c); \
-  } while (0)
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeSetPoint"
 PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
 {
   PetscInt       i;
@@ -452,8 +426,6 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeGeomMap"
 PetscErrorCode IGAProbeGeomMap(IGAProbe prb,PetscReal x[])
 {
   PetscFunctionBegin;
@@ -470,8 +442,6 @@ PetscErrorCode IGAProbeGeomMap(IGAProbe prb,PetscReal x[])
 
 static const size_t intpow[4][5] = {{1,0,0,0,0},{1,1,1,1,1},{1,2,4,8,16},{1,3,9,27,81}};
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeEvaluate"
 PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
 {
   PetscErrorCode ierr;
@@ -497,8 +467,6 @@ PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeFormValue"
 PetscErrorCode IGAProbeFormValue(IGAProbe prb,PetscScalar A[])
 {
   PetscErrorCode ierr;
@@ -507,8 +475,6 @@ PetscErrorCode IGAProbeFormValue(IGAProbe prb,PetscScalar A[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeFormGrad"
 PetscErrorCode IGAProbeFormGrad(IGAProbe prb,PetscScalar A[])
 {
   PetscErrorCode ierr;
@@ -517,8 +483,6 @@ PetscErrorCode IGAProbeFormGrad(IGAProbe prb,PetscScalar A[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeFormHess"
 PetscErrorCode IGAProbeFormHess(IGAProbe prb,PetscScalar A[])
 {
   PetscErrorCode ierr;
@@ -527,8 +491,6 @@ PetscErrorCode IGAProbeFormHess(IGAProbe prb,PetscScalar A[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeFormDer3"
 PetscErrorCode IGAProbeFormDer3(IGAProbe prb,PetscScalar A[])
 {
   PetscErrorCode ierr;
@@ -537,8 +499,6 @@ PetscErrorCode IGAProbeFormDer3(IGAProbe prb,PetscScalar A[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAProbeFormDer4"
 PetscErrorCode IGAProbeFormDer4(IGAProbe prb,PetscScalar A[])
 {
   PetscErrorCode ierr;

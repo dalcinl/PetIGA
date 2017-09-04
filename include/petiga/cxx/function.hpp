@@ -16,8 +16,6 @@ PetscErrorCode Function(const IGAPoint q,const PetscScalar U[],PetscScalar F[],v
 #include "lookup.hpp"
 
 extern "C"
-#undef  __FUNCT__
-#define __FUNCT__ Stringize(FunctionCXX)
 PetscErrorCode FunctionCXX(IGAPoint q,const PetscScalar U[],PetscScalar F[],void *ctx)
 {
   IGAFormFunction FunctionP = NULL;

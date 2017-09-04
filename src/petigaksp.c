@@ -30,8 +30,6 @@ PetscBool IGAElementNextFormSystem(IGAElement element,IGAFormSystem *sys,void **
   return PETSC_TRUE;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeVector"
 PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
 {
   IGAElement     element;
@@ -78,8 +76,6 @@ PetscErrorCode IGAComputeVector(IGA iga,Vec vecB)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeMatrix"
 PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
 {
   IGAElement     element;
@@ -128,8 +124,6 @@ PetscErrorCode IGAComputeMatrix(IGA iga,Mat matA)
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeSystem"
 /*@
    IGAComputeSystem - Form the matrix and vector which represents the
    discretized a(w,u) = L(w).
@@ -207,8 +201,6 @@ PetscErrorCode IGAComputeSystem(IGA iga,Mat matA,Vec vecB)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAKSPFormRHS"
 PetscErrorCode IGAKSPFormRHS(KSP ksp,Vec b,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -224,8 +216,6 @@ PetscErrorCode IGAKSPFormRHS(KSP ksp,Vec b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAKSPFormOperators"
 PetscErrorCode IGAKSPFormOperators(KSP ksp,Mat A,Mat B,void *ctx)
 {
   IGA            iga = (IGA)ctx;
@@ -246,15 +236,6 @@ PetscErrorCode IGAKSPFormOperators(KSP ksp,Mat A,Mat B,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-PETSC_EXTERN PetscErrorCode IGAKSPFormOperators_Legacy(KSP,Mat,Mat,MatStructure*,void*);
-PetscErrorCode IGAKSPFormOperators_Legacy(KSP ksp,Mat A,Mat B,MatStructure *m,void *ctx)
-{*m = SAME_NONZERO_PATTERN;return IGAKSPFormOperators(ksp,A,B,ctx);}
-#define IGAKSPFormOperators IGAKSPFormOperators_Legacy
-#endif
-
-#undef  __FUNCT__
-#define __FUNCT__ "KSPSetIGA"
 PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
 {
   DM             dm;
@@ -275,15 +256,6 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,5,0)
-#define PCGetOperators(pc,A,B) PCGetOperators(pc,A,B,NULL)
-#endif
-
-#if PETSC_VERSION_LT(3,7,0)
-typedef PetscOptions PetscOptionItems;
-#endif
-#undef  __FUNCT__
-#define __FUNCT__ "IGA_OptionsHandler_PC"
 static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
@@ -295,9 +267,6 @@ static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *Petsc
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc,PC_CLASSID,1);
-#if PETSC_VERSION_LT(3,6,0)
-  if (PetscOptionsPublishCount != 1) PetscFunctionReturn(0);
-#endif
   ierr = PetscObjectQuery((PetscObject)pc,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   ierr = PCGetDM(pc,&dm);CHKERRQ(ierr);
   ierr = PCGetOperatorsSet(pc,NULL,&hasmat);CHKERRQ(ierr);
@@ -317,15 +286,9 @@ static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *Petsc
   /* */
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_LT(3,7,0)
-static PetscErrorCode IGA_OptionsHandler_PC_Legacy(PetscObject obj,void *ctx) {return IGA_OptionsHandler_PC(NULL,obj,ctx);}
-#define IGA_OptionsHandler_PC IGA_OptionsHandler_PC_Legacy
-#endif
 
 static PetscErrorCode OptHdlDel(PETSC_UNUSED PetscObject obj,PETSC_UNUSED void *ctx) {return 0;}
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsHandlerKSP"
 PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
 {
   PC             pc;
@@ -338,8 +301,6 @@ PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGASetOptionsHandlerPC"
 PetscErrorCode IGASetOptionsHandlerPC(PC pc)
 {
   PetscErrorCode ierr;
@@ -350,8 +311,6 @@ PetscErrorCode IGASetOptionsHandlerPC(PC pc)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateKSP"
 /*@
    IGACreateKSP - Creates a KSP (linear solver) which uses the same
    communicators as the IGA.

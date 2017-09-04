@@ -18,8 +18,6 @@ PetscErrorCode IEJacobian(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal
 #include "lookup.hpp"
 
 extern "C"
-#undef  __FUNCT__
-#define __FUNCT__ Stringize(IEJacobianCXX)
 PetscErrorCode IEJacobianCXX(IGAPoint q,PetscReal s,const PetscScalar V[],PetscReal t,const PetscScalar U[],PetscReal t0,const PetscScalar U0[],PetscScalar F[],void *ctx)
 {
   IGAFormIEJacobian IEJacobianP = NULL;

@@ -24,8 +24,6 @@ extern PetscErrorCode FunctionFAD(IGAPoint,const PetscScalar U[],PetscScalar F[]
 extern PetscErrorCode JacobianFAD(IGAPoint,const PetscScalar U[],PetscScalar J[],void *ctx);
 EXTERN_C_END
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
   PetscInitialize(&argc,&argv,NULL,NULL);
 

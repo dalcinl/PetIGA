@@ -19,8 +19,6 @@ extern PetscErrorCode ElasticRod_IJacobian(IGAPoint,
                                            PetscScalar *J,void *ctx);
 EXTERN_C_END
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -66,7 +64,7 @@ int main(int argc, char *argv[]) {
   /* Timestepper, t_final=5.0, delta_t = 0.01 */
   TS ts;
   ierr = IGACreateTS2(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,PETSC_MAX_INT,5.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,5.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.01);CHKERRQ(ierr);
   ierr = TSAlpha2SetRadius(ts,0.5);CHKERRQ(ierr);

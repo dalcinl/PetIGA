@@ -22,10 +22,6 @@ year = {2010},
 
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 PETSC_STATIC_INLINE
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
@@ -70,8 +66,6 @@ static PetscReal NormalMeshSize(IGAPoint p)
   return 2/PetscSqrtReal(DOT(dim,N,N));
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt a,b;
@@ -117,8 +111,6 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscInt  dim = p->dim;
@@ -128,8 +120,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;

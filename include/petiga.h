@@ -8,13 +8,19 @@
 */
 
 #include <petsc.h>
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/petscimpl.h>
-#else
-#include <petsc/private/petscimpl.h>
+
+#if PETSC_VERSION_LT(3,7,0)
+#error "PetIGA requires PETSc 3.7 or higher"
 #endif
-#include "petscts1.h"
-#include "petscts2.h"
+
+#include <petsc/private/petscimpl.h>
+
+#if PETSC_VERSION_LT(3,8,0)
+#  ifdef PETSC_FUNCTION_NAME
+#    undef  __FUNCT__
+#    define __FUNCT__ PETSC_FUNCTION_NAME
+#  endif
+#endif
 
 typedef ISLocalToGlobalMapping LGMap;
 #define LGMap LGMap
@@ -921,19 +927,6 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 
 /* ---------------------------------------------------------------- */
 
-#if PETSC_VERSION_LT(3,5,0)
-#define PetscMalloc1(m1,r1) \
-  PetscMalloc((m1)*sizeof(**(r1)),r1)
-#define PetscCalloc1(m1,r1) \
-  (PetscMalloc1((m1),r1) || PetscMemzero(*(r1),(m1)*sizeof(**(r1))))
-#endif
-
-#if PETSC_VERSION_LT(3,4,0)
-#error "PetIGA requires PETSc 3.4 or higher"
-#endif
-
-/* ---------------------------------------------------------------- */
-
 PETSC_EXTERN PetscErrorCode IGAOptionsAlias(const char name[],const char defval[],const char alias[]);
 PETSC_EXTERN PetscErrorCode IGAOptionsDefault(const char prefix[],const char name[],const char value[]);
 PETSC_EXTERN PetscErrorCode IGAOptionsReject(const char prefix[],const char name[]);
@@ -944,6 +937,18 @@ PETSC_EXTERN PetscBool      IGAGetOptBool(const char prefix[],const char name[],
 PETSC_EXTERN PetscInt       IGAGetOptInt(const char prefix[],const char name[],PetscInt defval);
 PETSC_EXTERN PetscReal      IGAGetOptReal(const char prefix[],const char name[],PetscReal defval);
 PETSC_EXTERN PetscScalar    IGAGetOptScalar(const char prefix[],const char name[],PetscScalar defval);
+
+/* ---------------------------------------------------------------- */
+
+#if PETSC_VERSION_LT(3,8,0)
+PETSC_EXTERN PetscErrorCode TSSetMaxSteps(TS,PetscInt);
+PETSC_EXTERN PetscErrorCode TSGetMaxSteps(TS,PetscInt*);
+PETSC_EXTERN PetscErrorCode TSSetMaxTime(TS,PetscReal);
+PETSC_EXTERN PetscErrorCode TSGetMaxTime(TS,PetscReal*);
+#endif
+#define TSALPHA1 TSALPHA
+PETSC_EXTERN PetscErrorCode TSAlphaUseAdapt(TS,PetscBool);
+#else
 
 /* ---------------------------------------------------------------- */
 

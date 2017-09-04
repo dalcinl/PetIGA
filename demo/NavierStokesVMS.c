@@ -6,8 +6,6 @@ typedef struct {
   TS ts; /* XXX */
 } AppCtx;
 
-#undef __FUNCT__
-#define __FUNCT__ "Tau"
 void Tau(PetscReal J[3][3],PetscReal dt,
          PetscScalar u[],PetscReal nu,
          PetscScalar *tauM,PetscScalar *tauC)
@@ -47,8 +45,6 @@ void Tau(PetscReal J[3][3],PetscReal dt,
   *tauC = 1/(*tauC);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FineScale"
 void FineScale(const AppCtx *user,PetscScalar tauM,PetscScalar tauC,
                PetscScalar ux,
                PetscScalar ux_t,
@@ -79,8 +75,6 @@ void FineScale(const AppCtx *user,PetscScalar tauM,PetscScalar tauC,
 }
 
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint pnt,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -169,8 +163,6 @@ PetscErrorCode Residual(IGAPoint pnt,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Tangent"
 PetscErrorCode Tangent(IGAPoint pnt,
                        PetscReal shift,const PetscScalar *V,
                        PetscReal t,const PetscScalar *U,
@@ -251,8 +243,6 @@ PetscErrorCode Tangent(IGAPoint pnt,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],PetscReal t,Vec U)
 {
   PetscErrorCode ierr;
@@ -303,8 +293,6 @@ PetscErrorCode FormInitialCondition(AppCtx *user,IGA iga,const char datafile[],P
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,void *ctx)
 {
   IGA            iga;
@@ -317,8 +305,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt it_number,PetscReal c_time,Vec U,voi
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;
@@ -405,10 +391,10 @@ int main(int argc, char *argv[]) {
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
   user.ts = ts;
 
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1.0e-2);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1000.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1000.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   if (output) {ierr = TSMonitorSet(ts,OutputMonitor,&user,NULL);CHKERRQ(ierr);}
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);

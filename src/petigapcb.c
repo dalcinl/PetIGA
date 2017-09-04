@@ -1,11 +1,7 @@
 #include "petiga.h"
 #include "petigagrid.h"
-#if PETSC_VERSION_LT(3,6,0)
-#include <petsc-private/pcimpl.h>
-#else
+#include <petscblaslapack.h>
 #include <petsc/private/pcimpl.h>
-#endif
-#include "petigabl.h"
 
 typedef struct {
   PetscInt dim,dof;
@@ -50,8 +46,6 @@ static PetscInt ComputeOverlap(const PetscInt lgmap[],PetscInt bs,
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = NULL;
@@ -72,8 +66,6 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_BBB_CreateMatrix"
 static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
 {
   MPI_Comm       comm = ((PetscObject)A)->comm;
@@ -120,8 +112,6 @@ static PetscErrorCode PCSetUp_BBB_CreateMatrix(PC_BBB *bbb,Mat A,Mat *B)
  PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetUp_BBB"
 static PetscErrorCode PCSetUp_BBB(PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -206,11 +196,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
     gstart  = bbb->ghost_start;
     gwidth  = bbb->ghost_width;
     overlap = bbb->overlap;
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingGetIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingGetBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = MatGetOwnershipRange(A,&rstart,&rend);CHKERRQ(ierr);
     rstart /= dof; rend /= dof;
 
@@ -254,11 +240,7 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
             ierr = PetscLogFlops((PetscLogDouble)(n*n));CHKERRQ(ierr);
           }
 
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = ISLocalToGlobalMappingRestoreIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#else
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(bbb->lgmap,&ltogmap);CHKERRQ(ierr);
-#endif
     ierr = PetscFree2(indices,values);CHKERRQ(ierr);
     ierr = PetscFree(ipiv);CHKERRQ(ierr);
     ierr = PetscFree(work);CHKERRQ(ierr);
@@ -268,11 +250,6 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,7,0)
-typedef PetscOptions PetscOptionItems;
-#endif
-#undef  __FUNCT__
-#define __FUNCT__ "PCSetFromOptions_BBB"
 static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -281,9 +258,6 @@ static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,6,0)
-  (void)PetscOptionsObject;
-#endif
   for (i=0; i<3; i++) overlap[i] = bbb->overlap[i];
   ierr = PetscOptionsIntArray("-pc_bbb_overlap","Overlap","",overlap,&no,&flg);CHKERRQ(ierr);
   if (flg) for (i=0; i<3; i++) {
@@ -292,13 +266,7 @@ static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,
     }
   PetscFunctionReturn(0);
 }
-#if PETSC_VERSION_LT(3,6,0)
-static PetscErrorCode PCSetFromOptions_BBB_Legacy(PC pc) {return PCSetFromOptions_BBB(NULL,pc);}
-#define PCSetFromOptions_BBB PCSetFromOptions_BBB_Legacy
-#endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApply_BBB"
 static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -309,8 +277,6 @@ static PetscErrorCode PCApply_BBB(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCApplyTranspose_BBB"
 static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -321,8 +287,6 @@ static PetscErrorCode PCApplyTranspose_BBB(PC pc,Vec x,Vec y)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCView_BBB"
 static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -344,8 +308,6 @@ static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCReset_BBB"
 static PetscErrorCode PCReset_BBB(PC pc)
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
@@ -357,8 +319,6 @@ static PetscErrorCode PCReset_BBB(PC pc)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "PCDestroy_BBB"
 static PetscErrorCode PCDestroy_BBB(PC pc)
 {
   PetscErrorCode ierr;
@@ -370,8 +330,6 @@ static PetscErrorCode PCDestroy_BBB(PC pc)
 }
 
 EXTERN_C_BEGIN
-#undef  __FUNCT__
-#define __FUNCT__ "PCCreate_IGABBB"
 PetscErrorCode PCCreate_IGABBB(PC pc);
 PetscErrorCode PCCreate_IGABBB(PC pc)
 {
@@ -379,11 +337,7 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = PetscNewLog(pc,PC_BBB,&bbb);CHKERRQ(ierr);
-#else
   ierr = PetscNewLog(pc,&bbb);CHKERRQ(ierr);
-#endif
   pc->data = (void*)bbb;
 
   bbb->overlap[0] = PETSC_DECIDE;

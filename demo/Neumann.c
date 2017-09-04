@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 #define pi M_PI
 
 PetscReal Solution(PetscReal x[3])
@@ -29,8 +25,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "SystemGalerkin"
 PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -59,8 +53,6 @@ PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "SystemCollocation"
 PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscInt nen = p->nen;
@@ -78,8 +70,6 @@ PetscErrorCode SystemCollocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "MassVector"
 PetscErrorCode MassVector(IGAPoint p,PetscScalar *V,void *ctx)
 {
   PetscInt a,nen = p->nen;
@@ -88,8 +78,6 @@ PetscErrorCode MassVector(IGAPoint p,PetscScalar *V,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Exact"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   PetscReal x[3] = {0,0,0};
@@ -98,8 +86,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;
@@ -172,11 +158,7 @@ int main(int argc, char *argv[]) {
   } else {
     MatNullSpace nsp;
     ierr = MatGetNullSpace(A,&nsp);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-    ierr = MatNullSpaceRemove(nsp,x,NULL);CHKERRQ(ierr);
-#else
     ierr = MatNullSpaceRemove(nsp,x);CHKERRQ(ierr);
-#endif
   }
 
   PetscReal error;

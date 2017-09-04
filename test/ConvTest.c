@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 typedef struct {
   PetscReal c; /* reaction coefficient */
   PetscReal k; /* diffusion coefficient */
@@ -51,8 +47,6 @@ PetscReal DOT(PetscInt dim,const PetscReal a[dim],const PetscReal b[dim])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Galerkin"
 PetscErrorCode Galerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   const AppCtx *app = (AppCtx*)ctx;
@@ -83,8 +77,6 @@ PetscReal TRACE(PetscInt dim,const PetscReal a[dim][dim])
   return s;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Collocation"
 PetscErrorCode Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
 
@@ -107,8 +99,6 @@ PetscErrorCode Collocation(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Error"
 PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
 {
   switch (order) {
@@ -118,8 +108,6 @@ PetscErrorCode Exact(IGAPoint p,PetscInt order,PetscScalar value[],void *ctx)
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscErrorCode ierr;

@@ -20,8 +20,6 @@ typedef struct {
 
 PetscReal SEC_PER_YEAR = 365.0*24.0*3600.0;
 
-#undef __FUNCT__
-#define __FUNCT__ "EquationOfState"
 void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rholh,PetscScalar rholh_t,PetscScalar *rholh_x,
                      PetscScalar *Sl,PetscScalar *Sl_t,PetscScalar *krl,PetscScalar *krg,
                      PetscScalar *rhogh,PetscScalar *rhogh_t,PetscScalar *Pg_x,AppCtx *user)
@@ -54,8 +52,6 @@ void EquationOfState(PetscInt dim,PetscScalar Pl,PetscScalar Pl_t,PetscScalar rh
   return;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "LeftInjectionResidual"
 PetscErrorCode LeftInjectionResidual(IGAPoint p,
                                      PetscReal shift,const PetscScalar *V,
                                      PetscReal t,const PetscScalar *U,
@@ -78,8 +74,6 @@ PetscErrorCode LeftInjectionResidual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -148,8 +142,6 @@ PetscErrorCode Residual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "LeftInjectionJacobian"
 PetscErrorCode LeftInjectionJacobian(IGAPoint p,
                                      PetscReal shift,const PetscScalar *V,
                                      PetscReal t,const PetscScalar *U,
@@ -159,8 +151,6 @@ PetscErrorCode LeftInjectionJacobian(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -172,8 +162,6 @@ PetscErrorCode Jacobian(IGAPoint p,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "InitialCondition"
 PetscErrorCode InitialCondition(IGA iga,Vec U,AppCtx *user)
 {
   PetscErrorCode ierr;
@@ -198,8 +186,6 @@ PetscErrorCode InitialCondition(IGA iga,Vec U,AppCtx *user)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "Monitor"
 PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
@@ -264,8 +250,6 @@ PetscErrorCode Monitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -318,10 +302,10 @@ int main(int argc, char *argv[]) {
 
   TS     ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,1.0e6);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1.0e6);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,10.0);CHKERRQ(ierr);
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.95);CHKERRQ(ierr);
   ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
   ierr = TSMonitorSet(ts,Monitor,&user,NULL);CHKERRQ(ierr);

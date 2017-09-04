@@ -16,9 +16,6 @@ ALL: lib
 
 SOURCEH = \
 ../include/petiga.h \
-../include/petscts1.h \
-../include/petscts2.h \
-petigabl.h \
 petigaftn.h \
 petigagrid.h \
 
@@ -51,9 +48,7 @@ petigasnes.c \
 petigats.c \
 petigats2.c \
 petigaopts.c \
-tsalpha1.c \
-tsalpha2.c \
-tsbdf.c \
+petscts.c \
 
 SOURCEF = \
 petigaftn.F90 \

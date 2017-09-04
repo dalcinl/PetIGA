@@ -31,8 +31,6 @@ static PetscReal PW[3][3] = {
   { 1.0, sqrt2/2, 1.0 },
 };
 
-#undef  __FUNCT__
-#define __FUNCT__ "TestGeometryMap"
 PetscErrorCode TestGeometryMap(IGAPoint p)
 {
   PetscInt dim = p->dim;
@@ -259,8 +257,6 @@ PetscErrorCode TestGeometryMap(IGAPoint p)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Domain"
 PetscErrorCode Domain(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   PetscErrorCode ierr;
@@ -276,8 +272,6 @@ PetscErrorCode Domain(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_00"
 PetscErrorCode Boundary_00(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscReal      R   = 1.0;
@@ -300,8 +294,6 @@ PetscErrorCode Boundary_00(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_01"
 PetscErrorCode Boundary_01(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscReal      R   = 2.0;
@@ -324,8 +316,6 @@ PetscErrorCode Boundary_01(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_10"
 PetscErrorCode Boundary_10(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscErrorCode ierr;
@@ -344,8 +334,6 @@ PetscErrorCode Boundary_10(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_11"
 PetscErrorCode Boundary_11(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscErrorCode ierr;
@@ -364,8 +352,6 @@ PetscErrorCode Boundary_11(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_20"
 PetscErrorCode Boundary_20(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscErrorCode ierr;
@@ -384,8 +370,6 @@ PetscErrorCode Boundary_20(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary_21"
 PetscErrorCode Boundary_21(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   PetscErrorCode ierr;
@@ -404,8 +388,6 @@ PetscErrorCode Boundary_21(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Boundary"
 PetscErrorCode Boundary(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   static PetscErrorCode (*boundary[3][2])(IGAPoint,PetscScalar*,PetscScalar*,void*)
@@ -418,16 +400,12 @@ PetscErrorCode Boundary(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
   return boundary[d][s](p,A,b,ctx);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "System"
 PetscErrorCode System(IGAPoint p,PetscScalar *A,PetscScalar *b,void *ctx)
 {
   if (p->atboundary) return Boundary(p,A,b,ctx);
   else               return Domain  (p,A,b,ctx);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Scalar"
 PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   PetscBool b = p->atboundary;
@@ -436,8 +414,6 @@ PetscErrorCode Scalar(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGAComputeScalarFull"
 PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
                                     PetscInt n,PetscScalar S[],
                                     IGAFormScalar Scalar,void *ctx)
@@ -497,8 +473,6 @@ PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[])
 {
   PetscInt        dim = 3;

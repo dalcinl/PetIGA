@@ -7,8 +7,6 @@ typedef struct {
   PetscReal energy;
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "FreeEnergyMass"
 PetscErrorCode FreeEnergyMass(IGAPoint p,const PetscScalar *U,PetscInt n,PetscScalar *S,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -32,8 +30,6 @@ PetscErrorCode FreeEnergyMass(IGAPoint p,const PetscScalar *U,PetscInt n,PetscSc
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "EnergyMonitor"
 PetscErrorCode EnergyMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   AppCtx *user = (AppCtx *)mctx;
@@ -78,8 +74,6 @@ PetscErrorCode Jacobian2nd2nd2nd(IGAPoint p,PetscReal dt,
 
 #define SQ(A) ((A)*(A))
 
-#undef __FUNCT__
-#define __FUNCT__ "TriangularLattice"
 PetscReal TriangularLattice(const PetscReal x[],PetscReal phi_bar, PetscReal eps)
 {
   PetscReal q = sqrt(3.0)/2.0;
@@ -103,8 +97,6 @@ PetscReal TriangularLattice(const PetscReal x[],PetscReal phi_bar, PetscReal eps
   return phi;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ResidualL2Projection"
 PetscErrorCode ResidualL2Projection(IGAPoint p,const PetscScalar *U,PetscScalar *F,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
@@ -131,8 +123,6 @@ PetscErrorCode ResidualL2Projection(IGAPoint p,const PetscScalar *U,PetscScalar 
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "JacobianL2Projection"
 PetscErrorCode JacobianL2Projection(IGAPoint p,const PetscScalar *U,PetscScalar *J,void *ctx)
 {
   PetscInt a,b,c;
@@ -153,8 +143,6 @@ PetscErrorCode JacobianL2Projection(IGAPoint p,const PetscScalar *U,PetscScalar 
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
 {
   SNES           snes;
@@ -174,8 +162,6 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ChemicalPotential"
 void ChemicalPotential(AppCtx *user,PetscReal phi,PetscReal *psi,PetscReal *dpsi,PetscReal *d2psi)
 {
   if (psi)   *psi   = phi*(phi*phi-user->eps);
@@ -183,8 +169,6 @@ void ChemicalPotential(AppCtx *user,PetscReal phi,PetscReal *psi,PetscReal *dpsi
   if (d2psi) *d2psi = 6.0*phi;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual2nd2nd2nd"
 PetscErrorCode Residual2nd2nd2nd(IGAPoint p,PetscReal dt,
                                  PetscReal shift,const PetscScalar *V,
                                  PetscReal t,const PetscScalar *U,
@@ -229,8 +213,6 @@ PetscErrorCode Residual2nd2nd2nd(IGAPoint p,PetscReal dt,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian2nd2nd2nd"
 PetscErrorCode Jacobian2nd2nd2nd(IGAPoint p,PetscReal dt,
                                  PetscReal shift,const PetscScalar *V,
                                  PetscReal t,const PetscScalar *U,
@@ -271,8 +253,6 @@ PetscErrorCode Jacobian2nd2nd2nd(IGAPoint p,PetscReal dt,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual2nd2nd2ndStable"
 PetscErrorCode Residual2nd2nd2ndStable(IGAPoint p,PetscReal dt,
                                        PetscReal shift,const PetscScalar *V,
                                        PetscReal t,const PetscScalar *U1,
@@ -339,8 +319,6 @@ PetscErrorCode Residual2nd2nd2ndStable(IGAPoint p,PetscReal dt,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian2nd2nd2ndStable"
 PetscErrorCode Jacobian2nd2nd2ndStable(IGAPoint p,PetscReal dt,
                                        PetscReal shift,const PetscScalar *V,
                                        PetscReal t,const PetscScalar *U1,
@@ -396,8 +374,6 @@ PetscErrorCode Jacobian2nd2nd2ndStable(IGAPoint p,PetscReal dt,
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   PetscErrorCode ierr;
@@ -412,8 +388,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;
@@ -496,7 +470,7 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,150.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,150.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.5);CHKERRQ(ierr);
   if (stable) {

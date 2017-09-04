@@ -1,9 +1,5 @@
 #include "petiga.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define KSPSetOperators(ksp,A,B) KSPSetOperators(ksp,A,B,SAME_NONZERO_PATTERN)
-#endif
-
 #define SQ(A) ((A)*(A))
 
 typedef struct {
@@ -12,8 +8,6 @@ typedef struct {
   PetscBool phase_field;
 } AppCtx;
 
-#undef  __FUNCT__
-#define __FUNCT__ "L2Projection"
 PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
 {
   if (p->atboundary) return 0;
@@ -40,8 +34,6 @@ PetscErrorCode L2Projection(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitialCondition"
 PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
 {
   PetscErrorCode ierr;
@@ -72,8 +64,6 @@ PetscErrorCode FormInitialCondition(IGA iga,Vec U,AppCtx *user)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "CapillaryPressure"
 void CapillaryPressure(PetscScalar S,PetscScalar lambda,PetscScalar kappa,PetscScalar *J,PetscScalar *dJdS)
 {
   if(J){
@@ -86,8 +76,6 @@ void CapillaryPressure(PetscScalar S,PetscScalar lambda,PetscScalar kappa,PetscS
   }
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ZeroFluxResidual"
 PetscErrorCode ZeroFluxResidual(IGAPoint p,
                                 PetscReal shift,const PetscScalar *V,
                                 PetscReal t,const PetscScalar *U,
@@ -113,8 +101,6 @@ PetscErrorCode ZeroFluxResidual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Residual"
 PetscErrorCode Residual(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -170,8 +156,6 @@ PetscErrorCode Residual(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "ZeroFluxJacobian"
 PetscErrorCode ZeroFluxJacobian(IGAPoint p,
                                 PetscReal shift,const PetscScalar *V,
                                 PetscReal t,const PetscScalar *U,
@@ -180,8 +164,6 @@ PetscErrorCode ZeroFluxJacobian(IGAPoint p,
   return 0;
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "Jacobian"
 PetscErrorCode Jacobian(IGAPoint p,
                         PetscReal shift,const PetscScalar *V,
                         PetscReal t,const PetscScalar *U,
@@ -193,8 +175,6 @@ PetscErrorCode Jacobian(IGAPoint p,
 }
 
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode  ierr;
@@ -249,7 +229,7 @@ int main(int argc, char *argv[]) {
 
   TS     ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,1000000,150.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,150.0);CHKERRQ(ierr);
   ierr = TSSetExactFinalTime(ts,TS_EXACTFINALTIME_MATCHSTEP);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,0.25);CHKERRQ(ierr);
   ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);

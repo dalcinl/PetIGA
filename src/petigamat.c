@@ -1,36 +1,15 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-#if PETSC_VERSION_LT(3,5,0)
-#define MatPreallocateSymmetricSetBlock MatPreallocateSymmetricSet
-#endif
-
 #if PETSC_VERSION_LT(3,8,0)
 #define MatCreateSubMatrix MatGetSubMatrix
+#define MATOP_CREATE_VECS MATOP_GET_VECS
 #endif
-
-#if !defined(PetscCalloc2)
-#define PetscCalloc2(m1,r1,m2,r2)             \
-  (PetscMalloc1((m1),(r1))                 || \
-   PetscMalloc1((m2),(r2))                 || \
-   PetscMemzero(*(r1),(m1)*sizeof(**(r1))) || \
-   PetscMemzero(*(r2),(m2)*sizeof(**(r2))))
-#endif
-
-#undef  MatPreallocateInitialize
-#define MatPreallocateInitialize(comm,nrows,ncols,dnz,onz) 0; \
-{ \
-  PetscErrorCode _4_ierr; PetscInt __nrows = (nrows),__ctmp = (ncols),__rstart,__start,__end; \
-  _4_ierr = PetscCalloc2((size_t)__nrows,&dnz,(size_t)__nrows,&onz);CHKERRQ(_4_ierr); \
-  __start = 0; __end = __start;                                         \
-  _4_ierr = MPI_Scan(&__ctmp,&__end,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __start = __end - __ctmp;\
-  _4_ierr = MPI_Scan(&__nrows,&__rstart,1,MPIU_INT,MPI_SUM,comm);CHKERRQ(_4_ierr); __rstart = __rstart - __nrows;
 
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
+static PetscErrorCode MatCreateVecs_IGA(Mat,Vec*,Vec*);
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatView_MPI_IGA"
 static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 {
   PetscViewerFormat format;
@@ -51,7 +30,7 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   /* Map natural ordering to PETSc ordering and create IS */
@@ -84,8 +63,6 @@ static PetscErrorCode MatView_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatLoad_MPI_IGA"
 static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 {
   MPI_Comm       comm;
@@ -103,7 +80,7 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
 
   ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   /* Create and load the matrix in natural ordering */
@@ -145,53 +122,31 @@ static PetscErrorCode MatLoad_MPI_IGA(Mat A,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-#if PETSC_VERSION_LT(3,6,0)
-#undef  __FUNCT__
-#define __FUNCT__ "MatDuplicate_IS"
-static PetscErrorCode MatDuplicate_IS(Mat mat,MatDuplicateOption op,Mat *newmat)
+static PetscErrorCode MatCreateVecs_IGA(Mat A,Vec *right,Vec *left)
 {
   IGA            iga;
-  MPI_Comm       comm;
-  PetscInt       bs,m,n,M,N;
-  Mat            A=mat,Alocal,B,Blocal;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
-  ierr = MatGetBlockSize(A,&bs);CHKERRQ(ierr);
-  ierr = MatGetSize(A,&M,&N);CHKERRQ(ierr);
-  ierr = MatGetLocalSize(A,&m,&n);CHKERRQ(ierr);
-  ierr = MatISGetLocalMat(A,&Alocal);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (!iga) SETERRQ(PetscObjectComm((PetscObject)A),PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
-  ierr = MatCreateIS(comm,bs,m,n,M,N,iga->map->mapping,&B);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = MatSetLocalToGlobalMappingBlock(B,iga->map->bmapping,iga->map->bmapping);CHKERRQ(ierr);
-#endif
-  ierr = MatDuplicate(Alocal,op,&Blocal);CHKERRQ(ierr);
-  ierr = MatISSetLocalMat(B,Blocal);CHKERRQ(ierr);
-  ierr = MatDestroy(&Blocal);CHKERRQ(ierr);
-  ierr = MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  ierr = MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-  *newmat = B;
+
+  if (right) {ierr = IGACreateVec(iga,right);CHKERRQ(ierr);}
+  if (left)  {ierr = IGACreateVec(iga,left );CHKERRQ(ierr);}
   PetscFunctionReturn(0);
 }
-#endif
 
-#undef  __FUNCT__
-#define __FUNCT__ "MatDuplicate_IGA"
 static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
 {
-  MPI_Comm       comm;
   IGA            iga;
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidPointer(B,3);
-  ierr = PetscObjectGetComm((PetscObject)A,&comm);CHKERRQ(ierr);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
-  if (!iga) SETERRQ(comm,PETSC_ERR_ARG_WRONG,"Matrix not generated from a IGA");
+  if (!iga) SETERRQ(PetscObjectComm((PetscObject)A),PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
 
   { /* MatDuplicate */
@@ -209,6 +164,9 @@ static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
     ierr = MatShellGetOperation(A,MATOP_LOAD,(PetscVoidFunction*)&matload);CHKERRQ(ierr);
     if (matview == MatView_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_VIEW,(PetscVoidFunction)matview);CHKERRQ(ierr);}
     if (matload == MatLoad_MPI_IGA) {ierr = MatShellSetOperation(*B,MATOP_LOAD,(PetscVoidFunction)matload);CHKERRQ(ierr);}
+  }
+  {  /* MatCreateVecs */
+    ierr = MatShellSetOperation(*B,MATOP_CREATE_VECS,(PetscVoidFunction)MatCreateVecs_IGA);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
 }
@@ -236,7 +194,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
     k = IGA_NextKnot(m,U,k,+1);
     *first = k - p - 1;
   }
-  
+
   { /* compute index of the rightmost overlapping basis */
     PetscInt k = i + p + 1;
     k = IGA_NextKnot(m,U,k,-1);
@@ -290,8 +248,6 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "InferMatrixType"
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = NULL;
@@ -313,25 +269,16 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "L2GApplyBlock"
 PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = ISLocalToGlobalMappingApply(ltog,1,row,row);CHKERRQ(ierr);
-  ierr = ISLocalToGlobalMappingApply(ltog,*cnt,col,col);CHKERRQ(ierr);
-#else
   ierr = ISLocalToGlobalMappingApplyBlock(ltog,1,row,row);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingApplyBlock(ltog,*cnt,col,col);CHKERRQ(ierr);
-#endif
   PetscFunctionReturn(0);
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "UnblockIndices"
 PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
 {
   PetscInt n,c;
@@ -345,8 +292,6 @@ PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const Pets
 }
 
 PETSC_STATIC_INLINE
-#undef  __FUNCT__
-#define __FUNCT__ "FilterLowerTriangular"
 PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 {
   PetscInt i,n;
@@ -358,8 +303,6 @@ PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "IGACreateMat"
 /*@
    IGACreateMat - Creates a matrix with the correct parallel layout
    required for computing a matrix using the discretization
@@ -414,15 +357,15 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscVoidFunction f = NULL;
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
     is = f ? PETSC_TRUE: PETSC_FALSE;
-#if PETSC_VERSION_LT(3,6,0)
-    if (is) {ierr = MatShellSetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IS);CHKERRQ(ierr);}
-#endif
   }
 
   ierr = MPI_Comm_size(comm,&size);CHKERRQ(ierr);
   if (!is && size > 1) { /* Change MatView/MatLoad to handle matrix in natural ordering */
     ierr = MatShellSetOperation(A,MATOP_VIEW,(PetscVoidFunction)MatView_MPI_IGA);CHKERRQ(ierr);
     ierr = MatShellSetOperation(A,MATOP_LOAD,(PetscVoidFunction)MatLoad_MPI_IGA);CHKERRQ(ierr);
+  }
+  { /* Change MatCreateVecs to propagate composed objects */
+    ierr = MatShellSetOperation(A,MATOP_CREATE_VECS,(PetscVoidFunction)MatCreateVecs_IGA);CHKERRQ(ierr);
   }
   { /* Change MatDuplicate to propagate composed objects and method overrides */
     PetscErrorCode (*matduplicate)(Mat,MatDuplicateOption,Mat*);
@@ -433,9 +376,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
   ierr = MatSetLocalToGlobalMapping(A,rmap->mapping,cmap->mapping);CHKERRQ(ierr);
-#if PETSC_VERSION_LT(3,5,0)
-  ierr = MatSetLocalToGlobalMappingBlock(A,rmap->bmapping,cmap->bmapping);CHKERRQ(ierr);
-#endif
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
     ierr = MatISGetLocalMat(A,&A);CHKERRQ(ierr);
@@ -491,11 +431,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     {
       PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;
       ierr = PetscMalloc1((size_t)nnz,&indices);CHKERRQ(ierr);
-      #if PETSC_VERSION_LT(3,5,0)
-      ierr = PetscMalloc2((size_t)bs,PetscInt,&ubrows,(size_t)(nnz*bs),PetscInt,&ubcols);CHKERRQ(ierr);
-      #else
       ierr = PetscMalloc2((size_t)bs,&ubrows,(size_t)(nnz*bs),&ubcols);CHKERRQ(ierr);
-      #endif
       for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
         for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)
           for (i=lstart[0]; i<lstart[0]+lwidth[0]; i++)
@@ -548,13 +484,8 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
 
   if (aij || baij || sbaij) {
     PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;PetscScalar *values=NULL;
-    #if PETSC_VERSION_LT(3,5,0)
-    ierr = PetscMalloc2((size_t)bs,PetscInt,&ubrows,(size_t)(nnz*bs),PetscInt,&ubcols);CHKERRQ(ierr);
-    ierr = PetscMalloc2((size_t)nnz,PetscInt,&indices,(size_t)(nnz*bs*nnz*bs),PetscScalar,&values);CHKERRQ(ierr);
-    #else
     ierr = PetscMalloc2((size_t)bs,&ubrows,(size_t)(nnz*bs),&ubcols);CHKERRQ(ierr);
     ierr = PetscMalloc2((size_t)nnz,&indices,(size_t)(nnz*bs*nnz*bs),&values);CHKERRQ(ierr);
-    #endif
     ierr = PetscMemzero(values,(size_t)(nnz*bs*nnz*bs)*sizeof(PetscScalar));CHKERRQ(ierr);
     for (k=lstart[2]; k<lstart[2]+lwidth[2]; k++)
       for (j=lstart[1]; j<lstart[1]+lwidth[1]; j++)

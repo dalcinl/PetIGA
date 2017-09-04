@@ -39,8 +39,6 @@ PetscErrorCode IJacobianFAD(IGAPoint  q,
                             PetscScalar J[],void *ctx);
 EXTERN_C_END
 
-#undef __FUNCT__
-#define __FUNCT__ "FormInitial"
 PetscErrorCode FormInitial(IGA iga,Vec C,Params *user)
 {
   MPI_Comm       comm;
@@ -56,8 +54,6 @@ PetscErrorCode FormInitial(IGA iga,Vec C,Params *user)
   ierr = PetscRandomDestroy(&rctx);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-#undef __FUNCT__
-#define __FUNCT__ "OutputMonitor"
 PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
 {
   IGA            iga;
@@ -71,8 +67,6 @@ PetscErrorCode OutputMonitor(TS ts,PetscInt step,PetscReal t,Vec U,void *mctx)
   PetscFunctionReturn(0);
 }
 
-#undef  __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char *argv[]) {
 
   PetscErrorCode ierr;
@@ -134,10 +128,10 @@ int main(int argc, char *argv[]) {
 
   TS ts;
   ierr = IGACreateTS(iga,&ts);CHKERRQ(ierr);
-  ierr = TSSetDuration(ts,10000,1.0);CHKERRQ(ierr);
+  ierr = TSSetMaxTime(ts,1.0);CHKERRQ(ierr);
   ierr = TSSetTimeStep(ts,1e-11);CHKERRQ(ierr);
 
-  ierr = TSSetType(ts,TSALPHA1);CHKERRQ(ierr);
+  ierr = TSSetType(ts,TSALPHA);CHKERRQ(ierr);
   ierr = TSAlphaSetRadius(ts,0.5);CHKERRQ(ierr);
   ierr = TSAlphaUseAdapt(ts,PETSC_TRUE);CHKERRQ(ierr);
   ierr = TSSetMaxSNESFailures(ts,-1);CHKERRQ(ierr);
