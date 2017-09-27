@@ -1,6 +1,19 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
+static const char citation[] = \
+"@article{PetIGA,\n"
+" author = {L. Dalcin and N. Collier and P. Vignal and A.M.A. C\^{o}rtes and V.M. Calo},\n"
+" title = {{PetIGA}: A framework for high-performance isogeometric analysis},\n"
+" journal = {Computer Methods in Applied Mechanics and Engineering},\n"
+" volume = {308},\n"
+" pages = {151--181},\n"
+" year = {2016},\n"
+" issn = {0045-7825},\n"
+" doi = {https://doi.org/10.1016/j.cma.2016.05.011},\n"
+"}\n";
+static PetscBool cited = PETSC_FALSE;
+
 /*@
    IGACreate - Creates the default IGA context.
 
@@ -24,6 +37,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   PetscFunctionBegin;
   PetscValidPointer(newiga,2);
 
+  ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
   ierr = IGAInitializePackage();CHKERRQ(ierr);
 
   *newiga = NULL;
