@@ -65,13 +65,15 @@ Citation
 If you find PetIGA helpful in conducting research projects, we would
 appreciate a citation to the following article::
 
-  @Article{PetIGA,
-    author = 	 {N. Collier, L. Dalcin, V.M. Calo},
-    title = 	 {{PetIGA}: High-Performance Isogeometric Analysis},
-    journal = 	 {arxiv},
-    year = 	 {2013},
-    number = 	 {1305.4452},
-    note = 	 {http://arxiv.org/abs/1305.4452}
+  @article{PetIGA,
+   author = "L. Dalcin and N. Collier and P. Vignal and A.M.A. Côrtes and V.M. Calo",
+   title = "PetIGA: A framework for high-performance isogeometric analysis",
+   journal = "Computer Methods in Applied Mechanics and Engineering",
+   volume = "308",
+   pages = "151--181",
+   year = "2016",
+   issn = "0045-7825",
+   doi = "https://doi.org/10.1016/j.cma.2016.05.011",
   }
 
 
