@@ -1,9 +1,9 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-static const char citation[] = \
+static const char citation[] =
 "@article{PetIGA,\n"
-" author = {L. Dalcin and N. Collier and P. Vignal and A.M.A. C\^{o}rtes and V.M. Calo},\n"
+" author = {L. Dalcin and N. Collier and P. Vignal and A.M.A. C\\^{o}rtes and V.M. Calo},\n"
 " title = {{PetIGA}: A framework for high-performance isogeometric analysis},\n"
 " journal = {Computer Methods in Applied Mechanics and Engineering},\n"
 " volume = {308},\n"
