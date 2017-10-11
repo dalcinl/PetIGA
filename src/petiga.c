@@ -248,10 +248,15 @@ PetscErrorCode IGAPrint(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,8,0)
+#define PETSCVIEWERGLVIS "glvis"
+#endif
+
 PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
 {
-  PetscBool      match;
-  PetscErrorCode ierr;
+  PetscBool         match;
+  PetscViewerFormat format;
+  PetscErrorCode    ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -259,11 +264,17 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscValidHeaderSpecific(viewer,PETSC_VIEWER_CLASSID,2);
   PetscCheckSameComm(iga,1,viewer,2);
   if (!iga->setup) PetscFunctionReturn(0); /* XXX */
+  ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERBINARY,&match);CHKERRQ(ierr);
   if (match) { ierr = IGASave(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&match);CHKERRQ(ierr);
+  if (match && format == PETSC_VIEWER_ASCII_VTK) { ierr = IGADraw(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0);}
   if (match) { ierr = IGAPrint(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&match);CHKERRQ(ierr);
+  if (match) { ierr = IGADraw(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&match);CHKERRQ(ierr);
+  if (match) { ierr = IGADraw(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERGLVIS,&match);CHKERRQ(ierr);
   if (match) { ierr = IGADraw(iga,viewer);CHKERRQ(ierr); PetscFunctionReturn(0); }
   PetscFunctionReturn(0);
 }

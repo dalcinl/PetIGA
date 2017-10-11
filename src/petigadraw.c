@@ -3,6 +3,38 @@
 PETSC_EXTERN PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm);
 PETSC_EXTERN PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm);
 
+EXTERN_C_BEGIN
+extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
+EXTERN_C_END
+
+static
+PetscReal GrevillePoint(PetscInt index,PETSC_UNUSED PetscInt step,const IGAAxis axis)
+{
+  if (PetscUnlikely(axis->p == 0)) return 0;
+  return IGA_Greville(index,axis->p,axis->U);
+}
+
+static
+PetscReal LagrangePoint(PetscInt index,PetscInt step,const IGAAxis axis)
+{
+  if (PetscUnlikely(axis->p == 0)) return 0;
+  {
+    PetscInt n = axis->nel;
+    PetscInt p = step;
+    PetscInt e = index / p;
+    PetscInt i = index % p;
+    PetscReal u0,u1;
+    if (PetscUnlikely(e == n)) { e -= 1; i = p; }
+    u0 = axis->U[axis->span[e]];
+    u1 = axis->U[axis->span[e]+1];
+    return u0 + (PetscReal)i/(PetscReal)p*(u1-u0);
+  }
+}
+
+#if PETSC_VERSION_LT(3,8,0)
+#define PETSCVIEWERGLVIS "glvis"
+#endif
+
 PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
 {
   MPI_Comm        comm;
@@ -13,6 +45,8 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
   PetscInt        resolution[3] = {1,1,1};
   PetscInt        n,N;
   Vec             X;
+  PetscScalar     *arrayX;
+  IGAProbe        probe;
   PetscErrorCode  ierr;
 
   PetscFunctionBegin;
@@ -56,7 +90,39 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
   ierr = VecSetUp(X);CHKERRQ(ierr);
   ierr = DMSetCoordinates(*dm,X);CHKERRQ(ierr);
   ierr = VecDestroy(&X);CHKERRQ(ierr);
-
+  /* fill coordinate vector */
+  ierr = DMGetCoordinates(*dm,&X);CHKERRQ(ierr);
+  ierr = VecGetArray(X,&arrayX);CHKERRQ(ierr);
+  ierr = IGAProbeCreate(iga,NULL,&probe);CHKERRQ(ierr);
+  ierr = IGAProbeSetOrder(probe,0);CHKERRQ(ierr);
+  ierr = IGAProbeSetCollective(probe,PETSC_FALSE);CHKERRQ(ierr);
+  {
+    PetscReal uvw[3]  = {0,0,0};
+    PetscReal xval[3] = {0,0,0};
+    PetscInt is,iw,js,jw,ks,kw;
+    PetscInt c,i,j,k,xpos=0;
+    const PetscInt *shift = iga->node_shift;
+    const IGAAxis  *axis  = iga->axis;
+    PetscReal (*ComputePoint)(PetscInt,PetscInt,IGAAxis);
+    ComputePoint = iga->collocation ? GrevillePoint : LagrangePoint;
+    ierr = DMDAGetCorners(*dm,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
+    for (k=ks; k<ks+kw; k++) {
+      uvw[2] = ComputePoint(k+shift[2],resolution[2],axis[2]);
+      for (j=js; j<js+jw; j++) {
+        uvw[1] = ComputePoint(j+shift[1],resolution[1],axis[1]);
+        for (i=is; i<is+iw; i++) {
+          uvw[0] = ComputePoint(i+shift[0],resolution[0],axis[0]);
+          {
+            ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
+            ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);
+            for (c=0; c<nsd; c++) arrayX[xpos++] = xval[c];
+          }
+        }
+      }
+    }
+  }
+  ierr = IGAProbeDestroy(&probe);CHKERRQ(ierr);
+  ierr = VecRestoreArray(X,&arrayX);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -87,43 +153,14 @@ PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm)
   PetscFunctionReturn(0);
 }
 
-EXTERN_C_BEGIN
-extern PetscReal IGA_Greville(PetscInt i,PetscInt p,const PetscReal U[]);
-EXTERN_C_END
-
-static
-PetscReal GrevillePoint(PetscInt index,PETSC_UNUSED PetscInt step,IGAAxis axis)
-{
-  if (PetscUnlikely(axis->p == 0)) return 0;
-  return IGA_Greville(index,axis->p,axis->U);
-}
-
-static
-PetscReal LagrangePoint(PetscInt index,PetscInt step,IGAAxis axis)
-{
-  if (PetscUnlikely(axis->p == 0)) return 0;
-  {
-    PetscInt n = axis->nel;
-    PetscInt p = step;
-    PetscInt e = index / p;
-    PetscInt i = index % p;
-    PetscReal u0,u1;
-    if (PetscUnlikely(e == n)) { e -= 1; i = p; }
-    u0 = axis->U[axis->span[e]];
-    u1 = axis->U[axis->span[e]+1];
-    return u0 + (PetscReal)i/(PetscReal)p*(u1-u0);
-  }
-}
-
 PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
 {
-  PetscInt       dof,dim,nsd;
-  DM             da;
-  Vec            X,U;
-  PetscScalar    *arrayX=NULL;
+  DM             dm;
+  PetscInt       dof;
+  PetscInt       resolution[3] = {1,1,1},d,dim,M[3];
+  Vec            U;
   PetscScalar    *arrayU=NULL;
   IGAProbe       probe;
-  PetscReal     (*ComputePoint)(PetscInt,PetscInt,IGAAxis);
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
@@ -134,48 +171,39 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,3);
   IGACheckSetUp(iga,1);
 
-  ierr = IGAGetDrawDM(iga,&da);CHKERRQ(ierr);
-  ierr = DMGetGlobalVector(da,&U);CHKERRQ(ierr);
-  ierr = PetscObjectSetName((PetscObject)U,((PetscObject)vec)->name);CHKERRQ(ierr);
-
-  ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+  ierr = IGAGetDrawDM(iga,&dm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
   dim = PetscClipInterval(dim,1,3);
-  nsd = PetscClipInterval(nsd,dim,3);
+  ierr = DMDAGetInfo(dm,NULL,&M[0],&M[1],&M[2],NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
+  for (d=0; d<dim; d++) resolution[d] = (M[d]-1)/iga->elem_sizes[d];
 
-  ierr = DMGetCoordinates(da,&X);CHKERRQ(ierr);
-  ierr = VecGetArray(X,&arrayX);CHKERRQ(ierr);
+  ierr = DMGetGlobalVector(dm,&U);CHKERRQ(ierr);
+  ierr = PetscObjectSetName((PetscObject)U,((PetscObject)vec)->name);CHKERRQ(ierr);
+  ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   ierr = VecGetArray(U,&arrayU);CHKERRQ(ierr);
-
-  ComputePoint = iga->collocation ? GrevillePoint : LagrangePoint;
-
   ierr = IGAProbeCreate(iga,vec,&probe);CHKERRQ(ierr);
   ierr = IGAProbeSetOrder(probe,0);CHKERRQ(ierr);
   ierr = IGAProbeSetCollective(probe,PETSC_FALSE);CHKERRQ(ierr);
   {
     PetscReal uvw[3]  = {0,0,0};
-    PetscReal xval[3] = {0,0,0};
     PetscScalar *uval;
     PetscInt is,iw,js,jw,ks,kw;
-    PetscInt c,i,j,k,xpos=0,upos=0;
+    PetscInt c,i,j,k,upos=0;
     const PetscInt *shift = iga->node_shift;
-    PetscInt M[3],resolution[3] = {1,1,1};
-    ierr = DMDAGetInfo(da,NULL,&M[0],&M[1],&M[2],NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);CHKERRQ(ierr);
-    for (i=0; i<dim; i++) resolution[i] = (M[i]-1)/iga->elem_sizes[i];
-    ierr = DMDAGetCorners(da,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
+    const IGAAxis  *axis  = iga->axis;
+    PetscReal (*ComputePoint)(PetscInt,PetscInt,IGAAxis);
+    ComputePoint = iga->collocation ? GrevillePoint : LagrangePoint;
+    ierr = DMDAGetCorners(dm,&is,&js,&ks,&iw,&jw,&kw);CHKERRQ(ierr);
     ierr = PetscMalloc1((size_t)dof,&uval);CHKERRQ(ierr);
     for (k=ks; k<ks+kw; k++) {
-      uvw[2] = ComputePoint(k+shift[2],resolution[2],iga->axis[2]);
+      uvw[2] = ComputePoint(k+shift[2],resolution[2],axis[2]);
       for (j=js; j<js+jw; j++) {
-        uvw[1] = ComputePoint(j+shift[1],resolution[1],iga->axis[1]);
+        uvw[1] = ComputePoint(j+shift[1],resolution[1],axis[1]);
         for (i=is; i<is+iw; i++) {
-          uvw[0] = ComputePoint(i+shift[0],resolution[0],iga->axis[0]);
+          uvw[0] = ComputePoint(i+shift[0],resolution[0],axis[0]);
           {
             ierr = IGAProbeSetPoint(probe,uvw);CHKERRQ(ierr);
-            ierr = IGAProbeGeomMap(probe,xval);CHKERRQ(ierr);
             ierr = IGAProbeFormValue(probe,uval);CHKERRQ(ierr);
-            for (c=0; c<nsd; c++) arrayX[xpos++] = xval[c];
             for (c=0; c<dof; c++) arrayU[upos++] = uval[c];
           }
         }
@@ -184,13 +212,10 @@ PetscErrorCode IGADrawVec(IGA iga,Vec vec,PetscViewer viewer)
     ierr = PetscFree(uval);CHKERRQ(ierr);
   }
   ierr = IGAProbeDestroy(&probe);CHKERRQ(ierr);
-
-  ierr = VecRestoreArray(X,&arrayX);CHKERRQ(ierr);
   ierr = VecRestoreArray(U,&arrayU);CHKERRQ(ierr);
-
   ierr = VecView(U,viewer);CHKERRQ(ierr);
   ierr = PetscObjectSetName((PetscObject)U,NULL);CHKERRQ(ierr);
-  ierr = DMRestoreGlobalVector(da,&U);CHKERRQ(ierr);
+  ierr = DMRestoreGlobalVector(dm,&U);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -219,14 +244,16 @@ EXTERN_C_END
 
 PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
 {
-  PetscInt       i,j,dim;
-  PetscBool      match;
-  PetscDraw      draw;
-  MPI_Comm       comm;
-  PetscMPIInt    size,rank;
-  double         xmin=0,xmax=0,xlen=0,xb=0;
-  double         ymin=0,ymax=0,ylen=0,yb=0;
-  PetscErrorCode ierr;
+  DM                dm;
+  PetscBool         match;
+  PetscViewerFormat format;
+  PetscInt          i,j,dim;
+  PetscDraw         draw;
+  MPI_Comm          comm;
+  PetscMPIInt       size,rank;
+  double            xmin=0,xmax=0,xlen=0,xb=0;
+  double            ymin=0,ymax=0,ylen=0,yb=0;
+  PetscErrorCode    ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -234,11 +261,32 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,2);
   IGACheckSetUp(iga,1);
 
-  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-  if (dim != 2) PetscFunctionReturn(0);
+  ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&match);CHKERRQ(ierr);
+  if (match && format == PETSC_VIEWER_ASCII_VTK) {
+    ierr = IGAGetDrawDM(iga,&dm);CHKERRQ(ierr);
+    ierr = DMView(dm,viewer);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERGLVIS,&match);CHKERRQ(ierr);
+  if (match) {
+    ierr = IGAGetDrawDM(iga,&dm);CHKERRQ(ierr);
+    ierr = DMView(dm,viewer);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
+  ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERVTK,&match);CHKERRQ(ierr);
+  if (match) {
+    ierr = IGAGetDrawDM(iga,&dm);CHKERRQ(ierr);
+    ierr = DMView(dm,viewer);CHKERRQ(ierr);
+    PetscFunctionReturn(0);
+  }
 
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERDRAW,&match);CHKERRQ(ierr);
   if (!match) PetscFunctionReturn(0);
+
+  ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+  if (dim != 2) PetscFunctionReturn(0);
+
   ierr = PetscViewerDrawGetDraw(viewer,0,&draw);CHKERRQ(ierr);
   ierr = PetscDrawIsNull(draw,&match);CHKERRQ(ierr);
   if (match) PetscFunctionReturn(0);
