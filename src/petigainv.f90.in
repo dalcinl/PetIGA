@@ -1,11 +1,11 @@
 ! -*- f90 -*-
 
-pure function Inverse(dim,detA,A) result (invA)
+pure subroutine Inverse(dim,detA,A,invA)
   implicit none
-  integer(kind=IGA_INTEGER_KIND), intent(in) :: dim
-  real   (kind=IGA_REAL_KIND   ), intent(in) :: detA
-  real   (kind=IGA_REAL_KIND   ), intent(in) :: A(dim,dim)
-  real   (kind=IGA_REAL_KIND   )  :: invA(dim,dim)
+  integer(kind=IGA_INTEGER_KIND), intent(in)  :: dim
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: detA
+  real   (kind=IGA_REAL_KIND   ), intent(in)  :: A(dim,dim)
+  real   (kind=IGA_REAL_KIND   ), intent(out) :: invA(dim,dim)
   select case (dim)
   case (1)
      invA = 1/detA
@@ -29,4 +29,4 @@ pure function Inverse(dim,detA,A) result (invA)
   case default
      invA = 0
   end select
-end function Inverse
+end subroutine Inverse

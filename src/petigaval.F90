@@ -134,7 +134,7 @@ subroutine IGA_GetInvGradGeomMap(nen,nsd,dim,N,C,G) &
   F = matmul(C,transpose(N))
   M = matmul(transpose(F),F)
   detM = Determinant(dim,M)
-  invM = Inverse(dim,detM,M)
+  call Inverse(dim,detM,M,invM)
   G = transpose(matmul(invM,transpose(F)))
 contains
 include 'petigadet.f90.in'

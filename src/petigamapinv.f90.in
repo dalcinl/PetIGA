@@ -25,7 +25,7 @@ pure subroutine InverseMap(&
   ! 1st derivatives
   if (order < 1) return
   dX = Determinant(dim,X1)
-  E1 = Inverse(dim,dX,X1)
+  call Inverse(dim,dX,X1,E1)
 
   ! 2nd derivatives
   if (order < 2) return
