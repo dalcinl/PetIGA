@@ -100,7 +100,7 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
     PetscReal uvw[3]  = {0,0,0};
     PetscReal xval[3] = {0,0,0};
     PetscInt is,iw,js,jw,ks,kw;
-    PetscInt c,i,j,k,xpos=0;
+    PetscInt c,j,k,xpos=0;
     const PetscInt *shift = iga->node_shift;
     const IGAAxis  *axis  = iga->axis;
     PetscReal (*ComputePoint)(PetscInt,PetscInt,IGAAxis);
