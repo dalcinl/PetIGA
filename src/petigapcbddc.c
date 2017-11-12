@@ -310,7 +310,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     PetscScalar            *vals,*ma;
     const PetscScalar      *fa;
     PetscInt               nl,dim,nnsp_size,n,i,s,ni,bs,*idxs;
-    PetscInt               mid[3] = {0,0,0};
+    PetscInt               mid[3] = {0,0,0}, fix[3] = {0,0,0};
     PetscInt               width[3][2] = {{0,1},{0,1},{0,1}};
     PetscBool              nnsp_has_cnst = PETSC_TRUE;
 
@@ -346,12 +346,13 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     for (i=0;i<dim;i++) {
       PetscInt lend = iga->node_lstart[i] + iga->node_lwidth[i];
       PetscInt gend = iga->node_gstart[i] + iga->node_gwidth[i];
+      if (lend == gend-1 || lend == gend) fix[i] = 1; /* fix for lowest order */
       mid[i]        = iga->node_gwidth[i] - (gend-lend)/2 - 1;
       width[i][0]   = iga->node_lstart[i] - iga->node_gstart[i];
       width[i][1]   = width[i][0] + iga->node_lwidth[i];
     }
     for (i=0;i<ni;i++) vals[i] = 0.0;
-    if (0 < mid[0] && mid[0] < iga->node_gwidth[0]-1) {
+    if (0 < mid[0] && mid[0] < iga->node_gwidth[0]-1 + fix[0]) {
       PetscInt j,k;
       for (k = width[2][0]; k < width[2][1]; k++) {
         for (j = width[1][0]; j < width[1][1]; j++) {
@@ -360,7 +361,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
         }
       }
     }
-    if (0 < mid[1] && mid[1] < iga->node_gwidth[1]-1) {
+    if (0 < mid[1] && mid[1] < iga->node_gwidth[1]-1 + fix[0]) {
       PetscInt j,k;
       for (k = width[2][0]; k < width[2][1]; k++) {
         for (j = width[0][0]; j < width[0][1]; j++) {
@@ -369,7 +370,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
         }
       }
     }
-    if (0 < mid[2] && mid[2] < iga->node_gwidth[2]-1) {
+    if (0 < mid[2] && mid[2] < iga->node_gwidth[2]-1 + fix[0]) {
       PetscInt j,k;
       for (k = width[1][0]; k < width[1][1]; k++) {
         for (j = width[0][0]; j < width[0][1]; j++) {
@@ -394,7 +395,6 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     for (i=0;i<nl;i++) {
       /* m = (2.^m == f) */
       PetscReal t = PetscPowReal(2.0,PetscRealPart(ma[i]));
-
       ma[i] = (PetscScalar)(PetscAbsReal(t-PetscRealPart(fa[i])) < PETSC_SMALL ? 1.0 : 0.0);
     }
     ierr = VecRestoreArrayRead(fat,&fa);CHKERRQ(ierr);
