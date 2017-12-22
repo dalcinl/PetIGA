@@ -283,7 +283,11 @@ static PetscErrorCode DMCreateCoordinateDM_IGA(DM dm,DM *cdm)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,9,0)
 static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,PetscInt fields[],IS *is,DM *subdm)
+#else
+static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,const PetscInt fields[],IS *is,DM *subdm)
+#endif
 {
   IGA            iga = DMIGACast(dm)->iga;
   IGA            subiga;
