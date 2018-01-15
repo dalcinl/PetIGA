@@ -309,18 +309,22 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ISLocalToGlobalMapping l2g;
     PetscScalar            *vals,*ma;
     const PetscScalar      *fa;
-    PetscInt               nl,dim,nnsp_size,n,i,s,ni,bs,*idxs;
+    PetscInt               nl,dim,nnsp_size,n,i,s,ni,bs,*idxs,nv,*minimalv;
     PetscInt               mid[3] = {0,0,0}, fix[3] = {0,0,0};
     PetscInt               width[3][2] = {{0,1},{0,1},{0,1}};
-    PetscBool              nnsp_has_cnst = PETSC_TRUE;
+    PetscBool              nnsp_has_cnst = PETSC_TRUE,hasv;
 
     nnsp_size = 0;
     ierr = MatGetNearNullSpace(mat,&nnsp);CHKERRQ(ierr);
     if (nnsp) {
       ierr = MatNullSpaceGetVecs(nnsp,&nnsp_has_cnst,&nnsp_size,(const Vec**)&nnsp_v);CHKERRQ(ierr);
     }
+    ierr = PetscMalloc1(nnsp_size,&minimalv);CHKERRQ(ierr);
+    for (i=0;i<nnsp_size;i++) minimalv[i] = -1;
+    ierr = PetscOptionsGetIntArray(((PetscObject)pc)->options,prefix,"-iga_set_bddc_minimal_volume",minimalv,(nv = nnsp_size,&nv),&hasv);CHKERRQ(ierr);
+    if (!hasv) nv = 0;
     s = nnsp_has_cnst ? 1 : 0;
-    n = nnsp_size + s;
+    n = nnsp_size + s + nv;
 
     ierr = PetscMalloc1(n,&v);CHKERRQ(ierr);
     ierr = MatGetLocalToGlobalMapping(mat,&l2g,NULL);CHKERRQ(ierr);
@@ -401,11 +405,15 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = VecRestoreArray(mask,&ma);CHKERRQ(ierr);
     ierr = PetscObjectSetName((PetscObject)mask,"MASK");CHKERRQ(ierr);
     ierr = VecViewFromOptions(mask,NULL,"-view_mask");CHKERRQ(ierr);
+    if (s) {
+      ierr = VecCopy(mask,v[0]);CHKERRQ(ierr);
+    }
     for (i=0;i<nnsp_size;i++) {
       ierr = VecPointwiseMult(v[i+s],nnsp_v[i],mask);CHKERRQ(ierr);
     }
-    if (s) {
-      ierr = VecCopy(mask,v[0]);CHKERRQ(ierr);
+    for (i=0;i<nv;i++) {
+      if (minimalv[i] < 0 || minimalv[i] >= nnsp_size) SETERRQ1(PetscObjectComm((PetscObject)pc),PETSC_ERR_USER,"Invalid volume term %D",minimalv[i]);
+      ierr = VecCopy(nnsp_v[minimalv[i]],v[i+s+nnsp_size]);CHKERRQ(ierr);
     }
     ierr = OrthonormalizeVecs_Private(n,v);CHKERRQ(ierr);
     ierr = MatNullSpaceCreate(PetscObjectComm((PetscObject)mat),PETSC_FALSE,n,v,&nnsp);CHKERRQ(ierr);
@@ -418,6 +426,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = VecDestroy(&fat);CHKERRQ(ierr);
     ierr = PetscFree(v);CHKERRQ(ierr);
     ierr = PetscFree2(idxs,vals);CHKERRQ(ierr);
+    ierr = PetscFree(minimalv);CHKERRQ(ierr);
   }
 
   if (boundary[0] || boundary[1]) {
