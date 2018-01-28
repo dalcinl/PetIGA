@@ -316,11 +316,12 @@ module PetIGA
       type(IGAPoint), intent(in) :: p
       integer(kind=IGA_INTEGER_KIND), intent(out), optional :: axis
       integer(kind=IGA_INTEGER_KIND), intent(out), optional :: side
+      integer(kind=IGA_INTEGER_KIND), parameter :: two = 2
       logical :: atboundary
       atboundary = (p%atboundary /= 0)
       if (atboundary) then
-         if (present(axis)) axis = p%boundary_id / 2
-         if (present(side)) side = mod(p%boundary_id,2)
+         if (present(axis)) axis = p%boundary_id/two
+         if (present(side)) side = mod(p%boundary_id,two)
       else
          if (present(axis)) axis = -1
          if (present(side)) side = -1

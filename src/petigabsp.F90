@@ -36,12 +36,13 @@ contains
 include 'petigalgb.f90.in'
 pure subroutine NewtonCotesPoints(n,U0,U1,X)
   implicit none
+  integer, parameter :: rk = IGA_REAL_KIND
   integer(kind=IGA_INTEGER_KIND), intent(in)  :: n
   real   (kind=IGA_REAL_KIND   ), intent(in)  :: U0, U1
   real   (kind=IGA_REAL_KIND   ), intent(out) :: X(0:n-1)
   integer(kind=IGA_INTEGER_KIND)  :: i
   do i = 0, n-1
-     X(i) = U0 + i * (U1-U0)/(n-1)
+     X(i) = U0 + (U1-U0) * real(i,rk)/real(n-1,rk)
   end do
 end subroutine NewtonCotesPoints
 end subroutine IGA_Basis_Lagrange

@@ -51,7 +51,7 @@ PetscInt IGA_PART3D_INNER(PetscInt size,
   PetscInt m,n,p,C;
   PetscInt mm,nn,pp,CC;
   /**/
-  m = (PetscInt)(0.5 + pow(((double)M*M)/((double)N*P)*size,1./3.));
+  m = (PetscInt)(0.5 + pow(((double)M*(double)M)/((double)N*(double)P)*(double)size,1./3.));
   if (m == 0) {m = 1;} while (m > 0 && size % m) m--;
   /**/
   IGA_PART2D(size/m,N,P,&n,&p);

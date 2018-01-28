@@ -57,7 +57,7 @@ pure subroutine BSplineBasisFunsDers(i,uu,p,n,U,ders)
   end do
   r = p
   do k = 1, n
-     ders(:,k) = ders(:,k) * r
+     ders(:,k) = ders(:,k) * real(r,IGA_REAL_KIND)
      r = r * (p-k)
   end do
 end subroutine BSplineBasisFunsDers

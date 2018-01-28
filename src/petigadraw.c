@@ -251,8 +251,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   PetscDraw         draw;
   MPI_Comm          comm;
   PetscMPIInt       size,rank;
-  double            xmin=0,xmax=0,xlen=0,xb=0;
-  double            ymin=0,ymax=0,ylen=0,yb=0;
+  PetscReal         xmin=0,xmax=0,xlen=0,xb=0;
+  PetscReal         ymin=0,ymax=0,ylen=0,yb=0;
   PetscErrorCode    ierr;
 
   PetscFunctionBegin;
@@ -302,8 +302,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     IGAAxis axis; PetscReal Ua,Ub;
     ierr = IGAGetAxis(iga,i,&axis);CHKERRQ(ierr);
     ierr = IGAAxisGetLimits(axis,&Ua,&Ub);CHKERRQ(ierr);
-    if (!i) { xmin = (double)Ua; xmax = (double)Ub; xlen = xmax-xmin; xb = 0.05*xlen;}
-    else    { ymin = (double)Ua; ymax = (double)Ub; ylen = ymax-ymin; yb = 0.05*ylen;}
+    if (!i) { xmin = Ua; xmax = Ub; xlen = xmax-xmin; xb = (PetscReal)0.05*xlen;}
+    else    { ymin = Ua; ymax = Ub; ylen = ymax-ymin; yb = (PetscReal)0.05*ylen;}
   }
   ierr = PetscDrawSetCoordinates(draw,xmin-xb,ymin-yb,xmax+xb,ymax+yb);CHKERRQ(ierr);
 
@@ -311,7 +311,7 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     PetscInt *r = iga->proc_ranks;
     int colors[] = {PETSC_DRAW_GRAY, PETSC_DRAW_WHITE};
     int c = colors[(r[0]+r[1]) % 2]; /* chessboard */
-    double x0=0,y0=0,x=0,y=0;
+    PetscReal x0=0,y0=0,x=0,y=0;
     for (i=0; i<2; i++) {
       PetscReal Ua,Ub;
       if (!iga->collocation) {
@@ -332,8 +332,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
         Ua = U[a] + ((a>0) ? (U[a-1]-U[a])/2 : 0);
         Ub = U[b] + ((b<n) ? (U[b+1]-U[b])/2 : 0);
       }
-      if (!i) { x0 = (double)Ua; x = (double)Ub;}
-      else    { y0 = (double)Ua; y = (double)Ub;}
+      if (!i) { x0 = Ua; x = Ub;}
+      else    { y0 = Ua; y = Ub;}
     }
     ierr = PetscDrawCollectiveBegin(draw);CHKERRQ(ierr);
     ierr = PetscDrawRectangle(draw,x0,y0,x,y,c,c,c,c);CHKERRQ(ierr);
@@ -351,14 +351,14 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
     ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
     for (i=p; i<=m-p; i = IGA_NextKnot(m,U,i,1)) {
-      double x = (double)U[i];
+      PetscReal x = U[i];
       ierr = PetscDrawLine(draw,x,ymin,x,ymax,c);CHKERRQ(ierr);
     }
     ierr = IGAGetAxis(iga,1,&axis);CHKERRQ(ierr);
     ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
     ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
     for (i=p; i<=m-p; i = IGA_NextKnot(m,U,i,1)) {
-      double y = (double)U[i];
+      PetscReal y = U[i];
       ierr = PetscDrawLine(draw,xmin,y,xmax,y,c);CHKERRQ(ierr);
     }
   }
@@ -374,9 +374,9 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     PetscReal *u = BD[0]->point, *wu = BD[0]->weight;
     PetscReal *v = BD[1]->point, *wv = BD[1]->weight;
     for (i=0; i<ni; i++) {
-      double x = (double)u[i]; if (wu[i] <= 0) continue;
+      PetscReal x = u[i]; if (wu[i] <= 0) continue;
       for (j=0; j<nj; j++) {
-        double y = (double)v[j]; if (wv[j] <= 0) continue;
+        PetscReal y = v[j]; if (wv[j] <= 0) continue;
         ierr = PetscDrawPoint(draw,x,y,c);CHKERRQ(ierr);
       }
     }
