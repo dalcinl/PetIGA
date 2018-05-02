@@ -1,8 +1,8 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
-#define MatGetOperation MatShellGetOperation
 #if PETSC_VERSION_LT(3,9,0)
+#define MatGetOperation MatShellGetOperation
 #define MatSetOperation MatShellSetOperation
 #endif
 
