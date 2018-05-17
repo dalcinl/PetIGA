@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBool("-monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-alpha","Interface thickess parameter",__FILE__,user.alpha,&user.alpha,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,user.alpha,&user.alpha,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,user.theta,&user.theta,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   if (k == PETSC_DECIDE) k = p-1;
 
