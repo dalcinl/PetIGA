@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBool("-output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-cbar","Initial average concentration",__FILE__,params.cbar,&params.cbar,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-alpha","Interface thickess parameter",__FILE__,params.alpha,&params.alpha,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,params.alpha,&params.alpha,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,params.theta,&params.theta,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   ierr = IGAOptionsAlias("-wrap",  "", "-iga_periodic");CHKERRQ(ierr);

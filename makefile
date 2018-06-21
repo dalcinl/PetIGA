@@ -205,6 +205,7 @@ testexamples:
 
 
 # Test build
+check: test
 test:
 	-@${OMAKE} test-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} 2>&1 | tee ./${PETSC_ARCH}/log/test.log
 test-build:
@@ -216,7 +217,7 @@ test-build:
 	@cd test; ${OMAKE} test-build  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	@cd test; ${OMAKE} clean       PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR}
 	-@echo "Completed test"
-.PHONY: test test-build
+.PHONY: check test test-build
 
 
 #

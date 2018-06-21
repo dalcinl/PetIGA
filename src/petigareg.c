@@ -58,9 +58,33 @@ PetscErrorCode IGAFinalizePackage(void)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,9,0)
+static PetscErrorCode PetscStrInList(const char str[],const char list[],char sep,PetscBool *found)
+{
+  PetscToken     token;
+  char           *item;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  *found = PETSC_FALSE;
+  ierr = PetscTokenCreate(list,sep,&token);CHKERRQ(ierr);
+  ierr = PetscTokenFind(token,&item);CHKERRQ(ierr);
+  while (item) {
+    ierr = PetscStrcmp(str,item,found);CHKERRQ(ierr);
+    if (*found) break;
+    ierr = PetscTokenFind(token,&item);CHKERRQ(ierr);
+  }
+  ierr = PetscTokenDestroy(&token);CHKERRQ(ierr);
+  PetscFunctionReturn(0);
+}
+#endif
+
 PetscErrorCode IGAInitializePackage(void)
 {
+  char           logList[256];
+  PetscBool      opt,pkg;
   PetscErrorCode ierr;
+
   PetscFunctionBegin;
   if (IGAPackageInitialized) PetscFunctionReturn(0);
   IGAPackageInitialized = PETSC_TRUE;
@@ -77,7 +101,19 @@ PetscErrorCode IGAInitializePackage(void)
   ierr = PetscLogEventRegister("IGAFormJacobian",IGA_CLASSID,&IGA_FormJacobian);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIFunction",IGA_CLASSID,&IGA_FormIFunction);CHKERRQ(ierr);
   ierr = PetscLogEventRegister("IGAFormIJacobian",IGA_CLASSID,&IGA_FormIJacobian);CHKERRQ(ierr);
-  /* Register finalization routine */
+  /* Process info exclusions */
+  ierr = PetscOptionsGetString(NULL,NULL,"-info_exclude",logList,sizeof(logList),&opt);CHKERRQ(ierr);
+  if (opt) {
+    ierr = PetscStrInList("iga",logList,',',&pkg);CHKERRQ(ierr);
+    if (pkg) {ierr = PetscInfoDeactivateClass(IGA_CLASSID);CHKERRQ(ierr);}
+  }
+  /* Process summary exclusions */
+  ierr = PetscOptionsGetString(NULL,NULL,"-log_exclude",logList,sizeof(logList),&opt);CHKERRQ(ierr);
+  if (opt) {
+    ierr = PetscStrInList("iga",logList,',',&pkg);CHKERRQ(ierr);
+    if (pkg) {ierr = PetscLogEventDeactivateClass(IGA_CLASSID);CHKERRQ(ierr);}
+  }
+  /* Register package finalizer */
   ierr = PetscRegisterFinalize(IGAFinalizePackage);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
