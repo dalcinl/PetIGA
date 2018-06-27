@@ -9,7 +9,7 @@ PetscErrorCode System(const IGAPoint q,PetscScalar K[],PetscScalar F[],void *ctx
   typedef PetscScalar (&ArrayF)[nen][dof];
   ArrayK arrayK = reinterpret_cast<ArrayK>(*K);
   ArrayF arrayF = reinterpret_cast<ArrayF>(*F);
-  return System<dim>(q,arrayU,arrayJ,ctx);
+  return System<dim>(q,arrayK,arrayF,ctx);
 }
 }
 
@@ -21,7 +21,7 @@ PetscErrorCode SystemCXX(IGAPoint q,PetscScalar K[],PetscScalar F[],void *ctx)
   IGAFormSystem SystemP = NULL;
   LookupTemplateSet(SystemP,q,System);
   LookupTemplateChk(SystemP,q,System);
-  return SystemP(q,U,J,ctx);
+  return SystemP(q,K,F,ctx);
 }
 
 #endif
