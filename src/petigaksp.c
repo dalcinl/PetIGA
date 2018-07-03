@@ -256,6 +256,42 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   PetscFunctionReturn(0);
 }
 
+static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
+{
+  KSP            ksp = (KSP)obj;
+  DM             dm;
+  PetscBool      match,hasmat;
+  Mat            mat;
+  IGA            iga = NULL;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  ierr = PetscObjectQuery((PetscObject)ksp,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  ierr = KSPGetDM(ksp,&dm);CHKERRQ(ierr);
+  ierr = KSPGetOperatorsSet(ksp,NULL,&hasmat);CHKERRQ(ierr);
+  if (!iga && dm) {
+    ierr = PetscObjectTypeCompare((PetscObject)dm,DMIGA,&match);CHKERRQ(ierr);
+    if (match) {ierr = DMIGAGetIGA(dm,&iga);CHKERRQ(ierr);}
+  }
+  if (!iga && hasmat) {
+    ierr = KSPGetOperators(ksp,NULL,&mat);CHKERRQ(ierr);
+    ierr = PetscObjectQuery((PetscObject)mat,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  }
+  if (!iga) PetscFunctionReturn(0);
+  PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+  /* */
+  ierr = PetscObjectTypeCompare((PetscObject)ksp,KSPFETIDP,&match);CHKERRQ(ierr);
+  if (match) {
+    PC pc;
+
+    ierr = KSPFETIDPGetInnerBDDC(ksp,&pc);CHKERRQ(ierr);
+    ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
+  }
+  /* */
+  PetscFunctionReturn(0);
+}
+
 static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
 {
   PC             pc = (PC)obj;
@@ -296,6 +332,7 @@ PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp,KSP_CLASSID,1);
+  ierr = PetscObjectAddOptionsHandler((PetscObject)ksp,IGA_OptionsHandler_KSP,OptHdlDel,NULL);CHKERRQ(ierr);
   ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);
   ierr = IGASetOptionsHandlerPC(pc);CHKERRQ(ierr);
   PetscFunctionReturn(0);
