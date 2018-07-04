@@ -4,9 +4,9 @@ PETIGA_DIR ?= $(CURDIR)
 include ./lib/petiga/conf/variables
 -include makefile.in
 
-OBJDIR := $(PETSC_ARCH)/obj
-MODDIR := $(PETSC_ARCH)/include
-LIBDIR := $(abspath $(PETSC_ARCH)/lib)
+OBJDIR := $(PETIGA_ARCH)/obj
+MODDIR := $(PETIGA_ARCH)/include
+LIBDIR := $(abspath $(PETIGA_ARCH)/lib)
 
 libpetiga_shared := $(LIBDIR)/libpetiga.$(SL_LINKER_SUFFIX)
 libpetiga_static := $(LIBDIR)/libpetiga.$(AR_LIB_SUFFIX)

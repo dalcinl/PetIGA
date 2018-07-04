@@ -13,12 +13,16 @@ ifndef PETSC_CONF_DIR
   endif
 endif
 include $(PETSC_CONF_DIR)/variables
-ifeq ($(PETSC_ARCH),)
-  PETSC_ARCH = arch-default
+ifeq ($(PETIGA_ARCH),)
+  ifeq ($(PETSC_ARCH),)
+    PETIGA_ARCH = arch-default
+  else
+    PETIGA_ARCH = $(PETSC_ARCH)
+  endif
 endif
 
-PETIGA_INCLUDE = -I$(PETIGA_DIR)/$(PETSC_ARCH)/include -I$(PETIGA_DIR)/include
-PETIGA_LIB_DIR = $(PETIGA_DIR)/$(PETSC_ARCH)/lib
+PETIGA_INCLUDE = -I$(PETIGA_DIR)/$(PETIGA_ARCH)/include -I$(PETIGA_DIR)/include
+PETIGA_LIB_DIR = $(PETIGA_DIR)/$(PETIGA_ARCH)/lib
 PETIGA_LIB     = $(CC_LINKER_SLFLAG)$(PETIGA_LIB_DIR) -L$(PETIGA_LIB_DIR) -lpetiga $(PETSC_LIB)
 
 CCPPFLAGS = $(PETSC_CCPPFLAGS) $(PETIGA_INCLUDE)
