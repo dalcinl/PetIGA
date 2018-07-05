@@ -319,7 +319,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     if (nnsp) {
       ierr = MatNullSpaceGetVecs(nnsp,&nnsp_has_cnst,&nnsp_size,(const Vec**)&nnsp_v);CHKERRQ(ierr);
     }
-    ierr = PetscMalloc1(nnsp_size,&minimalv);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nnsp_size+1,&minimalv);CHKERRQ(ierr);
     for (i=0;i<nnsp_size;i++) minimalv[i] = -1;
     ierr = PetscOptionsGetIntArray(((PetscObject)pc)->options,prefix,"-iga_set_bddc_minimal_volume",minimalv,(nv = nnsp_size,&nv),&hasv);CHKERRQ(ierr);
     if (!hasv) nv = 0;
