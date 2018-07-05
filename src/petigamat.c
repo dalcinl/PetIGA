@@ -387,7 +387,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     ierr = MatSetOperation(A,MATOP_DUPLICATE,(PetscVoidFunction)MatDuplicate_IGA);CHKERRQ(ierr);
   }
 
-  if (is) {ierr = MatSetUp(A);CHKERRQ(ierr);}
   ierr = MatSetLocalToGlobalMapping(A,rmap->mapping,cmap->mapping);CHKERRQ(ierr);
   if (is) {
     const MatType mtype = (bs > 1) ? MATBAIJ : MATAIJ;
