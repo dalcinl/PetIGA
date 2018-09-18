@@ -98,7 +98,7 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
       }
 
   /* Allocate arrays to store the adjacency graph */
-  nvtx *= bs; nadj *= bs; /* adjust for block size */
+  nvtx *= bs; nadj *= bs*bs; /* adjust for block size */
   ierr = PetscMalloc1((size_t)(nvtx+1),&xadj);CHKERRQ(ierr);
   ierr = PetscMalloc1((size_t)nadj,&adjy);CHKERRQ(ierr);
 
@@ -124,9 +124,12 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
         }
         ierr = PetscSortInt(nv,vertices);CHKERRQ(ierr);
         for (c=0; c<bs; c++) {
+          PetscInt c2;
+
           xadj[pos] = xadj[pos-1];
           for (v=0; v<nv; v++)
-            adjy[xadj[pos]++] = c + bs*vertices[v];
+            for (c2=0; c2<bs; c2++)
+              adjy[xadj[pos]++] = c2 + bs*vertices[v];
           pos++;
         }
       }
