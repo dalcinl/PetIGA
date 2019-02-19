@@ -279,28 +279,13 @@ PetscErrorCode IGAView(IGA iga,PetscViewer viewer)
   PetscFunctionReturn(0);
 }
 
-PetscErrorCode IGAViewFromOptions(IGA iga,const char prefix[],const char option[])
+PetscErrorCode IGAViewFromOptions(IGA iga,PetscObject obj,const char name[])
 {
 
-  MPI_Comm          comm;
-  PetscViewer       viewer;
-  PetscViewerFormat format;
-  PetscBool         skipinfo = PETSC_FALSE;
-  PetscBool         flg;
-  PetscErrorCode    ierr;
+  PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
-  if (!prefix) {ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);}
-  ierr = PetscOptionsGetBool(NULL,NULL,"-viewer_binary_skip_info",&skipinfo,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsSetValue(NULL,"-viewer_binary_skip_info","");CHKERRQ(ierr);
-  ierr = PetscOptionsGetViewer(comm,prefix,option,&viewer,&format,&flg);CHKERRQ(ierr);
-  if (!skipinfo) {ierr = PetscOptionsClearValue(NULL,"-viewer_binary_skip_info");CHKERRQ(ierr);}
-  if (!flg) PetscFunctionReturn(0);
-  ierr = PetscViewerPushFormat(viewer,format);CHKERRQ(ierr);
-  ierr = IGAView(iga,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerPopFormat(viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  ierr = PetscObjectViewFromOptions((PetscObject)iga,obj,name);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
