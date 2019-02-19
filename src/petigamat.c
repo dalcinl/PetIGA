@@ -6,6 +6,11 @@
 #define MatSetOperation MatShellSetOperation
 #endif
 
+#if PETSC_VERSION_LT(3,9,0)
+#define MatSeqSELLSetPreallocation(A,dnz,dnnz) 0
+#define MatMPISELLSetPreallocation(A,dnz,dnnz,onz,onnz) 0
+#endif
+
 #if PETSC_VERSION_LT(3,8,0)
 #define MatCreateSubMatrix MatGetSubMatrix
 #define MATOP_CREATE_VECS MATOP_GET_VECS
