@@ -280,15 +280,16 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *Pets
   }
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
+#if !PETSC_VERSION_LT(3,8,0)
   /* */
   ierr = PetscObjectTypeCompare((PetscObject)ksp,KSPFETIDP,&match);CHKERRQ(ierr);
   if (match) {
     PC pc;
-
     ierr = KSPFETIDPGetInnerBDDC(ksp,&pc);CHKERRQ(ierr);
     ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
   }
   /* */
+#endif
   PetscFunctionReturn(0);
 }
 
