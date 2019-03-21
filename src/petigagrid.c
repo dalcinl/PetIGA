@@ -1,10 +1,6 @@
 #include "petigagrid.h"
 #include <petsc/private/petscimpl.h>
 
-#if PETSC_VERSION_LT(3,11,0)
-#define VecScatterCreateWithData VecScatterCreate
-#endif
-
 PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
 {
   IGA_Grid       g;
@@ -334,7 +330,7 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
     ierr = IGA_Grid_GetVecGlobal(g,VECSTANDARD,&gvec);CHKERRQ(ierr);
     ierr = IGA_Grid_GetVecLocal(g,VECSTANDARD,&lvec);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nghost,ighost,PETSC_USE_POINTER,&isghost);CHKERRQ(ierr);
-    ierr = VecScatterCreateWithData(gvec,isghost,lvec,NULL,&g->g2l);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isghost,lvec,NULL,&g->g2l);CHKERRQ(ierr);
     ierr = ISDestroy(&isghost);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingRestoreBlockIndices(lgmap,&ighost);CHKERRQ(ierr);
   }
@@ -380,7 +376,7 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
     ierr = VecGetOwnershipRange(gvec,&start,NULL);CHKERRQ(ierr);
     ierr = ISCreateBlock(PETSC_COMM_SELF,g->dof,nlocal,ilocal,PETSC_OWN_POINTER,&islocal);CHKERRQ(ierr);
     ierr = ISCreateStride(g->comm,nlocal*g->dof,start,1,&isglobal);CHKERRQ(ierr);
-    ierr = VecScatterCreateWithData(lvec,islocal,gvec,isglobal,&g->l2g);CHKERRQ(ierr);
+    ierr = VecScatterCreate(lvec,islocal,gvec,isglobal,&g->l2g);CHKERRQ(ierr);
     ierr = ISDestroy(&islocal);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
   }
@@ -404,7 +400,7 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
     ierr = VecGetOwnershipRange(gvec,&start,NULL);CHKERRQ(ierr);
     ierr = ISCreateStride(g->comm,nlocal*g->dof,start,1,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
-    ierr = VecScatterCreateWithData(gvec,isglobal,nvec,isnatural,&g->g2n);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g->g2n);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
   }
@@ -529,7 +525,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
           inatural[pos++] = i + j * jstride + k * kstride;
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
     ierr = ISCreateStride(g->comm,nlocal*g->dof,gstart,1,&isglobal);CHKERRQ(ierr);
-    ierr = VecScatterCreateWithData(nvec,isnatural,gvec,isglobal,&n2g);CHKERRQ(ierr);
+    ierr = VecScatterCreate(nvec,isnatural,gvec,isglobal,&n2g);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
   }
@@ -568,7 +564,7 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
     ierr = ISLocalToGlobalMappingApplyBlock(lgmap,nlocal,iglobal,iglobal);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,iglobal,PETSC_OWN_POINTER,&isglobal);CHKERRQ(ierr);
     ierr = ISCreateBlock(g->comm,g->dof,nlocal,inatural,PETSC_OWN_POINTER,&isnatural);CHKERRQ(ierr);
-    ierr = VecScatterCreateWithData(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);
+    ierr = VecScatterCreate(gvec,isglobal,nvec,isnatural,&g2n);CHKERRQ(ierr);
     ierr = ISDestroy(&isnatural);CHKERRQ(ierr);
     ierr = ISDestroy(&isglobal);CHKERRQ(ierr);
   }
