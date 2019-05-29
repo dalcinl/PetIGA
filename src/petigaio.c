@@ -593,6 +593,10 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,12,0)
+#define PetscBinaryRead(fd,data,num,count,type) PetscBinaryRead(fd,data,num,type)
+#endif
+
 static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
 {
   MPI_Comm       comm;
@@ -613,7 +617,7 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
   ierr = VecGetLocalSize(vec,&n);CHKERRQ(ierr);
   ierr = VecGetArray(vec,&array);CHKERRQ(ierr);
   if (!rank) {
-    ierr = PetscBinaryRead(fd,array,n,PETSC_SCALAR);CHKERRQ(ierr);
+    ierr = PetscBinaryRead(fd,array,n,NULL,PETSC_SCALAR);CHKERRQ(ierr);
     if (size > 1) {
       ierr = VecGetOwnershipRanges(vec,&range);CHKERRQ(ierr);
       n = 1;
@@ -623,7 +627,7 @@ static PetscErrorCode VecLoad_Binary_SkipHeader(Vec vec,PetscViewer viewer)
       for (i=1; i<size; i++) {
         n = range[i+1] - range[i];
         ierr = PetscMPIIntCast(n,&count);CHKERRQ(ierr);
-        ierr = PetscBinaryRead(fd,work,count,PETSC_SCALAR);CHKERRQ(ierr);
+        ierr = PetscBinaryRead(fd,work,count,NULL,PETSC_SCALAR);CHKERRQ(ierr);
         ierr = MPI_Send(work,count,MPIU_SCALAR,i,tag,comm);CHKERRQ(ierr);
       }
       ierr = PetscFree(work);CHKERRQ(ierr);
