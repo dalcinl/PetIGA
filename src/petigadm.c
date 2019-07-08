@@ -407,14 +407,12 @@ PetscErrorCode DMCreate_IGA(DM dm)
   dm->ops->localtolocalbegin            = DMLocalToLocalBegin_IGA;
   dm->ops->localtolocalend              = DMLocalToLocalEnd_IGA;
   /*
-  dm->ops->getcoloring                  = DMCreateColoring_IGA;
-  dm->ops->createinterpolation          = DMCreateInterpolation_IGA;
   dm->ops->refine                       = DMRefine_IGA;
   dm->ops->coarsen                      = DMCoarsen_IGA;
-  dm->ops->refinehierarchy              = DMRefineHierarchy_IGA;
-  dm->ops->coarsenhierarchy             = DMCoarsenHierarchy_IGA;
-  dm->ops->getinjection                 = DMCreateInjection_IGA;
-  dm->ops->getaggregates                = DMCreateAggregates_IGA;
+  dm->ops->getcoloring                  = DMCreateColoring_IGA;
+  dm->ops->createinterpolation          = DMCreateInterpolation_IGA;
+  dm->ops->createinjection              = DMCreateInjection_IGA;
+  dm->ops->createrestriction            = DMCreateRestriction_IGA;
   */
   dm->ops->clone                        = DMClone_IGA;
   dm->ops->createcoordinatedm           = DMCreateCoordinateDM_IGA;
