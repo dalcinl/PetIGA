@@ -220,8 +220,7 @@ static PetscErrorCode DMSetUp_IGA(DM dm)
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetGeometryDim(iga,&nsd);CHKERRQ(ierr);
   ierr = DMSetDimension(dm,dim);CHKERRQ(ierr);
-  if (nsd < 1) nsd = PETSC_DEFAULT;
-  ierr = DMSetCoordinateDim(dm,nsd);CHKERRQ(ierr);
+  ierr = DMSetCoordinateDim(dm,nsd>=1?nsd:dim);CHKERRQ(ierr);
   ierr = DMSetVecType(dm,iga->vectype);CHKERRQ(ierr);
   ierr = DMSetMatType(dm,iga->mattype);CHKERRQ(ierr);
   PetscFunctionReturn(0);
