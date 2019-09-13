@@ -284,8 +284,12 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *Pets
   /* */
   ierr = PetscObjectTypeCompare((PetscObject)ksp,KSPFETIDP,&match);CHKERRQ(ierr);
   if (match) {
-    PC pc;
+    Mat A,P;
+    PC  pc;
+
     ierr = KSPFETIDPGetInnerBDDC(ksp,&pc);CHKERRQ(ierr);
+    ierr = KSPGetOperators(ksp,&A,&P);CHKERRQ(ierr);
+    ierr = PCSetOperators(pc,A,P);CHKERRQ(ierr);
     ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
   }
   /* */

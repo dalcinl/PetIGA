@@ -201,20 +201,24 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
 
 PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
 {
-  Mat            mat;
-  void           (*f)(void);
-  const char     *prefix;
-  PetscInt       num;
-  PetscBool      boundary[2] = {PETSC_TRUE,PETSC_TRUE};
-  PetscBool      minimal = PETSC_FALSE;
-  PetscBool      primal = PETSC_TRUE;
-  PetscBool      graph = PETSC_FALSE;
-  PetscErrorCode ierr;
+  Mat                    mat;
+  ISLocalToGlobalMapping l2g;
+  const char             *prefix;
+  PetscInt               num;
+  PetscBool              boundary[2] = {PETSC_TRUE,PETSC_TRUE};
+  PetscBool              minimal = PETSC_FALSE;
+  PetscBool              primal = PETSC_TRUE;
+  PetscBool              graph = PETSC_FALSE;
+  PetscBool              isbddc;
+  PetscErrorCode         ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(pc,PC_CLASSID,2);
   IGACheckSetUpStage2(iga,1);
+
+  ierr = PetscObjectTypeCompare((PetscObject)pc,PCBDDC,&isbddc);CHKERRQ(ierr);
+  if (!isbddc) PetscFunctionReturn(0);
 
   {
     Mat A,B;
@@ -223,11 +227,6 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = PCGetUseAmat(pc,&useAmat);CHKERRQ(ierr);
     mat = useAmat ? A : B;
   }
-
-  ierr = PetscObjectQueryFunction((PetscObject)mat,"MatISGetLocalMat_C",&f);CHKERRQ(ierr);
-  if (!f) PetscFunctionReturn(0);
-  ierr = PetscObjectQueryFunction((PetscObject)pc,"PCBDDCSetLocalAdjacencyGraph_C",&f);CHKERRQ(ierr);
-  if (!f) PetscFunctionReturn(0);
 
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
   ierr = PetscOptionsGetBool(((PetscObject)pc)->options,prefix,"-iga_set_bddc_graph",&graph,NULL);CHKERRQ(ierr);
@@ -306,16 +305,17 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = ISDestroy(&isp);CHKERRQ(ierr);
   }
 
-  if (minimal) {
-    MatNullSpace           nnsp;
-    Vec                   *nnsp_v = NULL,*v, mask, fat;
-    ISLocalToGlobalMapping l2g;
-    PetscScalar            *vals,*ma;
-    const PetscScalar      *fa;
-    PetscInt               nl,dim,nnsp_size,n,i,s,ni,bs,*idxs,nv,*minimalv;
-    PetscInt               mid[3] = {0,0,0}, fix[3] = {0,0,0};
-    PetscInt               width[3][2] = {{0,1},{0,1},{0,1}};
-    PetscBool              nnsp_has_cnst = PETSC_TRUE,hasv;
+  ierr = MatGetLocalToGlobalMapping(mat,&l2g,NULL);CHKERRQ(ierr);
+  if (!l2g) l2g = iga->map->mapping;
+  if (minimal && l2g) {
+    MatNullSpace      nnsp;
+    Vec               *nnsp_v = NULL,*v, mask, fat;
+    PetscScalar       *vals,*ma;
+    const PetscScalar *fa;
+    PetscInt          nl,dim,nnsp_size,n,i,s,ni,bs,*idxs,nv,*minimalv;
+    PetscInt          mid[3] = {0,0,0}, fix[3] = {0,0,0};
+    PetscInt          width[3][2] = {{0,1},{0,1},{0,1}};
+    PetscBool         nnsp_has_cnst = PETSC_TRUE,hasv;
 
     nnsp_size = 0;
     ierr = MatGetNearNullSpace(mat,&nnsp);CHKERRQ(ierr);
@@ -330,7 +330,6 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     n = nnsp_size + s + nv;
 
     ierr = PetscMalloc1(n,&v);CHKERRQ(ierr);
-    ierr = MatGetLocalToGlobalMapping(mat,&l2g,NULL);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetSize(l2g,&ni);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetBlockSize(l2g,&bs);CHKERRQ(ierr);
     ierr = PetscMalloc2(ni/bs,&idxs,ni,&vals);CHKERRQ(ierr);
@@ -342,7 +341,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     }
 
     for (i=0;i<n;i++) {
-      ierr = MatCreateVecs(mat,&v[i],NULL);CHKERRQ(ierr);
+      ierr = IGACreateVec(iga,&v[i]);CHKERRQ(ierr);
     }
 
     ierr = IGACreateVec(iga,&fat);CHKERRQ(ierr);
