@@ -39,83 +39,83 @@ PETIGA_DIR ?= $(topdir)
 include $(PETIGA_DIR)/lib/petiga/conf/variables
 include $(PETIGA_DIR)/lib/petiga/conf/rules
 
-Poisson1D: Poisson1D.o chkopts
+Poisson1D: Poisson1D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Poisson2D: Poisson2D.o chkopts
+Poisson2D: Poisson2D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Poisson3D: Poisson3D.o chkopts
+Poisson3D: Poisson3D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
 
-L2Projection: L2Projection.o chkopts
+L2Projection: L2Projection.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-AdaptiveL2Projection: AdaptiveL2Projection.o chkopts
+AdaptiveL2Projection: AdaptiveL2Projection.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Laplace: Laplace.o chkopts
+Laplace: Laplace.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-BoundaryIntegral: BoundaryIntegral.o chkopts
+BoundaryIntegral: BoundaryIntegral.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Poisson: Poisson.o chkopts
+Poisson: Poisson.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-LoggChallenge: LoggChallenge.o chkopts
+LoggChallenge: LoggChallenge.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Neumann: Neumann.o chkopts
+Neumann: Neumann.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-NitscheMethod: NitscheMethod.o chkopts
+NitscheMethod: NitscheMethod.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Bratu: Bratu.o BratuFJ.o chkopts
+Bratu: Bratu.o BratuFJ.o
 	$(CLINKER) -o $@ $< BratuFJ.o $(PETIGA_LIB)
 	$(RM) -f $< BratuFJ.o bratufj.mod
-AdvectionDiffusion: AdvectionDiffusion.o chkopts
+AdvectionDiffusion: AdvectionDiffusion.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-PatternFormation: PatternFormation.o chkopts
+PatternFormation: PatternFormation.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-CahnHilliard2D: CahnHilliard2D.o chkopts
+CahnHilliard2D: CahnHilliard2D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-CahnHilliard3D: CahnHilliard3D.o chkopts
+CahnHilliard3D: CahnHilliard3D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-NavierStokesKorteweg2D: NavierStokesKorteweg2D.o chkopts
+NavierStokesKorteweg2D: NavierStokesKorteweg2D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-NavierStokesVMS: NavierStokesVMS.o chkopts
+NavierStokesVMS: NavierStokesVMS.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-ShallowWater: ShallowWater.o chkopts
+ShallowWater: ShallowWater.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-ClassicalShell: ClassicalShell.o chkopts
+ClassicalShell: ClassicalShell.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-ElasticRod: ElasticRod.o ElasticRodFJ.o chkopts
+ElasticRod: ElasticRod.o ElasticRodFJ.o
 	$(CLINKER) -o $@ $< ElasticRodFJ.o $(PETIGA_LIB)
 	$(RM) -f $< ElasticRodFJ.o elasticrodfj.mod
-Elasticity: Elasticity.o chkopts
+Elasticity: Elasticity.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Elasticity3D: Elasticity3D.o chkopts
+Elasticity3D: Elasticity3D.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-HyperElasticity: HyperElasticity.o chkopts
+HyperElasticity: HyperElasticity.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-Richards: Richards.o chkopts
+Richards: Richards.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
-TwoPhaseTwoComponent: TwoPhaseTwoComponent.o chkopts
+TwoPhaseTwoComponent: TwoPhaseTwoComponent.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
 

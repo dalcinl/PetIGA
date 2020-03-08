@@ -1,18 +1,12 @@
+# -*- mode: makefile-gmake -*-
+
 ALL: all
-LOCDIR = .
-DIRS   = include src docs test demo
 
 PETIGA_DIR ?= $(CURDIR)
-include ${PETIGA_DIR}/lib/petiga/conf/variables
-include ${PETIGA_DIR}/lib/petiga/conf/rules
-include ${PETIGA_DIR}/lib/petiga/conf/test
+include ./lib/petiga/conf/variables
 
 all:
-	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
-	${OMAKE} all-gmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; \
-	elif [ "${PETSC_BUILD_USING_CMAKE}" != "" ]; then \
-	${OMAKE} all-cmake  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; else \
-	${OMAKE} all-legacy PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; fi;
+	${OMAKE} gmake-all
 .PHONY: all
 
 
@@ -31,19 +25,11 @@ arch-tree: ${PETIGA_DIR}/${PETIGA_ARCH}/include \
 #
 # GNU Make build
 #
-ifndef MAKE_IS_GNUMAKE
-MAKE_IS_GNUMAKE = $(if $(findstring GNU Make,$(shell $(OMAKE) --version 2>/dev/null)),1,)
-endif
-ifdef OMAKE_PRINTDIR
-GMAKE = ${OMAKE_PRINTDIR}
-else
-GMAKE = ${OMAKE}
-endif
 gmake-build:
-	@cd ${PETIGA_DIR} && ${GMAKE} -f gmakefile -j ${MAKE_NP}
+	@cd ${PETIGA_DIR} && ${OMAKE} -f gmakefile -j ${MAKE_NP}
 gmake-clean:
-	@cd ${PETIGA_DIR} && ${GMAKE} -f gmakefile clean
-all-gmake: chk_petsc_dir chk_petiga_dir arch-tree
+	@cd ${PETIGA_DIR} && ${OMAKE} -f gmakefile clean
+gmake-all: arch-tree
 	-@echo "=================================================="
 	-@echo "Building PetIGA (GNU Make - ${MAKE_NP} build jobs)"
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
@@ -51,123 +37,10 @@ all-gmake: chk_petsc_dir chk_petiga_dir arch-tree
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
 	-@echo "=================================================="
-	@${GMAKE} gmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH} 2>&1 | tee ./${PETIGA_ARCH}/log/make.log
+	@${OMAKE} gmake-build 2>&1 | tee ./${PETIGA_ARCH}/log/make.log
 	-@echo "=================================================="
-.PHONY: gmake-build gmake-clean all-gmake
+.PHONY: gmake-build gmake-clean gmake-all
 
-
-#
-# CMake build
-#
-ifeq (${PETSC_LANGUAGE},CXXONLY)
-cmake_cc_clang=-DPETSC_CLANGUAGE_Cxx:STRING='YES'
-cmake_cc_path =-DCMAKE_CXX_COMPILER:FILEPATH=${CXX}
-cmake_cc_flags=-DCMAKE_CXX_FLAGS:STRING='${PCC_FLAGS} ${CFLAGS} ${CCPPFLAGS}'
-else
-cmake_cc_clang=-DPETSC_CLANGUAGE_Cxx:STRING='NO'
-cmake_cc_path =-DCMAKE_C_COMPILER:FILEPATH=${CC}
-cmake_cc_flags=-DCMAKE_C_FLAGS:STRING='${PCC_FLAGS} ${CFLAGS} ${CCPPFLAGS}'
-endif
-ifneq (${FC},)
-cmake_fc_path =-DCMAKE_Fortran_COMPILER:FILEPATH=${FC}
-endif
-ifneq (${FC_FLAGS},)
-cmake_fc_flags=-DCMAKE_Fortran_FLAGS:STRING='${FC_FLAGS} ${FFLAGS} ${FCPPFLAGS}'
-endif
-cmake_cc=${cmake_cc_path} ${cmake_cc_flags} ${cmake_cc_clang}
-cmake_fc=${cmake_fc_path} ${cmake_fc_flags}
-${PETIGA_DIR}/${PETIGA_ARCH}/CMakeCache.txt: CMakeLists.txt
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/CMakeCache.txt
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/CMakeFiles
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/Makefile
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/cmake_install.cmake
-	@${MKDIR} ${PETIGA_DIR}/${PETIGA_ARCH}
-	@cd ${PETIGA_DIR}/${PETIGA_ARCH} && ${CMAKE} ${PETIGA_DIR} ${cmake_cc} ${cmake_fc}
-cmake-boot: ${PETIGA_DIR}/${PETIGA_ARCH}/CMakeCache.txt
-cmake-down:
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/CMakeCache.txt
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/CMakeFiles
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/Makefile
-	-@${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/cmake_install.cmake
-cmake-build: cmake-boot
-	@cd ${PETIGA_DIR}/${PETIGA_ARCH} && ${OMAKE} -j ${MAKE_NP}
-	-@if [ "${DSYMUTIL}" != "true" -a -f ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX} ]; then \
-        ${DSYMUTIL} ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX}; fi
-cmake-install:
-	@cd ${PETIGA_DIR}/${PETIGA_ARCH} && ${OMAKE} install
-cmake-clean:
-	@if [ -f ${PETIGA_DIR}/${PETIGA_ARCH}/Makefile ]; then \
-	cd ${PETIGA_DIR}/${PETIGA_ARCH} && ${OMAKE} clean; fi;
-all-cmake: chk_petsc_dir chk_petiga_dir arch-tree
-	-@echo "=================================================="
-	-@echo "Building PetIGA (CMake - ${MAKE_NP} build jobs)"
-	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
-	-@echo "Using PETIGA_ARCH=${PETIGA_ARCH}"
-	-@echo "Using PETSC_DIR=${PETSC_DIR}"
-	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "=================================================="
-	@${OMAKE} cmake-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH} 2>&1 | tee ./${PETIGA_ARCH}/log/make.log
-	-@echo "=================================================="
-.PHONY: cmake-boot cmake-down cmake-build cmake-clean all-cmake
-
-
-#
-# Legacy build
-#
-legacy-build: arch-tree deletelibs deletemods build
-legacy-clean: deletemods deletelibs
-	-@${OMAKE} tree ACTION=clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-all-legacy: chk_petsc_dir chk_petiga_dir arch-tree
-	-@echo "=================================================="
-	-@echo "Building PetIGA (legacy build)"
-	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
-	-@echo "Using PETIGA_ARCH=${PETIGA_ARCH}"
-	-@echo "Using PETSC_DIR=${PETSC_DIR}"
-	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	-@echo "=================================================="
-	-@echo "Beginning to build PetIGA library"
-	@${OMAKE} legacy-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH} 2>&1 | tee ./${PETSC_ARCH}/log/make.log
-	-@echo "Completed building PetIGA library"
-	-@echo "=================================================="
-.PHONY: legacy-build legacy-clean all-legacy
-
-#
-# Check if PETSC_DIR variable specified is valid
-#
-chk_petsc_dir:
-	@if [ ! -f ${PETSC_DIR}/include/petsc.h ]; then \
-	  echo "Incorrect PETSC_DIR specified: ${PETSC_DIR}"; \
-	  echo "Aborting build"; \
-	  false; fi
-.PHONY: chk_petsc_dir
-
-#
-# Check if PETIGA_DIR variable specified is valid
-#
-chk_petiga_dir:
-	@if [ ! -f ${PETIGA_DIR}/include/petiga.h ]; then \
-	  echo "Incorrect PETIGA_DIR specified: ${PETIGA_DIR}"; \
-	  echo "Aborting build"; \
-	  false; fi
-.PHONY: chk_petiga_dir
-
-#
-# Build the PetIGA library
-#
-build: compile ranlib shlibs
-compile:
-	-@${OMAKE} tree ACTION=libfast PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-	-@${MV} -f ${PETIGA_DIR}/src/petiga*.mod ${PETIGA_DIR}/${PETIGA_ARCH}/include
-ranlib:
-	-@echo "building libpetiga.${AR_LIB_SUFFIX}"
-	-@${RANLIB} ${PETIGA_LIB_DIR}/*.${AR_LIB_SUFFIX} > tmpf 2>&1 ; ${GREP} -v "has no symbols" tmpf; ${RM} tmpf;
-shlibs:
-	-@${OMAKE} shared_nomesg PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH} \
-		   | (${GREP} -vE "making shared libraries in" || true) \
-		   | (${GREP} -vE "==========================" || true)
-	-@if [ "${DSYMUTIL}" != "true" ]; then \
-        ${DSYMUTIL} ${INSTALL_LIB_DIR}/libpetiga.${SL_LINKER_SUFFIX}; fi
-.PHONY: build compile ranlib shlibs
 
 # Delete PetIGA library
 deletelogs:
@@ -185,12 +58,8 @@ deletelibs: deletestaticlibs deletesharedlibs
 # Clean up build
 clean:: allclean
 allclean:
-	@if [ "${MAKE_IS_GNUMAKE}" != "" ]; then \
-	${OMAKE} gmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; \
-	elif [ "${PETSC_BUILD_USING_CMAKE}" != "" ]; then \
-	${OMAKE} cmake-clean  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; else \
-	${OMAKE} legacy-clean PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}; fi;
-distclean: chk_petiga_dir
+	@${OMAKE} gmake-clean
+distclean:
 	@echo "*** Deleting all build files ***"
 	-${RM} -r ${PETIGA_DIR}/${PETIGA_ARCH}/
 .PHONY: clean allclean distclean
@@ -225,6 +94,33 @@ test:
 
 
 #
+# Install
+#
+PREFIX = /tmp/petiga
+find-install-dir = \
+find $2 -type d -exec \
+install -m $1 -d "$(PREFIX)/{}" \;
+find-install = \
+find $2 -type f -name $3 -exec \
+install -m $1 "{}" "$(PREFIX)/$(if $4,$4,{})" \;
+install : all
+	@echo "*** Installing PetIGA in PREFIX=$(PREFIX) ***"
+	@$(call find-install-dir,755,include)
+	@$(call find-install-dir,755,lib)
+	@$(call find-install,644,include,'*.h')
+	@$(call find-install,644,include,'*.hpp')
+	@$(call find-install,644,lib/petiga/conf,'*')
+	@$(call find-install,644,$(PETIGA_ARCH)/include,'petiga.mod',include)
+	@$(call find-install,644,$(PETIGA_ARCH)/lib,'libpetiga*.$(AR_LIB_SUFFIX)',lib)
+	@$(call find-install,755,$(PETIGA_ARCH)/lib,'libpetiga*.$(SL_LINKER_SUFFIX)',lib)
+	@printf "override PETIGA_ARCH=\n" > $(PREFIX)/lib/petiga/conf/arch
+	@printf "override PETSC_DIR=$(PETSC_DIR)\n" > $(PREFIX)/lib/petiga/conf/petsc
+	@printf "override PETSC_ARCH=$(PETSC_ARCH)\n" >> $(PREFIX)/lib/petiga/conf/petsc
+	@$(RM) $(PREFIX)/lib/petiga/conf/.DIR
+.PHONY: install
+
+
+#
 # Documentation
 #
 SRCDIR=${PETIGA_DIR}/src
@@ -247,7 +143,7 @@ deletedoc:
 # TAGS Generation
 #
 alletags:
-	-@${PYTHON} ${PETSC_DIR}/bin/maint/generateetags.py
+	-@${PYTHON} ${PETSC_DIR}/lib/petsc/bin/maint/generateetags.py
 deleteetags:
 	-@${RM} CTAGS TAGS
 .PHONY: alletags deleteetags

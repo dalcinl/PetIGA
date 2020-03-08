@@ -23,9 +23,7 @@ all : $(libpetiga)
 
 # check missing Fortran compiler
 ifeq ($(FC),)
-$(info GNU Make build requires PETSc with Fortran support)
-$(info Try using CMake build with 'make all-cmake')
-$(error '')
+$(error PetIGA requires PETSc with Fortran support)
 endif
 
 # workaround old Cygwin versions

@@ -17,7 +17,7 @@ include $(PETIGA_DIR)/lib/petiga/conf/test
 
 OPTS=-nox -malloc_debug -malloc_dump
 
-IGACreate: IGACreate.o chkopts
+IGACreate: IGACreate.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex1:
@@ -41,7 +41,7 @@ runex1:
 IGACreate = IGACreate.PETSc runex1 IGACreate.rm
 TESTEXAMPLES += $(IGACreate)
 
-IGAInputOutput: IGAInputOutput.o chkopts
+IGAInputOutput: IGAInputOutput.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex2:
@@ -57,7 +57,7 @@ IGAInputOutput = IGAInputOutput.PETSc runex2 IGAInputOutput.rm
 TESTEXAMPLES += $(IGAInputOutput)
 
 
-IGAGeometryMap: IGAGeometryMap.o chkopts
+IGAGeometryMap: IGAGeometryMap.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex3:
@@ -69,7 +69,7 @@ IGAGeometryMap = IGAGeometryMap.PETSc runex3 IGAGeometryMap.rm
 TESTEXAMPLES += $(IGAGeometryMap)
 
 
-IGAFixTable: IGAFixTable.o chkopts
+IGAFixTable: IGAFixTable.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex4:
@@ -90,7 +90,7 @@ runex4:
 IGAFixTable = IGAFixTable.PETSc runex4 IGAFixTable.rm
 TESTEXAMPLES += $(IGAFixTable)
 
-IGAProbe: IGAProbe.o chkopts
+IGAProbe: IGAProbe.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex5:
@@ -106,7 +106,7 @@ IGAProbe = IGAProbe.PETSc runex5 IGAProbe.rm
 TESTEXAMPLES += $(IGAProbe)
 
 
-IGAErrNorm: IGAErrNorm.o chkopts
+IGAErrNorm: IGAErrNorm.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex6:
@@ -119,7 +119,7 @@ IGAErrNorm = IGAErrNorm.PETSc runex6 IGAErrNorm.rm
 TESTEXAMPLES += $(IGAErrNorm)
 
 
-Test_SNES_2D: Test_SNES_2D.o chkopts
+Test_SNES_2D: Test_SNES_2D.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 runex7:
@@ -151,7 +151,7 @@ Test_SNES_2D = Test_SNES_2D.PETSc runex7 Test_SNES_2D.rm
 TESTEXAMPLES += $(Test_SNES_2D)
 
 
-ConvTest: ConvTest.o chkopts
+ConvTest: ConvTest.o
 	@$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	@$(RM) -f $<
 
@@ -172,7 +172,7 @@ check: Test_SNES_2D.PETSc
 	      $(MPIEXEC) -n 3 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	      $(MPIEXEC) -n 4 ./Test_SNES_2D -nox -malloc_debug -malloc_dump; \
 	    fi; \
-	    $(OMAKE) Test_SNES_2D.rm PETSC_ARCH=$(PETSC_ARCH) PETSC_DIR=$(PETSC_DIR) PETIGA_DIR=$(PETIGA_DIR); \
+	    $(OMAKE) Test_SNES_2D.rm; \
 	   fi
 
 SOURCES = $(wildcard *.c)

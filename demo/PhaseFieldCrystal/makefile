@@ -19,7 +19,7 @@ PETIGA_DIR ?= $(topdir)
 include $(PETIGA_DIR)/lib/petiga/conf/variables
 include $(PETIGA_DIR)/lib/petiga/conf/rules
 
-Mixed222Stable: Mixed222Stable.o chkopts
+Mixed222Stable: Mixed222Stable.o
 	$(CLINKER) -o $@ $< $(PETIGA_LIB)
 	$(RM) -f $<
 

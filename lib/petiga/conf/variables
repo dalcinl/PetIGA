@@ -1,34 +1,61 @@
 # -*- makefile-gmake -*-
+
+#--------------------------------------------------------------------#
+
+ifeq ($(PETIGA_DIR),)
+  $(error PETIGA_DIR not defined)
+endif
 ifeq ($(wildcard $(PETIGA_DIR)/include/petiga.h),)
   $(error Incorrect PETIGA_DIR: $(PETIGA_DIR))
+endif
+
+ifneq ($(wildcard $(PETIGA_DIR)/lib/petiga/conf/arch),)
+  include $(PETIGA_DIR)/lib/petiga/conf/arch
+else ifeq ($(PETIGA_ARCH),)
+  ifeq ($(PETSC_ARCH),)
+    override PETIGA_ARCH := arch-default
+  else
+    override PETIGA_ARCH := $(PETSC_ARCH)
+  endif
+endif
+
+-include $(PETIGA_DIR)/$(PETIGA_ARCH)/lib/petiga/conf/petsc
+
+#--------------------------------------------------------------------#
+
+ifeq ($(PETSC_DIR),)
+  $(error PETSC_DIR not defined)
 endif
 ifeq ($(wildcard $(PETSC_DIR)/include/petsc.h),)
   $(error Incorrect PETSC_DIR: $(PETSC_DIR))
 endif
-ifndef PETSC_CONF_DIR
-  ifneq ($(wildcard $(PETSC_DIR)/lib/petsc/conf),)
-    PETSC_CONF_DIR = $(PETSC_DIR)/lib/petsc/conf
-  else
-    $(error Incorrect PETSC_DIR: $(PETSC_DIR))
-  endif
-endif
-include $(PETSC_CONF_DIR)/variables
-ifeq ($(PETIGA_ARCH),)
+ifeq ($(wildcard $(PETSC_DIR)/include/petscconf.h),)
   ifeq ($(PETSC_ARCH),)
-    PETIGA_ARCH = arch-default
-  else
-    PETIGA_ARCH = $(PETSC_ARCH)
+    $(error PETSC_ARCH not defined)
+  endif
+  ifeq ($(wildcard $(PETSC_DIR)/$(PETSC_ARCH)/include/petscconf.h),)
+    $(error Incorrect PETSC_ARCH: $(PETSC_ARCH))
   endif
 endif
+
+ifndef PETSC_LIB
+include $(PETSC_DIR)/lib/petsc/conf/variables
+endif
+
+#--------------------------------------------------------------------#
 
 PETIGA_INCLUDE = -I$(PETIGA_DIR)/$(PETIGA_ARCH)/include -I$(PETIGA_DIR)/include
 PETIGA_LIB_DIR = $(PETIGA_DIR)/$(PETIGA_ARCH)/lib
-PETIGA_LIB     = $(CC_LINKER_SLFLAG)$(PETIGA_LIB_DIR) -L$(PETIGA_LIB_DIR) -lpetiga $(PETSC_LIB)
+PETIGA_RPATH = $(CC_LINKER_SLFLAG)$(PETIGA_LIB_DIR)
+PETIGA_LPATH = -L$(PETIGA_LIB_DIR)
+PETIGA_LIB = $(PETIGA_RPATH) $(PETIGA_LPATH) -lpetiga $(PETSC_LIB)
 
-CCPPFLAGS   += $(PETIGA_INCLUDE)
-CXXCPPFLAGS += $(PETIGA_INCLUDE)
-FCPPFLAGS   += $(PETIGA_INCLUDE)
+PETIGA_CCPPFLAGS   = $(PETIGA_INCLUDE)
+PETIGA_CXXCPPFLAGS = $(PETIGA_INCLUDE)
+PETIGA_FCPPFLAGS   = $(PETIGA_INCLUDE)
 
-INSTALL_LIB_DIR = $(PETIGA_LIB_DIR)
-LIBNAME = $(INSTALL_LIB_DIR)/$(LIBBASE).$(AR_LIB_SUFFIX)
-SHLIBS  = libpetiga
+CCPPFLAGS   += $(PETIGA_CCPPFLAGS)
+CXXCPPFLAGS += $(PETIGA_CXXCPPFLAGS)
+FCPPFLAGS   += $(PETIGA_FCPPFLAGS)
+
+#--------------------------------------------------------------------#

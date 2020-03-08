@@ -1,5 +1,5 @@
 # -*- makefile -*-
-include $(PETSC_CONF_DIR)/rules
+include $(PETSC_DIR)/lib/petsc/conf/rules
 
 .SUFFIXES: .PETIGA
 .c.PETIGA .cpp.PETIGA .cxx.PETIGA .cc.PETIGA .C.PETIGA:

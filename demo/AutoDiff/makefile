@@ -30,15 +30,15 @@ CFLAGS   = $(OPTFLAGS)
 CXXFLAGS = $(OPTFLAGS)
 FFLAGS   = $(OPTFLAGS)
 
-Bratu: Bratu.o BratuC99.o BratuF90.o BratuCXX.o BratuFAD.o | chkopts
+Bratu: Bratu.o BratuC99.o BratuF90.o BratuCXX.o BratuFAD.o
 	$(CLINKER) -o $@ $^ $(PETIGA_LIB)
 	$(RM) -f $^ bratuf90.mod
 
-CahnHilliardPrimal: CahnHilliardPrimal.o CahnHilliardPrimalC99.o CahnHilliardPrimalCXX.o CahnHilliardPrimalFAD.o | chkopts
+CahnHilliardPrimal: CahnHilliardPrimal.o CahnHilliardPrimalC99.o CahnHilliardPrimalCXX.o CahnHilliardPrimalFAD.o
 	$(CLINKER) -o $@ $^ $(PETIGA_LIB)
 	$(RM) -f $^
 
-CahnHilliardMixed: CahnHilliardMixed.o CahnHilliardMixedC99.o CahnHilliardMixedCXX.o CahnHilliardMixedFAD.o | chkopts
+CahnHilliardMixed: CahnHilliardMixed.o CahnHilliardMixedC99.o CahnHilliardMixedCXX.o CahnHilliardMixedFAD.o
 	$(CLINKER) -o $@ $^ $(PETIGA_LIB)
 	$(RM) -f $^
 
