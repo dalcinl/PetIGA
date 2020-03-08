@@ -196,32 +196,32 @@ distclean: chk_petiga_dir
 .PHONY: clean allclean distclean
 
 
-# Run test examples
-testexamples:
-	-@echo "=================================================="
-	-@echo "Beginning to compile and run test examples"
-	-@echo "=================================================="
-	-@${OMAKE} tree ACTION=testexamples_C PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-	-@echo "Completed compiling and running test examples"
-	-@echo "=================================================="
-.PHONY: testexamples
-
-
 # Test build
-check: test
-test:
-	-@${OMAKE} test-build PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH} 2>&1 | tee ./${PETIGA_ARCH}/log/test.log
-test-build:
-	-@echo "Running test to verify correct installation"
+check:
+	-@echo "=================================================="
+	-@echo "Running check to verify correct installation"
+	-@echo "=================================================="
 	-@echo "Using PETIGA_DIR=${PETIGA_DIR}"
 	-@echo "Using PETIGA_ARCH=${PETIGA_ARCH}"
 	-@echo "Using PETSC_DIR=${PETSC_DIR}"
 	-@echo "Using PETSC_ARCH=${PETSC_ARCH}"
-	@cd test; ${OMAKE} clean       PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-	@cd test; ${OMAKE} test-build  PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-	@cd test; ${OMAKE} clean       PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PETIGA_DIR=${PETIGA_DIR} PETIGA_ARCH=${PETIGA_ARCH}
-	-@echo "Completed test"
-.PHONY: check test test-build
+	@${OMAKE} -C test clean
+	@${OMAKE} -C test check clean
+	-@echo "Completed compiling and running check"
+	-@echo "=================================================="
+.PHONY: check
+
+
+# Run tests
+test:
+	-@echo "=================================================="
+	-@echo "Beginning to compile and run test examples"
+	-@echo "=================================================="
+	@${OMAKE} -C test test clean
+	@${OMAKE} -C demo test clean
+	-@echo "Completed compiling and running tests"
+	-@echo "=================================================="
+.PHONY: test
 
 
 #

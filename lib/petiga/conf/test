@@ -1,2 +1,32 @@
-# -*- makefile -*-
-include $(PETSC_CONF_DIR)/test
+# -*- makefile-gmake -*-
+
+run-test-name = $@$(if $(run-test-suffix),-$(run-test-suffix))
+
+ifeq ($(VALGRIND),1)
+override VALGRIND = valgrind
+endif
+
+MPIUNI = $(MPI_IS_MPIUNI)
+ifeq ($(MPIUNI),1)
+run-test-exec = $(MPIEXEC) -n 1 $(VALGRIND)
+else
+run-test-exec = $(MPIEXEC) -n $1 $(VALGRIND)
+endif
+
+ifeq ($(V),)
+run-test-begin = @printf "[>] %s " $(run-test-name)
+mpiexec        = @printf "."; $(run-test-exec)
+run-test-end   = @printf "\n"
+else ifeq ($(V),0)
+run-test-begin = @true
+mpiexec        = @$(run-test-exec)
+run-test-end   = @true
+else ifeq ($(V),1)
+run-test-begin = @printf "\# %s\n" $(run-test-name)
+mpiexec        = $(run-test-exec)
+run-test-end   = @printf "\n"
+else
+run-test-begin = @true
+mpiexec        = $(run-test-exec)
+run-test-end   = @true
+endif
