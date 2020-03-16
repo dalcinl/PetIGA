@@ -1,6 +1,10 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
+#if PETSC_VERSION_LT(3,13,0)
+#define PetscViewerBinaryWrite(v,p,n,t) PetscViewerBinaryWrite(v,p,n,t,PETSC_FALSE)
+#endif
+
 PETSC_EXTERN PetscErrorCode IGASetUp_Basic(IGA);
 static       PetscErrorCode VecLoad_Binary_SkipHeader(Vec,PetscViewer);
 
@@ -93,18 +97,18 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
 
   if (!skipheader) {
     PetscInt classid = IGA_FILE_CLASSID;
-    ierr = PetscViewerBinaryWrite(viewer,&classid,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&classid,1,PETSC_INT);CHKERRQ(ierr);
   }
   { /* */
     PetscInt info = 0;
     if (iga->geometry) info |= 0x1;
     if (iga->property) info |= 0x2;
-    ierr = PetscViewerBinaryWrite(viewer,&info,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&info,1,PETSC_INT);CHKERRQ(ierr);
   }
   { /* */
     PetscInt i,dim;
     ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_FALSE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT);CHKERRQ(ierr);
     for (i=0; i<dim; i++) {
       IGAAxis   axis;
       PetscInt  p,m,buf[2];
@@ -113,20 +117,20 @@ PetscErrorCode IGASave(IGA iga,PetscViewer viewer)
       ierr = IGAAxisGetDegree(axis,&p);CHKERRQ(ierr);
       ierr = IGAAxisGetKnots(axis,&m,&U);CHKERRQ(ierr);
       buf[0] = p; buf[1] = m+1;
-      ierr = PetscViewerBinaryWrite(viewer,buf,2,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
-      ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL,PETSC_FALSE);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryWrite(viewer,buf,2,PETSC_INT);CHKERRQ(ierr);
+      ierr = PetscViewerBinaryWrite(viewer,U,m+1,PETSC_REAL);CHKERRQ(ierr);
     }
   }
   if (iga->geometry) { /* */
     PetscInt dim;
     ierr = IGAGetGeometryDim(iga,&dim);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASaveGeometry(iga,viewer);CHKERRQ(ierr);
   }
   if (iga->property) { /* */
     PetscInt dim;
     ierr = IGAGetPropertyDim(iga,&dim);CHKERRQ(ierr);
-    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT,PETSC_TRUE);CHKERRQ(ierr);
+    ierr = PetscViewerBinaryWrite(viewer,&dim,1,PETSC_INT);CHKERRQ(ierr);
     ierr = IGASaveProperty(iga,viewer);CHKERRQ(ierr);
   }
   ierr = PetscViewerFlush(viewer);CHKERRQ(ierr);
