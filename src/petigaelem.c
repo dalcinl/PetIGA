@@ -1079,7 +1079,7 @@ PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[]
   PetscFunctionBegin;
   PetscValidPointer(element,1);
   if (arrayU) PetscValidScalarPointer(arrayU,2);
-  PetscValidScalarPointer(_U,3);
+  PetscValidPointer(_U,3);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   if (PetscUnlikely((size_t)element->nval >= sizeof(element->wval)/sizeof(PetscScalar*)))
