@@ -246,7 +246,6 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
 {
   DM                dm;
   PetscBool         match;
-  PetscViewerFormat format;
   PetscInt          i,j,dim;
   PetscDraw         draw;
   MPI_Comm          comm;
@@ -261,6 +260,9 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
   PetscCheckSameComm(iga,1,viewer,2);
   IGACheckSetUp(iga,1);
 
+#if PETSC_VERSION_LT(3,14,0)
+{
+  PetscViewerFormat format;
   ierr = PetscViewerGetFormat(viewer,&format);CHKERRQ(ierr);
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERASCII,&match);CHKERRQ(ierr);
   if (match && format == PETSC_VIEWER_ASCII_VTK) {
@@ -268,6 +270,8 @@ PetscErrorCode IGADraw(IGA iga,PetscViewer viewer)
     ierr = DMView(dm,viewer);CHKERRQ(ierr);
     PetscFunctionReturn(0);
   }
+}
+#endif
   ierr = PetscObjectTypeCompare((PetscObject)viewer,PETSCVIEWERGLVIS,&match);CHKERRQ(ierr);
   if (match) {
     ierr = IGAGetDrawDM(iga,&dm);CHKERRQ(ierr);
