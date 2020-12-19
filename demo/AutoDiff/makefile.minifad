@@ -7,7 +7,7 @@ AD_INCLUDE = -DMINIFAD $(MINIFAD_INCLUDE)
 .PHONY: bootstrap
 bootstrap: $(MINIFAD_DIR)/minifad.hpp
 
-MINIFAD_URL = https://bitbucket.org/dalcinl/minifad/raw/master/minifad.hpp
+MINIFAD_URL = https://raw.githubusercontent.com/dalcinl/MiniFAD/master/minifad.hpp
 $(MINIFAD_DIR)/minifad.hpp: $(MINIFAD_DIR)
 	@curl -s $(MINIFAD_URL) > $@
 $(MINIFAD_DIR):
