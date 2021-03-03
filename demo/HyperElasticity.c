@@ -20,7 +20,7 @@ typedef struct {
   void (*model) (IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx);
 } AppCtx;
 
-void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
+static void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -119,7 +119,7 @@ void NeoHookeanModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pe
   D[5][4]=D[4][5];
 }
 
-void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
+static void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -202,7 +202,7 @@ void StVenantModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Pets
   D[5][4]=D[4][5];
 }
 
-void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
+static void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -317,7 +317,7 @@ void MooneyRivlinModel1(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 
 }
 
-void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
+static void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -385,7 +385,7 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 
   PetscScalar sinva = 0.5*(trC*trC - trCs);
 
-  PetscScalar temp = pow(J,-2/3);
+  PetscScalar temp = pow(J,-2/3.);
   PetscScalar tempD = (c1*trC+2*c2*temp*sinva);
 
   //Sij=2*a*deltaij+(J^2*(2*c+b*tr(Cinv))-d)Cinvij-b*J^2*Csij
@@ -499,7 +499,7 @@ void MooneyRivlinModel2(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3],
 
 }
 
-void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
+static void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], PetscScalar (*S)[3], PetscScalar (*D)[6], void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -806,7 +806,7 @@ void GeneralModel(IGAPoint pnt, const PetscScalar *U, PetscScalar (*F)[3], Petsc
 
 }
 
-void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3], PetscScalar (*B)[3])
+static void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3], PetscScalar (*B)[3])
 {
   // Given F and basis values, returns B
   B[0][0] = F[0][0]*Nx;
@@ -830,7 +830,7 @@ void DeltaE(PetscScalar Nx, PetscScalar Ny, PetscScalar Nz, PetscScalar (*F)[3],
 }
 
 
-PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *ctx)
+static PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -855,7 +855,7 @@ PetscErrorCode Residual(IGAPoint pnt,const PetscScalar *U,PetscScalar *Re,void *
   return 0;
 }
 
-PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *ctx)
+static PetscErrorCode Jacobian(IGAPoint pnt,const PetscScalar *U,PetscScalar *Je,void *ctx)
 {
   AppCtx *user = (AppCtx *)ctx;
 
@@ -980,12 +980,14 @@ int main(int argc, char *argv[])
 
   // Application specific data (defaults to Aluminum)
   AppCtx user;
-  PetscScalar E  = 70.0e9;
-  PetscScalar nu = 0.35;
-  user.model     = GeneralModel;
-  PetscBool NeoHook,StVenant,MooneyR1,MooneyR2;
-  NeoHook = StVenant = MooneyR1 = MooneyR2 = PETSC_FALSE;
-  PetscInt nsteps = 1;
+  PetscReal E        = 70.0e9;
+  PetscReal nu       = 0.35;
+  PetscBool NeoHook  = PETSC_FALSE;
+  PetscBool StVenant = PETSC_FALSE;
+  PetscBool MooneyR1 = PETSC_FALSE;
+  PetscBool MooneyR2 = PETSC_FALSE;
+  PetscInt  nsteps   = 1;
+
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","HyperElasticity Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsBool("-neohook","Use the NeoHookean constitutive model",__FILE__,NeoHook,&NeoHook,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-mooneyr1","Use the MooneyRivlin1 constitutive model",__FILE__,MooneyR1,&MooneyR1,NULL);CHKERRQ(ierr);
@@ -994,28 +996,39 @@ int main(int argc, char *argv[])
   ierr = PetscOptionsInt("-nsteps","Number of load steps to take",__FILE__,nsteps,&nsteps,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
-  user.lambda = E*nu/(1.+nu)/(1.-2.*nu);
-  user.mu     = 0.5*E/(1.+nu);
+  user.model  = GeneralModel;
+  user.lambda = E*nu/(1+nu)/(1-2*nu);
+  user.mu     = 0.5*E/(1+nu);
+  user.a      = 0.5*user.mu;
+  user.b      = 0;
+  user.c      = user.lambda*0.25;
+  user.d      = user.lambda*0.5+user.mu;
+  user.kappa  = E/(3*(1-2*nu));
   user.c1     = user.mu*0.5;
   user.c2     = 0;
-  user.kappa  = 0;
-  if(NeoHook){
-    user.model = NeoHookeanModel;
+
+  if (NeoHook) {
+    user.model  = NeoHookeanModel;
+    user.lambda = E*nu/(1+nu)/(1-2*nu);
+    user.mu     = 0.5*E/(1+nu);
   }
-  if(StVenant){
-    user.model = StVenantModel;
+  if (StVenant) {
+    user.model  = StVenantModel;
+    user.lambda = E*nu/(1+nu)/(1-2*nu);
+    user.mu     = 0.5*E/(1+nu);
   }
-  if(MooneyR1){
+  if (MooneyR1) {
     user.model = MooneyRivlinModel1;
-    user.a = 0.5*user.mu;
-    user.b = 0;
-    user.c = user.lambda*0.25;
-    user.d = user.lambda*0.5+user.mu;
+    user.a     = 0.5*user.mu;
+    user.b     = 0;
+    user.c     = user.lambda*0.25;
+    user.d     = user.lambda*0.5+user.mu;
   }
-  if(MooneyR2){
-    user.c1 = user.mu*0.5;
-    user.c2 = 0;
-    user.kappa = 0;
+  if (MooneyR2) {
+    user.model = MooneyRivlinModel2;
+    user.kappa = E/(3*(1-2*nu));
+    user.c1    = user.mu*0.5;
+    user.c2    = 0;
   }
 
   // Initialize the discretization
@@ -1038,7 +1051,7 @@ int main(int argc, char *argv[])
   ierr = IGASetBoundaryValue(iga,0,0,1,0.0);CHKERRQ(ierr);
   ierr = IGASetBoundaryValue(iga,0,0,2,0.0);CHKERRQ(ierr);
   //   ux = 1 @ x = [1,:,:]
-  ierr = IGASetBoundaryValue(iga,0,1,0,0.1/((PetscScalar)nsteps));CHKERRQ(ierr);
+  ierr = IGASetBoundaryValue(iga,0,1,0,0.1/((PetscReal)nsteps));CHKERRQ(ierr);
 
   // Setup the nonlinear solver
   SNES snes;
