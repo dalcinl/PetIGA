@@ -99,10 +99,10 @@ test:
 PREFIX = /tmp/petiga
 find-install-dir = \
 find $2 -type d -exec \
-install -m $1 -d "$(PREFIX)/{}" \;
+install -m $1 -d "$(DESDIR)$(PREFIX)/{}" \;
 find-install = \
 find $2 -type f -name $3 -exec \
-install -m $1 "{}" "$(PREFIX)/$(if $4,$4,{})" \;
+install -m $1 "{}" "$(DESDIR)$(PREFIX)/$(if $4,$4,{})" \;
 install : all
 	@echo "*** Installing PetIGA in PREFIX=$(PREFIX) ***"
 	@$(call find-install-dir,755,include)
@@ -113,9 +113,9 @@ install : all
 	@$(call find-install,644,$(PETIGA_ARCH)/include,'petiga.mod',include)
 	@$(call find-install,644,$(PETIGA_ARCH)/lib,'libpetiga*.$(AR_LIB_SUFFIX)',lib)
 	@$(call find-install,755,$(PETIGA_ARCH)/lib,'libpetiga*.$(SL_LINKER_SUFFIX)',lib)
-	@printf "override PETIGA_ARCH=\n" > $(PREFIX)/lib/petiga/conf/arch
-	@printf "override PETSC_DIR=$(PETSC_DIR)\n" > $(PREFIX)/lib/petiga/conf/petsc
-	@printf "override PETSC_ARCH=$(PETSC_ARCH)\n" >> $(PREFIX)/lib/petiga/conf/petsc
+	@printf "override PETIGA_ARCH=\n" > $(DESDIR)$(PREFIX)/lib/petiga/conf/arch
+	@printf "override PETSC_DIR=$(PETSC_DIR)\n" > $(DESDIR)$(PREFIX)/lib/petiga/conf/petsc
+	@printf "override PETSC_ARCH=$(PETSC_ARCH)\n" >> $(DESDIR)$(PREFIX)/lib/petiga/conf/petsc
 	@$(RM) $(PREFIX)/lib/petiga/conf/.DIR
 .PHONY: install
 
