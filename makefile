@@ -96,7 +96,7 @@ test:
 #
 # Install
 #
-PREFIX = /tmp/petiga
+PREFIX ?= /tmp/petiga
 find-install-dir = \
 find $2 -type d -exec \
 install -m $1 -d "$(DESDIR)$(PREFIX)/{}" \;
