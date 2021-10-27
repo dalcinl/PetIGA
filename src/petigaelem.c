@@ -424,7 +424,7 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
   PetscFunctionReturn(0);
 }
 
-PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[3][2])
+PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[][2])
 {
   PetscInt dim = element->dim;
   PetscFunctionBegin;
