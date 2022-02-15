@@ -761,7 +761,7 @@ EXTERN_C_BEGIN
 extern void IGA_GetNormal(PetscInt dim,PetscInt axis,PetscInt side,const PetscReal F[],PetscReal *dS,PetscReal n[]);
 EXTERN_C_END
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt IGA_Quadrature_SIZE(const IGABasis BD[],const PetscInt ID[],PetscInt NQ[3])
 {
   PetscInt i;
@@ -989,8 +989,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
 #if defined(PETSC_USE_DEBUG)
       for (q=0; q<nqp; q++)
         if (dX[q] <= 0)
-          SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_USER,
-                   "Non-positive det(Jacobian)=%g",(double)dX[q]);
+          SETERRQ(PETSC_COMM_SELF,PETSC_ERR_USER,"Non-positive det(Jacobian)=%g",(double)dX[q]);
 #endif
       /* */
       (void)PetscMemcpy(N[0],M[0],(size_t)(nqp*nen)*sizeof(PetscReal));
@@ -1238,14 +1237,14 @@ static void BuildFix(IGAElement element,PetscInt dir,PetscInt side)
   }
 }
 
-PETSC_STATIC_INLINE
+static inline
 IGAFormBC AtBoundaryV(IGAElement element,PetscInt dir,PetscInt side)
 {
   IGAFormBC bc = element->parent->form->value[dir][side];
   PetscInt  e  = side ? element->sizes[dir]-1 : 0;
   return (element->ID[dir] == e) ? bc : NULL;
 }
-PETSC_STATIC_INLINE
+static inline
 IGAFormBC AtBoundaryL(IGAElement element,PetscInt dir,PetscInt side)
 {
   IGAFormBC bc = element->parent->form->load[dir][side];
@@ -1253,7 +1252,7 @@ IGAFormBC AtBoundaryL(IGAElement element,PetscInt dir,PetscInt side)
   return (element->ID[dir] == e) ? bc : NULL;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;

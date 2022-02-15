@@ -155,7 +155,7 @@ EXTERN_C_BEGIN
 extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
 EXTERN_C_END
 
-PETSC_STATIC_INLINE
+static inline
 void IGA_ContinuityString(IGAAxis axis,char buf[8],size_t len)
 {
   PetscInt  p  = axis->p;
@@ -323,11 +323,9 @@ PetscErrorCode IGASetDim(IGA iga,PetscInt dim)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dim,2);
   if (dim < 1 || dim > 3)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of parametric dimensions must be in range [1,3], got %D",dim);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of parametric dimensions must be in range [1,3], got %D",dim);
   if (iga->dim > 0 && iga->dim != dim)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot change IGA dim from %D after it was set to %D",iga->dim,dim);
   iga->dim = dim;
   PetscFunctionReturn(0);
 }
@@ -360,11 +358,9 @@ PetscErrorCode IGASetDof(IGA iga,PetscInt dof)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dof,2);
   if (dof < 1)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of DOFs per node must be greater than one, got %D",dof);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of DOFs per node must be greater than one, got %D",dof);
   if (iga->dof > 0 && iga->dof != dof)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot change number of DOFs from %D after it was set to %D",iga->dof,dof);
   iga->dof = dof;
   PetscFunctionReturn(0);
 }
@@ -420,11 +416,9 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidCharPointer(name,3);
   if (iga->dof < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetDof() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Field number must be in range [0,%D], got %D",iga->dof-1,field);
   if (!iga->fieldname) {ierr = PetscCalloc1((size_t)(iga->dof+1),&iga->fieldname);CHKERRQ(ierr);}
   ierr = PetscStrallocpy(name,&fname);CHKERRQ(ierr);
   ierr = PetscFree(iga->fieldname[field]);CHKERRQ(ierr);
@@ -440,11 +434,9 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(name,3);
   if (iga->dof < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetDof() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Field number must be in range [0,%D], got %D",iga->dof-1,field);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Field number must be in range [0,%D], got %D",iga->dof-1,field);
   *name = iga->fieldname ? iga->fieldname[field] : NULL;
   PetscFunctionReturn(0);
 }
@@ -474,8 +466,7 @@ PetscErrorCode IGASetOrder(IGA iga,PetscInt order)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,order,2);
   if (order < 0)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Order must be nonnegative, got %D",order);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Order must be nonnegative, got %D",order);
   iga->order = PetscClipInterval(order,1,4);
   PetscFunctionReturn(0);
 }
@@ -498,9 +489,7 @@ PetscErrorCode IGASetBasisType(IGA iga,PetscInt i,IGABasisType type)
   PetscValidLogicalCollectiveInt(iga,i,2);
   PetscValidLogicalCollectiveEnum(iga,type,3);
   if (iga->collocation && type != IGA_BASIS_BSPLINE)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Basis type is %s, collocation method requires %s",
-             IGABasisTypes[type],IGABasisTypes[IGA_BASIS_BSPLINE]);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Basis type is %s, collocation method requires %s",IGABasisTypes[type],IGABasisTypes[IGA_BASIS_BSPLINE]);
   ierr = IGAGetBasis(iga,i,&basis);CHKERRQ(ierr);
   if (basis->type == type) PetscFunctionReturn(0);
   ierr = IGABasisSetType(basis,type);CHKERRQ(ierr);
@@ -548,7 +537,7 @@ PetscErrorCode IGASetQuadrature(IGA iga,PetscInt i,PetscInt q)
   PetscValidLogicalCollectiveInt(iga,q,3);
   ierr = IGAGetRule(iga,i,&rule);CHKERRQ(ierr);
   if (q == PETSC_DECIDE && iga->axis[i]->p > 0) q = iga->axis[i]->p + 1;
-  if (q <= 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
+  if (q <= 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D must be positive",q);
   if (rule->nqp == q) PetscFunctionReturn(0);
   ierr = IGARuleSetSize(rule,q);CHKERRQ(ierr);
   iga->setup = PETSC_FALSE;
@@ -566,23 +555,20 @@ PetscErrorCode IGASetProcessors(IGA iga,PetscInt i,PetscInt processors)
   PetscValidLogicalCollectiveInt(iga,processors,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
   if (iga->setup) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot call after IGASetUp()");
-  if (i < 0)      SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= dim)   SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
+  if (i < 0)      SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim)   SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
   ierr = MPI_Comm_size(((PetscObject)iga)->comm,&size);CHKERRQ(ierr);
   if (processors < 1)
-    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of processors must be nonnegative, got %D",processors);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of processors must be nonnegative, got %D",processors);
   if (size % processors != 0)
-    SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of processors %D is incompatible with communicator size %d",processors,(int)size);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Number of processors %D is incompatible with communicator size %d",processors,(int)size);
   for (k=0; k<dim; k++)
     np[k] = iga->proc_sizes[k];
   np[i] = prod = processors;
   for (k=0; k<dim; k++)
     if (k!=i && np[k]>0) prod *= np[k];
   if (size % prod != 0)
-    SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-             "Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Processor grid sizes (%D,%D,%D) are incompatible with communicator size %d",np[0],np[1],np[2],(int)size);
   iga->proc_sizes[i] = processors;
   PetscFunctionReturn(0);
 }
@@ -593,8 +579,7 @@ PetscErrorCode IGASetUseCollocation(IGA iga,PetscBool collocation)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveBool(iga,collocation,2);
   if (iga->setupstage > 0 && iga->collocation != collocation)
-    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,
-            "Cannot change collocation after IGASetUp()");
+    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Cannot change collocation after IGASetUp()");
   iga->collocation = collocation;
   PetscFunctionReturn(0);
 }
@@ -622,8 +607,8 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(axis,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
+  if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,dim);
   *axis = iga->axis[i];
   PetscFunctionReturn(0);
 }
@@ -651,8 +636,8 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(rule,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
+  if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dim %D",i,iga->dim);
   *rule = iga->rule[i];
   PetscFunctionReturn(0);
 }
@@ -664,8 +649,8 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(basis,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
-  if (i < 0)    SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
-  if (i >= dim) SETERRQ2(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
+  if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D must be nonnegative",i);
+  if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %D, but dimension %D",i,iga->dim);
   *basis = iga->basis[i];
   PetscFunctionReturn(0);
 }
@@ -1467,8 +1452,7 @@ PetscErrorCode IGASetUp(IGA iga)
   if (iga->setup) PetscFunctionReturn(0);
 
   if (iga->dim < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-            "Must call IGASetDim() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDim() first");
 
   iga->setup = PETSC_TRUE;
 

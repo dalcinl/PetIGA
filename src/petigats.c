@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormIFunction(IGAElement element,IGAFormIFunction *fun,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -10,7 +10,7 @@ PetscBool IGAElementNextFormIFunction(IGAElement element,IGAFormIFunction *fun,v
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormIJacobian(IGAElement element,IGAFormIJacobian *jac,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -159,7 +159,7 @@ PetscErrorCode IGAComputeIJacobian(IGA iga,
 }
 
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormIEFunction(IGAElement element,IGAFormIEFunction *fun,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -169,7 +169,7 @@ PetscBool IGAElementNextFormIEFunction(IGAElement element,IGAFormIEFunction *fun
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormIEJacobian(IGAElement element,IGAFormIEJacobian *jac,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -334,7 +334,7 @@ PetscErrorCode IGAComputeIEJacobian(IGA iga,
 }
 
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormRHSFunction(IGAElement element,IGAFormRHSFunction *fun,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -344,7 +344,7 @@ PetscBool IGAElementNextFormRHSFunction(IGAElement element,IGAFormRHSFunction *f
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormRHSJacobian(IGAElement element,IGAFormRHSJacobian *jac,void **ctx)
 {
   IGAForm form = element->parent->form;

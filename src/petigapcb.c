@@ -12,7 +12,7 @@ typedef struct {
   Mat      mat;
 } PC_BBB;
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt Index3D(const PetscInt start[3],const PetscInt width[3],
                  PetscInt i,PetscInt j,PetscInt k)
 {
@@ -45,7 +45,7 @@ static PetscInt ComputeOverlap(const PetscInt lgmap[],PetscInt bs,
   return pos;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij)
 {
   void (*f)(void) = NULL;

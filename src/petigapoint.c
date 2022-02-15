@@ -181,9 +181,7 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(point,1);
   PetscValidPointer(basisfuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-            "Requested derivative must be in range [0,%d], got %D",
-            (int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Requested derivative must be in range [0,%d], got %D",(int)(sizeof(point->basis)/sizeof(PetscReal*)-1),der);
   *basisfuns = point->basis[der];
   PetscFunctionReturn(0);
 }
@@ -194,9 +192,7 @@ PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal 
   PetscValidPointer(point,1);
   PetscValidPointer(shapefuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-            "Requested derivative must be in range [0,%d], got %D",
-            (int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Requested derivative must be in range [0,%d], got %D",(int)(sizeof(point->shape)/sizeof(PetscReal*)-1),der);
   *shapefuns = point->shape[der];
   PetscFunctionReturn(0);
 }
@@ -397,7 +393,7 @@ PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],P
   if (PetscUnlikely(p->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   if (PetscUnlikely(ider < 0 || ider > 4))
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=ider<=4, got %D",ider);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=ider<=4, got %D",ider);
   {
     PetscInt nen = p->nen;
     PetscInt dof = p->dof;

@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormFunction(IGAElement element,IGAFormFunction *fun,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -10,7 +10,7 @@ PetscBool IGAElementNextFormFunction(IGAElement element,IGAFormFunction *fun,voi
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormJacobian(IGAElement element,IGAFormJacobian *jac,void **ctx)
 {
   IGAForm form = element->parent->form;

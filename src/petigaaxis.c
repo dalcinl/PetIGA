@@ -179,11 +179,9 @@ PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (p < 1)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Polynomial degree must be greater than one, got %D",p);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Polynomial degree must be greater than one, got %D",p);
   if (axis->p > 0 && axis->m > 1 && axis->p != p)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,
-             "Cannot change degree to %D after it was set to %D",p,axis->p);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Cannot change degree to %D after it was set to %D",p,axis->p);
   axis->p = p;
   PetscFunctionReturn(0);
 }
@@ -209,28 +207,21 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
   PetscValidPointer(U,3);
 
   if (axis->p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
-            "Must call IGAAxisSetDegree() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (m < 2*axis->p+1)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of knots must be at least %D, got %D",
-             2*(axis->p+1),m+1);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of knots must be at least %D, got %D",2*(axis->p+1),m+1);
 
   {
     PetscInt p = axis->p;
     PetscInt k,j,s;
     for (k=1; k<=m; k++) { /* check increasing sequence */
       if (U[k-1] > U[k])
-        SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                 "Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",
-                 k-1,(double)U[k-1],k,(double)U[k]);
+        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",k-1,(double)U[k-1],k,(double)U[k]);
     }
     for (k=1,j=m; k<m; k=j) { /* check multiplicity */
       j = IGA_NextKnot(m,U,k,1);
       if ((s = j-k) > p)
-        SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                 "Knot U[%D:%D]=%g has multiplicity %D greater than degree %D",
-                 k,j-1,(double)U[k],s,p);
+        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot U[%D:%D]=%g has multiplicity %D greater than degree %D",k,j-1,(double)U[k],s,p);
     }
   }
 
@@ -340,20 +331,14 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   PetscValidPointer(u,3);
   if (C == PETSC_DECIDE) C = axis->p-1;
   if (axis->p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
-            "Must call IGAAxisSetDegree() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (nu < 2)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of breaks must be at least two, got %D",nu);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of breaks must be at least two, got %D",nu);
   for (i=1; i<nu; i++)
     if (u[i-1] >= u[i])
-      SETERRQ5(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Break sequence must be strictly increasing, "
-               "got u[%D]=%g %s u[%D]=%g",
-               i-1,(double)u[i-1],(u[i-1]>u[i])?">":"==",i,(double)u[i]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Break sequence must be strictly increasing, got u[%D]=%g %s u[%D]=%g",i-1,(double)u[i-1],(u[i-1]>u[i])?">":"==",i,(double)u[i]);
   if (C < 0 || C >= axis->p)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Continuity must be in range [0,%D], got %D",axis->p-1,C);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%D], got %D",axis->p-1,C);
 
   p = axis->p; /* polynomial degree */
   s = p - C; /* multiplicity */
@@ -423,17 +408,13 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   PetscValidPointer(axis,1);
   if (C == PETSC_DECIDE) C = axis->p-1;
   if (axis->p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
-            "Must call IGAAxisSetDegree() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (N < 1)
-    SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Number of elements must be greater than zero, got %D",N);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Number of elements must be greater than zero, got %D",N);
   if (Ui >= Uf)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Initial value %g must be less than final value %g",(double)Ui,(double)Uf);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Initial value %g must be less than final value %g",(double)Ui,(double)Uf);
   if (C < 0 || C >= axis->p)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,
-             "Continuity must be in range [0,%D], got %D",axis->p-1,C);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%D], got %D",axis->p-1,C);
 
   p = axis->p; /* polynomial degree */
   s = p - C; /* multiplicity */
@@ -478,11 +459,9 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (axis->p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
-            "Must call IGAAxisSetDegree() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (axis->m < 2*axis->p+1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
-            "Must call IGAAxisSetKnots() first");
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetKnots() first");
 
   ierr = IGAAxisGetSpans(axis,&axis->nel,&axis->span);CHKERRQ(ierr);
   {

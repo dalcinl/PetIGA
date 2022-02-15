@@ -112,11 +112,11 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
     for (k=1,j=m; k<m; k=j) { /* check multiplicity */
       j = IGA_NextKnot(m,U,k,1);
       if ((s = j-k) < p)
-        SETERRQ6(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-                 "Basis type %s requires C^0 continuity, "
-                 "Knot U[%D:%D]=%g has multiplicity %D "
-                 "less than polynomial degree %D",
-                 IGABasisTypes[basis->type],k,j-1,(double)U[k],s,p);
+        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+                "Basis type %s requires C^0 continuity, "
+                "Knot U[%D:%D]=%g has multiplicity %D "
+                "less than polynomial degree %D",
+                IGABasisTypes[basis->type],k,j-1,(double)U[k],s,p);
     }
   }
 
@@ -246,7 +246,7 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   U = axis->U;
 
   if (basis->type != IGA_BASIS_BSPLINE)
-    SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Basis type is %s, collocation method requires %s",
              IGABasisTypes[basis->type],IGABasisTypes[IGA_BASIS_BSPLINE]);
 

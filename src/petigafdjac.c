@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DeltaWP(PetscInt N,const PetscScalar U[])
 {
   const PetscReal sqrteps = PETSC_SQRT_MACHINE_EPSILON;

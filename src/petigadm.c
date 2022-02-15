@@ -298,8 +298,7 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,const PetscInt 
     PetscValidLogicalCollectiveInt(dm,fields[i],3);
   for (i=0; i<numFields; i++)
     if (fields[i] < 0 || fields[i] >= iga->dof)
-      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Field number %d must be in range [0,%D], got %D",i,iga->dof-1,fields[i]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Field number %d must be in range [0,%D], got %D",i,iga->dof-1,fields[i]);
   if (is) {
     MPI_Comm comm;
     PetscInt n,bs,start,end;

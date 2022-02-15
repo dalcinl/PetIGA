@@ -167,8 +167,7 @@ PetscErrorCode IGAComputeErrorNorm(IGA iga,PetscInt k,
   if (vecU) PetscValidHeaderSpecific(vecU,VEC_CLASSID,3);
   PetscValidRealPointer(enorm,5);
   IGACheckSetUp(iga,1);
-  if (k < 0) SETERRQ1(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,
-                      "Derivative index must be nonnegative, got %D",k);
+  if (k < 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Derivative index must be nonnegative, got %D",k);
 
   ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);

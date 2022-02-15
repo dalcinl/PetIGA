@@ -67,7 +67,7 @@ PetscErrorCode System(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   do {                                              \
     double _a = (a), _b = (b);                      \
     if (fabs(_a-_b) > atol+rtol*fabs(_b))           \
-      SETERRQ2(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
+      SETERRQ(PETSC_COMM_SELF,1,"%f != %f",_a,_b);  \
   } while(0)
 
 PetscErrorCode Test(IGAProbe prb,PetscReal u[])

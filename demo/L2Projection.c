@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeErrorNorm(iga,0,x,Exact,&L2error,&app);CHKERRQ(ierr);
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)L2error);CHKERRQ(ierr);}
-  if (check_error) {if (L2error > 1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"L2 error=%g\n",(double)L2error);}
+  if (check_error) {if (L2error > 1e-3) SETERRQ(PETSC_COMM_WORLD,1,"L2 error=%g\n",(double)L2error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   if (save) {ierr = IGAWrite   (iga,  "L2Projection-geometry.dat");CHKERRQ(ierr);}

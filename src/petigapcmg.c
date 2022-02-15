@@ -7,6 +7,15 @@
 #define PC_MG_GALERKIN_BOTH PETSC_TRUE
 #endif
 
+#if PETSC_VERSION_LT(3,17,0)
+#undef PetscInfo
+#if defined(PETSC_USE_INFO)
+#define PetscInfo(A,...) PetscInfo_Private(PETSC_FUNCTION_NAME,((PetscObject)A),__VA_ARGS__)
+#else
+#define PetscInfo(A,...) 0
+#endif
+#endif
+
 static
 PetscErrorCode DMDASetCoarseningFactor(DM da,PetscInt coarsen_x,PetscInt coarsen_y,PetscInt coarsen_z)
 {
@@ -32,7 +41,7 @@ static const PetscInt primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                                   127, 131, 137, 139, 149, 151, 157, 163, 167, 173};
 static const PetscInt nprimes  = (PetscInt)(sizeof(primes)/sizeof(PetscInt));
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool CoarsenFactor(PetscInt dim,const PetscInt M[3],const PetscInt P[3],PetscInt factor[3])
 {
   PetscInt tiny = 2*3; /* */
@@ -98,7 +107,7 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
   (void)CoarsenFactor(dim,M,P,factor);
   ierr = DMDASetCoarseningFactor(dm,factor[0],factor[1],factor[2]);CHKERRQ(ierr);
   ierr = DMCoarsenHookAdd(dm,DMDACoarsenHook_PCMG,NULL,NULL);CHKERRQ(ierr);
-  ierr = PetscInfo6(dm,"DA dimensions (%3D,%3D,%3D) coarsen factors (%3D,%3D,%3D)\n",M[0],M[1],M[2],factor[0],factor[1],factor[2]);CHKERRQ(ierr);
+  ierr = PetscInfo(dm,"DA dimensions (%3D,%3D,%3D) coarsen factors (%3D,%3D,%3D)\n",M[0],M[1],M[2],factor[0],factor[1],factor[2]);CHKERRQ(ierr);
   ierr = DMViewFromOptions(dm,NULL,"-mg_levels_da_view");CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }

@@ -8,7 +8,7 @@
   do {                                              \
     double _a = (a), _b = (b);                      \
     if (fabs(_a-_b) > 1e-6)                         \
-      SETERRQ2(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
+      SETERRQ(PETSC_COMM_SELF,1,"%f != %f",_a,_b); \
   } while(0)
 
 #define sqrt2      ((PetscReal)1.41421356237309504880)
@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAGeometryMap Options","IGA");CHKERRQ(ierr);
   ierr = PetscOptionsInt("-dim","Number of space dimensions",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
-  if (dim < 2) SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE, "Problem requires dim={2,3}, not %D",dim);
+  if (dim < 2) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE, "Problem requires dim={2,3}, not %D",dim);
 
   ierr = IGACreate(PETSC_COMM_SELF,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);

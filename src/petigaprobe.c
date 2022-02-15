@@ -184,7 +184,7 @@ PetscErrorCode IGAProbeSetOrder(IGAProbe prb,PetscInt order)
   PetscFunctionBegin;
   PetscValidPointer(prb,1);
   PetscValidLogicalCollectiveInt(prb->iga,order,2);
-  if (PetscUnlikely(order < 0 || order > 4)) SETERRQ1(((PetscObject)prb->iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=order<=4, got %D",order);
+  if (PetscUnlikely(order < 0 || order > 4)) SETERRQ(((PetscObject)prb->iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=order<=4, got %D",order);
   prb->order = order;
   PetscFunctionReturn(0);
 }
@@ -235,8 +235,7 @@ PetscErrorCode IGAProbeSetPoint(IGAProbe prb,const PetscReal u[])
     PetscInt   a = prb->p[i];
     PetscInt   b = prb->n[i];
     if (PetscUnlikely(u[i] < U[a] || u[i] > U[b]))
-      SETERRQ4(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-               "Expecting %g <= u[%D]=%g <= %g",(double)U[a],i,(double)u[i],(double)U[b]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting %g <= u[%D]=%g <= %g",(double)U[a],i,(double)u[i],(double)U[b]);
     if (prb->collective) PetscValidLogicalCollectiveReal(prb->iga,u[i],2);
   }
 #endif
@@ -448,7 +447,7 @@ PetscErrorCode IGAProbeEvaluate(IGAProbe prb,PetscInt der,PetscScalar A[])
   PetscFunctionBegin;
   PetscValidPointer(prb,1);
   PetscValidScalarPointer(A,3);
-  if (PetscUnlikely(der < 0 || der > prb->order)) SETERRQ2(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=der<=%D, got der=%D",prb->order,der);
+  if (PetscUnlikely(der < 0 || der > prb->order)) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Expecting 0<=der<=%D, got der=%D",prb->order,der);
   if (PetscUnlikely(!prb->arrayA)) SETERRQ(((PetscObject)prb->iga)->comm,PETSC_ERR_ARG_WRONGSTATE,"Must call IGAProbeSetVec() first");
   if (PetscUnlikely(prb->offprocess && !prb->collective)) {
     size_t n = (size_t)prb->dof * intpow[prb->dim][der];

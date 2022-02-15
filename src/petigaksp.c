@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormVector(IGAElement element,IGAFormVector *vec,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -10,7 +10,7 @@ PetscBool IGAElementNextFormVector(IGAElement element,IGAFormVector *vec,void **
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormMatrix(IGAElement element,IGAFormMatrix *mat,void **ctx)
 {
   IGAForm form = element->parent->form;
@@ -20,7 +20,7 @@ PetscBool IGAElementNextFormMatrix(IGAElement element,IGAFormMatrix *mat,void **
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool IGAElementNextFormSystem(IGAElement element,IGAFormSystem *sys,void **ctx)
 {
   IGAForm form = element->parent->form;

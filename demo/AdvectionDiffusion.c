@@ -15,7 +15,7 @@ typedef struct {
   PetscReal wind[3];
 } AppCtx;
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;

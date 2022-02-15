@@ -3,8 +3,8 @@
 
 /*
 #include <petscconf.h>
-#undef  PETSC_STATIC_INLINE
-#define PETSC_STATIC_INLINE static __inline
+#undef  static inline
+#define static inline static __inline
 */
 
 #include <petsc.h>
@@ -20,6 +20,11 @@
 #    undef  __FUNCT__
 #    define __FUNCT__ PETSC_FUNCTION_NAME
 #  endif
+#endif
+
+#if PETSC_VERSION_LT(3,17,0)
+#undef  SETERRQ
+#define SETERRQ(comm,ierr,...) return PetscError(comm,__LINE__,PETSC_FUNCTION_NAME,__FILE__,ierr,PETSC_ERROR_INITIAL,__VA_ARGS__)
 #endif
 
 typedef ISLocalToGlobalMapping LGMap;
@@ -897,14 +902,14 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 /* ---------------------------------------------------------------- */
 
 #if defined(PETSC_USE_DEBUG)
-#define IGACheckSetUp(iga,arg) do {                                      \
-    if (PetscUnlikely(!(iga)->setup))                                    \
-      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
-               "Must call IGASetUp() on argument %D \"%s\" before %s()", \
-               (arg),#iga,PETSC_FUNCTION_NAME);                          \
+#define IGACheckSetUp(iga,arg) do {                                     \
+    if (PetscUnlikely(!(iga)->setup))                                   \
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,                 \
+              "Must call IGASetUp() on argument %D \"%s\" before %s()", \
+              (arg),#iga,PETSC_FUNCTION_NAME);                          \
     } while (0)
-#define IGACheckSetUpStage(iga,arg,stg) do {                             \
-    if (PetscUnlikely((iga)->setupstage<(stg))) IGACheckSetUp(iga,arg);  \
+#define IGACheckSetUpStage(iga,arg,stg) do {                            \
+    if (PetscUnlikely((iga)->setupstage<(stg))) IGACheckSetUp(iga,arg); \
     } while (0)
 #else
 #define IGACheckSetUp(iga,arg)          do {} while (0)
@@ -914,12 +919,12 @@ PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerTS(TS ts);
 #define IGACheckSetUpStage2(iga,arg) IGACheckSetUpStage(iga,arg,2)
 
 #if defined(PETSC_USE_DEBUG)
-#define IGACheckFormOp(iga,arg,FormOp) do {             \
-    if (!iga->form->ops->FormOp)                        \
-      SETERRQ4(((PetscObject)iga)->comm,PETSC_ERR_USER, \
-               "Must call IGASetForm%s() "              \
-               "on argument %D \"%s\" before %s()",     \
-               #FormOp,(arg),#iga,PETSC_FUNCTION_NAME); \
+#define IGACheckFormOp(iga,arg,FormOp) do {            \
+    if (!iga->form->ops->FormOp)                       \
+      SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_USER, \
+              "Must call IGASetForm%s() "              \
+              "on argument %D \"%s\" before %s()",     \
+              #FormOp,(arg),#iga,PETSC_FUNCTION_NAME); \
     } while (0)
 #else
 #define IGACheckFormOp(iga,arg,FormOp) do {} while (0)

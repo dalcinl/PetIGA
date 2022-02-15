@@ -44,7 +44,7 @@ PetscErrorCode IGAOptionsReject(const char prefix[],const char name[])
   PetscErrorCode ierr;
   PetscFunctionBegin;
   ierr = PetscOptionsHasName(NULL,prefix,name,&flag);CHKERRQ(ierr);
-  if (flag) SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Disabled option: %s",name);
+  if (flag) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Disabled option: %s",name);
   PetscFunctionReturn(0);
 }
 

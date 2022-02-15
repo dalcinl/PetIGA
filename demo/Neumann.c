@@ -17,7 +17,7 @@ PetscReal Flux(PetscInt dir,PetscInt side)
   return (side?+1:-1) * 2*pi;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -45,7 +45,7 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
   return 0;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"Error=%g\n",(double)error);CHKERRQ(ierr);}
-  if (check_error) {if (error>1e-3) SETERRQ1(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
+  if (check_error) {if (error>1e-3) SETERRQ(PETSC_COMM_WORLD,1,"Error=%g\n",(double)error);}
   if (draw&&dim<3) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
 
   if (save) {ierr = IGAWrite   (iga,  "Neumann-geometry.dat");CHKERRQ(ierr);}

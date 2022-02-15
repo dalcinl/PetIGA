@@ -8,7 +8,7 @@ EXTERN_C_BEGIN
 extern void IGA_LobattoPoints(PetscInt n,PetscReal x0,PetscReal x1,PetscReal x[]);
 EXTERN_C_END
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal ComputePoint(PetscInt index,IGAAxis axis,IGABasisType btype)
 {
   if (PetscUnlikely(axis->p == 0)) return 0;
@@ -28,7 +28,7 @@ PetscReal ComputePoint(PetscInt index,IGAAxis axis,IGABasisType btype)
   return IGA_Greville(index,axis->p,axis->U);
 }
 
-PETSC_STATIC_INLINE PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
+static inline PetscInt Product(const PetscInt a[3]) { return a[0]*a[1]*a[2]; }
 
 PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
 {

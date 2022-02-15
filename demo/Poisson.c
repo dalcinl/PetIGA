@@ -1,6 +1,6 @@
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -24,7 +24,7 @@ PetscErrorCode SystemGalerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx
   return 0;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DEL2(PetscInt dim,const PetscReal a[dim][dim])
 {
   PetscInt i; PetscReal s = 0.0;

@@ -275,10 +275,10 @@
 #define LookupTemplateSet(Symbol,q,Template)  \
   LookupTemplate(Symbol = Template,q->dim,q->nen,q->dof)
 
-#define LookupTemplateChk(Symbol,q,Template)                          \
-  do{if(PetscUnlikely(!Symbol)){                                      \
-      SETERRQ3(PETSC_COMM_SELF,PETSC_ERR_USER,                        \
-               #Template " unavailable for dim=%D, nen=%D, dof=%D",   \
-               q->dim,q->nen,q->dof);return PETSC_ERR_USER;}}while(0)
+#define LookupTemplateChk(Symbol,q,Template)                         \
+  do{if(PetscUnlikely(!Symbol)){                                     \
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_USER,                        \
+              #Template " unavailable for dim=%D, nen=%D, dof=%D",   \
+              q->dim,q->nen,q->dof);return PETSC_ERR_USER;}}while(0)
 
 #endif

@@ -18,13 +18,13 @@ static PetscErrorCode OrthonormalizeVecs_Private(PetscInt n, Vec vecs[])
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt Index(const PetscInt N[],PetscInt i,PetscInt j,PetscInt k)
 {
   return i + j * N[0] + k * N[0] * N[1];
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscBool OnGrid(const PetscBool W[3],const PetscInt N[3],
                  PetscInt *i,PetscInt *j,PetscInt *k)
 {
@@ -37,7 +37,7 @@ PetscBool OnGrid(const PetscBool W[3],const PetscInt N[3],
   return PETSC_TRUE;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt Color(const PetscInt shape[3],
                const PetscInt start[3],
                const PetscInt width[3],
@@ -414,7 +414,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
       ierr = VecPointwiseMult(v[i+s],nnsp_v[i],mask);CHKERRQ(ierr);
     }
     for (i=0;i<nv;i++) {
-      if (minimalv[i] < 0 || minimalv[i] >= nnsp_size) SETERRQ1(PetscObjectComm((PetscObject)pc),PETSC_ERR_USER,"Invalid volume term %D",minimalv[i]);
+      if (minimalv[i] < 0 || minimalv[i] >= nnsp_size) SETERRQ(PetscObjectComm((PetscObject)pc),PETSC_ERR_USER,"Invalid volume term %D",minimalv[i]);
       ierr = VecCopy(nnsp_v[minimalv[i]],v[i+s+nnsp_size]);CHKERRQ(ierr);
     }
     ierr = OrthonormalizeVecs_Private(n,v);CHKERRQ(ierr);

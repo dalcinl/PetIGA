@@ -78,8 +78,8 @@ PetscErrorCode System(IGAPoint p,PetscScalar *KK,PetscScalar *FF,void *ctx)
   do {                                                \
     const PetscReal tol = PETSC_SQRT_MACHINE_EPSILON; \
     if (PetscAbsReal((a)-(b)) > tol)                  \
-      SETERRQ2(PETSC_COMM_SELF,1,"%.16f != %.16f",    \
-               (double)(a),(double)(b));              \
+      SETERRQ(PETSC_COMM_SELF,1,"%.16f != %.16f",     \
+              (double)(a),(double)(b));               \
   } while(0)
 
 int main(int argc, char *argv[])

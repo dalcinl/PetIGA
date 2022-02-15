@@ -185,7 +185,7 @@ EXTERN_C_BEGIN
 extern PetscInt IGA_NextKnot(PetscInt m,const PetscReal U[],PetscInt k,PetscInt direction);
 EXTERN_C_END
 
-PETSC_STATIC_INLINE
+static inline
 void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
 {
   IGAAxis axis = iga->axis[dir];
@@ -223,7 +223,7 @@ void Stencil(IGA iga,PetscInt dir,PetscInt i,PetscInt *first,PetscInt *last)
   }
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
                  PetscInt i,PetscInt j,PetscInt k)
 {
@@ -231,7 +231,7 @@ PetscInt Index3D(const PetscInt start[3],const PetscInt shape[3],
   return i + j * shape[0] + k * shape[0] * shape[1];
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
                        PetscInt iA,PetscInt jA,PetscInt kA,PetscInt stencil[])
 {
@@ -257,7 +257,7 @@ PetscInt ColumnIndices(IGA iga,const PetscInt start[3],const PetscInt shape[3],
   return count;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *sbaij,PetscBool *sell)
 {
   void (*f)(void) = NULL;
@@ -281,7 +281,7 @@ PetscErrorCode InferMatrixType(Mat A,PetscBool *aij,PetscBool *baij,PetscBool *s
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt *cnt,PetscInt col[])
 {
   PetscErrorCode ierr;
@@ -291,7 +291,7 @@ PetscErrorCode L2GApplyBlock(ISLocalToGlobalMapping ltog,PetscInt *row,PetscInt 
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const PetscInt indices[],PetscInt ubrows[],PetscInt ubcols[])
 {
   PetscInt n,c;
@@ -304,7 +304,7 @@ PetscErrorCode UnblockIndices(PetscInt bs,PetscInt row,PetscInt count,const Pets
   PetscFunctionReturn(0);
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscErrorCode FilterLowerTriangular(PetscInt row,PetscInt *cnt,PetscInt col[])
 {
   PetscInt i,n;

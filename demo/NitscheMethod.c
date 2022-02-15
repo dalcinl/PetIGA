@@ -22,7 +22,7 @@ year = {2010},
 
 #include "petiga.h"
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -30,7 +30,7 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
   return s;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal Solution(PetscInt dim,const PetscReal x[])
 {
   PetscInt i; PetscReal u = 0.0;
@@ -38,7 +38,7 @@ PetscReal Solution(PetscInt dim,const PetscReal x[])
   return u;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscReal Forcing(PetscInt dim,const PetscReal x[])
 {
   PetscInt i; PetscReal f = 0.0;
@@ -46,7 +46,7 @@ PetscReal Forcing(PetscInt dim,const PetscReal x[])
   return f;
 }
 
-PETSC_STATIC_INLINE
+static inline
 PetscInt Degree(IGAPoint p)
 {
   PetscInt i,dim = p->dim;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
   ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
 
   if (print_error) {ierr = PetscPrintf(PETSC_COMM_WORLD,"L2 error = %g\n",(double)error);CHKERRQ(ierr);}
-  if (check_error) {if (error>error_tol) SETERRQ2(PETSC_COMM_WORLD,1,"L2 error=%g > %g\n",(double)error,(double)error_tol);}
+  if (check_error) {if (error>error_tol) SETERRQ(PETSC_COMM_WORLD,1,"L2 error=%g > %g\n",(double)error,(double)error_tol);}
   if (draw&&dim<3) {ierr = VecView(x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}
   if (save)        {ierr = IGAWrite(iga,"NitscheGeometry.dat");CHKERRQ(ierr);}
   if (save)        {ierr = IGAWriteVec(iga,x,"NitscheSolution.dat");CHKERRQ(ierr);}
