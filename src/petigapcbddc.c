@@ -332,7 +332,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
     ierr = PetscMalloc1(n,&v);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetSize(l2g,&ni);CHKERRQ(ierr);
     ierr = ISLocalToGlobalMappingGetBlockSize(l2g,&bs);CHKERRQ(ierr);
-    ierr = PetscMalloc2(ni/bs,&idxs,ni,&vals);CHKERRQ(ierr);
+    ierr = PetscMalloc2((ni/bs),&idxs,ni,&vals);CHKERRQ(ierr);
     for (i=0;i<ni/bs;i++) {
       PetscInt j;
 
