@@ -80,8 +80,11 @@ appreciate a citation to the following article::
 Acknowledgments
 ---------------
 
-This project was partially supported by the Center for Numerical
-Porous Media, Division of Computer, Electrical, and Mathematical
-Sciences & Engineering (`CEMSE <http://cemse.kaust.edu.sa/>`_), King
-Abdullah University of Science and Technology (`KAUST
-<http://www.kaust.edu.sa/>`_).
+This project was partially supported by the
+Extreme Computing Research Center
+(`ECRC <https://cemse.kaust.edu.sa/ecrc>`_),
+Division of Computer, Electrical, and
+Mathematical Sciences & Engineering
+(`CEMSE <https://cemse.kaust.edu.sa>`_),
+King Abdullah University of Science and Technology
+(`KAUST <http://www.kaust.edu.sa>`_).
