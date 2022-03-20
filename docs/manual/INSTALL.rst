@@ -18,7 +18,7 @@ most recent release of PETSc, download the compressed tar file from
 use the development version of PETSc which can be checked-out using
 `Git <http://git-scm.com/>`_ by the following command::
 
-    git clone https://bitbucket.org/petsc/petsc.git
+    git clone https://gitlab.com/petsc/petsc.git
 
 In either case, once you have the library source code downloaded,
 enter top-level source directory and run the :file:`configure`
@@ -44,7 +44,7 @@ PetIGA
 The development version of PetIGA can be checked-out using `Git
 <http://git-scm.com/>`_ by the following command::
 
-    git clone https://bitbucket.org/dalcinl/PetIGA.git
+    git clone https://github.com/dalcinl/PetIGA.git
 
 To compile PetIGA, simply enter into the top level directory and type
 :command:`make`. PetIGA will compile a library based on the values of

@@ -1,6 +1,6 @@
 """
 This python script shows the usage of igakit
-(https://bitbucket.org/dalcinl/igakit) to post-process results
+(https://github.com/dalcinl/igakit) to post-process results
 obtained using the demo code:
 
    ./demo/Poisson.c 

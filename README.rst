@@ -33,9 +33,9 @@ environment::
   $ export PETSC_ARCH=arch-linux2-c-debug
 
 Clone the `Git <http://git-scm.com/>`_ repository
-hosted at `Bitbucket <https://bitbucket.org/dalcinl/petiga>`_ ::
+hosted at `GitHub <https://github.com/dalcinl/petiga>`_ ::
 
-  $ git clone https://bitbucket.org/dalcinl/PetIGA.git
+  $ git clone https://github.com/dalcinl/PetIGA.git
 
 Finally, enter PetIGA top level directory and use ``make`` to compile
 the code and build the PetIGA library::
@@ -53,7 +53,7 @@ things like output VTK files suitable for viewing the solution. We do
 have routines which output the discretization information and solution
 vectors, but these are in a binary format to minimize I/O time. We
 have written a python package, `igakit
-<https://bitbucket.org/dalcinl/igakit>`_ which handles post-processing
+<https://github.com/dalcinl/igakit>`_ which handles post-processing
 for visualization as well as geometry generation. A series of
 tutorials in how to use PetIGA and igakit are underway and can be
 found `here <https://petiga-igakit.readthedocs.org>`_.
