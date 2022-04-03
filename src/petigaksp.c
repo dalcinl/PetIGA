@@ -324,6 +324,7 @@ static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *Petsc
   /* */
   ierr = IGAPreparePCMG(iga,pc);CHKERRQ(ierr);
   ierr = IGAPreparePCBDDC(iga,pc);CHKERRQ(ierr);
+  ierr = IGAPreparePCH2OPUS(iga,pc);CHKERRQ(ierr);
   /* */
   PetscFunctionReturn(0);
 }

@@ -894,6 +894,7 @@ PETSC_EXTERN PetscErrorCode IGATSFormI2Jacobian(TS,PetscReal,Vec,Vec,Vec,PetscRe
 
 PETSC_EXTERN PetscErrorCode IGAPreparePCMG(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc);
+PETSC_EXTERN PetscErrorCode IGAPreparePCH2OPUS(IGA iga,PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerPC(PC pc);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerKSP(KSP ksp);
 PETSC_EXTERN PetscErrorCode IGASetOptionsHandlerSNES(SNES snes);
