@@ -2,6 +2,15 @@
 #include <petscblaslapack.h>
 #include <petsc/private/pcimpl.h>
 
+#if PETSC_VERSION_LT(3,17,0)
+#undef  PetscTryMethod
+#define PetscTryMethod(obj,A,B,C) \
+  do { PetscErrorCode (*_7_f)B, _7_ierr; \
+    _7_ierr = PetscObjectQueryFunction((PetscObject)(obj),A,&_7_f);CHKERRQ(_7_ierr); \
+    if (_7_f) {_7_ierr = (*_7_f)C;CHKERRQ(_7_ierr);} \
+  } while (0)
+#endif
+
 typedef struct {
   Mat mat;
 } PC_EBE;
@@ -24,7 +33,7 @@ static PetscErrorCode PCSetUp_EBE_CreateMatrix(Mat A,Mat *B)
     ierr = PetscObjectQueryFunction((PetscObject)A,"MatMPISBAIJSetPreallocation_C",&sbaij);CHKERRQ(ierr);
     if (aij || baij || sbaij) {
       Mat Ad = NULL;
-      ierr = PetscTryMethod(A,"MatGetDiagonalBlock_C",(Mat,Mat*),(A,&Ad));CHKERRQ(ierr);
+      PetscTryMethod(A,"MatGetDiagonalBlock_C",(Mat,Mat*),(A,&Ad));
       if (Ad) {
         PetscInt na;
         const PetscInt *ia,*ja;
