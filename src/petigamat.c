@@ -1,6 +1,11 @@
 #include "petiga.h"
 #include "petigagrid.h"
 
+#if PETSC_VERSION_LT(3,18,0)
+#define MatPreallocateBegin MatPreallocateInitialize
+#define MatPreallocateEnd   MatPreallocateFinalize
+#endif
+
 #if PETSC_VERSION_LT(3,9,0)
 #define MatGetOperation MatShellGetOperation
 #define MatSetOperation MatShellSetOperation
@@ -352,7 +357,6 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidPointer(mat,2);
   IGACheckSetUpStage2(iga,1);
-
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
   ierr = IGAGetDof(iga,&bs);CHKERRQ(ierr);
@@ -440,7 +444,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
     PetscInt nbs = (baij||sbaij) ? n : n*bs;
     PetscInt Nbs = (baij||sbaij) ? N : N*bs;
     PetscInt *dnz = NULL, *onz = NULL;
-    ierr = MatPreallocateInitialize(comm,nbs,nbs,dnz,onz);CHKERRQ(ierr);
+    MatPreallocateBegin(comm,nbs,nbs,dnz,onz);
     {
       PetscInt nnz = maxnnz,*indices=NULL,*ubrows=NULL,*ubcols=NULL;
       ierr = PetscMalloc1((size_t)nnz,&indices);CHKERRQ(ierr);
@@ -492,7 +496,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
         ierr = MatMPISELLSetPreallocation(A,0,dnz,0,onz);CHKERRQ(ierr);
       }
     }
-    ierr = MatPreallocateFinalize(dnz,onz);CHKERRQ(ierr);
+    MatPreallocateEnd(dnz,onz);
     ierr = MatSetOption(A,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_TRUE);CHKERRQ(ierr);
   } else {
     ierr = MatSetUp(A);CHKERRQ(ierr);

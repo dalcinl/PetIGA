@@ -759,7 +759,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
       }
     }
 
-    ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+    PetscObjectOptionsBegin((PetscObject)iga);
 
     /* If setup has been called, then many options are not available so skip them. */
     if (iga->setupstage) goto setupcalled;
@@ -885,7 +885,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsName("-iga_view_draw",  "Draw to screen",                  "IGAView",NULL);CHKERRQ(ierr);
 
     ierr = PetscObjectProcessOptionsHandlers(PetscOptionsObject,(PetscObject)iga);CHKERRQ(ierr);
-    ierr = PetscOptionsEnd();CHKERRQ(ierr);
+    PetscOptionsEnd();
 
     if (setup) {ierr = IGASetUp(iga);CHKERRQ(ierr);}
   }
@@ -1396,13 +1396,13 @@ static PetscErrorCode IGASetUp_View(IGA iga)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
 
-  ierr = PetscObjectOptionsBegin((PetscObject)iga);CHKERRQ(ierr);
+  PetscObjectOptionsBegin((PetscObject)iga);
   ierr = PetscOptionsString("-iga_view_ascii",  "Information on IGA context",      "IGAView",filename1,filename1,PETSC_MAX_PATH_LEN,&ascii);CHKERRQ(ierr);
   ierr = PetscOptionsBool  ("-iga_view_info",   "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool  ("-iga_view_detail", "Output more detailed information","IGAView",info,&info,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-iga_view_binary", "Save to file in binary format",   "IGAView",filename2,filename2,PETSC_MAX_PATH_LEN,&binary);CHKERRQ(ierr);
   ierr = PetscOptionsBool  ("-iga_view_draw",   "Draw to screen",                  "IGAView",draw,&draw,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   if ((ascii||info) && !PetscPreLoadingOn) {
