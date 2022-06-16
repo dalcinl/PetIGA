@@ -1,5 +1,6 @@
 #include "petiga.h"
 #include "petigagrid.h"
+#include <petsc/private/dmimpl.h>
 
 static const char citation[] =
 "@article{PetIGA,\n"
@@ -984,6 +985,9 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   ierr = DMDASetStencilType(da,stype);CHKERRQ(ierr);
   ierr = DMDASetStencilWidth(da,swidth);CHKERRQ(ierr);
   ierr = DMSetUp(da);CHKERRQ(ierr);
+  ierr = ISLocalToGlobalMappingDestroy(&da->ltogmap);CHKERRQ(ierr);
+  ierr = PetscObjectReference(iga->map->mapping);CHKERRQ(ierr);
+  da->ltogmap = iga->map->mapping;
   for (i=0; i<dim; i++) {ierr = PetscFree(ranges[i]);CHKERRQ(ierr);}
 
   *dm = da;

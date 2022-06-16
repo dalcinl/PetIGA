@@ -112,6 +112,78 @@ PetscErrorCode DMDAComputeCoarsenFactor(DM dm)
   PetscFunctionReturn(0);
 }
 
+static
+PetscErrorCode IGAComputeLocalRGDSWSets(DM dm, PetscInt *n, IS **cc)
+{
+  IGA            iga;
+  PetscErrorCode ierr;
+
+  PetscFunctionBegin;
+  ierr = PetscObjectQuery((PetscObject)dm,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
+  if (iga) {
+    IS *iscc;
+    PetscInt cidx,idx,i,j,k,d,dim,dof,nc,*color,**idxcc;
+    PetscInt shape[3] = {1,1,1};
+    PetscInt m[3];
+    PetscInt c[3];
+    ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
+    ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
+    for (i=0; i<dim; i++) shape[i] = iga->node_gwidth[i];
+
+    nc = PetscPowInt(2,dim);
+    i = shape[0]*shape[1]*shape[2];
+
+    ierr = PetscCalloc1(nc,&color);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nc,&iscc);CHKERRQ(ierr);
+    ierr = PetscMalloc1(nc,&idxcc);CHKERRQ(ierr);
+    ierr = PetscMalloc1(dof*i,&idxcc[0]);CHKERRQ(ierr);
+
+    m[0] = shape[0]/2 + shape[0]%2;
+    m[1] = shape[1]/2 + shape[1]%2;
+    m[2] = shape[2]/2 + shape[2]%2;
+    for (k=0;k<shape[2];k++) {
+      c[2] = k < m[2] ? 0 : 1;
+      for (j=0;j<shape[1];j++) {
+        c[1] = j < m[1] ? 0 : 1;
+        for (i=0;i<shape[0];i++) {
+          c[0] = i < m[0] ? 0 : 1;
+          cidx = c[0] + 2 * c[1] + 4 * c[2];
+          color[cidx] += dof;
+        }
+      }
+    }
+    for (i = 1; i < nc; i++) idxcc[i] = color[i-1] + idxcc[i-1];
+    for (i = 0; i < nc; i++) color[i] = 0;
+
+    for (k=0;k<shape[2];k++) {
+      c[2] = k < m[2] ? 0 : 1;
+      for (j=0;j<shape[1];j++) {
+        c[1] = j < m[1] ? 0 : 1;
+        for (i=0;i<shape[0];i++) {
+          c[0] = i < m[0] ? 0 : 1;
+          idx = k*shape[0]*shape[1] + j*shape[0] + i;
+          cidx = c[0] + 2 * c[1] + 4 * c[2];
+          for (d=0;d<dof;d++) idxcc[cidx][color[cidx]++] = dof*idx + d;
+        }
+      }
+    }
+    for (i = 0; i < nc; i++) {
+      ierr = ISCreateGeneral(PETSC_COMM_SELF,color[i],idxcc[i],PETSC_COPY_VALUES,&iscc[i]);CHKERRQ(ierr);
+    }
+    ierr = PetscFree(color);CHKERRQ(ierr);
+    ierr = PetscFree(idxcc[0]);CHKERRQ(ierr);
+    ierr = PetscFree(idxcc);CHKERRQ(ierr);
+
+    *n = nc;
+    *cc = iscc;
+  } else {
+    *n = 0;
+    *cc = NULL;
+  }
+  PetscFunctionReturn(0);
+}
+
+
 PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
 {
   PetscBool      match,set;
@@ -151,6 +223,9 @@ PetscErrorCode IGAPreparePCMG(IGA iga,PC pc)
       ierr = PCMGSetLevels(pc,levels,NULL);CHKERRQ(ierr);
     }
     ierr = DMDAComputeCoarsenFactor(da);CHKERRQ(ierr);
+    /* RGDSW support */
+    ierr = PetscObjectCompose((PetscObject)da,"IGA",(PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscObjectComposeFunction((PetscObject)da,"DMComputeLocalRGDSWSets",IGAComputeLocalRGDSWSets);CHKERRQ(ierr);
     ierr = DMDestroy(&da);CHKERRQ(ierr);
   }
   PetscFunctionReturn(0);
