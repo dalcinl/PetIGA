@@ -986,7 +986,7 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   ierr = DMDASetStencilWidth(da,swidth);CHKERRQ(ierr);
   ierr = DMSetUp(da);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&da->ltogmap);CHKERRQ(ierr);
-  ierr = PetscObjectReference(iga->map->mapping);CHKERRQ(ierr);
+  ierr = PetscObjectReference((PetscObject)iga->map->mapping);CHKERRQ(ierr);
   da->ltogmap = iga->map->mapping;
   for (i=0; i<dim; i++) {ierr = PetscFree(ranges[i]);CHKERRQ(ierr);}
 
