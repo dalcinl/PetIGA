@@ -691,6 +691,10 @@ PetscErrorCode IGAAppendOptionsPrefix(IGA iga,const char prefix[])
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,18,0)
+#define PetscObjectProcessOptionsHandlers(obj,items) PetscObjectProcessOptionsHandlers(items,obj)
+#endif
+
 /*@
    IGASetFromOptions - Call this in your code to allow IGA options to
    be set from the command line. This routine should be called before
@@ -884,7 +888,7 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",NULL);CHKERRQ(ierr);
     ierr = PetscOptionsName("-iga_view_draw",  "Draw to screen",                  "IGAView",NULL);CHKERRQ(ierr);
 
-    ierr = PetscObjectProcessOptionsHandlers(PetscOptionsObject,(PetscObject)iga);CHKERRQ(ierr);
+    ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga,PetscOptionsObject);CHKERRQ(ierr);
     PetscOptionsEnd();
 
     if (setup) {ierr = IGASetUp(iga);CHKERRQ(ierr);}

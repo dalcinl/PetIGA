@@ -129,9 +129,9 @@ int main(int argc, char *argv[])
   ierr = IGAOptionsAlias("-C",   "-1", "-iga_continuity");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-L",  "0,1", "-iga_limits");CHKERRQ(ierr);
   */
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAProbe Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAProbe Options","IGA");
   ierr = PetscOptionsBool("-collective","Collective evaluation",__FILE__,collective,&collective,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);

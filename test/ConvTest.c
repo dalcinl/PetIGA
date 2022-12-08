@@ -5,7 +5,7 @@ typedef struct {
   PetscReal k; /* diffusion coefficient */
 } AppCtx;
 
-PETSC_STATIC_INLINE
+static
 void Solution(PetscInt dim,const PetscReal x[],PetscReal *value,PetscReal grad[])
 {
   PetscInt  i,j;
@@ -27,7 +27,7 @@ void Solution(PetscInt dim,const PetscReal x[],PetscReal *value,PetscReal grad[]
   }
 }
 
-PETSC_STATIC_INLINE
+static
 PetscReal Forcing(PetscInt dim,const PetscReal x[],const AppCtx *app)
 {
   PetscInt i;
@@ -39,7 +39,7 @@ PetscReal Forcing(PetscInt dim,const PetscReal x[],const AppCtx *app)
   return f;
 }
 
-PETSC_STATIC_INLINE
+static
 PetscReal DOT(PetscInt dim,const PetscReal a[dim],const PetscReal b[dim])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -69,7 +69,7 @@ PetscErrorCode Galerkin(IGAPoint p,PetscScalar *K,PetscScalar *F,void *ctx)
   return 0;
 }
 
-PETSC_STATIC_INLINE
+static
 PetscReal TRACE(PetscInt dim,const PetscReal a[dim][dim])
 {
   PetscInt i; PetscReal s = 0.0;
@@ -125,10 +125,10 @@ int main(int argc, char *argv[])
   AppCtx app;
   app.c = 1;
   app.k = 1;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ConvTest Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","ConvTest Options","IGA");
   ierr = PetscOptionsReal("-reaction", "Reaction  coefficient",__FILE__,app.c,&app.c,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-diffusion","Diffusion coefficient",__FILE__,app.k,&app.k,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   /* Initialize the discretization */
 

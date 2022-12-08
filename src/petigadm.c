@@ -196,7 +196,11 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,DM dm)
+#else
+static PetscErrorCode DMSetFromOptions_IGA(DM dm,PETSC_UNUSED PetscOptionItems *PetscOptionsObject)
+#endif
 {
   IGA            iga = DMIGACast(dm)->iga;
   PetscErrorCode ierr;
@@ -384,7 +388,7 @@ PetscErrorCode DMCreate_IGA(DM dm)
   PetscFunctionBegin;
   PetscValidPointer(dm,1);
 
-  ierr = PetscNewLog(dm,&dd);CHKERRQ(ierr);
+  ierr = PetscNew(&dd);CHKERRQ(ierr);
   dm->data = dd;
 
   dm->ops->destroy                      = DMDestroy_IGA;

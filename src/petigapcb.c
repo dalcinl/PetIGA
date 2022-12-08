@@ -250,7 +250,11 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,PC pc)
+#else
+static PetscErrorCode PCSetFromOptions_BBB(PC pc,PetscOptionItems *PetscOptionsObject)
+#endif
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
   PetscBool      flg;
@@ -337,7 +341,7 @@ PetscErrorCode PCCreate_IGABBB(PC pc)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscNewLog(pc,&bbb);CHKERRQ(ierr);
+  ierr = PetscNew(&bbb);CHKERRQ(ierr);
   pc->data = (void*)bbb;
 
   bbb->overlap[0] = PETSC_DECIDE;

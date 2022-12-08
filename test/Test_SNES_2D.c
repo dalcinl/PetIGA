@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
   PetscErrorCode  ierr;
   ierr = PetscInitialize(&argc,&argv,0,0);CHKERRQ(ierr);
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","MultiComp2D Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","MultiComp2D Options","IGA");
+  PetscOptionsEnd();
   ierr = IGAOptionsAlias("-N","16","-iga_elements");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-p", "2","-iga_degree");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-C","-1","-iga_continuity");CHKERRQ(ierr);

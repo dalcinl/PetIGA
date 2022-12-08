@@ -244,7 +244,7 @@ PetscErrorCode PCCreate_IGAEBE(PC pc)
   PC_EBE         *ebe = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  ierr = PetscNewLog(pc,&ebe);CHKERRQ(ierr);
+  ierr = PetscNew(&ebe);CHKERRQ(ierr);
   pc->data = (void*)ebe;
 
   pc->ops->setup               = PCSetUp_EBE;

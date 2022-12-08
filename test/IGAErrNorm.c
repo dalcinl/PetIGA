@@ -2,21 +2,21 @@
 
 #define DO(i) for (i=0; i<dim; i++)
 
-PETSC_STATIC_INLINE PetscReal Sum1(PetscInt dim,const PetscReal x[])
+static PetscReal Sum1(PetscInt dim,const PetscReal x[])
 {
   PetscInt i; PetscReal r = 0;
   DO(i) r += x[i];
   return r;
 }
 
-PETSC_STATIC_INLINE PetscReal Sum2(PetscInt dim,const PetscReal x[])
+static PetscReal Sum2(PetscInt dim,const PetscReal x[])
 {
   PetscInt i; PetscReal r = 0;
   DO(i) r += x[i]*x[i];
   return r;
 }
 
-PETSC_STATIC_INLINE PetscReal Prod(PetscInt dim,const PetscReal x[])
+static PetscReal Prod(PetscInt dim,const PetscReal x[])
 {
   PetscInt i; PetscReal r = 1;
   DO(i) r *= x[i];

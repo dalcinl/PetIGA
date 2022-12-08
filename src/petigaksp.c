@@ -256,7 +256,11 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
+#else
+static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PETSC_UNUSED void *ctx)
+#endif
 {
   KSP            ksp = (KSP)obj;
   DM             dm;
@@ -297,7 +301,11 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *Pets
   PetscFunctionReturn(0);
 }
 
+#if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
+#else
+static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PETSC_UNUSED void *ctx)
+#endif
 {
   PC             pc = (PC)obj;
   DM             dm;
