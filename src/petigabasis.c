@@ -114,9 +114,9 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
       if ((s = j-k) < p)
         SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
                 "Basis type %s requires C^0 continuity, "
-                "Knot U[%D:%D]=%g has multiplicity %D "
-                "less than polynomial degree %D",
-                IGABasisTypes[basis->type],k,j-1,(double)U[k],s,p);
+                "Knot U[%d:%d]=%g has multiplicity %d "
+                "less than polynomial degree %d",
+                IGABasisTypes[basis->type],(int)k,(int)j-1,(double)U[k],(int)s,(int)p);
     }
   }
 

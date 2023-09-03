@@ -303,7 +303,7 @@ static PetscErrorCode PCView_BBB(PC pc,PetscViewer viewer)
   if (!isascii) PetscFunctionReturn(0);
   if (!bbb->mat) PetscFunctionReturn(0);
   ierr = PetscViewerASCIIPushTab(viewer);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIPrintf(viewer,"overlap: %D,%D,%D\n",ov[0],ov[1],ov[2]);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIPrintf(viewer,"overlap: %d,%d,%d\n",(int)ov[0],(int)ov[1],(int)ov[2]);CHKERRQ(ierr);
   ierr = PetscViewerASCIIPrintf(viewer,"basis-by-basis matrix:\n");CHKERRQ(ierr);
   ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_INFO);CHKERRQ(ierr);
   ierr = MatView(bbb->mat,viewer);CHKERRQ(ierr);

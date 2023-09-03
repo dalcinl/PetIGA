@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
   PetscOptionsBegin(PETSC_COMM_WORLD,"","IGAGeometryMap Options","IGA");
   ierr = PetscOptionsInt("-dim","Number of space dimensions",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
   PetscOptionsEnd();
-  if (dim < 2) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE, "Problem requires dim={2,3}, not %D",dim);
+  if (dim < 2) SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE, "Problem requires dim={2,3}, not %d",(int)dim);
 
   ierr = IGACreate(PETSC_COMM_SELF,&iga);CHKERRQ(ierr);
   ierr = IGASetDof(iga,1);CHKERRQ(ierr);

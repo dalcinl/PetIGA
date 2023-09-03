@@ -414,7 +414,7 @@ PetscErrorCode IGAPreparePCBDDC(IGA iga,PC pc)
       ierr = VecPointwiseMult(v[i+s],nnsp_v[i],mask);CHKERRQ(ierr);
     }
     for (i=0;i<nv;i++) {
-      if (minimalv[i] < 0 || minimalv[i] >= nnsp_size) SETERRQ(PetscObjectComm((PetscObject)pc),PETSC_ERR_USER,"Invalid volume term %D",minimalv[i]);
+      if (minimalv[i] < 0 || minimalv[i] >= nnsp_size) SETERRQ(PetscObjectComm((PetscObject)pc),PETSC_ERR_USER,"Invalid volume term %d",(int)minimalv[i]);
       ierr = VecCopy(nnsp_v[minimalv[i]],v[i+s+nnsp_size]);CHKERRQ(ierr);
     }
     ierr = OrthonormalizeVecs_Private(n,v);CHKERRQ(ierr);

@@ -144,20 +144,20 @@ PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
   if (i) PetscValidIntPointer(i,6);
   if (size < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of partitions %D must be positive",size);
+             "Number of partitions %d must be positive",(int)size);
   if (i && (rank < 0 || rank >= size))
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition index %D must be in range [0,%D]",rank,size-1);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition index %d must be in range [0,%d]",(int)rank,(int)size-1);
 
   switch (dim) {
   case 3:  IGA_Part3D(size,N[0],N[1],N[2],&n[0],&n[1],&n[2]); break;
   case 2:  IGA_Part2D(size,N[0],N[1],&n[0],&n[1]); break;
   case 1:  if (n[0] < 1) n[0] = size; break;
-  default: SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of dimensions %D must be in range [1,3]",dim);
+  default: SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of dimensions %d must be in range [1,3]",(int)dim);
   }
   for (k=0; k<dim; k++) p *= (m[k] = n[k]);
-  if (p != size) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Bad partition, prod(%D,%D,%D) != %D",m[0],m[1],m[2],size);
+  if (p != size) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Bad partition, prod(%d,%d,%d) != %d",(int)m[0],(int)m[1],(int)m[2],(int)size);
   for (k=0; k<dim; k++)
-    if (N[k] < n[k]) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition %D is too fine, %D elements in %D parts",k,N[k],n[k]);
+    if (N[k] < n[k]) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition %d is too fine, %d elements in %d parts",(int)k,(int)N[k],(int)n[k]);
   if (i)
     for (k=0; k<dim; k++) {
       i[k] = rank % n[k];
@@ -187,14 +187,14 @@ PetscErrorCode IGA_Distribute(PetscInt dim,
   PetscValidIntPointer(n,5);
   PetscValidIntPointer(s,6);
   if (dim < 1 || dim > 3)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of dimensions %D must be in range [1,3]",dim);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of dimensions %d must be in range [1,3]",(int)dim);
   for (k=0; k<dim; k++) {
     if (size[k] < 1)
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of partitions %D must be positive",size[k]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of partitions %d must be positive",(int)size[k]);
     if (rank[k] < 0 || rank[k] >= size[k])
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition index %D must be in range [0,%D]",rank[k],size[k]-1);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Partition index %d must be in range [0,%d]",(int)rank[k],(int)size[k]-1);
     if (N[k] < 0)
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of elements %D must be non-negative",N[k]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of elements %d must be non-negative",(int)N[k]);
   }
   for (k=0; k<dim; k++)
     IGA_Dist1D(size[k],rank[k],N[k],&n[k],&s[k]);

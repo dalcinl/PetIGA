@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     char fieldname[16];PetscInt field,dof;
     ierr = IGAGetDof(iga,&dof);CHKERRQ(ierr);
     for (field=0; field<dof; field++) {
-      ierr = PetscSNPrintf(fieldname,sizeof(fieldname),"Field_%D",field);CHKERRQ(ierr);
+      ierr = PetscSNPrintf(fieldname,sizeof(fieldname),"Field_%d",(int)field);CHKERRQ(ierr);
       ierr = IGASetFieldName(iga,field,fieldname);CHKERRQ(ierr);
     }
   }

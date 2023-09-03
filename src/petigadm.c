@@ -302,7 +302,7 @@ static PetscErrorCode DMCreateSubDM_IGA(DM dm,PetscInt numFields,const PetscInt 
     PetscValidLogicalCollectiveInt(dm,fields[i],3);
   for (i=0; i<numFields; i++)
     if (fields[i] < 0 || fields[i] >= iga->dof)
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Field number %d must be in range [0,%D], got %D",i,iga->dof-1,fields[i]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Field number %d must be in range [0,%d], got %d",i,(int)iga->dof-1,(int)fields[i]);
   if (is) {
     MPI_Comm comm;
     PetscInt n,bs,start,end;
@@ -343,7 +343,7 @@ static PetscErrorCode DMCreateFieldIS_IGA(DM dm,PetscInt *numFields,char ***fiel
       const char *fieldname; char buf[256];
       ierr = IGAGetFieldName(iga,i,&fieldname);CHKERRQ(ierr);
       if (!fieldname) {
-        ierr = PetscSNPrintf(buf,sizeof(buf),"%D",i);CHKERRQ(ierr);
+        ierr = PetscSNPrintf(buf,sizeof(buf),"%d",(int)i);CHKERRQ(ierr);
         fieldname = buf;
       }
       ierr = PetscStrallocpy(fieldname,&(*fieldNames)[i]);CHKERRQ(ierr);

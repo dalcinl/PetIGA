@@ -94,8 +94,8 @@ PetscErrorCode IGAFormReference(IGAForm form)
 
 #define IGAFormCheckArg(arg,m) \
 do { \
-  if (arg<0)  SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be nonnegative, got %D",arg); \
-  if (arg>=m) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be less than %D, got %D",m,arg); \
+  if (arg<0)  SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be nonnegative, got %d",(int)arg); \
+  if (arg>=m) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,#arg" must be less than %d, got %d",(int)m,(int)arg); \
  } while (0)
 
 static inline

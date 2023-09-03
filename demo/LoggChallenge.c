@@ -128,9 +128,9 @@ int main(int argc, char *argv[]) {
   PetscReal error = 0;
   ierr = IGAComputeErrorNorm(iga,0,x,Exact,&error,NULL);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,
-                     "Error=%E , ||b-Ax||=%E in %D its , "
+                     "Error=%E , ||b-Ax||=%E in %d its , "
                      "Time: %f [assembly: %f (%.0f\%), solve: %f (%.0f\%)]\n",
-                     error,rnorm,its,tt,ta,ta/tt*100,ts,ts/tt*100);CHKERRQ(ierr);
+                     error,rnorm,(int)its,tt,ta,ta/tt*100,ts,ts/tt*100);CHKERRQ(ierr);
 
   PetscBool draw = IGAGetOptBool(NULL,"-draw",PETSC_FALSE);
   if (draw) {ierr = IGADrawVec(iga,x,PETSC_VIEWER_DRAW_WORLD);CHKERRQ(ierr);}

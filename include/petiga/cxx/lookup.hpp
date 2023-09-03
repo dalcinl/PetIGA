@@ -278,7 +278,8 @@
 #define LookupTemplateChk(Symbol,q,Template)                         \
   do{if(PetscUnlikely(!Symbol)){                                     \
       SETERRQ(PETSC_COMM_SELF,PETSC_ERR_USER,                        \
-              #Template " unavailable for dim=%D, nen=%D, dof=%D",   \
-              q->dim,q->nen,q->dof);return PETSC_ERR_USER;}}while(0)
+              #Template " unavailable for dim=%d, nen=%d, dof=%d",   \
+              (int)q->dim,(int)q->nen,(int)q->dof);                  \
+     return PETSC_ERR_USER;}}while(0)
 
 #endif

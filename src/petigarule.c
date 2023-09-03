@@ -104,7 +104,7 @@ PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp)
   PetscValidPointer(rule,1);
   if (nqp < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
-             "Number of quadrature points must be greater than zero, got %D",nqp);
+             "Number of quadrature points must be greater than zero, got %d",(int)nqp);
   if (rule->nqp == nqp) PetscFunctionReturn(0);
   ierr = IGARuleReset(rule);CHKERRQ(ierr);
   rule->nqp = nqp;
@@ -138,7 +138,7 @@ PetscErrorCode IGARuleSetUp(IGARule rule)
     ComputeRule = IGA_Rule_GaussLegendre; break;
   }
   if (ComputeRule && ComputeRule(rule->nqp,rule->point,rule->weight) != 0)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %D not implemented",rule->nqp);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of quadrature points %d not implemented",(int)rule->nqp);
   PetscFunctionReturn(0);
 }
 

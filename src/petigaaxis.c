@@ -179,9 +179,9 @@ PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
   PetscFunctionBegin;
   PetscValidPointer(axis,1);
   if (p < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Polynomial degree must be greater than one, got %D",p);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Polynomial degree must be greater than one, got %d",(int)p);
   if (axis->p > 0 && axis->m > 1 && axis->p != p)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Cannot change degree to %D after it was set to %D",p,axis->p);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Cannot change degree to %d after it was set to %d",(int)p,(int)axis->p);
   axis->p = p;
   PetscFunctionReturn(0);
 }
@@ -209,19 +209,19 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (m < 2*axis->p+1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of knots must be at least %D, got %D",2*(axis->p+1),m+1);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of knots must be at least %d, got %d",(int)(2*(axis->p+1)),(int)(m+1));
 
   {
     PetscInt p = axis->p;
     PetscInt k,j,s;
     for (k=1; k<=m; k++) { /* check increasing sequence */
       if (U[k-1] > U[k])
-        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot sequence must be increasing, got U[%D]=%g > U[%D]=%g",k-1,(double)U[k-1],k,(double)U[k]);
+        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot sequence must be increasing, got U[%d]=%g > U[%d]=%g",(int)k-1,(double)U[k-1],(int)k,(double)U[k]);
     }
     for (k=1,j=m; k<m; k=j) { /* check multiplicity */
       j = IGA_NextKnot(m,U,k,1);
       if ((s = j-k) > p)
-        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot U[%D:%D]=%g has multiplicity %D greater than degree %D",k,j-1,(double)U[k],s,p);
+        SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Knot U[%d:%d]=%g has multiplicity %d greater than degree %d",(int)k,(int)j-1,(double)U[k],(int)s,(int)p);
     }
   }
 
@@ -333,12 +333,12 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (nu < 2)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of breaks must be at least two, got %D",nu);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of breaks must be at least two, got %d",(int)nu);
   for (i=1; i<nu; i++)
     if (u[i-1] >= u[i])
-      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Break sequence must be strictly increasing, got u[%D]=%g %s u[%D]=%g",i-1,(double)u[i-1],(u[i-1]>u[i])?">":"==",i,(double)u[i]);
+      SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Break sequence must be strictly increasing, got u[%d]=%g %s u[%d]=%g",(int)i-1,(double)u[i-1],(u[i-1]>u[i])?">":"==",(int)i,(double)u[i]);
   if (C < 0 || C >= axis->p)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%D], got %D",axis->p-1,C);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%d], got %d",(int)axis->p-1,(int)C);
 
   p = axis->p; /* polynomial degree */
   s = p - C; /* multiplicity */
@@ -410,11 +410,11 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (N < 1)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Number of elements must be greater than zero, got %D",N);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Number of elements must be greater than zero, got %d",(int)N);
   if (Ui >= Uf)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Initial value %g must be less than final value %g",(double)Ui,(double)Uf);
   if (C < 0 || C >= axis->p)
-    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%D], got %D",axis->p-1,C);
+    SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONG,"Continuity must be in range [0,%d], got %d",(int)axis->p-1,(int)C);
 
   p = axis->p; /* polynomial degree */
   s = p - C; /* multiplicity */
