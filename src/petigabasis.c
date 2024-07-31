@@ -13,7 +13,7 @@ PetscErrorCode IGABasisCreate(IGABasis *_basis)
   IGABasis       basis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_basis,3);
+  PetscAssertPointer(_basis,3);
   ierr = PetscCalloc1(1,&basis);CHKERRQ(ierr);
   *_basis = basis; basis->refct = 1;
   PetscFunctionReturn(0);
@@ -24,7 +24,7 @@ PetscErrorCode IGABasisDestroy(IGABasis *_basis)
   IGABasis       basis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_basis,1);
+  PetscAssertPointer(_basis,1);
   basis = *_basis; *_basis = NULL;
   if (!basis) PetscFunctionReturn(0);
   if (--basis->refct > 0) PetscFunctionReturn(0);
@@ -38,7 +38,7 @@ PetscErrorCode IGABasisReset(IGABasis basis)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!basis) PetscFunctionReturn(0);
-  PetscValidPointer(basis,1);
+  PetscAssertPointer(basis,1);
   basis->nel = 0;
   basis->nqp = 0;
   basis->nen = 0;
@@ -55,7 +55,7 @@ PetscErrorCode IGABasisReset(IGABasis basis)
 PetscErrorCode IGABasisReference(IGABasis basis)
 {
   PetscFunctionBegin;
-  PetscValidPointer(basis,1);
+  PetscAssertPointer(basis,1);
   basis->refct++;
   PetscFunctionReturn(0);
 }
@@ -64,7 +64,7 @@ PetscErrorCode IGABasisSetType(IGABasis basis,IGABasisType type)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(basis,1);
+  PetscAssertPointer(basis,1);
   if (basis->type != type) {ierr = IGABasisReset(basis);CHKERRQ(ierr);}
   basis->type = type;
   PetscFunctionReturn(0);
@@ -96,9 +96,9 @@ PetscErrorCode IGABasisInitQuadrature(IGABasis basis,IGAAxis axis,IGARule rule)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(basis,1);
-  PetscValidPointer(axis,2);
-  PetscValidPointer(rule,3);
+  PetscAssertPointer(basis,1);
+  PetscAssertPointer(axis,2);
+  PetscAssertPointer(rule,3);
 
   if (rule->nqp < 1) {ierr = IGARuleSetSize(rule,axis->p+1);CHKERRQ(ierr);}
 
@@ -237,8 +237,8 @@ PetscErrorCode IGABasisInitCollocation(IGABasis basis,IGAAxis axis)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(basis,1);
-  PetscValidPointer(axis,2);
+  PetscAssertPointer(basis,1);
+  PetscAssertPointer(axis,2);
 
   p = axis->p;
   m = axis->m;

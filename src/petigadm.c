@@ -14,7 +14,7 @@ PetscErrorCode DMIGACreate(IGA iga,DM *dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,2);
+  PetscAssertPointer(dm,2);
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetOptionsPrefix(iga,&prefix);CHKERRQ(ierr);
   ierr = DMCreate(comm,dm);CHKERRQ(ierr);
@@ -50,7 +50,7 @@ PetscErrorCode DMIGAGetIGA(DM dm,IGA *iga)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  PetscValidPointer(iga,2);
+  PetscAssertPointer(iga,2);
   ierr = PetscObjectTypeCompare((PetscObject)dm,DMIGA,&match);CHKERRQ(ierr);
   if (!match) SETERRQ(((PetscObject)dm)->comm,PETSC_ERR_ARG_WRONG,"DM is not of type DMIGA");
   *iga = DMIGACast(dm)->iga;
@@ -386,7 +386,7 @@ PetscErrorCode DMCreate_IGA(DM dm)
   DM_IGA         *dd = NULL;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(dm,1);
+  PetscAssertPointer(dm,1);
 
   ierr = PetscNew(&dd);CHKERRQ(ierr);
   dm->data = dd;

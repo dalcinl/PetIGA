@@ -6,7 +6,7 @@ PetscErrorCode IGAElementCreate(IGAElement *_element)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(_element,1);
+  PetscAssertPointer(_element,1);
   ierr = PetscCalloc1(1,&element);CHKERRQ(ierr);
   *_element = element; element->refct = 1;
   element->index = -1;
@@ -20,7 +20,7 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(_element,1);
+  PetscAssertPointer(_element,1);
   element = *_element; *_element = NULL;
   if (!element) PetscFunctionReturn(0);
   if (--element->refct > 0) PetscFunctionReturn(0);
@@ -33,7 +33,7 @@ PetscErrorCode IGAElementDestroy(IGAElement *_element)
 PetscErrorCode IGAElementReference(IGAElement element)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   element->refct++;
   PetscFunctionReturn(0);
 }
@@ -43,7 +43,7 @@ PetscErrorCode IGAElementFreeWork(IGAElement element)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   {
     size_t MAX_WORK_VAL = sizeof(element->wval)/sizeof(PetscScalar*);
     size_t MAX_WORK_VEC = sizeof(element->wvec)/sizeof(PetscScalar*);
@@ -67,7 +67,7 @@ PetscErrorCode IGAElementFreeFix(IGAElement element)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   element->nfix = 0;
   ierr = PetscFree(element->ifix);CHKERRQ(ierr);
   ierr = PetscFree(element->vfix);CHKERRQ(ierr);
@@ -83,7 +83,7 @@ PetscErrorCode IGAElementReset(IGAElement element)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!element) PetscFunctionReturn(0);
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
 
   element->count =  0;
   element->index = -1;
@@ -141,7 +141,7 @@ PetscErrorCode IGAElementInit(IGAElement element,IGA iga)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,2);
   IGACheckSetUp(iga,1);
 
@@ -266,7 +266,7 @@ PetscErrorCode IGAGetElement(IGA iga,IGAElement *element)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(element,2);
+  PetscAssertPointer(element,2);
   *element = iga->iterator;
   PetscFunctionReturn(0);
 }
@@ -278,7 +278,7 @@ PetscErrorCode IGABeginElement(IGA iga,IGAElement *_element)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(_element,2);
+  PetscAssertPointer(_element,2);
   IGACheckSetUp(iga,1);
   element = *_element = iga->iterator;
 
@@ -413,8 +413,8 @@ PetscErrorCode IGAEndElement(IGA iga,IGAElement *element)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(element,2);
-  PetscValidPointer(*element,2);
+  PetscAssertPointer(element,2);
+  PetscAssertPointer(*element,2);
   if (PetscUnlikely((*element)->index != -1)) {
     (*element)->index = -1;
     *element = NULL;
@@ -449,8 +449,8 @@ PetscBool IGAElementNextForm(IGAElement element,PetscBool visit[][2])
 PetscErrorCode IGAElementGetPoint(IGAElement element,IGAPoint *point)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(point,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(point,2);
   *point = element->iterator;
   PetscFunctionReturn(0);
 }
@@ -461,8 +461,8 @@ PetscErrorCode IGAElementBeginPoint(IGAElement element,IGAPoint *_point)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(_point,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(_point,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   point = *_point = element->iterator;
@@ -595,9 +595,9 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(point,2);
-  PetscValidPointer(*point,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(point,2);
+  PetscAssertPointer(*point,2);
   if (PetscUnlikely((*point)->index != -1)) {
     (*point)->index = -1;
     PetscFunctionReturn(PETSC_ERR_PLIB);
@@ -623,8 +623,8 @@ PetscErrorCode IGAElementEndPoint(IGAElement element,IGAPoint *point)
 PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidIntPointer(parent,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(parent,2);
   *parent = element->parent;
   PetscFunctionReturn(0);
 }
@@ -632,8 +632,8 @@ PetscErrorCode IGAElementGetParent(IGAElement element,IGA *parent)
 PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidIntPointer(index,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(index,2);
   *index = element->index;
   PetscFunctionReturn(0);
 }
@@ -641,8 +641,8 @@ PetscErrorCode IGAElementGetIndex(IGAElement element,PetscInt *index)
 PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidIntPointer(count,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(count,2);
   *count = element->count;
   PetscFunctionReturn(0);
 }
@@ -650,10 +650,10 @@ PetscErrorCode IGAElementGetCount(IGAElement element,PetscInt *count)
 PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  if (neq) PetscValidIntPointer(neq,2);
-  if (nen) PetscValidIntPointer(nen,3);
-  if (dof) PetscValidIntPointer(dof,4);
+  PetscAssertPointer(element,1);
+  if (neq) PetscAssertPointer(neq,2);
+  if (nen) PetscAssertPointer(nen,3);
+  if (dof) PetscAssertPointer(dof,4);
   if (neq) *neq = element->neq;
   if (nen) *nen = element->nen;
   if (dof) *dof = element->dof;
@@ -663,9 +663,9 @@ PetscErrorCode IGAElementGetSizes(IGAElement element,PetscInt *neq,PetscInt *nen
 PetscErrorCode IGAElementGetClosure(IGAElement element,PetscInt *nen,const PetscInt *mapping[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  if (nen)     PetscValidIntPointer(nen,2);
-  if (mapping) PetscValidPointer(mapping,3);
+  PetscAssertPointer(element,1);
+  if (nen)     PetscAssertPointer(nen,2);
+  if (mapping) PetscAssertPointer(mapping,3);
   if (nen)     *nen     = element->nen;
   if (mapping) *mapping = element->mapping;
   PetscFunctionReturn(0);
@@ -676,11 +676,11 @@ PetscErrorCode IGAElementGetIndices(IGAElement element,
                                     PetscInt *nen,const PetscInt *colmap[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  if (neq)    PetscValidIntPointer(neq,2);
-  if (rowmap) PetscValidPointer(rowmap,3);
-  if (nen)    PetscValidIntPointer(nen,4);
-  if (colmap) PetscValidPointer(colmap,5);
+  PetscAssertPointer(element,1);
+  if (neq)    PetscAssertPointer(neq,2);
+  if (rowmap) PetscAssertPointer(rowmap,3);
+  if (nen)    PetscAssertPointer(nen,4);
+  if (colmap) PetscAssertPointer(colmap,5);
   if (neq)    *neq    = element->neq;
   if (colmap) *colmap = element->rowmap;
   if (nen)    *nen    = element->nen;
@@ -693,7 +693,7 @@ PetscErrorCode IGAElementGetIndices(IGAElement element,
 PetscErrorCode IGAElementBuildClosure(IGAElement element)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   { /* */
@@ -796,7 +796,7 @@ PetscErrorCode IGAElementBuildTabulation(IGAElement element)
   PetscInt axis = PETSC_MAX_INT;
   PetscInt side = PETSC_MAX_INT;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   {
@@ -1038,8 +1038,8 @@ PetscErrorCode IGAElementGetWorkVec(IGAElement element,PetscScalar *V[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(V,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(V,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   if (PetscUnlikely((size_t)element->nvec >= sizeof(element->wvec)/sizeof(PetscScalar*)))
@@ -1056,8 +1056,8 @@ PetscErrorCode IGAElementGetWorkMat(IGAElement element,PetscScalar *M[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidPointer(M,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(M,2);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   if (PetscUnlikely((size_t)element->nmat >= sizeof(element->wmat)/sizeof(PetscScalar*)))
@@ -1076,9 +1076,9 @@ PetscErrorCode IGAElementGetValues(IGAElement element,const PetscScalar arrayU[]
   PetscScalar    *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  if (arrayU) PetscValidScalarPointer(arrayU,2);
-  PetscValidPointer(_U,3);
+  PetscAssertPointer(element,1);
+  if (arrayU) PetscAssertPointer(arrayU,2);
+  PetscAssertPointer(_U,3);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   if (PetscUnlikely((size_t)element->nval >= sizeof(element->wval)/sizeof(PetscScalar*)))
@@ -1263,7 +1263,7 @@ PetscReal DOT(PetscInt dim,const PetscReal a[],const PetscReal b[])
 PetscErrorCode IGAElementBuildFix(IGAElement element)
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
+  PetscAssertPointer(element,1);
   if (PetscUnlikely(element->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during element loop");
   if (PetscUnlikely(element->collocation)) goto collocation;
@@ -1327,8 +1327,8 @@ PetscErrorCode IGAElementBuildFix(IGAElement element)
 PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(V,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(V,2);
   {
     PetscInt f,n,k;
     n = element->nfix;
@@ -1343,8 +1343,8 @@ PetscErrorCode IGAElementDelValues(IGAElement element,PetscScalar V[])
 PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(U,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(U,2);
   {
     PetscInt f,n,k;
     n = element->nfix;
@@ -1360,9 +1360,9 @@ PetscErrorCode IGAElementFixValues(IGAElement element,PetscScalar U[])
 PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScalar F[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(K,2);
-  PetscValidScalarPointer(F,3);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(K,2);
+  PetscAssertPointer(F,3);
   if (PetscUnlikely(element->collocation)) goto collocation;
   {
     PetscInt M = element->neq * element->dof;
@@ -1441,8 +1441,8 @@ PetscErrorCode IGAElementFixSystem(IGAElement element,PetscScalar K[],PetscScala
 PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(F,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(F,2);
   if (PetscUnlikely(element->collocation)) goto collocation;
   {
     PetscInt f,n;
@@ -1483,8 +1483,8 @@ PetscErrorCode IGAElementFixFunction(IGAElement element,PetscScalar F[])
 PetscErrorCode IGAElementFixJacobian(IGAElement element,PetscScalar J[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(J,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(J,2);
   if (PetscUnlikely(element->collocation)) goto collocation;
   {
     PetscInt M = element->neq * element->dof;
@@ -1527,8 +1527,8 @@ PetscErrorCode IGAElementAssembleVec(IGAElement element,const PetscScalar F[],Ve
   PetscInt       mm,*ii;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(F,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(F,2);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,3);
   mm = element->neq; ii = element->rowmap;
   if (element->dof == 1) {
@@ -1545,8 +1545,8 @@ PetscErrorCode IGAElementAssembleMat(IGAElement element,const PetscScalar K[],Ma
   PetscInt       nn,*jj;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(element,1);
-  PetscValidScalarPointer(K,2);
+  PetscAssertPointer(element,1);
+  PetscAssertPointer(K,2);
   PetscValidHeaderSpecific(mat,MAT_CLASSID,3);
   mm = element->neq; ii = element->rowmap;
   nn = element->nen; jj = element->colmap;

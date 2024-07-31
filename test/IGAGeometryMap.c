@@ -429,7 +429,7 @@ PetscErrorCode IGAComputeScalarFull(IGA iga,Vec vecU,
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
-  PetscValidScalarPointer(S,3);
+  PetscAssertPointer(S,3);
   IGACheckSetUp(iga,1);
 
   ierr = PetscCalloc1((size_t)n,&localS);CHKERRQ(ierr);

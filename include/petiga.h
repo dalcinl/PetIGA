@@ -27,6 +27,10 @@
 #define SETERRQ(comm,ierr,...) return PetscError(comm,__LINE__,PETSC_FUNCTION_NAME,__FILE__,ierr,PETSC_ERROR_INITIAL,__VA_ARGS__)
 #endif
 
+#if PETSC_VERSION_LT(3,20,0)
+#define PetscAssertPointer PetscValidPointer
+#endif
+
 typedef ISLocalToGlobalMapping LGMap;
 #define LGMap LGMap
 

@@ -52,8 +52,8 @@ PetscErrorCode IGACreateDrawDM(IGA iga,PetscInt bs,const PetscInt res[],DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
-  if (res) PetscValidIntPointer(res,3);
-  PetscValidPointer(dm,2);
+  if (res) PetscAssertPointer(res,3);
+  PetscAssertPointer(dm,2);
   IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
@@ -132,7 +132,7 @@ PetscErrorCode IGAGetDrawDM(IGA iga,DM *dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,2);
+  PetscAssertPointer(dm,2);
   IGACheckSetUpStage2(iga,1);
   if (!iga->draw_dm) {
     /* determine resolution */
@@ -229,7 +229,7 @@ PetscErrorCode IGADrawVecVTK(IGA iga,Vec vec,const char filename[])
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
   PetscCheckSameComm(iga,1,vec,2);
-  PetscValidCharPointer(filename,2);
+  PetscAssertPointer(filename,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerVTKOpen(comm,filename,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);

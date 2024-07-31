@@ -39,7 +39,7 @@ PetscErrorCode IGACreateCoordinates(IGA iga,Vec *coords)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(coords,2);
+  PetscAssertPointer(coords,2);
   IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
@@ -122,7 +122,7 @@ PetscErrorCode IGACreateRigidBody(IGA iga,MatNullSpace *nsp)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(nsp,2);
+  PetscAssertPointer(nsp,2);
   IGACheckSetUpStage2(iga,1);
   ierr = IGACreateCoordinates(iga,&coords);CHKERRQ(ierr);
   ierr = MatNullSpaceCreateRigidBody(coords,nsp);CHKERRQ(ierr);

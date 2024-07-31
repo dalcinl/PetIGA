@@ -80,7 +80,7 @@ PetscErrorCode IGACreateVec(IGA iga, Vec *vec)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(vec,2);
+  PetscAssertPointer(vec,2);
   IGACheckSetUpStage2(iga,1);
   ierr = VecCreate(((PetscObject)iga)->comm,vec);CHKERRQ(ierr);
   ierr = VecSetLayout(*vec,iga->map);CHKERRQ(ierr);
@@ -98,7 +98,7 @@ PetscErrorCode IGACreateLocalVec(IGA iga,Vec *vec)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(vec,2);
+  PetscAssertPointer(vec,2);
   IGACheckSetUpStage2(iga,1);
   /* */
   bs = iga->dof;
@@ -117,7 +117,7 @@ PetscErrorCode IGAGetLocalVec(IGA iga,Vec *lvec)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(lvec,2);
+  PetscAssertPointer(lvec,2);
   IGACheckSetUpStage2(iga,1);
   if (iga->nwork > 0) {
     *lvec = iga->vwork[--iga->nwork];
@@ -133,7 +133,7 @@ PetscErrorCode IGARestoreLocalVec(IGA iga,Vec *lvec)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(lvec,2);
+  PetscAssertPointer(lvec,2);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,2);
   IGACheckSetUpStage2(iga,1);
   if (iga->nwork < (PetscInt)(sizeof(iga->vwork)/sizeof(Vec))) {
@@ -259,8 +259,8 @@ PetscErrorCode IGAGetLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscScalar 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
-  PetscValidPointer(lvec,3);
-  PetscValidPointer(array,4);
+  PetscAssertPointer(lvec,3);
+  PetscAssertPointer(array,4);
   IGACheckSetUpStage2(iga,1);
   ierr = IGAGetLocalVec(iga,lvec);CHKERRQ(ierr);
   ierr = IGAGlobalToLocal(iga,gvec,*lvec,INSERT_VALUES);CHKERRQ(ierr);
@@ -274,9 +274,9 @@ PetscErrorCode IGARestoreLocalVecArray(IGA iga,Vec gvec,Vec *lvec,const PetscSca
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
-  PetscValidPointer(lvec,3);
+  PetscAssertPointer(lvec,3);
   PetscValidHeaderSpecific(*lvec,VEC_CLASSID,3);
-  PetscValidPointer(array,4);
+  PetscAssertPointer(array,4);
   IGACheckSetUpStage2(iga,1);
   ierr = VecRestoreArrayRead(*lvec,array);CHKERRQ(ierr);
   ierr = IGARestoreLocalVec(iga,lvec);CHKERRQ(ierr);
@@ -287,7 +287,7 @@ PetscErrorCode IGAGetNaturalVec(IGA iga,Vec *nvec)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(nvec,2);
+  PetscAssertPointer(nvec,2);
   IGACheckSetUpStage2(iga,1);
   *nvec = iga->natural;
   PetscFunctionReturn(0);

@@ -215,7 +215,7 @@ PetscErrorCode IGACreateSNES(IGA iga,SNES *snes)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(snes,2);
+  PetscAssertPointer(snes,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = SNESCreate(comm,snes);CHKERRQ(ierr);

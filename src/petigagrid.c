@@ -7,7 +7,7 @@ PetscErrorCode IGA_Grid_Create(MPI_Comm comm,IGA_Grid *grid)
   PetscInt       i;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(grid,9);
+  PetscAssertPointer(grid,9);
 
   ierr = PetscMalloc(sizeof(*g),&g);CHKERRQ(ierr);
   ierr = PetscMemzero(g,sizeof(*g));CHKERRQ(ierr);
@@ -36,12 +36,12 @@ PetscErrorCode IGA_Grid_Init(IGA_Grid g,
   PetscInt       i;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidIntPointer(sizes,4);
-  PetscValidIntPointer(local_start,5);
-  PetscValidIntPointer(local_width,6);
-  PetscValidIntPointer(ghost_start,7);
-  PetscValidIntPointer(ghost_width,8);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(sizes,4);
+  PetscAssertPointer(local_start,5);
+  PetscAssertPointer(local_width,6);
+  PetscAssertPointer(ghost_start,7);
+  PetscAssertPointer(ghost_width,8);
 
   ierr = IGA_Grid_Reset(g);CHKERRQ(ierr);
   g->dim = dim;
@@ -62,7 +62,7 @@ PetscErrorCode IGA_Grid_Reset(IGA_Grid g)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!g) PetscFunctionReturn(0);
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   for (i=0; i<3; i++) {
     g->sizes[i]       = 1;
     g->local_start[i] = 0;
@@ -87,8 +87,8 @@ PetscErrorCode IGA_Grid_Destroy(IGA_Grid *grid)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!grid) PetscFunctionReturn(0);
-  PetscValidPointer(grid,1);
-  PetscValidPointer(*grid,1);
+  PetscAssertPointer(grid,1);
+  PetscAssertPointer(*grid,1);
   g = *grid; *grid = NULL;
   ierr = IGA_Grid_Reset(g);CHKERRQ(ierr);
   ierr = PetscFree(g);CHKERRQ(ierr);
@@ -101,9 +101,9 @@ PetscErrorCode IGA_Grid_LocalIndices(IGA_Grid g,PetscInt bs,PetscInt *nlocal,Pet
   PetscInt       *iloc;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidIntPointer(nlocal,3);
-  PetscValidPointer(indices,4);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(nlocal,3);
+  PetscAssertPointer(indices,4);
   {
     const PetscInt *sizes = g->sizes;
     const PetscInt *lstart = g->local_start;
@@ -135,9 +135,9 @@ PetscErrorCode IGA_Grid_GhostIndices(IGA_Grid g,PetscInt bs,PetscInt *nghost,Pet
   PetscInt       *ight;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidIntPointer(nghost,3);
-  PetscValidPointer(indices,4);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(nghost,3);
+  PetscAssertPointer(indices,4);
   {
     const PetscInt *sizes = g->sizes;
     const PetscInt *gstart = g->ghost_start;
@@ -174,7 +174,7 @@ PetscErrorCode IGA_Grid_SetAO(IGA_Grid g,AO ao)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(ao,AO_CLASSID,2);
   ierr = PetscObjectReference((PetscObject)ao);CHKERRQ(ierr);
   ierr = AODestroy(&g->ao);CHKERRQ(ierr);
@@ -186,8 +186,8 @@ PetscErrorCode IGA_Grid_GetAO(IGA_Grid g,AO *ao)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(ao,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(ao,2);
   if (!g->ao) {
     PetscInt napp,*iapp;
     ierr = IGA_Grid_LocalIndices(g,1,&napp,&iapp);CHKERRQ(ierr);
@@ -202,7 +202,7 @@ PetscErrorCode IGA_Grid_SetLGMap(IGA_Grid g,LGMap lgmap)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(lgmap,IS_LTOGM_CLASSID,2);
   ierr = PetscObjectReference((PetscObject)lgmap);CHKERRQ(ierr);
   ierr = ISLocalToGlobalMappingDestroy(&g->lgmap);CHKERRQ(ierr);
@@ -214,8 +214,8 @@ PetscErrorCode IGA_Grid_GetLGMap(IGA_Grid g,LGMap *lgmap)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(lgmap,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(lgmap,2);
   if (!g->lgmap) {
     PetscInt nghost,*ighost;
     ierr = IGA_Grid_GhostIndices(g,1,&nghost,&ighost);CHKERRQ(ierr);
@@ -231,8 +231,8 @@ PetscErrorCode IGA_Grid_GetLayout(IGA_Grid g,PetscLayout *map)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(map,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(map,2);
   if (!g->map) {
     LGMap lgmap;
     const PetscInt *sizes = g->sizes;
@@ -257,9 +257,9 @@ PetscErrorCode IGA_Grid_GetVecLocal(IGA_Grid g,const VecType vtype,Vec *lvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  if (vtype) PetscValidCharPointer(vtype,2);
-  PetscValidPointer(lvec,3);
+  PetscAssertPointer(g,1);
+  if (vtype) PetscAssertPointer(vtype,2);
+  PetscAssertPointer(lvec,3);
   if (!g->lvec) {
     const PetscInt *width = g->ghost_width;
     PetscInt n  = width[0]*width[1]*width[2];
@@ -277,9 +277,9 @@ PetscErrorCode IGA_Grid_GetVecGlobal(IGA_Grid g,const VecType vtype,Vec *gvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  if (vtype) PetscValidCharPointer(vtype,2);
-  PetscValidPointer(gvec,3);
+  PetscAssertPointer(g,1);
+  if (vtype) PetscAssertPointer(vtype,2);
+  PetscAssertPointer(gvec,3);
   if (!g->gvec) {
     const PetscInt *sizes = g->sizes;
     const PetscInt *width = g->local_width;
@@ -299,9 +299,9 @@ PetscErrorCode IGA_Grid_GetVecNatural(IGA_Grid g,const VecType vtype,Vec *nvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  if (vtype) PetscValidCharPointer(vtype,2);
-  PetscValidPointer(nvec,3);
+  PetscAssertPointer(g,1);
+  if (vtype) PetscAssertPointer(vtype,2);
+  PetscAssertPointer(nvec,3);
   if (!g->nvec) {
     Vec gvec;
     ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);
@@ -315,8 +315,8 @@ PetscErrorCode IGA_Grid_GetScatterG2L(IGA_Grid g,VecScatter *g2l)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(g2l,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(g2l,2);
   if (!g->g2l) {
     LGMap lgmap;
     IS isghost;
@@ -342,8 +342,8 @@ PetscErrorCode IGA_Grid_GetScatterL2G(IGA_Grid g,VecScatter *l2g)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(l2g,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(l2g,2);
   if (!g->l2g) {
     IS isglobal,islocal;
     Vec gvec,lvec;
@@ -388,8 +388,8 @@ PetscErrorCode IGA_Grid_GetScatterG2N(IGA_Grid g,VecScatter *g2n)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(g2n,2);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(g2n,2);
   if (!g->g2n) {
     IS isnatural,isglobal;
     Vec gvec,nvec;
@@ -412,7 +412,7 @@ PetscErrorCode IGA_Grid_GlobalToLocal(IGA_Grid g,Vec gvec,Vec lvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,3);
   ierr = IGA_Grid_GetScatterG2L(g,&g->g2l);CHKERRQ(ierr);
@@ -425,7 +425,7 @@ PetscErrorCode IGA_Grid_LocalToGlobal(IGA_Grid g,Vec lvec,Vec gvec,InsertMode ad
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(lvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
   if (addv == ADD_VALUES) {
@@ -444,7 +444,7 @@ PetscErrorCode IGA_Grid_NaturalToGlobal(IGA_Grid g,Vec nvec,Vec gvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,3);
   ierr = IGA_Grid_GetScatterG2N(g,&g->g2n);CHKERRQ(ierr);
@@ -457,7 +457,7 @@ PetscErrorCode IGA_Grid_GlobalToNatural(IGA_Grid g,Vec gvec,Vec nvec)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
+  PetscAssertPointer(g,1);
   PetscValidHeaderSpecific(gvec,VEC_CLASSID,2);
   PetscValidHeaderSpecific(nvec,VEC_CLASSID,3);
   ierr = IGA_Grid_GetScatterG2N(g,&g->g2n);CHKERRQ(ierr);
@@ -482,10 +482,10 @@ PetscErrorCode IGA_Grid_NewScatterApp(IGA_Grid g,
   VecScatter     g2n;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(g,1);
-  PetscValidPointer(avec,2);
-  PetscValidPointer(a2g,3);
-  PetscValidPointer(g2a,4);
+  PetscAssertPointer(g,1);
+  PetscAssertPointer(avec,2);
+  PetscAssertPointer(a2g,3);
+  PetscAssertPointer(g2a,4);
   /* global vector */
   {
     ierr = IGA_Grid_GetVecGlobal(g,vtype,&gvec);CHKERRQ(ierr);

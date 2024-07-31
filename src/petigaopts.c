@@ -8,8 +8,8 @@ PetscErrorCode IGAOptionsAlias(const char alias[],const char defval[],const char
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidCharPointer(alias,1);
-  PetscValidCharPointer(name,3);
+  PetscAssertPointer(alias,1);
+  PetscAssertPointer(name,3);
   ierr = PetscOptionsHasName(NULL,NULL,alias,&flag);CHKERRQ(ierr);
   if (flag) {
     ierr = PetscOptionsGetString(NULL,NULL,alias,value,sizeof(value),&flag);CHKERRQ(ierr);

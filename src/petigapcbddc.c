@@ -76,9 +76,9 @@ PetscErrorCode IGAComputeBDDCGraph(PetscInt bs,
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(_nvtx,6);
-  PetscValidPointer(_xadj,7);
-  PetscValidPointer(_adjy,8);
+  PetscAssertPointer(_nvtx,6);
+  PetscAssertPointer(_xadj,7);
+  PetscAssertPointer(_adjy,8);
 
   /* Compute the number of vertices and adjacencies */
   nvtx = shape[0]*shape[1]*shape[2];
@@ -155,10 +155,10 @@ PetscErrorCode IGAComputeBDDCBoundary(PetscInt dim,PetscInt bs,const PetscInt sh
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(_ndirichlet,7);
-  PetscValidPointer(_idirichlet,8);
-  PetscValidIntPointer(_nneumann,9);
-  PetscValidPointer(_ineumann,10);
+  PetscAssertPointer(_ndirichlet,7);
+  PetscAssertPointer(_idirichlet,8);
+  PetscAssertPointer(_nneumann,9);
+  PetscAssertPointer(_ineumann,10);
 
   ierr = PetscBTCreate(m,&Dmask);CHKERRQ(ierr);
   ierr = PetscBTCreate(m,&Nmask);CHKERRQ(ierr);

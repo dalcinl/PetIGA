@@ -139,9 +139,9 @@ PetscErrorCode IGA_Partition(PetscInt size,PetscInt rank,
 {
   PetscInt k,p=1,m[3]={1,1,1};
   PetscFunctionBegin;
-  PetscValidIntPointer(N,4);
-  PetscValidIntPointer(n,5);
-  if (i) PetscValidIntPointer(i,6);
+  PetscAssertPointer(N,4);
+  PetscAssertPointer(n,5);
+  if (i) PetscAssertPointer(i,6);
   if (size < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of partitions %d must be positive",(int)size);
@@ -181,11 +181,11 @@ PetscErrorCode IGA_Distribute(PetscInt dim,
 {
   PetscInt k;
   PetscFunctionBegin;
-  PetscValidIntPointer(size,2);
-  PetscValidIntPointer(rank,3);
-  PetscValidIntPointer(N,4);
-  PetscValidIntPointer(n,5);
-  PetscValidIntPointer(s,6);
+  PetscAssertPointer(size,2);
+  PetscAssertPointer(rank,3);
+  PetscAssertPointer(N,4);
+  PetscAssertPointer(n,5);
+  PetscAssertPointer(s,6);
   if (dim < 1 || dim > 3)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Number of dimensions %d must be in range [1,3]",(int)dim);
   for (k=0; k<dim; k++) {

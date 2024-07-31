@@ -5,7 +5,7 @@ PetscErrorCode IGAPointCreate(IGAPoint *_point)
   IGAPoint       point;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_point,3);
+  PetscAssertPointer(_point,3);
   ierr = PetscCalloc1(1,&point);CHKERRQ(ierr);
   *_point = point; point->refct =  1;
   point->index = -1;
@@ -17,7 +17,7 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
   IGAPoint       point;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_point,1);
+  PetscAssertPointer(_point,1);
   point = *_point; *_point = NULL;
   if (!point) PetscFunctionReturn(0);
   if (--point->refct > 0) PetscFunctionReturn(0);
@@ -29,7 +29,7 @@ PetscErrorCode IGAPointDestroy(IGAPoint *_point)
 PetscErrorCode IGAPointReference(IGAPoint point)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
+  PetscAssertPointer(point,1);
   point->refct++;
   PetscFunctionReturn(0);
 }
@@ -39,7 +39,7 @@ PetscErrorCode IGAPointFreeWork(IGAPoint point)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
+  PetscAssertPointer(point,1);
   {
     size_t MAX_WORK_VEC = sizeof(point->wvec)/sizeof(PetscScalar*);
     size_t MAX_WORK_MAT = sizeof(point->wmat)/sizeof(PetscScalar*);
@@ -59,7 +59,7 @@ PetscErrorCode IGAPointReset(IGAPoint point)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!point) PetscFunctionReturn(0);
-  PetscValidPointer(point,1);
+  PetscAssertPointer(point,1);
   point->count =  0;
   point->index = -1;
   point->rational = NULL;
@@ -73,8 +73,8 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(element,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(element,2);
   ierr = IGAPointReset(point);CHKERRQ(ierr);
   point->parent = element;
   point->neq = element->neq;
@@ -101,8 +101,8 @@ PetscErrorCode IGAPointInit(IGAPoint point,IGAElement element)
 PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(element,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(element,2);
   *element = point->parent;
   PetscFunctionReturn(0);
 }
@@ -110,8 +110,8 @@ PetscErrorCode IGAPointGetParent(IGAPoint point,IGAElement *element)
 PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidIntPointer(index,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(index,2);
   *index = point->index;
   PetscFunctionReturn(0);
 }
@@ -119,8 +119,8 @@ PetscErrorCode IGAPointGetIndex(IGAPoint point,PetscInt *index)
 PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidIntPointer(count,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(count,2);
   *count = point->count;
   PetscFunctionReturn(0);
 }
@@ -128,9 +128,9 @@ PetscErrorCode IGAPointGetCount(IGAPoint point,PetscInt *count)
 PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  if (axis) PetscValidIntPointer(axis,2);
-  if (side) PetscValidIntPointer(side,3);
+  PetscAssertPointer(point,1);
+  if (axis) PetscAssertPointer(axis,2);
+  if (side) PetscAssertPointer(side,3);
   if (axis) *axis = point->atboundary ? point->boundary_id / 2 : -1;
   if (side) *side = point->atboundary ? point->boundary_id % 2 : -1;
   PetscFunctionReturn(0);
@@ -139,10 +139,10 @@ PetscErrorCode IGAPointAtBoundary(IGAPoint point,PetscInt *axis,PetscInt *side)
 PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,PetscInt *dof)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  if (neq) PetscValidIntPointer(neq,2);
-  if (nen) PetscValidIntPointer(nen,3);
-  if (dof) PetscValidIntPointer(dof,4);
+  PetscAssertPointer(point,1);
+  if (neq) PetscAssertPointer(neq,2);
+  if (nen) PetscAssertPointer(nen,3);
+  if (dof) PetscAssertPointer(dof,4);
   if (neq) *neq = point->neq;
   if (nen) *nen = point->nen;
   if (dof) *dof = point->dof;
@@ -152,10 +152,10 @@ PetscErrorCode IGAPointGetSizes(IGAPoint point,PetscInt *neq,PetscInt *nen,Petsc
 PetscErrorCode IGAPointGetDims(IGAPoint point,PetscInt *dim,PetscInt *nsd,PetscInt *npd)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  if (dim) PetscValidIntPointer(dim,2);
-  if (nsd) PetscValidIntPointer(nsd,3);
-  if (npd) PetscValidIntPointer(npd,4);
+  PetscAssertPointer(point,1);
+  if (dim) PetscAssertPointer(dim,2);
+  if (nsd) PetscAssertPointer(nsd,3);
+  if (npd) PetscAssertPointer(npd,4);
   if (dim) *dim = point->dim;
   if (nsd) *nsd = point->nsd;
   if (npd) *npd = point->npd;
@@ -167,9 +167,9 @@ PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
                                      PetscReal *detJac)
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  if (weight) PetscValidRealPointer(weight,3);
-  if (detJac) PetscValidRealPointer(detJac,4);
+  PetscAssertPointer(point,1);
+  if (weight) PetscAssertPointer(weight,3);
+  if (detJac) PetscAssertPointer(detJac,4);
   if (weight) *weight = point->weight[0];
   if (detJac) *detJac = point->detJac[0];
   PetscFunctionReturn(0);
@@ -178,8 +178,8 @@ PetscErrorCode IGAPointGetQuadrature(IGAPoint point,
 PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal *basisfuns[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(basisfuns,3);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(basisfuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->basis)/sizeof(PetscReal*))))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Requested derivative must be in range [0,%d], got %d",(int)(sizeof(point->basis)/sizeof(PetscReal*)-1),(int)der);
   *basisfuns = point->basis[der];
@@ -189,8 +189,8 @@ PetscErrorCode IGAPointGetBasisFuns(IGAPoint point,PetscInt der,const PetscReal 
 PetscErrorCode IGAPointGetShapeFuns(IGAPoint point,PetscInt der,const PetscReal *shapefuns[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(shapefuns,3);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(shapefuns,3);
   if (PetscUnlikely(der < 0 || der >= (PetscInt)(sizeof(point->shape)/sizeof(PetscReal*))))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Requested derivative must be in range [0,%d], got %d",(int)(sizeof(point->shape)/sizeof(PetscReal*)-1),(int)der);
   *shapefuns = point->shape[der];
@@ -209,8 +209,8 @@ EXTERN_C_END
 static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidRealPointer(L,2);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(L,2);
   {
     PetscInt i;
     PetscInt dim = p->dim;
@@ -225,8 +225,8 @@ static PetscErrorCode IGAPointFormScale(IGAPoint p,PetscReal L[])
 PetscErrorCode IGAPointFormGeomMap(IGAPoint p,PetscReal x[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidRealPointer(x,2);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(x,2);
   if (p->geometry) {
     PetscInt i,nsd = p->nsd;
     const PetscReal *X = p->mapX[0];
@@ -243,8 +243,8 @@ PetscErrorCode IGAPointFormGradGeomMap(IGAPoint p,PetscReal F[])
 {
   PetscReal L[3] = {1,1,1};
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidRealPointer(F,2);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(F,2);
   (void)IGAPointFormScale(p,L);
   if (p->geometry) {
     PetscInt a,dim = p->dim;
@@ -270,8 +270,8 @@ PetscErrorCode IGAPointFormInvGradGeomMap(IGAPoint p,PetscReal G[])
 {
   PetscReal L[3] = {1,1,1};
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidRealPointer(G,2);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(G,2);
   (void)IGAPointFormScale(p,L);
   if (p->geometry) {
     PetscInt a,dim = p->dim;
@@ -327,9 +327,9 @@ PetscErrorCode IGAPointFormPoint(IGAPoint p,PetscReal x[])
 PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetValue(p->nen,p->dof,p->shape[0],U,u);
   PetscFunctionReturn(0);
 }
@@ -337,9 +337,9 @@ PetscErrorCode IGAPointFormValue(IGAPoint p,const PetscScalar U[],PetscScalar u[
 PetscErrorCode IGAPointFormGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetGrad(p->nen,p->dof,p->dim,p->shape[1],U,u);
   PetscFunctionReturn(0);
 }
@@ -347,9 +347,9 @@ PetscErrorCode IGAPointFormGrad(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 PetscErrorCode IGAPointFormHess(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetHess(p->nen,p->dof,p->dim,p->shape[2],U,u);
   PetscFunctionReturn(0);
 }
@@ -357,9 +357,9 @@ PetscErrorCode IGAPointFormHess(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 PetscErrorCode IGAPointFormDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetDel2(p->nen,p->dof,p->dim,p->shape[2],U,u);
   PetscFunctionReturn(0);
 }
@@ -367,9 +367,9 @@ PetscErrorCode IGAPointFormDel2(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetDer3(p->nen,p->dof,p->dim,p->shape[3],U,u);
   PetscFunctionReturn(0);
 }
@@ -377,9 +377,9 @@ PetscErrorCode IGAPointFormDer3(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 PetscErrorCode IGAPointFormDer4(IGAPoint p,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidScalarPointer(U,2);
-  PetscValidScalarPointer(u,3);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,2);
+  PetscAssertPointer(u,3);
   IGA_GetDer4(p->nen,p->dof,p->dim,p->shape[4],U,u);
   PetscFunctionReturn(0);
 }
@@ -387,9 +387,9 @@ PetscErrorCode IGAPointFormDer4(IGAPoint p,const PetscScalar U[],PetscScalar u[]
 PetscErrorCode IGAPointEvaluate(IGAPoint p,PetscInt ider,const PetscScalar U[],PetscScalar u[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(p,1);
-  PetscValidPointer(U,4);
-  PetscValidPointer(u,4);
+  PetscAssertPointer(p,1);
+  PetscAssertPointer(U,4);
+  PetscAssertPointer(u,4);
   if (PetscUnlikely(p->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   if (PetscUnlikely(ider < 0 || ider > 4))
@@ -415,8 +415,8 @@ PetscErrorCode IGAPointGetWorkVec(IGAPoint point,PetscScalar *V[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(V,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(V,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   if (PetscUnlikely((size_t)point->nvec >= sizeof(point->wvec)/sizeof(PetscScalar*)))
@@ -433,8 +433,8 @@ PetscErrorCode IGAPointGetWorkMat(IGAPoint point,PetscScalar *M[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidPointer(M,2);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(M,2);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   if (PetscUnlikely((size_t)point->nmat >= sizeof(point->wmat)/sizeof(PetscScalar*)))
@@ -453,9 +453,9 @@ PetscErrorCode IGAPointAddArray(IGAPoint point,PetscInt n,const PetscScalar a[],
   PetscInt  i;
   PetscReal JW;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidScalarPointer(a,3);
-  PetscValidScalarPointer(A,4);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(a,3);
+  PetscAssertPointer(A,4);
   if (PetscUnlikely(point->index < 0))
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call during point loop");
   JW = point->detJac[0] * point->weight[0];
@@ -469,9 +469,9 @@ PetscErrorCode IGAPointAddVec(IGAPoint point,const PetscScalar f[],PetscScalar F
   PetscInt       m;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidScalarPointer(f,2);
-  PetscValidScalarPointer(F,3);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(f,2);
+  PetscAssertPointer(F,3);
   m = point->neq * point->dof;
   ierr = IGAPointAddArray(point,m,f,F);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -482,9 +482,9 @@ PetscErrorCode IGAPointAddMat(IGAPoint point,const PetscScalar k[],PetscScalar K
   PetscInt       m,n;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(point,1);
-  PetscValidScalarPointer(k,2);
-  PetscValidScalarPointer(K,3);
+  PetscAssertPointer(point,1);
+  PetscAssertPointer(k,2);
+  PetscAssertPointer(K,3);
   m = point->neq * point->dof;
   n = point->nen * point->dof;
   ierr = IGAPointAddArray(point,m*n,k,K);CHKERRQ(ierr);

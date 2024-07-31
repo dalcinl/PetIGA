@@ -253,7 +253,7 @@ PetscErrorCode IGACreateTS2(IGA iga,TS *ts)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(ts,2);
+  PetscAssertPointer(ts,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = TSCreate(comm,ts);CHKERRQ(ierr);

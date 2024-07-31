@@ -143,7 +143,7 @@ static PetscErrorCode IGA_NewGridIO(IGA iga,PetscInt bs,IGA_Grid *grid)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(grid,3);
+  PetscAssertPointer(grid,3);
   {
     MPI_Comm comm    = ((PetscObject)iga)->comm;
     PetscInt dim     = iga->dim;
@@ -193,7 +193,7 @@ PetscErrorCode IGAGetGeometryDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dim,2);
+  PetscAssertPointer(dim,2);
   *dim = iga->geometry;
   PetscFunctionReturn(0);
 }
@@ -385,7 +385,7 @@ PetscErrorCode IGAGetPropertyDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dim,2);
+  PetscAssertPointer(dim,2);
   *dim = iga->property;
   PetscFunctionReturn(0);
 }
@@ -540,7 +540,7 @@ PetscErrorCode IGARead(IGA iga,const char filename[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidCharPointer(filename,2);
+  PetscAssertPointer(filename,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
@@ -576,7 +576,7 @@ PetscErrorCode IGAWrite(IGA iga,const char filename[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidCharPointer(filename,2);
+  PetscAssertPointer(filename,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = PetscViewerCreate(comm,&viewer);CHKERRQ(ierr);
@@ -692,7 +692,7 @@ PetscErrorCode IGAReadVec(IGA iga,Vec vec,const char filename[])
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
   PetscCheckSameComm(iga,1,vec,2);
-  PetscValidCharPointer(filename,2);
+  PetscAssertPointer(filename,2);
   IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
@@ -718,7 +718,7 @@ PetscErrorCode IGAWriteVec(IGA iga,Vec vec,const char filename[])
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidHeaderSpecific(vec,VEC_CLASSID,1);
   PetscCheckSameComm(iga,1,vec,2);
-  PetscValidCharPointer(filename,2);
+  PetscAssertPointer(filename,2);
   IGACheckSetUpStage2(iga,1);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);

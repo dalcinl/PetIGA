@@ -4,7 +4,7 @@ PetscErrorCode IGAGetForm(IGA iga,IGAForm *form)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(form,2);
+  PetscAssertPointer(form,2);
   *form = iga->form;
   PetscFunctionReturn(0);
 }
@@ -14,7 +14,7 @@ PetscErrorCode IGASetForm(IGA iga,IGAForm form)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(form,2);
+  PetscAssertPointer(form,2);
   if (form == iga->form) PetscFunctionReturn(0);
   ierr = IGAFormReference(form);CHKERRQ(ierr);
   ierr = IGAFormDestroy(&iga->form);CHKERRQ(ierr);
@@ -28,7 +28,7 @@ PetscErrorCode IGAFormCreate(IGAForm *_form)
   IGAForm        form;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_form,1);
+  PetscAssertPointer(_form,1);
   ierr = PetscCalloc1(1,&form);CHKERRQ(ierr);
   *_form = form; form->refct = 1;
   /* */
@@ -48,7 +48,7 @@ PetscErrorCode IGAFormDestroy(IGAForm *_form)
   IGAForm        form;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_form,1);
+  PetscAssertPointer(_form,1);
   form = *_form; *_form = NULL;
   if (!form) PetscFunctionReturn(0);
   if (--form->refct > 0) PetscFunctionReturn(0);
@@ -68,7 +68,7 @@ PetscErrorCode IGAFormReset(IGAForm form)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!form) PetscFunctionReturn(0);
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->dof = -1;
   ierr = PetscMemzero(form->ops,sizeof(struct _IGAFormOps));CHKERRQ(ierr);
   ierr = PetscMemzero(form->value,3*2*sizeof(struct _IGAFormBC));CHKERRQ(ierr);
@@ -80,7 +80,7 @@ PetscErrorCode IGAFormReset(IGAForm form)
 PetscErrorCode IGAFormReference(IGAForm form)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->refct++;
   PetscFunctionReturn(0);
 }
@@ -154,7 +154,7 @@ PetscErrorCode IGAFormClearBoundary(IGAForm form,PetscInt axis,PetscInt side)
 PetscErrorCode IGAFormSetVector(IGAForm form,IGAFormVector Vector,void *VecCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->Vector = Vector;
   form->ops->VecCtx = VecCtx;
   PetscFunctionReturn(0);
@@ -163,7 +163,7 @@ PetscErrorCode IGAFormSetVector(IGAForm form,IGAFormVector Vector,void *VecCtx)
 PetscErrorCode IGAFormSetMatrix(IGAForm form,IGAFormMatrix Matrix,void *MatCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->Matrix = Matrix;
   form->ops->MatCtx = MatCtx;
   PetscFunctionReturn(0);
@@ -172,7 +172,7 @@ PetscErrorCode IGAFormSetMatrix(IGAForm form,IGAFormMatrix Matrix,void *MatCtx)
 PetscErrorCode IGAFormSetSystem(IGAForm form,IGAFormSystem System,void *SysCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->System = System;
   form->ops->SysCtx = SysCtx;
   PetscFunctionReturn(0);
@@ -181,7 +181,7 @@ PetscErrorCode IGAFormSetSystem(IGAForm form,IGAFormSystem System,void *SysCtx)
 PetscErrorCode IGAFormSetFunction(IGAForm form,IGAFormFunction Function,void *FunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->Function = Function;
   form->ops->FunCtx   = FunCtx;
   PetscFunctionReturn(0);
@@ -190,7 +190,7 @@ PetscErrorCode IGAFormSetFunction(IGAForm form,IGAFormFunction Function,void *Fu
 PetscErrorCode IGAFormSetJacobian(IGAForm form,IGAFormJacobian Jacobian,void *JacCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->Jacobian = Jacobian;
   form->ops->JacCtx   = JacCtx;
   PetscFunctionReturn(0);
@@ -199,7 +199,7 @@ PetscErrorCode IGAFormSetJacobian(IGAForm form,IGAFormJacobian Jacobian,void *Ja
 PetscErrorCode IGAFormSetIFunction(IGAForm form,IGAFormIFunction IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->IFunction = IFunction;
   form->ops->IFunCtx   = IFunCtx;
   PetscFunctionReturn(0);
@@ -208,7 +208,7 @@ PetscErrorCode IGAFormSetIFunction(IGAForm form,IGAFormIFunction IFunction,void 
 PetscErrorCode IGAFormSetIJacobian(IGAForm form,IGAFormIJacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->IJacobian = IJacobian;
   form->ops->IJacCtx   = IJacCtx;
   PetscFunctionReturn(0);
@@ -217,7 +217,7 @@ PetscErrorCode IGAFormSetIJacobian(IGAForm form,IGAFormIJacobian IJacobian,void 
 PetscErrorCode IGAFormSetI2Function(IGAForm form,IGAFormI2Function IFunction,void *IFunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->I2Function = IFunction;
   form->ops->IFunCtx    = IFunCtx;
   PetscFunctionReturn(0);
@@ -226,7 +226,7 @@ PetscErrorCode IGAFormSetI2Function(IGAForm form,IGAFormI2Function IFunction,voi
 PetscErrorCode IGAFormSetI2Jacobian(IGAForm form,IGAFormI2Jacobian IJacobian,void *IJacCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->I2Jacobian = IJacobian;
   form->ops->IJacCtx    = IJacCtx;
   PetscFunctionReturn(0);
@@ -235,7 +235,7 @@ PetscErrorCode IGAFormSetI2Jacobian(IGAForm form,IGAFormI2Jacobian IJacobian,voi
 PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,void *IEFunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->IEFunction = IEFunction;
   form->ops->IEFunCtx   = IEFunCtx;
   PetscFunctionReturn(0);
@@ -244,7 +244,7 @@ PetscErrorCode IGAFormSetIEFunction(IGAForm form,IGAFormIEFunction IEFunction,vo
 PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,void *IEJacCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->IEJacobian = IEJacobian;
   form->ops->IEJacCtx   = IEJacCtx;
   PetscFunctionReturn(0);
@@ -253,7 +253,7 @@ PetscErrorCode IGAFormSetIEJacobian(IGAForm form,IGAFormIEJacobian IEJacobian,vo
 PetscErrorCode IGAFormSetRHSFunction(IGAForm form,IGAFormRHSFunction RHSFunction,void *RHSFunCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->RHSFunction = RHSFunction;
   form->ops->RHSFunCtx   = RHSFunCtx;
   PetscFunctionReturn(0);
@@ -262,7 +262,7 @@ PetscErrorCode IGAFormSetRHSFunction(IGAForm form,IGAFormRHSFunction RHSFunction
 PetscErrorCode IGAFormSetRHSJacobian(IGAForm form,IGAFormRHSJacobian RHSJacobian,void *RHSJacCtx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(form,1);
+  PetscAssertPointer(form,1);
   form->ops->RHSJacobian = RHSJacobian;
   form->ops->RHSJacCtx   = RHSJacCtx;
   PetscFunctionReturn(0);

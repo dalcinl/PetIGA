@@ -13,7 +13,7 @@ PetscErrorCode IGARuleCreate(IGARule *_rule)
   IGARule        rule;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_rule,1);
+  PetscAssertPointer(_rule,1);
   ierr = PetscCalloc1(1,&rule);CHKERRQ(ierr);
   *_rule = rule; rule->refct = 1;
   PetscFunctionReturn(0);
@@ -24,7 +24,7 @@ PetscErrorCode IGARuleDestroy(IGARule *_rule)
   IGARule        rule;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_rule,1);
+  PetscAssertPointer(_rule,1);
   rule = *_rule; *_rule = NULL;
   if (!rule) PetscFunctionReturn(0);
   if (--rule->refct > 0) PetscFunctionReturn(0);
@@ -39,7 +39,7 @@ PetscErrorCode IGARuleReset(IGARule rule)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!rule) PetscFunctionReturn(0);
-  PetscValidPointer(rule,1);
+  PetscAssertPointer(rule,1);
   rule->nqp = 0;
   ierr = PetscFree(rule->point);CHKERRQ(ierr);
   ierr = PetscFree(rule->weight);CHKERRQ(ierr);
@@ -49,7 +49,7 @@ PetscErrorCode IGARuleReset(IGARule rule)
 PetscErrorCode IGARuleReference(IGARule rule)
 {
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
+  PetscAssertPointer(rule,1);
   rule->refct++;
   PetscFunctionReturn(0);
 }
@@ -58,8 +58,8 @@ PetscErrorCode IGARuleCopy(IGARule base,IGARule rule)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(base,1);
-  PetscValidPointer(rule,2);
+  PetscAssertPointer(base,1);
+  PetscAssertPointer(rule,2);
   if (base == rule) PetscFunctionReturn(0);
   ierr = IGARuleReset(rule);CHKERRQ(ierr);
   rule->type = base->type;
@@ -79,8 +79,8 @@ PetscErrorCode IGARuleDuplicate(IGARule base,IGARule *rule)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(base,1);
-  PetscValidPointer(rule,2);
+  PetscAssertPointer(base,1);
+  PetscAssertPointer(rule,2);
   ierr = IGARuleCreate(rule);CHKERRQ(ierr);
   ierr = IGARuleCopy(base,*rule);CHKERRQ(ierr);
   PetscFunctionReturn(0);
@@ -90,7 +90,7 @@ PetscErrorCode IGARuleSetType(IGARule rule,IGARuleType type)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
+  PetscAssertPointer(rule,1);
   if (rule->type == type) PetscFunctionReturn(0);
   rule->type = type;
   if (rule->nqp > 0) {ierr = IGARuleSetUp(rule);CHKERRQ(ierr);}
@@ -101,7 +101,7 @@ PetscErrorCode IGARuleSetSize(IGARule rule,PetscInt nqp)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
+  PetscAssertPointer(rule,1);
   if (nqp < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,
              "Number of quadrature points must be greater than zero, got %d",(int)nqp);
@@ -121,7 +121,7 @@ PetscErrorCode IGARuleSetUp(IGARule rule)
   PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
+  PetscAssertPointer(rule,1);
   if (rule->nqp < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,
             "Must call IGARuleSetSize() first");
@@ -146,9 +146,9 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
-  PetscValidPointer(x,3);
-  PetscValidPointer(w,4);
+  PetscAssertPointer(rule,1);
+  PetscAssertPointer(x,3);
+  PetscAssertPointer(w,4);
   rule->type = IGA_RULE_USER;
   ierr = IGARuleSetSize(rule,q);CHKERRQ(ierr);
   ierr = PetscMemcpy(rule->point,x,(size_t)rule->nqp*sizeof(PetscReal));CHKERRQ(ierr);
@@ -159,10 +159,10 @@ PetscErrorCode IGARuleSetRule(IGARule rule,PetscInt q,const PetscReal x[],const 
 PetscErrorCode IGARuleGetRule(IGARule rule,PetscInt *q,PetscReal *x[],PetscReal *w[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(rule,1);
-  if (q) PetscValidPointer(q,2);
-  if (x) PetscValidPointer(x,3);
-  if (w) PetscValidPointer(w,4);
+  PetscAssertPointer(rule,1);
+  if (q) PetscAssertPointer(q,2);
+  if (x) PetscAssertPointer(x,3);
+  if (w) PetscAssertPointer(w,4);
   if (q) *q = rule->nqp;
   if (x) *x = rule->point;
   if (w) *w = rule->weight;

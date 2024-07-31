@@ -385,7 +385,7 @@ PetscErrorCode IGACreateKSP(IGA iga,KSP *ksp)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(ksp,2);
+  PetscAssertPointer(ksp,2);
 
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = KSPCreate(comm,ksp);CHKERRQ(ierr);

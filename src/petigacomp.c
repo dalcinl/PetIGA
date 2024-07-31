@@ -48,7 +48,7 @@ PetscErrorCode IGAComputeScalar(IGA iga,Vec vecU,
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   if (vecU) PetscValidHeaderSpecific(vecU,VEC_CLASSID,2);
   PetscValidLogicalCollectiveInt(iga,n,3);
-  PetscValidScalarPointer(S,4);
+  PetscAssertPointer(S,4);
   IGACheckSetUp(iga,1);
 
   ierr = PetscCalloc1((size_t)n,&localS);CHKERRQ(ierr);
@@ -165,7 +165,7 @@ PetscErrorCode IGAComputeErrorNorm(IGA iga,PetscInt k,
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,k,2);
   if (vecU) PetscValidHeaderSpecific(vecU,VEC_CLASSID,3);
-  PetscValidRealPointer(enorm,5);
+  PetscAssertPointer(enorm,5);
   IGACheckSetUp(iga,1);
   if (k < 0) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Derivative index must be nonnegative, got %d",(int)k);
 

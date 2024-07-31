@@ -35,7 +35,7 @@ PetscErrorCode IGACreate(MPI_Comm comm,IGA *newiga)
   IGA            iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(newiga,2);
+  PetscAssertPointer(newiga,2);
 
   ierr = PetscCitationsRegister(citation,&cited);CHKERRQ(ierr);
   ierr = IGAInitializePackage();CHKERRQ(ierr);
@@ -80,7 +80,7 @@ PetscErrorCode IGADestroy(IGA *_iga)
   IGA            iga;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_iga,1);
+  PetscAssertPointer(_iga,1);
   iga = *_iga; *_iga = NULL;
   if (!iga) PetscFunctionReturn(0);
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
@@ -299,7 +299,7 @@ PetscErrorCode IGAGetComm(IGA iga,MPI_Comm *comm)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(comm,2);
+  PetscAssertPointer(comm,2);
   *comm = ((PetscObject)iga)->comm;
   PetscFunctionReturn(0);
 }
@@ -334,7 +334,7 @@ PetscErrorCode IGAGetDim(IGA iga,PetscInt *dim)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dim,2);
+  PetscAssertPointer(dim,2);
   *dim = iga->dim;
   PetscFunctionReturn(0);
 }
@@ -369,7 +369,7 @@ PetscErrorCode IGAGetDof(IGA iga,PetscInt *dof)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dof,2);
+  PetscAssertPointer(dof,2);
   *dof = iga->dof;
   PetscFunctionReturn(0);
 }
@@ -379,7 +379,7 @@ PetscErrorCode IGASetName(IGA iga,const char name[])
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  if (name) PetscValidCharPointer(name,2);
+  if (name) PetscAssertPointer(name,2);
   ierr = PetscObjectSetName((PetscObject)iga,name);CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
@@ -388,7 +388,7 @@ PetscErrorCode IGAGetName(IGA iga,const char *name[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(name,2);
+  PetscAssertPointer(name,2);
   *name = ((PetscObject)iga)->name;
   PetscFunctionReturn(0);
 }
@@ -414,7 +414,7 @@ PetscErrorCode IGASetFieldName(IGA iga,PetscInt field,const char name[])
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidCharPointer(name,3);
+  PetscAssertPointer(name,3);
   if (iga->dof < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
@@ -432,7 +432,7 @@ PetscErrorCode IGAGetFieldName(IGA iga,PetscInt field,const char *name[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(name,3);
+  PetscAssertPointer(name,3);
   if (iga->dof < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_WRONGSTATE,"Must call IGASetDof() first");
   if (field < 0 || field >= iga->dof)
@@ -475,7 +475,7 @@ PetscErrorCode IGAGetOrder(IGA iga,PetscInt *order)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidIntPointer(order,2);
+  PetscAssertPointer(order,2);
   *order = iga->order;
   PetscFunctionReturn(0);
 }
@@ -605,7 +605,7 @@ PetscErrorCode IGAGetAxis(IGA iga,PetscInt i,IGAAxis *axis)
   PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(axis,3);
+  PetscAssertPointer(axis,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
   if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d must be nonnegative",(int)i);
   if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d, but dim %d",(int)i,(int)dim);
@@ -634,7 +634,7 @@ PetscErrorCode IGAGetRule(IGA iga,PetscInt i,IGARule *rule)
   PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(rule,3);
+  PetscAssertPointer(rule,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
   if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d must be nonnegative",(int)i);
   if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d, but dim %d",(int)i,(int)iga->dim);
@@ -647,7 +647,7 @@ PetscErrorCode IGAGetBasis(IGA iga,PetscInt i,IGABasis *basis)
   PetscInt dim;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(basis,3);
+  PetscAssertPointer(basis,3);
   dim = (iga->dim > 0) ? iga->dim : 3;
   if (i < 0)    SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d must be nonnegative",(int)i);
   if (i >= dim) SETERRQ(((PetscObject)iga)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Index %d, but dimension %d",(int)i,(int)iga->dim);
@@ -906,7 +906,7 @@ PetscErrorCode IGACreateSubComms1D(IGA iga,MPI_Comm subcomms[])
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(subcomms,2);
+  PetscAssertPointer(subcomms,2);
   IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
@@ -957,12 +957,12 @@ PetscErrorCode IGACreateDMDA(IGA iga,
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
-  PetscValidIntPointer(gsizes,3);
-  PetscValidIntPointer(lsizes,4);
-  if (periodic) PetscValidIntPointer(periodic,5);
+  PetscAssertPointer(gsizes,3);
+  PetscAssertPointer(lsizes,4);
+  if (periodic) PetscAssertPointer(periodic,5);
   PetscValidLogicalCollectiveBool(iga,stencil_box,6);
   PetscValidLogicalCollectiveInt(iga,stencil_width,7);
-  PetscValidPointer(dm,8);
+  PetscAssertPointer(dm,8);
   IGACheckSetUpStage1(iga,1);
 
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
@@ -1000,7 +1000,7 @@ PetscErrorCode IGACreateElemDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDMDA(iga,bs,iga->elem_sizes,iga->elem_width,
                        NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
@@ -1013,7 +1013,7 @@ PetscErrorCode IGACreateGeomDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDMDA(iga,bs,iga->geom_sizes,iga->geom_lwidth,
                        NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
@@ -1050,7 +1050,7 @@ PetscErrorCode IGACreateNodeDM(IGA iga,PetscInt bs,DM *dm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,bs,2);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage1(iga,1);
   ierr = IGACreateDMDA(iga,bs,iga->node_sizes,iga->node_lwidth,
                        NULL,PETSC_TRUE,0,dm);CHKERRQ(ierr);
@@ -1062,7 +1062,7 @@ PetscErrorCode IGAGetElemDM(IGA iga,DM *dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage2(iga,1);
   if (!iga->elem_dm) {ierr = IGACreateElemDM(iga,iga->dof,&iga->elem_dm);CHKERRQ(ierr);}
   *dm = iga->elem_dm;
@@ -1074,7 +1074,7 @@ PetscErrorCode IGAGetGeomDM(IGA iga,DM *dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage2(iga,1);
   if (!iga->geom_dm) {ierr = IGACreateGeomDM(iga,iga->dof,&iga->geom_dm);CHKERRQ(ierr);}
   *dm = iga->geom_dm;
@@ -1087,7 +1087,7 @@ PetscErrorCode IGAGetNodeDM(IGA iga,DM *dm)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(dm,3);
+  PetscAssertPointer(dm,3);
   IGACheckSetUpStage2(iga,1);
   if (!iga->node_dm) {
     ierr = IGACreateNodeDM(iga,iga->dof,&iga->node_dm);CHKERRQ(ierr);
@@ -1502,7 +1502,7 @@ PetscErrorCode IGAClone(IGA iga,PetscInt dof,IGA *_newiga)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
   PetscValidLogicalCollectiveInt(iga,dof,2);
-  PetscValidPointer(_newiga,3);
+  PetscAssertPointer(_newiga,3);
   IGACheckSetUp(iga,1);
 
   *_newiga = NULL;
@@ -1570,7 +1570,7 @@ PetscErrorCode IGASetVecType(IGA iga,const VecType vectype)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidCharPointer(vectype,2);
+  PetscAssertPointer(vectype,2);
   ierr = PetscStrallocpy(vectype,&vtype);CHKERRQ(ierr);
   ierr = PetscFree(iga->vectype);CHKERRQ(ierr);
   iga->vectype = vtype;
@@ -1583,7 +1583,7 @@ PetscErrorCode IGASetMatType(IGA iga,const MatType mattype)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidCharPointer(mattype,2);
+  PetscAssertPointer(mattype,2);
   ierr = PetscStrallocpy(mattype,&mtype);CHKERRQ(ierr);
   ierr = PetscFree(iga->mattype);CHKERRQ(ierr);
   iga->mattype = mtype;

@@ -5,7 +5,7 @@ PetscErrorCode IGAAxisCreate(IGAAxis *_axis)
   IGAAxis        axis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_axis,1);
+  PetscAssertPointer(_axis,1);
   ierr = PetscCalloc1(1,&axis);CHKERRQ(ierr);
   *_axis = axis; axis->refct = 1;
 
@@ -31,7 +31,7 @@ PetscErrorCode IGAAxisDestroy(IGAAxis *_axis)
   IGAAxis        axis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(_axis,1);
+  PetscAssertPointer(_axis,1);
   axis = *_axis; *_axis = NULL;
   if (!axis) PetscFunctionReturn(0);
   if (--axis->refct > 0) PetscFunctionReturn(0);
@@ -46,7 +46,7 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   if (!axis) PetscFunctionReturn(0);
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
 
   axis->periodic = PETSC_FALSE;
 
@@ -73,7 +73,7 @@ PetscErrorCode IGAAxisReset(IGAAxis axis)
 PetscErrorCode IGAAxisReference(IGAAxis axis)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   axis->refct++;
   PetscFunctionReturn(0);
 }
@@ -97,8 +97,8 @@ PetscErrorCode IGAAxisCopy(IGAAxis base,IGAAxis axis)
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(base,1);
-  PetscValidPointer(axis,2);
+  PetscAssertPointer(base,1);
+  PetscAssertPointer(axis,2);
   if (base == axis) PetscFunctionReturn(0);
 
   axis->periodic = base->periodic;
@@ -123,8 +123,8 @@ PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *_axis)
   IGAAxis        axis;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(base,1);
-  PetscValidPointer(_axis,2);
+  PetscAssertPointer(base,1);
+  PetscAssertPointer(_axis,2);
   ierr = PetscCalloc1(1,&axis);CHKERRQ(ierr);
   *_axis = axis; axis->refct = 1;
   ierr = IGAAxisCopy(base,axis);CHKERRQ(ierr);
@@ -147,7 +147,7 @@ PetscErrorCode IGAAxisDuplicate(IGAAxis base,IGAAxis *_axis)
 PetscErrorCode IGAAxisSetPeriodic(IGAAxis axis,PetscBool periodic)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   axis->periodic = periodic ? PETSC_TRUE : PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -155,8 +155,8 @@ PetscErrorCode IGAAxisSetPeriodic(IGAAxis axis,PetscBool periodic)
 PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  PetscValidPointer(periodic,2);
+  PetscAssertPointer(axis,1);
+  PetscAssertPointer(periodic,2);
   *periodic = axis->periodic;
   PetscFunctionReturn(0);
 }
@@ -177,7 +177,7 @@ PetscErrorCode IGAAxisGetPeriodic(IGAAxis axis,PetscBool *periodic)
 PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   if (p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_OUTOFRANGE,"Polynomial degree must be greater than one, got %d",(int)p);
   if (axis->p > 0 && axis->m > 1 && axis->p != p)
@@ -189,8 +189,8 @@ PetscErrorCode IGAAxisSetDegree(IGAAxis axis,PetscInt p)
 PetscErrorCode IGAAxisGetDegree(IGAAxis axis,PetscInt *p)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  PetscValidPointer(p,2);
+  PetscAssertPointer(axis,1);
+  PetscAssertPointer(p,2);
   *p = axis->p;
   PetscFunctionReturn(0);
 }
@@ -203,8 +203,8 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  PetscValidPointer(U,3);
+  PetscAssertPointer(axis,1);
+  PetscAssertPointer(U,3);
 
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
@@ -253,9 +253,9 @@ PetscErrorCode IGAAxisSetKnots(IGAAxis axis,PetscInt m,const PetscReal U[])
 PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  if (m) PetscValidPointer(m,2);
-  if (U) PetscValidPointer(U,3);
+  PetscAssertPointer(axis,1);
+  if (m) PetscAssertPointer(m,2);
+  if (U) PetscAssertPointer(U,3);
   if (m) *m = axis->m;
   if (U) *U = axis->U;
   PetscFunctionReturn(0);
@@ -264,9 +264,9 @@ PetscErrorCode IGAAxisGetKnots(IGAAxis axis,PetscInt *m,PetscReal *U[])
 PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  if (Ui) PetscValidRealPointer(Ui,2);
-  if (Uf) PetscValidRealPointer(Uf,3);
+  PetscAssertPointer(axis,1);
+  if (Ui) PetscAssertPointer(Ui,2);
+  if (Uf) PetscAssertPointer(Uf,3);
   if (Ui) *Ui = axis->U[axis->p];
   if (Uf) *Uf = axis->U[axis->m-axis->p];
   PetscFunctionReturn(0);
@@ -275,9 +275,9 @@ PetscErrorCode IGAAxisGetLimits(IGAAxis axis,PetscReal *Ui,PetscReal *Uf)
 PetscErrorCode IGAAxisGetSizes(IGAAxis axis,PetscInt *nel,PetscInt *nnp)
 {
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  if (nel) PetscValidIntPointer(nel,2);
-  if (nnp) PetscValidIntPointer(nnp,3);
+  PetscAssertPointer(axis,1);
+  if (nel) PetscAssertPointer(nel,2);
+  if (nnp) PetscAssertPointer(nnp,3);
   if (nel) *nel = axis->nel;
   if (nnp) *nnp = axis->nnp;
   PetscFunctionReturn(0);
@@ -287,9 +287,9 @@ PetscErrorCode IGAAxisGetSpans(IGAAxis axis,PetscInt *nel,PetscInt *span[])
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  if (nel)  PetscValidIntPointer(nel,2);
-  if (span) PetscValidPointer(span,3);
+  PetscAssertPointer(axis,1);
+  if (nel)  PetscAssertPointer(nel,2);
+  if (span) PetscAssertPointer(span,3);
   if (!axis->span) {
     PetscInt  p = axis->p;
     PetscInt  m = axis->m;
@@ -313,7 +313,7 @@ PetscErrorCode IGAAxisInit(IGAAxis axis,PetscInt p,PetscInt m,const PetscReal U[
 {
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   axis->p = 0;
   ierr = IGAAxisSetDegree(axis,p);CHKERRQ(ierr);
   ierr = IGAAxisSetKnots(axis,m,U);CHKERRQ(ierr);
@@ -327,8 +327,8 @@ PetscErrorCode IGAAxisInitBreaks(IGAAxis axis,PetscInt nu,const PetscReal u[],Pe
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
-  PetscValidPointer(u,3);
+  PetscAssertPointer(axis,1);
+  PetscAssertPointer(u,3);
   if (C == PETSC_DECIDE) C = axis->p-1;
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
@@ -405,7 +405,7 @@ PetscErrorCode IGAAxisInitUniform(IGAAxis axis,PetscInt N,PetscReal Ui,PetscReal
   PetscReal      *U;
   PetscErrorCode ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   if (C == PETSC_DECIDE) C = axis->p-1;
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
@@ -457,7 +457,7 @@ PetscErrorCode IGAAxisSetUp(IGAAxis axis)
 {
   PetscErrorCode  ierr;
   PetscFunctionBegin;
-  PetscValidPointer(axis,1);
+  PetscAssertPointer(axis,1);
   if (axis->p < 1)
     SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ORDER,"Must call IGAAxisSetDegree() first");
   if (axis->m < 2*axis->p+1)

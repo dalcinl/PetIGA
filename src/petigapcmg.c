@@ -83,7 +83,7 @@ PetscErrorCode DMDAComputeCoarsenLevels(DM dm,PetscInt *outlevels)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm,DM_CLASSID,1);
-  PetscValidIntPointer(outlevels,2);
+  PetscAssertPointer(outlevels,2);
   ierr = DMDAGetInfo(dm,&dim,&M[0],&M[1],&M[2],&P[0],&P[1],&P[2],NULL,NULL,&btype[0],&btype[1],&btype[2],NULL);CHKERRQ(ierr);
   for (i=0; i<dim; i++) if (btype[i] == DM_BOUNDARY_NONE) M[i] -= 1;
   while (CoarsenFactor(dim,M,P,factor) && levels < 64)

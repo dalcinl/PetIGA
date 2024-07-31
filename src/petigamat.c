@@ -159,7 +159,7 @@ static PetscErrorCode MatDuplicate_IGA(Mat A,MatDuplicateOption op,Mat *B)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
-  PetscValidPointer(B,3);
+  PetscAssertPointer(B,3);
   ierr = PetscObjectQuery((PetscObject)A,"IGA",(PetscObject*)&iga);CHKERRQ(ierr);
   if (!iga) SETERRQ(PetscObjectComm((PetscObject)A),PETSC_ERR_ARG_WRONG,"Matrix not generated from IGA");
   PetscValidHeaderSpecific(iga,IGA_CLASSID,0);
@@ -355,7 +355,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   PetscErrorCode ierr;
   PetscFunctionBegin;
   PetscValidHeaderSpecific(iga,IGA_CLASSID,1);
-  PetscValidPointer(mat,2);
+  PetscAssertPointer(mat,2);
   IGACheckSetUpStage2(iga,1);
   ierr = IGAGetComm(iga,&comm);CHKERRQ(ierr);
   ierr = IGAGetDim(iga,&dim);CHKERRQ(ierr);
