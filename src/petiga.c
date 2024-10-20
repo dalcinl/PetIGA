@@ -881,12 +881,12 @@ PetscErrorCode IGASetFromOptions(IGA iga)
     if (flg) {ierr = IGASetMatType(iga,mtype);CHKERRQ(ierr);}
 
     /* View options, handled in IGASetUp() */
-    ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView",NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_ascii", "Information on IGA context",      "IGAView",NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView",NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView",NULL);CHKERRQ(ierr);
-    ierr = PetscOptionsName("-iga_view_draw",  "Draw to screen",                  "IGAView",NULL);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view",       "Information on IGA context",      "IGAView", &flg);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_ascii", "Information on IGA context",      "IGAView", &flg);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_info",  "Output more detailed information","IGAView", &flg);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_detail","Output more detailed information","IGAView", &flg);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_binary","Save to file in binary format",   "IGAView", &flg);CHKERRQ(ierr);
+    ierr = PetscOptionsName("-iga_view_draw",  "Draw to screen",                  "IGAView", &flg);CHKERRQ(ierr);
 
     ierr = PetscObjectProcessOptionsHandlers((PetscObject)iga,PetscOptionsObject);CHKERRQ(ierr);
     PetscOptionsEnd();
