@@ -176,12 +176,12 @@ int main(int argc, char *argv[]) {
   PetscInt  N[2] = {64,64}, nN = 2;
   PetscInt  p[2] = { 2, 2}, np = 2;
   PetscInt  C[2] = {-1,-1}, nC = 2;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ShallowWater Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","ShallowWater Options","IGA");
   ierr = PetscOptionsBoolArray("-W","periodicity",            __FILE__,W,&nW,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray ("-N","number of elements",     __FILE__,N,&nN,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray ("-p","polynomial order",       __FILE__,p,&np,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray ("-C","global continuity order",__FILE__,C,&nC,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
   if (nW == 1) W[1] = W[0];
   if (nN == 1) N[1] = N[0];
   if (np == 1) p[1] = p[0];

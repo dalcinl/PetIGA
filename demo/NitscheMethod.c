@@ -137,12 +137,12 @@ int main(int argc, char *argv[]) {
   PetscReal error_tol   = 1e-4;
   PetscBool draw = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","NitscheMethod Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","NitscheMethod Options","IGA");
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-check_error","Checks the L2 error of the solution",__FILE__,error_tol,&error_tol,&check_error);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-save","Save the solution to file",                        __FILE__,save,&save,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);

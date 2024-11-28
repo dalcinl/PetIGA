@@ -38,11 +38,11 @@ int main(int argc, char *argv[]) {
   PetscBool fd = PETSC_FALSE;
   PetscBool steady = PETSC_TRUE;
   PetscReal lambda = 6.80;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Bratu Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","Bratu Options","IGA");
   ierr = PetscOptionsBool("-steady","Steady problem",__FILE__,steady,&steady,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-lambda","Bratu parameter",__FILE__,lambda,&lambda,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-iga_fd","Use FD Jacobian",__FILE__,fd,&fd,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);

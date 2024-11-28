@@ -253,13 +253,13 @@ int main(int argc, char *argv[]) {
   PetscBool output = PETSC_FALSE;
   PetscBool monitor = PETSC_FALSE;
   char initial[PETSC_MAX_PATH_LEN] = {0};
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard3D Options","CH3D");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard3D Options","CH3D");CHKERRQ(ierr);
   ierr = PetscOptionsString("-ch_initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-ch_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-ch_monitor","Compute and show statistics of solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-ch_cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-ch_alpha","Characteristic parameter",__FILE__,user.alpha,&user.alpha,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);

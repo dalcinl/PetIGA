@@ -986,13 +986,13 @@ int main(int argc, char *argv[])
   PetscBool NeoHook,StVenant,MooneyR1,MooneyR2;
   NeoHook = StVenant = MooneyR1 = MooneyR2 = PETSC_FALSE;
   PetscInt nsteps = 1;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","HyperElasticity Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","HyperElasticity Options","IGA");
   ierr = PetscOptionsBool("-neohook","Use the NeoHookean constitutive model",__FILE__,NeoHook,&NeoHook,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-mooneyr1","Use the MooneyRivlin1 constitutive model",__FILE__,MooneyR1,&MooneyR1,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-mooneyr2","Use the MooneyRivlin2 constitutive model",__FILE__,MooneyR2,&MooneyR2,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-stvenant","Use the StVenant constitutive model",__FILE__,StVenant,&StVenant,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-nsteps","Number of load steps to take",__FILE__,nsteps,&nsteps,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   user.lambda = E*nu/(1.+nu)/(1.-2.*nu);
   user.mu     = 0.5*E/(1.+nu);

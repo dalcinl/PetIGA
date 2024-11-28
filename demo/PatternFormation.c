@@ -163,12 +163,12 @@ int main(int argc, char *argv[]) {
   PetscInt N[2] = {32,32}, nN = 2;
   PetscInt p[2] = { 2, 2}, np = 2;
   PetscInt C[2] = {-1,-1}, nC = 2;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","PatternFormation Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","PatternFormation Options","IGA");
   ierr = PetscOptionsBool("-implicit","Treat all terms implicitly",__FILE__,user.IMPLICIT,&user.IMPLICIT,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-N","number of elements",     __FILE__,N,&nN,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-p","polynomial order",       __FILE__,p,&np,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsIntArray("-C","global continuity order",__FILE__,C,&nC,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
   if (nN == 1) N[1] = N[0];
   if (np == 1) p[1] = p[0];
   if (nC == 1) C[1] = C[0];

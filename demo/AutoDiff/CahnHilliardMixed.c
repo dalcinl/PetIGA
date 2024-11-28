@@ -81,13 +81,13 @@ int main(int argc, char *argv[]) {
   /* Set discretization options */
   char      initial[PETSC_MAX_PATH_LEN] = {0};
   PetscBool output  = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard Options","IGA");
   ierr = PetscOptionsString("-initial","Load initial solution from file",__FILE__,initial,initial,sizeof(initial),NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-cbar","Initial average concentration",__FILE__,params.cbar,&params.cbar,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-alpha","Interface thickess parameter",__FILE__,params.alpha,&params.alpha,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,params.theta,&params.theta,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   ierr = IGAOptionsAlias("-wrap",  "", "-iga_periodic");CHKERRQ(ierr);
   ierr = IGAOptionsAlias("-dim",  "2", "-iga_dim");CHKERRQ(ierr);

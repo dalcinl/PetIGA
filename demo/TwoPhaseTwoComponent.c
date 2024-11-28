@@ -271,8 +271,8 @@ int main(int argc, char *argv[]) {
   user.Dlh      = 3e-9*SEC_PER_YEAR;
   user.k        = 5e-20;
   PetscInt dim = 2, p = 1, N = 200, L = 200;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"r_","2c2p Options","2c2p");CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"r_","2c2p Options","2c2p");CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA         iga;
   IGAAxis     axis;

@@ -64,11 +64,11 @@ int main(int argc, char *argv[]) {
   PetscInt  nld = 3;
   PetscReal load[3] = {1.0, 0.0, 0.0};
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Elasticity Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","Elasticity Options","IGA");
   ierr = PetscOptionsReal     ("-lambda","Lame's first parameter", __FILE__,user.lambda,&user.lambda,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal     ("-mu",    "Lame's second parameter",__FILE__,user.mu,    &user.mu,    NULL);CHKERRQ(ierr);
   ierr = PetscOptionsRealArray("-load",  "Boundary load",          __FILE__,load,&nld,               NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   ierr = IGAOptionsAlias("-d",  "2", "-iga_dim");
   ierr = IGAOptionsAlias("-N", "32", "-iga_elements");

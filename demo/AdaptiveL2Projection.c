@@ -147,11 +147,11 @@ int main(int argc, char *argv[]) {
 
   PetscInt i,j;
   PetscInt dim = 2, p = 2, C = 1;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","Options","IGA");
   ierr = PetscOptionsInt("-dim","dimension",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p","polynomial order",       __FILE__,p,&p,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-C","global continuity order",__FILE__,C,&C,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   // initial breaks (2x2 mesh)
   for (i=0; i<dim; i++) { U[i][0] = 0.; U[i][1] = .5; U[i][2] = 1.; N[i] = 3; }

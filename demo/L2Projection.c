@@ -108,13 +108,13 @@ int main(int argc, char *argv[]) {
   PetscBool check_error = PETSC_FALSE;
   PetscBool save = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","L2Projection Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","L2Projection Options","IGA");
   ierr = PetscOptionsEList("-function","Function to project",__FILE__,choicelist,nchoices,choicelist[choice],&choice,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the L2 error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-check_error","Checks the L2 error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-save","Save the solution to file",__FILE__,save,&save,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","Draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   AppCtx app;
   switch (choice) {

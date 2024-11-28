@@ -63,10 +63,10 @@ int main(int argc, char *argv[]) {
   PetscInt  i,dim,n=3;
   PetscReal Pe = 1.0;
   PetscReal dir[3] = {1.0,1.0,1.0};
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","AdvectionDiffusion Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","AdvectionDiffusion Options","IGA");
   ierr = PetscOptionsReal("-Pe","Peclet number",__FILE__,Pe,&Pe,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsRealArray("-dir","Direction",__FILE__,dir,&n,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);

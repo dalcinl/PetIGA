@@ -192,8 +192,8 @@ int main(int argc, char *argv[]) {
   user.phase_field = PETSC_TRUE;
 
   PetscInt dim = 2, p = 2, k = 1, N = 256, L = 2;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","Richard's Equation Options","IGA");CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","Richard's Equation Options","IGA");
+  PetscOptionsEnd();
 
   IGA         iga;
   IGAAxis     axis;

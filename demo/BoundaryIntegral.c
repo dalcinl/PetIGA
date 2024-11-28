@@ -145,13 +145,13 @@ int main(int argc, char *argv[]) {
   PetscBool print_error = PETSC_FALSE;
   PetscBool check_error = PETSC_FALSE;
   PetscBool draw = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","BoundaryIntegral Options","IGA");
   ierr = PetscOptionsInt ("-axis","Neuman BC direction",__FILE__,user.axis,&user.axis,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt ("-side","Neuman BC side",     __FILE__,user.side,&user.side,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-print_error","Prints the error of the solution",__FILE__,print_error,&print_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-check_error","Checks the error of the solution",__FILE__,check_error,&check_error,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-draw","If dim <= 2, then draw the solution to the screen",__FILE__,draw,&draw,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);

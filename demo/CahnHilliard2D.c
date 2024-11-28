@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
   char      initial[PETSC_MAX_PATH_LEN] = {0};
   PetscBool output  = PETSC_FALSE;
   PetscBool monitor = PETSC_FALSE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard2D Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","CahnHilliard2D Options","IGA");
   ierr = PetscOptionsInt("-N","number of elements (along one dimension)",__FILE__,N,&N,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p","polynomial order",__FILE__,p,&p,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-k","global continuity order",__FILE__,k,&k,NULL);CHKERRQ(ierr);
@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsReal("-cbar","Initial average concentration",__FILE__,user.cbar,&user.cbar,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-alpha","Interface thickess parameter",__FILE__,user.alpha,&user.alpha,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-theta","Ratio temperature/critical temperature",__FILE__,user.theta,&user.theta,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
   if (k == PETSC_DECIDE) k = p-1;
 
   if (p < 2 || k < 1) /* Problem requires a p>=2 C^1 basis */

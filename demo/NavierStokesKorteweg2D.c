@@ -288,13 +288,13 @@ int main(int argc, char *argv[]) {
   // Set discretization options
   PetscInt  N=256,p=2,C=1;
   PetscBool output=PETSC_FALSE,monitor=PETSC_TRUE;
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD, "", "NSK Options", "IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD, "", "NSK Options", "IGA");
   ierr = PetscOptionsInt("-N", "number of elements along one dimension", __FILE__, N, &N, NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-p", "polynomial order", __FILE__, p, &p, NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-C", "global continuity order", __FILE__, C, &C, NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-nsk_output","Enable output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsBool("-nsk_monitor","Monitor the free energy of the solution",__FILE__,monitor,&monitor,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   // Compute simulation parameters
   user.h  = user.L0/N; // characteristic length scale of mesh (Eq. 43, simplified for uniform elements)

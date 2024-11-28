@@ -407,7 +407,7 @@ int main(int argc, char *argv[]) {
   PetscBool output  = PETSC_FALSE;
   char final[PETSC_MAX_PATH_LEN] = "pfc_final.dat";
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","PhaseFieldCrystal Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","PhaseFieldCrystal Options","IGA");
 
   ierr = PetscOptionsInt("-dim","number of spatial dimensions",__FILE__,dim,&dim,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsInt("-N","number of elements in x direction",__FILE__,N,&N,NULL);CHKERRQ(ierr);
@@ -423,7 +423,7 @@ int main(int argc, char *argv[]) {
   ierr = PetscOptionsBool("-output","Enable solution output files",__FILE__,output,&output,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsString("-final","Filename for final solution",__FILE__,final,final,sizeof(final),NULL);CHKERRQ(ierr);
 
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   if (p < 1) /* Problem requires a p>=1 basis */
     SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,

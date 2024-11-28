@@ -28,10 +28,10 @@ int main(int argc, char *argv[]) {
   user.rho = 1.0;
   user.E   = 1.0;
 
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,"","ElasticRod Options","IGA");CHKERRQ(ierr);
+  PetscOptionsBegin(PETSC_COMM_WORLD,"","ElasticRod Options","IGA");
   ierr = PetscOptionsReal("-density","Density",__FILE__,user.rho,&user.rho,NULL);CHKERRQ(ierr);
   ierr = PetscOptionsReal("-Young_modulus","Young modulus",__FILE__,user.E,&user.E,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   IGA iga;
   ierr = IGACreate(PETSC_COMM_WORLD,&iga);CHKERRQ(ierr);
