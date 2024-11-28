@@ -21,6 +21,10 @@
 #define MATOP_CREATE_VECS MATOP_GET_VECS
 #endif
 
+#if PETSC_VERSION_LT(3,21,0)
+#define MatISSetAllowRepeated(A,b) 0
+#endif
+
 static PetscErrorCode MatView_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatLoad_MPI_IGA(Mat,PetscViewer);
 static PetscErrorCode MatCreateVecs_IGA(Mat,Vec*,Vec*);
@@ -366,6 +370,7 @@ PetscErrorCode IGACreateMat(IGA iga,Mat *mat)
   ierr = MatSetSizes(A,rmap->n,cmap->n,rmap->N,cmap->N);CHKERRQ(ierr);
   ierr = MatSetBlockSizes(A,rmap->bs,cmap->bs);CHKERRQ(ierr);
   ierr = MatSetType(A,iga->mattype);CHKERRQ(ierr);
+  ierr = MatISSetAllowRepeated(A,PETSC_TRUE);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = PetscObjectCompose((PetscObject)A,"IGA",(PetscObject)iga);CHKERRQ(ierr);
   *mat = A;
