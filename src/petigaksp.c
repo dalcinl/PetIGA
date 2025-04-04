@@ -258,8 +258,10 @@ PetscErrorCode KSPSetIGA(KSP ksp,IGA iga)
 
 #if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode IGA_OptionsHandler_KSP(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
-#else
+#elif PETSC_VERSION_LT(3,23,0)
 static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PETSC_UNUSED void *ctx)
+#else
+static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,PETSC_UNUSED PetscOptionItems PetscOptionsObject,PETSC_UNUSED void *ctx)
 #endif
 {
   KSP            ksp = (KSP)obj;
@@ -303,8 +305,10 @@ static PetscErrorCode IGA_OptionsHandler_KSP(PetscObject obj,PETSC_UNUSED PetscO
 
 #if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode IGA_OptionsHandler_PC(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PetscObject obj,PETSC_UNUSED void *ctx)
-#else
+#elif PETSC_VERSION_LT(3,23,0)
 static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED PetscOptionItems *PetscOptionsObject,PETSC_UNUSED void *ctx)
+#else
+static PetscErrorCode IGA_OptionsHandler_PC(PetscObject obj,PETSC_UNUSED PetscOptionItems PetscOptionsObject,PETSC_UNUSED void *ctx)
 #endif
 {
   PC             pc = (PC)obj;

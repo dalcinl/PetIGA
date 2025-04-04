@@ -198,8 +198,10 @@ static PetscErrorCode DMDestroy_IGA(DM dm)
 
 #if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode DMSetFromOptions_IGA(PETSC_UNUSED PetscOptionItems *PetscOptionsObject,DM dm)
-#else
+#elif PETSC_VERSION_LT(3,23,0)
 static PetscErrorCode DMSetFromOptions_IGA(DM dm,PETSC_UNUSED PetscOptionItems *PetscOptionsObject)
+#else
+static PetscErrorCode DMSetFromOptions_IGA(DM dm,PETSC_UNUSED PetscOptionItems PetscOptionsObject)
 #endif
 {
   IGA            iga = DMIGACast(dm)->iga;

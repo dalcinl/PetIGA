@@ -252,8 +252,10 @@ static PetscErrorCode PCSetUp_BBB(PC pc)
 
 #if PETSC_VERSION_LT(3,18,0)
 static PetscErrorCode PCSetFromOptions_BBB(PetscOptionItems *PetscOptionsObject,PC pc)
-#else
+#elif PETSC_VERSION_LT(3,23,0)
 static PetscErrorCode PCSetFromOptions_BBB(PC pc,PetscOptionItems *PetscOptionsObject)
+#else
+static PetscErrorCode PCSetFromOptions_BBB(PC pc,PetscOptionItems PetscOptionsObject)
 #endif
 {
   PC_BBB         *bbb = (PC_BBB*)pc->data;
